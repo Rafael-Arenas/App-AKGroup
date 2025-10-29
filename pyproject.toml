@@ -1,0 +1,36 @@
+[tool.poetry]
+name = "app-akgroup"
+version = "0.1.0"
+description = "Sistema de gestión empresarial AK Group"
+authors = ["Rafael Arenas López <ra.arenas.lopez@gmail.com>"]
+readme = "README.md"
+packages = [{include = "models", from = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.13"
+flet = "^0.28.3"
+sqlalchemy = "^2.0.44"
+pydantic = "^2.12.3"
+loguru = "^0.7.3"
+alembic = "^1.17.0"
+pendulum = "^3.1.0"
+pydantic-settings = "^2.11.0"
+aiosqlite = "^0.21.0"
+email-validator = "^2.3.0"
+greenlet = "^3.2.4"
+openpyxl = "^3.1.5"
+fastapi = "^0.115.0"
+uvicorn = {extras = ["standard"], version = "^0.34.0"}
+pymysql = "^1.1.0"
+cryptography = "^44.0.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.0.0"
+pytest-cov = "^4.1.0"
+black = "^24.0.0"
+ruff = "^0.1.0"
+mypy = "^1.8.0"
+
+[build-system]
+requires = ["poetry-core>=2.0.0"]
+build-backend = "poetry.core.masonry.api"
