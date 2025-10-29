@@ -1,5 +1,7 @@
-"""Vistas de empresas."""
+"""
+Vistas de gestión de empresas.
+"""
 
-from src.frontend.views.companies.companies_list_view import CompaniesListView
+from src.frontend.views.companies.list_view import CompaniesListView
 
 __all__ = ["CompaniesListView"]

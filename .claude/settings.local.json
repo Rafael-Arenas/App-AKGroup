@@ -5,9 +5,12 @@
       "Bash(poetry lock:*)",
       "Bash(poetry env info:*)",
       "Bash(poetry run python:*)",
-      "Bash(cp:*)",
       "Bash(poetry run pytest:*)",
-      "Bash(tree:*)"
+      "Bash(tree:*)",
+      "Bash(dir:*)",
+      "Bash(python scripts/update_imports.py:*)",
+      "Bash(poetry add:*)",
+      "Bash(poetry check:*)"
     ],
     "deny": [],
     "ask": []

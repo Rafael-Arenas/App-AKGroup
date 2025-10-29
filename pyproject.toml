@@ -1,27 +1,38 @@
 [tool.poetry]
 name = "app-akgroup"
 version = "0.1.0"
-description = "Sistema de gestión empresarial AK Group"
+description = "Sistema de gestión empresarial AK Group - Monorepo FastAPI + Flet"
 authors = ["Rafael Arenas López <ra.arenas.lopez@gmail.com>"]
 readme = "README.md"
-packages = [{include = "models", from = "src"}]
+packages = [
+    {include = "src"}
+]
+
+[tool.poetry.scripts]
+backend = "scripts.dev_backend:main"
+frontend = "scripts.dev_frontend:main"
+dev = "scripts.dev_all:main"
 
 [tool.poetry.dependencies]
 python = "^3.13"
-flet = "^0.28.3"
+# Backend dependencies
+fastapi = "^0.115.0"
+uvicorn = {extras = ["standard"], version = "^0.34.0"}
 sqlalchemy = "^2.0.44"
-pydantic = "^2.12.3"
-loguru = "^0.7.3"
 alembic = "^1.17.0"
-pendulum = "^3.1.0"
-pydantic-settings = "^2.11.0"
 aiosqlite = "^0.21.0"
+pymysql = "^1.1.0"
+# Frontend dependencies
+flet = "^0.28.3"
+httpx = "^0.27.0"
+# Shared dependencies
+pydantic = "^2.12.3"
+pydantic-settings = "^2.11.0"
+loguru = "^0.7.3"
+pendulum = "^3.1.0"
 email-validator = "^2.3.0"
 greenlet = "^3.2.4"
 openpyxl = "^3.1.5"
-fastapi = "^0.115.0"
-uvicorn = {extras = ["standard"], version = "^0.34.0"}
-pymysql = "^1.1.0"
 cryptography = "^44.0.0"
 
 [tool.poetry.group.dev.dependencies]

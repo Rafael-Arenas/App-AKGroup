@@ -1,10 +1,8 @@
-"""Servicios de API del frontend."""
+"""
+Servicios HTTP para comunicación con el backend.
+"""
 
-from src.frontend.services.base_api_client import BaseAPIClient, APIException
-from src.frontend.services.company_api import CompanyAPIClient
+from src.frontend.services.base_api import BaseAPIClient
+from src.frontend.services.companies_api import CompaniesAPIClient
 
-__all__ = [
-    "BaseAPIClient",
-    "APIException",
-    "CompanyAPIClient",
-]
+__all__ = ["BaseAPIClient", "CompaniesAPIClient"]

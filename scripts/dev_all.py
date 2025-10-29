@@ -1,80 +1,59 @@
 """
 Script para ejecutar backend y frontend simultáneamente.
 
-Inicia ambos servicios en procesos separados.
+Ejecuta ambos servicios en procesos separados.
 """
 
-import sys
 import subprocess
+import sys
 import time
 from pathlib import Path
-from typing import List
-
-# Agregar raíz del proyecto al path
-project_root = Path(__file__).parent.parent
-sys.path.insert(0, str(project_root))
 
 from loguru import logger
 
 
 def main() -> None:
     """
-    Inicia backend y frontend en procesos separados.
-
-    El backend inicia primero, luego espera 3 segundos antes
-    de iniciar el frontend para asegurar que la API esté lista.
+    Ejecuta backend y frontend simultáneamente.
     """
-    logger.info("=" * 60)
-    logger.info("Starting Full Stack Development Environment")
-    logger.info("=" * 60)
+    logger.info("Iniciando backend y frontend en modo desarrollo...")
 
-    processes: List[subprocess.Popen] = []
+    # Obtener el directorio raíz del proyecto
+    project_root = Path(__file__).parent.parent
+
+    # Ejecutar backend en proceso separado
+    backend_process = subprocess.Popen(
+        [sys.executable, "-m", "uvicorn", "src.backend.main:app", "--reload", "--host", "0.0.0.0", "--port", "8000"],
+        cwd=str(project_root),
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+
+    logger.info("Backend iniciado en http://localhost:8000")
+    logger.info("Esperando 3 segundos antes de iniciar frontend...")
+    time.sleep(3)
+
+    # Ejecutar frontend en proceso separado
+    frontend_script = project_root / "scripts" / "dev_frontend.py"
+    frontend_process = subprocess.Popen(
+        [sys.executable, str(frontend_script)],
+        cwd=str(project_root),
+    )
+
+    logger.info("Frontend iniciado")
+    logger.info("Presiona Ctrl+C para detener ambos servicios")
 
     try:
-        # Iniciar backend
-        logger.info("Starting Backend...")
-        backend_process = subprocess.Popen(
-            [sys.executable, "scripts/dev_backend.py"],
-            cwd=project_root,
-        )
-        processes.append(backend_process)
-        logger.success("Backend started")
-
-        # Esperar a que el backend esté listo
-        logger.info("Waiting for backend to be ready...")
-        time.sleep(3)
-
-        # Iniciar frontend
-        logger.info("Starting Frontend...")
-        frontend_process = subprocess.Popen(
-            [sys.executable, "scripts/dev_frontend.py"],
-            cwd=project_root,
-        )
-        processes.append(frontend_process)
-        logger.success("Frontend started")
-
-        logger.info("=" * 60)
-        logger.info("Both services are running!")
-        logger.info("Press Ctrl+C to stop all services")
-        logger.info("=" * 60)
-
-        # Esperar a que algún proceso termine
-        for process in processes:
-            process.wait()
-
+        # Esperar a que ambos procesos terminen
+        backend_process.wait()
+        frontend_process.wait()
     except KeyboardInterrupt:
-        logger.info("\nShutting down services...")
-        for process in processes:
-            process.terminate()
-            process.wait()
-        logger.success("All services stopped")
-
-    except Exception as e:
-        logger.error(f"Error: {e}")
-        for process in processes:
-            process.terminate()
-            process.wait()
-        sys.exit(1)
+        logger.info("Deteniendo servicios...")
+        backend_process.terminate()
+        frontend_process.terminate()
+        backend_process.wait()
+        frontend_process.wait()
+        logger.info("Servicios detenidos")
 
 
 if __name__ == "__main__":

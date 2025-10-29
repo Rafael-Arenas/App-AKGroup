@@ -54,7 +54,7 @@ class CompaniesListView(BaseView):
                 ft.Container(expand=True),
                 ft.ElevatedButton(
                     "Nueva Empresa",
-                    icon=ft.icons.ADD,
+                    icon=ft.Icons.ADD,
                     on_click=self._on_create_company,
                 ),
             ],
@@ -67,12 +67,12 @@ class CompaniesListView(BaseView):
                 ft.TextField(
                     label="Buscar empresa",
                     hint_text="Nombre o trigram",
-                    prefix_icon=ft.icons.SEARCH,
+                    prefix_icon=ft.Icons.SEARCH,
                     on_change=self._on_search,
                     expand=True,
                 ),
                 ft.IconButton(
-                    icon=ft.icons.REFRESH,
+                    icon=ft.Icons.REFRESH,
                     tooltip="Actualizar",
                     on_click=lambda _: self._load_companies(),
                 ),
@@ -91,10 +91,10 @@ class CompaniesListView(BaseView):
                 ft.DataColumn(ft.Text("Acciones")),
             ],
             rows=[],
-            border=ft.border.all(1, ft.colors.GREY_400),
+            border=ft.border.all(1, ft.Colors.GREY_400),
             border_radius=10,
-            vertical_lines=ft.border.BorderSide(1, ft.colors.GREY_300),
-            horizontal_lines=ft.border.BorderSide(1, ft.colors.GREY_300),
+            vertical_lines=ft.border.BorderSide(1, ft.Colors.GREY_300),
+            horizontal_lines=ft.border.BorderSide(1, ft.Colors.GREY_300),
         )
 
         # Cargar datos iniciales
@@ -109,7 +109,7 @@ class CompaniesListView(BaseView):
                 ft.Container(height=20),
                 ft.Container(
                     content=self.data_table,
-                    border=ft.border.all(1, ft.colors.GREY_400),
+                    border=ft.border.all(1, ft.Colors.GREY_400),
                     border_radius=10,
                     padding=10,
                 ),
@@ -164,24 +164,24 @@ class CompaniesListView(BaseView):
                     ft.DataCell(ft.Text(company.phone or "-")),
                     ft.DataCell(
                         ft.Icon(
-                            ft.icons.CHECK_CIRCLE if company.is_active
-                            else ft.icons.CANCEL,
-                            color=ft.colors.GREEN if company.is_active
-                            else ft.colors.RED,
+                            ft.Icons.CHECK_CIRCLE if company.is_active
+                            else ft.Icons.CANCEL,
+                            color=ft.Colors.GREEN if company.is_active
+                            else ft.Colors.RED,
                         )
                     ),
                     ft.DataCell(
                         ft.Row(
                             [
                                 ft.IconButton(
-                                    icon=ft.icons.EDIT,
+                                    icon=ft.Icons.EDIT,
                                     tooltip="Editar",
                                     on_click=lambda _, c=company: self._on_edit_company(c),
                                 ),
                                 ft.IconButton(
-                                    icon=ft.icons.DELETE,
+                                    icon=ft.Icons.DELETE,
                                     tooltip="Eliminar",
-                                    icon_color=ft.colors.RED,
+                                    icon_color=ft.Colors.RED,
                                     on_click=lambda _, c=company: self._on_delete_company(c),
                                 ),
                             ],
@@ -283,8 +283,8 @@ class CompaniesListView(BaseView):
                 ft.ElevatedButton(
                     "Eliminar",
                     on_click=confirm_delete,
-                    color=ft.colors.WHITE,
-                    bgcolor=ft.colors.RED,
+                    color=ft.Colors.WHITE,
+                    bgcolor=ft.Colors.RED,
                 ),
             ],
         )

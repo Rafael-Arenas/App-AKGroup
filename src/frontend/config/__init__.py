@@ -1,5 +1,7 @@
-"""Configuración del frontend."""
+"""
+Configuración del frontend Flet.
+"""
 
-from src.frontend.config.settings import FrontendSettings, settings
+from src.frontend.config.settings import frontend_settings
 
-__all__ = ["FrontendSettings", "settings"]
+__all__ = ["frontend_settings"]

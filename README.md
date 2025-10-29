@@ -1,10 +1,33 @@
 # App-AKGroup
 
-**Sistema de Gestión Empresarial AK Group** - Una aplicación empresarial completa construida con FastAPI, SQLAlchemy y arquitectura limpia.
+**Sistema de Gestión Empresarial AK Group** - Monorepo Full-Stack con FastAPI (backend) + Flet (frontend).
+
+## Arquitectura
+
+Este proyecto utiliza una arquitectura **monorepo** que separa claramente backend y frontend:
+
+```
+App-AKGroup/
+├── src/
+│   ├── shared/              # Código compartido (schemas Pydantic)
+│   ├── backend/             # Backend FastAPI (API REST)
+│   └── frontend/            # Frontend Flet (aplicación desktop)
+├── scripts/                 # Scripts de desarrollo
+│   ├── dev_backend.py      # Ejecutar solo backend
+│   ├── dev_frontend.py     # Ejecutar solo frontend
+│   └── dev_all.py          # Ejecutar ambos simultáneamente
+└── migrations/             # Migraciones de base de datos
+```
+
+### Componentes
+
+- **Backend (FastAPI)**: API REST completa con SQLAlchemy ORM
+- **Frontend (Flet)**: Aplicación desktop cross-platform (Windows, macOS, Linux)
+- **Shared**: Schemas Pydantic compartidos para validación consistente
 
 ## Descripción
 
-App-AKGroup es un sistema de gestión empresarial integral diseñado para AK Group, que proporciona una API REST robusta para gestionar empresas, productos, cotizaciones, pedidos, entregas y facturación. El sistema sigue principios de arquitectura limpia con separación de responsabilidades y patrones de diseño SOLID.
+App-AKGroup es un sistema de gestión empresarial integral diseñado para AK Group, que proporciona una API REST robusta y una interfaz de usuario desktop. El sistema sigue principios de arquitectura limpia con separación de responsabilidades y patrones de diseño SOLID.
 
 ## Características Principales
 
@@ -21,19 +44,25 @@ App-AKGroup es un sistema de gestión empresarial integral diseñado para AK Gro
 
 ## Tecnologías
 
-### Backend & API
+### Core
 - **Python**: >=3.13.0,<4.0
+- **Poetry**: 2.1.3+ - Gestión de dependencias monorepo
+
+### Backend (FastAPI)
 - **FastAPI**: 0.115.0+ - Framework web moderno y rápido
 - **Uvicorn**: 0.34.0+ - Servidor ASGI de alto rendimiento
-- **Pydantic**: 2.12.3+ - Validación de datos y configuración
-
-### Base de Datos
 - **SQLAlchemy**: 2.0.44+ - ORM potente y flexible
 - **Alembic**: 1.17.0+ - Migraciones de base de datos
 - **aiosqlite**: 0.21.0+ - SQLite asíncrono (desarrollo)
 - **PyMySQL**: 1.1.0+ - MySQL/MariaDB connector (producción)
 
-### Utilidades
+### Frontend (Flet)
+- **Flet**: 0.28.3+ - Framework UI cross-platform
+- **httpx**: 0.27.0+ - Cliente HTTP asíncrono
+
+### Shared (Compartido)
+- **Pydantic**: 2.12.3+ - Validación de datos y configuración
+- **Pydantic Settings**: 2.11.0+ - Gestión de configuración
 - **Loguru**: 0.7.3+ - Logging simple y potente
 - **Pendulum**: 3.1.0+ - Manejo de fechas y tiempos con zonas horarias
 - **openpyxl**: 3.1.5+ - Exportación/importación de Excel
@@ -126,15 +155,37 @@ poetry run python seeds/seed_data.py
 
 ## Uso
 
-### Ejecutar el servidor de desarrollo
+### Ejecutar solo el backend
 
 ```bash
-poetry run python main.py
+poetry run backend
+# o directamente:
+python scripts/dev_backend.py
 ```
 
 La API estará disponible en: `http://localhost:8000`
 
-### Documentación interactiva
+### Ejecutar solo el frontend
+
+```bash
+poetry run frontend
+# o directamente:
+python scripts/dev_frontend.py
+```
+
+### Ejecutar ambos simultáneamente
+
+```bash
+poetry run dev
+# o directamente:
+python scripts/dev_all.py
+```
+
+Esto iniciará:
+- Backend en `http://localhost:8000`
+- Frontend en ventana desktop
+
+### Documentación interactiva del Backend
 
 - **Swagger UI**: http://localhost:8000/docs
 - **ReDoc**: http://localhost:8000/redoc

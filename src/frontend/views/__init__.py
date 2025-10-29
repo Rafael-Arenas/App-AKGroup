@@ -1,5 +1,5 @@
-"""Vistas del frontend."""
+"""
+Vistas de la aplicación Flet.
+"""
 
-from src.frontend.views.base_view import BaseView
-
-__all__ = ["BaseView"]
+__all__ = []

@@ -1,3 +1,7 @@
-"""Frontend Flet para App-AKGroup."""
+"""
+Frontend Flet para AK Group.
 
-__version__ = "1.0.0"
+Cliente desktop cross-platform construido con Flet.
+"""
+
+__version__ = "0.1.0"
