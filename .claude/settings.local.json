@@ -6,7 +6,8 @@
       "Bash(poetry env info:*)",
       "Read(//c/Users/raare/Documents/Personal/01Trabajo/AkGroup/aplicacion_1/docs/**)",
       "Bash(poetry run python:*)",
-      "Bash(cp:*)"
+      "Bash(cp:*)",
+      "Bash(poetry run pytest:*)"
     ],
     "deny": [],
     "ask": []

@@ -407,7 +407,7 @@ class Product(Base, TimestampMixin, AuditMixin, ActiveMixin):
     __table_args__ = (
         # Indexes
         Index("ix_products_product_type_active", "product_type", "is_active"),
-        Index("ix_products_reference", "reference"),
+        # Note: reference already has index=True in column definition (line 180)
         Index("ix_products_family_type_id", "family_type_id"),
         # Check constraints
         CheckConstraint(

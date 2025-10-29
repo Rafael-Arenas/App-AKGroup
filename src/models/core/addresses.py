@@ -137,7 +137,7 @@ class Address(Base, TimestampMixin, AuditMixin):
     # Indexes for performance
     __table_args__ = (
         Index("ix_addresses_company_id_is_default", "company_id", "is_default"),
-        Index("ix_addresses_address_type", "address_type"),
+        # Note: address_type already has index=True in column definition
         CheckConstraint(
             "length(trim(address)) >= 5", name="address_min_length"
         ),

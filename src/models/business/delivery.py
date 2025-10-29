@@ -26,7 +26,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import relationship, validates
 
 # Import base infrastructure (Phases 1-3 are complete)
-from src.models.base import Base, TimestampMixin, AuditMixin, ActiveMixin
+from ..base import Base, TimestampMixin, AuditMixin, ActiveMixin
 
 
 class DeliveryOrder(Base, TimestampMixin, AuditMixin, ActiveMixin):

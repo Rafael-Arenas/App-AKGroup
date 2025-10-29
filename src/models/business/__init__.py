@@ -11,10 +11,10 @@ This package contains all business-related models including:
 Phase 4: Business Models implementation.
 """
 
-from src.models.business.quotes import Quote, QuoteProduct
-from src.models.business.orders import Order
-from src.models.business.invoices import InvoiceSII, InvoiceExport
-from src.models.business.delivery import (
+from .quotes import Quote, QuoteProduct
+from .orders import Order
+from .invoices import InvoiceSII, InvoiceExport
+from .delivery import (
     DeliveryOrder,
     DeliveryDate,
     Transport,
