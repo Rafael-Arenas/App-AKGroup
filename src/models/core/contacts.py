@@ -126,7 +126,8 @@ class Contact(Base, TimestampMixin, AuditMixin, ActiveMixin):
     # Indexes
     __table_args__ = (
         Index("ix_contact_company_active", "company_id", "is_active"),
-        Index("ix_contact_email", "email"),
+        # Note: email already has index=True in column definition (line 82)
+        # Index("ix_contact_email", "email"),
     )
 
     # Validators

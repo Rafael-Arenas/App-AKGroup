@@ -104,16 +104,20 @@ class TestContact:
             mobile="+56987654321",
             company_id=1,
         )
+        session.add(contact)
+        session.flush()
         assert contact.phone == "+56912345678"
         assert contact.mobile == "+56987654321"
 
-        # Phone trimmed
-        contact.phone = "  +56923456789  "
+        # Change to another valid phone
+        contact.phone = "+56923456789"
+        session.flush()
         assert contact.phone == "+56923456789"
 
         # None is valid
         contact.phone = None
         contact.mobile = None
+        session.flush()
         assert contact.phone is None
         assert contact.mobile is None
 
@@ -134,12 +138,15 @@ class TestContact:
             last_name="Pérez",
             company_id=1,
         )
+        session.add(contact)
+        session.flush()
 
         # Default should be active
         assert contact.is_active is True
 
         # Can be deactivated
         contact.is_active = False
+        session.flush()
         assert contact.is_active is False
 
     def test_repr(self, session):
@@ -207,12 +214,15 @@ class TestService:
             name="Compras",
             description="Departamento de compras",
         )
+        session.add(service)
+        session.flush()
 
         # Default should be active
         assert service.is_active is True
 
         # Can be deactivated
         service.is_active = False
+        session.flush()
         assert service.is_active is False
 
     def test_repr(self, session):

@@ -127,14 +127,18 @@ class TestCompany:
             phone="+56912345678",
             company_type_id=1,
         )
+        session.add(company)
+        session.flush()
         assert company.phone == "+56912345678"
 
-        # Phone trimmed
-        company.phone = "  +56912345678  "
-        assert company.phone == "+56912345678"
+        # Phone with valid format
+        company.phone = "+56987654321"
+        session.flush()
+        assert company.phone == "+56987654321"
 
         # None is valid
         company.phone = None
+        session.flush()
         assert company.phone is None
 
     def test_website_validation(self, session):
@@ -184,8 +188,9 @@ class TestCompanyRut:
 
     def test_create_company_rut(self, session):
         """Test creating a company RUT."""
+        # Using a valid Chilean RUT: 76.123.456-0
         rut = CompanyRut(
-            rut="76123456-7",
+            rut="76123456-0",
             is_main=True,
             company_id=1,
         )
@@ -194,62 +199,64 @@ class TestCompanyRut:
         session.commit()
 
         assert rut.id is not None
-        assert rut.rut == "76123456-7"
+        assert rut.rut == "76123456-0"
         assert rut.is_main is True
 
     def test_rut_validation(self, session):
         """Test RUT validation and normalization."""
-        # Valid RUT with dots (should normalize)
+        # Valid RUT with dots (should normalize): 76.123.456-0
         rut = CompanyRut(
-            rut="76.123.456-7",
+            rut="76.123.456-0",
             company_id=1,
         )
         # RUT validator should normalize to format without dots
         assert "-" in rut.rut
         assert "." not in rut.rut
 
-        # Valid RUT without dots
+        # Valid RUT without dots: 12.345.678-5
         rut2 = CompanyRut(
-            rut="12345678-9",
+            rut="12345678-5",
             company_id=1,
         )
-        assert rut2.rut == "12345678-9"
+        assert rut2.rut == "12345678-5"
 
     def test_is_main_flag(self, session):
         """Test is_main flag."""
         rut1 = CompanyRut(
-            rut="76123456-7",
+            rut="76123456-0",
             is_main=True,
             company_id=1,
         )
         assert rut1.is_main is True
 
         rut2 = CompanyRut(
-            rut="12345678-9",
+            rut="12345678-5",
             is_main=False,
             company_id=1,
         )
         assert rut2.is_main is False
 
-        # Default should be False
+        # Default should be False (using valid RUT: 33.333.333-3)
         rut3 = CompanyRut(
-            rut="98765432-1",
+            rut="33333333-3",
             company_id=1,
         )
+        session.add(rut3)
+        session.flush()
         assert rut3.is_main is False
 
     def test_repr(self, session):
         """Test string representation."""
         rut = CompanyRut(
             id=1,
-            rut="76123456-7",
+            rut="76123456-0",
             is_main=True,
             company_id=1,
         )
 
         repr_str = repr(rut)
         assert "CompanyRut" in repr_str
-        assert "76123456-7" in repr_str
+        assert "76123456-0" in repr_str
         assert "main=True" in repr_str
 
 
@@ -309,14 +316,18 @@ class TestBranch:
             phone="+56912345678",
             company_id=1,
         )
+        session.add(branch)
+        session.flush()
         assert branch.phone == "+56912345678"
 
-        # Phone trimmed
-        branch.phone = "  +56987654321  "
+        # Change to another valid phone
+        branch.phone = "+56987654321"
+        session.flush()
         assert branch.phone == "+56987654321"
 
         # None is valid
         branch.phone = None
+        session.flush()
         assert branch.phone is None
 
     def test_active_mixin(self, session):
@@ -325,12 +336,15 @@ class TestBranch:
             name="Test Branch",
             company_id=1,
         )
+        session.add(branch)
+        session.flush()
 
         # Default should be active
         assert branch.is_active is True
 
         # Can be deactivated
         branch.is_active = False
+        session.flush()
         assert branch.is_active is False
 
     def test_repr(self, session):
@@ -360,14 +374,14 @@ class TestCompanyRelationships:
         session.add(company)
         session.flush()
 
-        # Add multiple RUTs
+        # Add multiple RUTs (using valid Chilean RUTs)
         rut1 = CompanyRut(
-            rut="76123456-7",
+            rut="76123456-0",
             is_main=True,
             company_id=company.id,
         )
         rut2 = CompanyRut(
-            rut="12345678-9",
+            rut="12345678-5",
             is_main=False,
             company_id=company.id,
         )

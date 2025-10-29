@@ -408,7 +408,7 @@ class Product(Base, TimestampMixin, AuditMixin, ActiveMixin):
         # Indexes
         Index("ix_products_product_type_active", "product_type", "is_active"),
         # Note: reference already has index=True in column definition (line 180)
-        Index("ix_products_family_type_id", "family_type_id"),
+        # Note: family_type_id already has index=True in column definition (line 219)
         # Check constraints
         CheckConstraint(
             "length(trim(reference)) >= 2",
@@ -867,8 +867,9 @@ class ProductComponent(Base, TimestampMixin, AuditMixin):
         # Un producto no puede tener el mismo componente dos veces
         UniqueConstraint("parent_id", "component_id", name="uq_parent_component"),
         # Índices
-        Index("ix_product_components_parent_id", "parent_id"),
-        Index("ix_product_components_component_id", "component_id"),
+        # Note: parent_id and component_id already have index=True in column definitions (lines 824, 832)
+        # Index("ix_product_components_parent_id", "parent_id"),
+        # Index("ix_product_components_component_id", "component_id"),
         # Constraints
         CheckConstraint(
             "quantity > 0",

@@ -268,6 +268,18 @@ class Company(Base, TimestampMixin, AuditMixin, ActiveMixin):
         lazy="select",
     )
 
+    invoices_sii = relationship(
+        "InvoiceSII",
+        back_populates="company",
+        lazy="select",
+    )
+
+    invoices_export = relationship(
+        "InvoiceExport",
+        back_populates="company",
+        lazy="select",
+    )
+
     # Indexes
     __table_args__ = (
         Index("ix_companies_name_trgm", "name"),  # Para búsqueda full-text
