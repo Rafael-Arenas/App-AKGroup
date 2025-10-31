@@ -1,0 +1,501 @@
+"""
+Componente de tabla de datos avanzada.
+
+Proporciona una DataTable con ordenamiento, paginación y acciones.
+"""
+from typing import Callable, Any
+from dataclasses import dataclass
+import flet as ft
+from loguru import logger
+
+from src.frontend.color_constants import ColorConstants
+from src.frontend.layout_constants import LayoutConstants
+from src.frontend.i18n.translation_manager import t
+from src.frontend.app_state import app_state
+from src.frontend.components.common.empty_state import EmptyState
+
+
+@dataclass
+class ColumnConfig:
+    """
+    Configuración de columna para DataTable.
+
+    Attributes:
+        key: Clave del dato en el diccionario de fila
+        label: Etiqueta de la columna (i18n key)
+        sortable: Si la columna es ordenable
+        width: Ancho de la columna (None = auto)
+        formatter: Función para formatear el valor (opcional)
+    """
+    key: str
+    label: str
+    sortable: bool = False
+    width: int | None = None
+    formatter: Callable[[Any], str] | None = None
+
+
+class DataTable(ft.Container):
+    """
+    Tabla de datos avanzada con ordenamiento, paginación y acciones.
+
+    Args:
+        columns: Lista de configuraciones de columnas
+        data: Lista de diccionarios con los datos
+        on_edit: Callback para editar (recibe el dato completo)
+        on_delete: Callback para eliminar (recibe el dato completo)
+        selectable: Si permite selección de filas
+        on_selection_changed: Callback cuando cambia la selección
+        page_size: Tamaño de página para paginación (0 = sin paginación)
+        empty_message: Mensaje cuando no hay datos
+
+    Example:
+        >>> columns = [
+        ...     ColumnConfig("id", "ID", sortable=True),
+        ...     ColumnConfig("name", "Nombre", sortable=True),
+        ... ]
+        >>> data = [{"id": 1, "name": "Item 1"}]
+        >>> table = DataTable(
+        ...     columns=columns,
+        ...     data=data,
+        ...     on_edit=handle_edit,
+        ...     on_delete=handle_delete
+        ... )
+    """
+
+    def __init__(
+        self,
+        columns: list[ColumnConfig] | list[dict],
+        data: list[dict[str, Any]] | None = None,
+        on_edit: Callable[[dict[str, Any]], None] | None = None,
+        on_delete: Callable[[dict[str, Any]], None] | None = None,
+        on_row_click: Callable[[dict[str, Any]], None] | None = None,
+        on_page_change: Callable[[int], None] | None = None,
+        selectable: bool = False,
+        on_selection_changed: Callable[[list[dict[str, Any]]], None] | None = None,
+        page_size: int = 10,
+        empty_message: str | None = None,
+    ):
+        """Inicializa la tabla de datos."""
+        super().__init__()
+
+        # Convertir dicts a ColumnConfig si es necesario
+        self.columns = []
+        for col in columns:
+            if isinstance(col, dict):
+                self.columns.append(ColumnConfig(
+                    key=col.get("key", ""),
+                    label=col.get("label", ""),
+                    sortable=col.get("sortable", False),
+                    width=col.get("width"),
+                    formatter=col.get("formatter"),
+                ))
+            else:
+                self.columns.append(col)
+
+        self.data = data or []
+        self.on_edit = on_edit
+        self.on_delete = on_delete
+        self.on_row_click = on_row_click
+        self.on_page_change = on_page_change
+        self.selectable = selectable
+        self.on_selection_changed = on_selection_changed
+        self.page_size = page_size
+        self.empty_message = empty_message or t("common.no_data")
+
+        self._sort_column: str | None = None
+        self._sort_ascending: bool = True
+        self._current_page: int = 0
+        self._total_items: int = 0
+        self._selected_rows: set[int] = set()
+        self._data_table: ft.DataTable | None = None
+
+        logger.debug(f"DataTable initialized: {len(self.columns)} columns, {len(self.data)} rows")
+
+        # Suscribirse a cambios de tema
+        app_state.theme.add_observer(self._on_theme_changed)
+
+    def _on_theme_changed(self) -> None:
+        """Callback cuando cambia el tema."""
+        if self.page:
+            self.update()
+
+    def build(self) -> ft.Control:
+        """
+        Construye el componente de tabla.
+
+        Returns:
+            Control de Flet con la tabla
+        """
+        if not self.data:
+            return EmptyState(
+                icon=ft.Icons.TABLE_CHART,
+                title=t("common.no_data"),
+                message=self.empty_message,
+            )
+
+        is_dark = app_state.theme.is_dark_mode
+
+        # Construir columnas
+        dt_columns = []
+        for col in self.columns:
+            label_widget = ft.Text(
+                t(col.label),
+                weight=LayoutConstants.FONT_WEIGHT_SEMIBOLD,
+            )
+
+            if col.sortable:
+                label_widget = ft.Row(
+                    controls=[
+                        label_widget,
+                        ft.Icon(
+                            ft.Icons.ARROW_UPWARD if self._sort_ascending else ft.Icons.ARROW_DOWNWARD,
+                            size=LayoutConstants.ICON_SIZE_SM,
+                            visible=self._sort_column == col.key,
+                        ),
+                    ],
+                    spacing=LayoutConstants.SPACING_XS,
+                )
+
+            dt_columns.append(
+                ft.DataColumn(
+                    label=label_widget,
+                    on_sort=lambda e, k=col.key: self._handle_sort(k) if col.sortable else None,
+                )
+            )
+
+        # Agregar columna de acciones si hay callbacks
+        if self.on_edit or self.on_delete:
+            dt_columns.append(
+                ft.DataColumn(
+                    label=ft.Text(t("common.actions"), weight=LayoutConstants.FONT_WEIGHT_SEMIBOLD)
+                )
+            )
+
+        # Obtener datos paginados y ordenados
+        sorted_data = self._get_sorted_data()
+        paginated_data = self._get_paginated_data(sorted_data)
+
+        # Construir filas
+        dt_rows = []
+        for idx, row_data in enumerate(paginated_data):
+            cells = []
+
+            # Celdas de datos
+            for col in self.columns:
+                value = row_data.get(col.key, "")
+                if col.formatter:
+                    value = col.formatter(value)
+                # Agregar handler de click si existe on_row_click
+                cell = ft.DataCell(
+                    ft.Text(str(value)),
+                    on_tap=lambda e, data=row_data: self._handle_row_click(data) if self.on_row_click else None,
+                )
+                cells.append(cell)
+
+            # Celda de acciones
+            if self.on_edit or self.on_delete:
+                actions = []
+                if self.on_edit:
+                    actions.append(
+                        ft.IconButton(
+                            icon=ft.Icons.EDIT,
+                            icon_size=LayoutConstants.ICON_SIZE_SM,
+                            tooltip=t("common.edit"),
+                            on_click=lambda e, data=row_data: self._handle_edit(data),
+                        )
+                    )
+                if self.on_delete:
+                    actions.append(
+                        ft.IconButton(
+                            icon=ft.Icons.DELETE,
+                            icon_size=LayoutConstants.ICON_SIZE_SM,
+                            icon_color=ColorConstants.ERROR,
+                            tooltip=t("common.delete"),
+                            on_click=lambda e, data=row_data: self._handle_delete(data),
+                        )
+                    )
+                cells.append(
+                    ft.DataCell(
+                        ft.Row(controls=actions, spacing=LayoutConstants.SPACING_XS)
+                    )
+                )
+
+            dt_rows.append(
+                ft.DataRow(
+                    cells=cells,
+                    selected=idx in self._selected_rows if self.selectable else False,
+                    on_select_changed=lambda e, i=idx: self._handle_select(i, e.control.selected) if self.selectable else None,
+                )
+            )
+
+        self._data_table = ft.DataTable(
+            columns=dt_columns,
+            rows=dt_rows,
+            border=ft.border.all(1, ColorConstants.get_color_for_theme("DIVIDER", is_dark)),
+            border_radius=LayoutConstants.RADIUS_SM,
+            heading_row_color=ColorConstants.get_color_for_theme("TABLE_HEADER", is_dark),
+            heading_row_height=LayoutConstants.TABLE_HEADER_HEIGHT,
+            data_row_min_height=LayoutConstants.TABLE_ROW_HEIGHT,
+            data_row_max_height=LayoutConstants.TABLE_ROW_HEIGHT,
+            horizontal_lines=ft.border.BorderSide(1, ColorConstants.get_color_for_theme("DIVIDER", is_dark)),
+            show_checkbox_column=self.selectable,
+        )
+
+        # Construir paginación si es necesaria
+        pagination = None
+        if self.page_size > 0 and len(self.data) > self.page_size:
+            total_pages = (len(sorted_data) + self.page_size - 1) // self.page_size
+            pagination = ft.Row(
+                controls=[
+                    ft.IconButton(
+                        icon=ft.Icons.CHEVRON_LEFT,
+                        disabled=self._current_page == 0,
+                        on_click=self._previous_page,
+                    ),
+                    ft.Text(
+                        f"{t('common.page')} {self._current_page + 1} {t('common.of')} {total_pages}",
+                        size=LayoutConstants.FONT_SIZE_MD,
+                    ),
+                    ft.IconButton(
+                        icon=ft.Icons.CHEVRON_RIGHT,
+                        disabled=self._current_page >= total_pages - 1,
+                        on_click=self._next_page,
+                    ),
+                ],
+                alignment=ft.MainAxisAlignment.CENTER,
+                spacing=LayoutConstants.SPACING_MD,
+            )
+
+        controls = [
+            ft.Container(
+                content=ft.Column(
+                    controls=[self._data_table],
+                    scroll=ft.ScrollMode.AUTO,
+                ),
+                border=ft.border.all(1, ColorConstants.get_color_for_theme("DIVIDER", is_dark)),
+                border_radius=LayoutConstants.RADIUS_SM,
+            )
+        ]
+
+        if pagination:
+            controls.append(pagination)
+
+        return ft.Column(
+            controls=controls,
+            spacing=LayoutConstants.SPACING_MD,
+        )
+
+    def _get_sorted_data(self) -> list[dict[str, Any]]:
+        """
+        Obtiene los datos ordenados.
+
+        Returns:
+            Lista de datos ordenados
+        """
+        if not self._sort_column:
+            return self.data
+
+        return sorted(
+            self.data,
+            key=lambda x: x.get(self._sort_column, ""),
+            reverse=not self._sort_ascending,
+        )
+
+    def _get_paginated_data(self, data: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        """
+        Obtiene los datos de la página actual.
+
+        Args:
+            data: Datos completos (ordenados)
+
+        Returns:
+            Datos de la página actual
+        """
+        if self.page_size <= 0:
+            return data
+
+        start = self._current_page * self.page_size
+        end = start + self.page_size
+        return data[start:end]
+
+    def _handle_sort(self, column_key: str) -> None:
+        """
+        Maneja el ordenamiento por columna.
+
+        Args:
+            column_key: Clave de la columna a ordenar
+        """
+        if self._sort_column == column_key:
+            self._sort_ascending = not self._sort_ascending
+        else:
+            self._sort_column = column_key
+            self._sort_ascending = True
+
+        logger.debug(f"Sorting by {column_key}, ascending={self._sort_ascending}")
+        if self.page:
+            self.update()
+
+    def _handle_edit(self, row_data: dict[str, Any]) -> None:
+        """
+        Maneja el click en editar.
+
+        Args:
+            row_data: Datos de la fila
+        """
+        logger.info(f"Edit clicked for row: {row_data}")
+        if self.on_edit:
+            try:
+                self.on_edit(row_data)
+            except Exception as ex:
+                logger.error(f"Error in edit callback: {ex}")
+
+    def _handle_delete(self, row_data: dict[str, Any]) -> None:
+        """
+        Maneja el click en eliminar.
+
+        Args:
+            row_data: Datos de la fila
+        """
+        logger.info(f"Delete clicked for row: {row_data}")
+        if self.on_delete:
+            try:
+                self.on_delete(row_data)
+            except Exception as ex:
+                logger.error(f"Error in delete callback: {ex}")
+
+    def _handle_row_click(self, row_data: dict[str, Any]) -> None:
+        """
+        Maneja el click en una fila.
+
+        Args:
+            row_data: Datos de la fila
+        """
+        logger.info(f"Row clicked: {row_data}")
+        if self.on_row_click:
+            try:
+                self.on_row_click(row_data)
+            except Exception as ex:
+                logger.error(f"Error in row click callback: {ex}")
+
+    def _handle_select(self, row_index: int, selected: bool) -> None:
+        """
+        Maneja la selección de filas.
+
+        Args:
+            row_index: Índice de la fila
+            selected: Estado de selección
+        """
+        if selected:
+            self._selected_rows.add(row_index)
+        else:
+            self._selected_rows.discard(row_index)
+
+        logger.debug(f"Selected rows: {len(self._selected_rows)}")
+
+        if self.on_selection_changed:
+            selected_data = [
+                self.data[i] for i in self._selected_rows if i < len(self.data)
+            ]
+            try:
+                self.on_selection_changed(selected_data)
+            except Exception as ex:
+                logger.error(f"Error in selection changed callback: {ex}")
+
+    def _previous_page(self, e: ft.ControlEvent) -> None:
+        """Navega a la página anterior."""
+        if self._current_page > 0:
+            self._current_page -= 1
+            logger.debug(f"Navigate to page {self._current_page}")
+            if self.on_page_change:
+                try:
+                    self.on_page_change(self._current_page + 1)  # 1-indexed for user
+                except Exception as ex:
+                    logger.error(f"Error in page change callback: {ex}")
+            if self.page:
+                self.update()
+
+    def _next_page(self, e: ft.ControlEvent) -> None:
+        """Navega a la página siguiente."""
+        total_pages = (len(self.data) + self.page_size - 1) // self.page_size
+        if self._current_page < total_pages - 1:
+            self._current_page += 1
+            logger.debug(f"Navigate to page {self._current_page}")
+            if self.on_page_change:
+                try:
+                    self.on_page_change(self._current_page + 1)  # 1-indexed for user
+                except Exception as ex:
+                    logger.error(f"Error in page change callback: {ex}")
+            if self.page:
+                self.update()
+
+    def update_data(self, data: list[dict[str, Any]]) -> None:
+        """
+        Actualiza los datos de la tabla.
+
+        Args:
+            data: Nuevos datos
+
+        Example:
+            >>> table.update_data(new_data)
+            >>> table.update()
+        """
+        self.data = data
+        self._current_page = 0
+        self._selected_rows.clear()
+        logger.info(f"Table data updated: {len(data)} rows")
+        if self.page:
+            self.update()
+
+    def set_data(
+        self,
+        data: list[dict[str, Any]],
+        total: int | None = None,
+        current_page: int | None = None,
+    ) -> None:
+        """
+        Establece los datos de la tabla con información de paginación.
+
+        Args:
+            data: Datos a mostrar
+            total: Total de items (para paginación externa)
+            current_page: Página actual (1-indexed)
+
+        Example:
+            >>> table.set_data(items, total=100, current_page=2)
+            >>> table.update()
+        """
+        self.data = data
+        if total is not None:
+            self._total_items = total
+        if current_page is not None:
+            self._current_page = current_page - 1  # Convert to 0-indexed
+        logger.info(f"Table data set: {len(data)} rows, total={total}, page={current_page}")
+        if self.page:
+            self.update()
+
+    def get_selected_data(self) -> list[dict[str, Any]]:
+        """
+        Obtiene los datos de las filas seleccionadas.
+
+        Returns:
+            Lista de datos seleccionados
+
+        Example:
+            >>> selected = table.get_selected_data()
+        """
+        return [self.data[i] for i in self._selected_rows if i < len(self.data)]
+
+    def clear_selection(self) -> None:
+        """
+        Limpia la selección.
+
+        Example:
+            >>> table.clear_selection()
+        """
+        self._selected_rows.clear()
+        if self.page:
+            self.update()
+
+    def will_unmount(self) -> None:
+        """Limpieza cuando el componente se desmonta."""
+        app_state.theme.remove_observer(self._on_theme_changed)
