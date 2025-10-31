@@ -10,7 +10,10 @@
       "Bash(dir:*)",
       "Bash(python scripts/update_imports.py:*)",
       "Bash(poetry add:*)",
-      "Bash(poetry check:*)"
+      "Bash(poetry check:*)",
+      "Read(//c/Users/raare/Documents/Personal/01Trabajo/AkGroup/Planificador3/src/planificador/ui/**)",
+      "Read(//c/Users/raare/Documents/Personal/01Trabajo/AkGroup/Planificador3/**)",
+      "Bash(if exist srcfrontend rmdir /s /q srcfrontend)"
     ],
     "deny": [],
     "ask": []
