@@ -1,29 +1,40 @@
 """
-Script para ejecutar solo el frontend Flet.
+Script para ejecutar el frontend en modo desarrollo.
 
-Ejecuta la aplicación de escritorio Flet.
+Uso:
+    poetry run python scripts/dev_frontend.py
+    o
+    poetry run frontend (si está configurado en pyproject.toml)
 """
-
+import subprocess
 import sys
 from pathlib import Path
 
-# Agregar el directorio raíz al PYTHONPATH
-project_root = Path(__file__).parent.parent
-sys.path.insert(0, str(project_root))
 
-import flet as ft
-from loguru import logger
+def main():
+    """Ejecuta el frontend Flet en modo desarrollo."""
+    project_root = Path(__file__).parent.parent
+    frontend_main = project_root / "src" / "frontend" / "main.py"
 
-from src.frontend.main import main as flet_main
+    if not frontend_main.exists():
+        print(f"❌ Error: No se encuentra {frontend_main}")
+        sys.exit(1)
 
+    print("=" * 60)
+    print("🚀 AK Group - Frontend Development Server")
+    print("=" * 60)
+    print(f"📁 Ejecutando: {frontend_main}")
+    print("🔗 Asegúrate de que el backend esté corriendo en http://localhost:8000")
+    print("=" * 60)
+    print()
 
-def main() -> None:
-    """
-    Ejecuta la aplicación frontend Flet.
-    """
-    logger.info("Iniciando frontend Flet en desarrollo...")
-
-    ft.app(target=flet_main)
+    try:
+        subprocess.run([sys.executable, str(frontend_main)], check=True)
+    except KeyboardInterrupt:
+        print("\n\n🛑 Frontend detenido por el usuario")
+    except subprocess.CalledProcessError as e:
+        print(f"\n❌ Error ejecutando frontend: {e}")
+        sys.exit(1)
 
 
 if __name__ == "__main__":
