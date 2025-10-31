@@ -1,1 +1,1 @@
-
+"""UI components module."""
