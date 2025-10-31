@@ -1,7 +1,5 @@
 """
-Frontend Flet para AK Group.
+Frontend module for AK Group application.
 
-Cliente desktop cross-platform construido con Flet.
+This module contains the Flet-based desktop UI implementation.
 """
-
-__version__ = "0.1.0"
