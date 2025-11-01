@@ -432,6 +432,44 @@ def sample_company(
     return company
 
 
+@pytest.fixture
+def sample_product(
+    session: Session,
+    sample_family_type: FamilyType,
+) -> "Product":
+    """
+    Create a sample Product for testing.
+
+    Args:
+        session: Database session
+        sample_family_type: FamilyType fixture
+
+    Returns:
+        Product instance
+
+    Example:
+        >>> def test_with_product(sample_product):
+        ...     assert sample_product.reference == "PROD-TEST"
+    """
+    from src.backend.models.core.products import Product, ProductType
+
+    product = Product(
+        product_type=ProductType.ARTICLE,
+        reference="PROD-TEST",
+        designation_es="Producto de Prueba",
+        designation_en="Test Product",
+        family_type_id=sample_family_type.id,
+        cost_price=Decimal("100.00"),
+        sale_price=Decimal("150.00"),
+        stock_quantity=Decimal("50.0"),
+        is_active=True,
+    )
+    session.add(product)
+    session.commit()
+    session.refresh(product)
+    return product
+
+
 # ============= UTILITY FUNCTIONS =============
 
 
