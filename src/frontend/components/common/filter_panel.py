@@ -195,7 +195,7 @@ class FilterPanel(ft.Container):
                         text=t("common.apply_filters"),
                         icon=ft.Icons.CHECK,
                         bgcolor=ColorConstants.PRIMARY,
-                        color=ft.colors.WHITE,
+                        color=ft.Colors.WHITE,
                         on_click=self._handle_apply,
                     ),
                 ],
@@ -469,6 +469,55 @@ class FilterPanel(ft.Container):
             >>> count = panel.get_active_filters_count()
         """
         return self._active_filters_count
+
+    def update_filter_options(self, key: str, options: list[dict[str, str]]) -> None:
+        """
+        Actualiza las opciones de un filtro dropdown.
+
+        Args:
+            key: Clave del filtro
+            options: Nueva lista de opciones [{"value": ..., "label": ...}, ...]
+
+        Example:
+            >>> panel.update_filter_options("country", [{"value": "1", "label": "USA"}])
+            >>> panel.update()
+        """
+        # Encontrar la configuración del filtro
+        filter_config = None
+        for config in self.filters:
+            if config.key == key:
+                filter_config = config
+                break
+
+        if not filter_config:
+            logger.warning(f"Filter key '{key}' not found")
+            return
+
+        # Convertir options si es necesario
+        converted_options = []
+        for opt in options:
+            if isinstance(opt, dict):
+                converted_options.append({
+                    "value": opt.get("value", ""),
+                    "text": opt.get("label", opt.get("text", "")),
+                })
+            else:
+                converted_options.append(opt)
+
+        # Actualizar la configuración
+        filter_config.options = converted_options
+
+        # Actualizar el control si ya existe
+        control = self._filter_controls.get(key)
+        if control and isinstance(control, ft.Dropdown):
+            control.options = [
+                ft.dropdown.Option(key=opt["value"], text=opt["text"])
+                for opt in converted_options
+            ]
+            if self.page:
+                self.update()
+
+        logger.debug(f"Updated filter options for '{key}': {len(converted_options)} options")
 
     def will_unmount(self) -> None:
         """Limpieza cuando el componente se desmonta."""

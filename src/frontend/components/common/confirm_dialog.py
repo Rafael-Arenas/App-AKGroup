@@ -169,7 +169,7 @@ class ConfirmDialog:
                 ft.ElevatedButton(
                     text=self.confirm_text,
                     bgcolor=variant_color,
-                    color=ft.colors.WHITE,
+                    color=ft.Colors.WHITE,
                     on_click=self._handle_confirm,
                 ),
             ],

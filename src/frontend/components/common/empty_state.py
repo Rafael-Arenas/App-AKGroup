@@ -98,7 +98,7 @@ class EmptyState(ft.Container):
                     icon=ft.Icons.ADD,
                     on_click=self._handle_action,
                     bgcolor=ColorConstants.PRIMARY,
-                    color=ft.colors.WHITE,
+                    color=ft.Colors.WHITE,
                 )
             )
 

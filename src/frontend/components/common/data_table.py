@@ -114,6 +114,9 @@ class DataTable(ft.Container):
         # Suscribirse a cambios de tema
         app_state.theme.add_observer(self._on_theme_changed)
 
+        # Establecer contenido inicial
+        self.content = self.build()
+
     def _on_theme_changed(self) -> None:
         """Callback cuando cambia el tema."""
         if self.page:
@@ -333,6 +336,8 @@ class DataTable(ft.Container):
 
         logger.debug(f"Sorting by {column_key}, ascending={self._sort_ascending}")
         if self.page:
+            # Reconstruir contenido al ordenar
+            self.content = self.build()
             self.update()
 
     def _handle_edit(self, row_data: dict[str, Any]) -> None:
@@ -412,6 +417,8 @@ class DataTable(ft.Container):
                 except Exception as ex:
                     logger.error(f"Error in page change callback: {ex}")
             if self.page:
+                # Reconstruir contenido al cambiar de página
+                self.content = self.build()
                 self.update()
 
     def _next_page(self, e: ft.ControlEvent) -> None:
@@ -426,6 +433,8 @@ class DataTable(ft.Container):
                 except Exception as ex:
                     logger.error(f"Error in page change callback: {ex}")
             if self.page:
+                # Reconstruir contenido al cambiar de página
+                self.content = self.build()
                 self.update()
 
     def update_data(self, data: list[dict[str, Any]]) -> None:
@@ -470,6 +479,13 @@ class DataTable(ft.Container):
         if current_page is not None:
             self._current_page = current_page - 1  # Convert to 0-indexed
         logger.info(f"Table data set: {len(data)} rows, total={total}, page={current_page}")
+
+        # Siempre reconstruir el contenido cuando cambian los datos
+        new_content = self.build()
+        self.content = new_content
+        logger.debug(f"DataTable content rebuilt: {type(new_content).__name__}")
+
+        # Solo actualizar si está montado en una página
         if self.page:
             self.update()
 

@@ -73,7 +73,7 @@ class ErrorDisplay(ft.Container):
                     icon=ft.Icons.REFRESH,
                     on_click=self._handle_retry,
                     bgcolor=ColorConstants.ERROR,
-                    color=ft.colors.WHITE,
+                    color=ft.Colors.WHITE,
                 )
             )
 
