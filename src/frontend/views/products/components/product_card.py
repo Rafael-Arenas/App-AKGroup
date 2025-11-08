@@ -53,7 +53,7 @@ class ProductCard(ft.Container):
                 "Nomenclatura" if is_nomenclature else "Artículo",
                 size=LayoutConstants.FONT_SIZE_XS,
                 weight=LayoutConstants.FONT_WEIGHT_SEMIBOLD,
-                color=ft.colors.WHITE,
+                color=ft.Colors.WHITE,
             ),
             bgcolor=ColorConstants.PRIMARY if is_nomenclature else ColorConstants.INFO,
             padding=ft.padding.symmetric(
