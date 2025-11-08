@@ -83,23 +83,23 @@ class ProductListView(ft.Container):
             filters=[
                 {
                     "key": "status",
-                    "label": "Estado",
+                    "label": "products.filters.status",
                     "type": "dropdown",
                     "options": [
-                        {"label": "Todos", "value": "all"},
-                        {"label": "Activos", "value": "active"},
-                        {"label": "Inactivos", "value": "inactive"},
+                        {"label": "products.filters.all", "value": "all"},
+                        {"label": "products.filters.active", "value": "active"},
+                        {"label": "products.filters.inactive", "value": "inactive"},
                     ],
                     "default": "all",
                 },
                 {
                     "key": "type",
-                    "label": "Tipo",
+                    "label": "products.filters.type",
                     "type": "dropdown",
                     "options": [
-                        {"label": "Todos", "value": "all"},
-                        {"label": "Artículos", "value": "ARTICLE"},
-                        {"label": "Nomenclaturas", "value": "NOMENCLATURE"},
+                        {"label": "products.filters.all", "value": "all"},
+                        {"label": "products.filters.article", "value": "ARTICLE"},
+                        {"label": "products.filters.nomenclature", "value": "NOMENCLATURE"},
                     ],
                     "default": "all",
                 },
@@ -109,12 +109,12 @@ class ProductListView(ft.Container):
 
         self._data_table = DataTable(
             columns=[
-                {"key": "code", "label": "Código", "sortable": True},
-                {"key": "name", "label": "Nombre", "sortable": True},
-                {"key": "type", "label": "Tipo", "sortable": True},
-                {"key": "unit", "label": "Unidad", "sortable": False},
-                {"key": "cost", "label": "Costo", "sortable": True},
-                {"key": "status", "label": "Estado", "sortable": True},
+                {"key": "code", "label": "products.columns.code", "sortable": True},
+                {"key": "name", "label": "products.columns.name", "sortable": True},
+                {"key": "type", "label": "products.columns.type", "sortable": True},
+                {"key": "unit", "label": "products.columns.unit", "sortable": False},
+                {"key": "cost", "label": "products.columns.cost", "sortable": True},
+                {"key": "status", "label": "products.columns.status", "sortable": True},
             ],
             on_row_click=self._on_row_click,
             on_edit=self._on_edit_product,
