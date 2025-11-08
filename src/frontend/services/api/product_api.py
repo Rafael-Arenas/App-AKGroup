@@ -87,7 +87,7 @@ class ProductAPIService:
             params = {"skip": skip, "limit": limit}
             params.update(filters)
 
-            products = await self._client.get("/products", params=params)
+            products = await self._client.get("/products/", params=params)
 
             # Retornar en formato esperado por las vistas
             result = {
@@ -298,7 +298,7 @@ class ProductAPIService:
         )
 
         try:
-            product = await self._client.post("/products", json=data)
+            product = await self._client.post("/products/", json=data)
 
             logger.success(
                 "Producto creado exitosamente | id={} code={} name={}",

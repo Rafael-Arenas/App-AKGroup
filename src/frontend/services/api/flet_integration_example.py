@@ -91,7 +91,7 @@ class CompanyListView(ft.Container):
                 ft.Container(
                     content=self.companies_list,
                     expand=True,
-                    border=ft.border.all(1, ft.colors.OUTLINE),
+                    border=ft.border.all(1, ft.Colors.OUTLINE),
                     border_radius=10,
                 ),
             ],
@@ -174,7 +174,7 @@ class CompanyListView(ft.Container):
                     content=ft.Text(
                         "No hay empresas para mostrar",
                         text_align=ft.TextAlign.CENTER,
-                        color=ft.colors.GREY,
+                        color=ft.Colors.GREY,
                     ),
                     alignment=ft.alignment.center,
                     padding=50,
@@ -219,7 +219,7 @@ class CompanyListView(ft.Container):
                                     ft.IconButton(
                                         icon=ft.Icons.DELETE,
                                         tooltip="Eliminar",
-                                        icon_color=ft.colors.RED,
+                                        icon_color=ft.Colors.RED,
                                         on_click=lambda _, c=company: self.confirm_delete(
                                             c
                                         ),
@@ -344,7 +344,7 @@ class CompanyListView(ft.Container):
 
         self.page.snack_bar = ft.SnackBar(
             content=ft.Text(message),
-            bgcolor=ft.colors.RED if is_error else ft.colors.GREEN,
+            bgcolor=ft.Colors.RED if is_error else ft.Colors.GREEN,
         )
         self.page.snack_bar.open = True
         self.page.update()

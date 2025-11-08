@@ -60,7 +60,7 @@ class LookupAPIService:
         logger.info("Obteniendo tipos de empresa")
 
         try:
-            company_types = await self._client.get("/lookups/company-types")
+            company_types = await self._client.get("/lookups/company-types/")
 
             logger.success("Tipos de empresa obtenidos | total={}", len(company_types))
             return company_types
@@ -92,7 +92,7 @@ class LookupAPIService:
         logger.info("Obteniendo países")
 
         try:
-            countries = await self._client.get("/lookups/countries")
+            countries = await self._client.get("/lookups/countries/")
 
             logger.success("Países obtenidos | total={}", len(countries))
             return countries
@@ -124,7 +124,7 @@ class LookupAPIService:
         logger.info("Obteniendo unidades de medida")
 
         try:
-            units = await self._client.get("/lookups/units")
+            units = await self._client.get("/lookups/units/")
 
             logger.success("Unidades obtenidas | total={}", len(units))
             return units

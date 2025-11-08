@@ -82,7 +82,7 @@ class CompanyAPIService:
             params = {"skip": skip, "limit": limit}
             params.update(filters)
 
-            companies = await self._client.get("/companies", params=params)
+            companies = await self._client.get("/companies/", params=params)
 
             # Retornar en formato esperado por las vistas
             result = {
@@ -262,7 +262,7 @@ class CompanyAPIService:
         logger.info("Creando nueva empresa | name={}", data.get("name"))
 
         try:
-            company = await self._client.post("/companies", json=data)
+            company = await self._client.post("/companies/", json=data)
 
             logger.success(
                 "Empresa creada exitosamente | id={} name={}",
