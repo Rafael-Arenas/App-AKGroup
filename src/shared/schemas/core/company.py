@@ -147,7 +147,7 @@ class CompanyRutCreate(BaseSchema):
     Example:
         data = CompanyRutCreate(
             rut="12345678-9",
-            is_primary=True
+            is_main=True
         )
     """
 
@@ -158,7 +158,7 @@ class CompanyRutCreate(BaseSchema):
         pattern=r'^\d{1,8}-[\dkK]$',
         description="RUT en formato 12345678-9"
     )
-    is_primary: bool = Field(
+    is_main: bool = Field(
         default=False,
         description="Si es el RUT principal de la empresa"
     )
@@ -181,7 +181,7 @@ class CompanyRutResponse(BaseResponse):
 
     company_id: int
     rut: str
-    is_primary: bool
+    is_main: bool
 
 
 # ============================================================================
