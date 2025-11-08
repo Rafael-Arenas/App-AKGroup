@@ -167,6 +167,42 @@ class CompanyService(BaseService[Company, CompanyCreate, CompanyUpdate, CompanyR
         companies = self.company_repo.get_active_companies(skip, limit)
         return [self.response_schema.model_validate(c) for c in companies]
 
+    def get_by_type(
+        self,
+        company_type_id: int,
+        skip: int = 0,
+        limit: int = 100,
+        is_active: bool | None = None
+    ) -> list[CompanyResponse]:
+        """
+        Obtiene empresas filtradas por tipo.
+
+        Args:
+            company_type_id: ID del tipo de empresa (1=CLIENT, 2=SUPPLIER)
+            skip: Registros a saltar
+            limit: Número máximo de registros
+            is_active: Filtrar por estado activo/inactivo (None = todos)
+
+        Returns:
+            Lista de empresas del tipo especificado
+
+        Example:
+            clients = service.get_by_type(company_type_id=1)
+            active_suppliers = service.get_by_type(company_type_id=2, is_active=True)
+        """
+        logger.info(
+            f"Servicio: obteniendo empresas por tipo={company_type_id}, "
+            f"is_active={is_active}"
+        )
+
+        companies = self.company_repo.get_by_type(
+            company_type_id=company_type_id,
+            skip=skip,
+            limit=limit,
+            is_active=is_active
+        )
+        return [self.response_schema.model_validate(c) for c in companies]
+
     def get_with_branches(self, company_id: int) -> CompanyResponse:
         """
         Obtiene una empresa con sus sucursales.
@@ -196,23 +232,3 @@ class CompanyService(BaseService[Company, CompanyCreate, CompanyUpdate, CompanyR
             )
 
         return self.response_schema.model_validate(company)
-
-    def get_by_type(self, company_type_id: int, skip: int = 0, limit: int = 100) -> list[CompanyResponse]:
-        """
-        Obtiene empresas por tipo (customer, supplier, both).
-
-        Args:
-            company_type_id: ID del tipo de empresa
-            skip: Registros a saltar
-            limit: Número máximo de registros
-
-        Returns:
-            Lista de empresas del tipo especificado
-
-        Example:
-            customers = service.get_by_type(company_type_id=1)
-        """
-        logger.info(f"Servicio: obteniendo empresas tipo={company_type_id}")
-
-        companies = self.company_repo.get_by_type(company_type_id, skip, limit)
-        return [self.response_schema.model_validate(c) for c in companies]

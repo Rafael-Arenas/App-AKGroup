@@ -94,6 +94,42 @@ class CompanyRepository(BaseRepository[Company]):
         logger.debug(f"Encontradas {len(companies)} empresa(s) con nombre '{name}'")
         return companies
 
+    def get_by_type(
+        self,
+        company_type_id: int,
+        skip: int = 0,
+        limit: int = 100,
+        is_active: Optional[bool] = None
+    ) -> List[Company]:
+        """
+        Obtiene empresas filtradas por tipo y opcionalmente por estado.
+
+        Args:
+            company_type_id: ID del tipo de empresa (1=CLIENT, 2=SUPPLIER)
+            skip: Registros a saltar
+            limit: Máximo de registros
+            is_active: Filtrar por estado activo/inactivo (None = todos)
+
+        Returns:
+            Lista de empresas del tipo especificado
+
+        Example:
+            # Obtener solo clientes activos
+            clients = repo.get_by_type(company_type_id=1, is_active=True)
+        """
+        logger.debug(f"Obteniendo empresas por tipo: {company_type_id}, is_active={is_active}")
+
+        query = self.session.query(Company).filter(Company.company_type_id == company_type_id)
+
+        # Aplicar filtro de estado si se especifica
+        if is_active is not None:
+            query = query.filter(Company.is_active == is_active)
+
+        companies = query.offset(skip).limit(limit).all()
+
+        logger.debug(f"Encontradas {len(companies)} empresa(s) del tipo {company_type_id}")
+        return companies
+
     def get_with_branches(self, company_id: int) -> Optional[Company]:
         """
         Obtiene una empresa con sus sucursales cargadas (eager loading).
@@ -209,34 +245,6 @@ class CompanyRepository(BaseRepository[Company]):
         )
 
         logger.debug(f"Encontradas {len(companies)} empresa(s) activa(s)")
-        return companies
-
-    def get_by_type(self, company_type_id: int, skip: int = 0, limit: int = 100) -> List[Company]:
-        """
-        Obtiene empresas por tipo (customer, supplier, both).
-
-        Args:
-            company_type_id: ID del tipo de empresa
-            skip: Registros a saltar
-            limit: Número máximo de registros
-
-        Returns:
-            Lista de empresas del tipo especificado
-
-        Example:
-            customers = repo.get_by_type(company_type_id=1)
-        """
-        logger.debug(f"Obteniendo empresas tipo={company_type_id}")
-
-        companies = (
-            self.session.query(Company)
-            .filter(Company.company_type_id == company_type_id)
-            .offset(skip)
-            .limit(limit)
-            .all()
-        )
-
-        logger.debug(f"Encontradas {len(companies)} empresa(s) del tipo {company_type_id}")
         return companies
 
 
