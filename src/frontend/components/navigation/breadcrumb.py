@@ -87,10 +87,11 @@ class Breadcrumb(ft.Row):
                     ft.Text(
                         item["label"],
                         size=LayoutConstants.FONT_SIZE_MD,
-                        weight=ft.FontWeight.W_500,
+                        weight=ft.FontWeight.W_600,
                         color=text_color,
                     )
                 )
+                logger.debug(f"Breadcrumb item (current): {item['label']} - color: {text_color}")
             else:
                 # Items anteriores con ruta: clickeables
                 link_color = ColorConstants.PRIMARY
