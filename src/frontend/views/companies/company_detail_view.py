@@ -90,7 +90,7 @@ class CompanyDetailView(ft.Container):
                 "Activa" if self._company.get("is_active") else "Inactiva",
                 size=LayoutConstants.FONT_SIZE_SM,
                 weight=LayoutConstants.FONT_WEIGHT_SEMIBOLD,
-                color=ft.colors.WHITE,
+                color=ft.Colors.WHITE,
             ),
             bgcolor=(
                 ColorConstants.SUCCESS
@@ -143,14 +143,14 @@ class CompanyDetailView(ft.Container):
                             tooltip="Editar",
                             on_click=self._on_edit_click,
                             bgcolor=ColorConstants.PRIMARY,
-                            icon_color=ft.colors.WHITE,
+                            icon_color=ft.Colors.WHITE,
                         ),
                         ft.IconButton(
                             icon=ft.Icons.DELETE,
                             tooltip="Eliminar",
                             on_click=self._on_delete_click,
                             bgcolor=ColorConstants.ERROR,
-                            icon_color=ft.colors.WHITE,
+                            icon_color=ft.Colors.WHITE,
                         ),
                     ],
                     spacing=LayoutConstants.SPACING_SM,

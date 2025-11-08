@@ -3,7 +3,7 @@ Vista de listado de empresas.
 
 Muestra una tabla de empresas con filtros, búsqueda y paginación.
 """
-from typing import Any
+from typing import Any, Callable
 import flet as ft
 from loguru import logger
 
@@ -38,15 +38,29 @@ class CompanyListView(ft.Container):
         >>> page.add(company_list)
     """
 
-    def __init__(self, default_type_filter: str = "all"):
+    def __init__(
+        self,
+        default_type_filter: str = "all",
+        on_view_detail: Callable[[int, str], None] | None = None,
+        on_create: Callable[[str], None] | None = None,
+        on_edit: Callable[[int, str], None] | None = None,
+    ):
         """
         Inicializa la vista de listado de empresas.
 
         Args:
             default_type_filter: Filtro inicial de tipo ("all", "CLIENT", "SUPPLIER")
                                 Si es diferente de "all", el filtro de tipo se bloquea
+            on_view_detail: Callback para ver detalle (company_id, company_type)
+            on_create: Callback para crear nueva empresa (company_type)
+            on_edit: Callback para editar empresa (company_id, company_type)
         """
         super().__init__()
+
+        # Callbacks de navegación
+        self._on_view_detail_callback = on_view_detail
+        self._on_create_callback = on_create
+        self._on_edit_callback = on_edit
 
         # Estado
         self._is_loading: bool = True
@@ -92,28 +106,7 @@ class CompanyListView(ft.Container):
         Returns:
             Control de Flet con la vista completa
         """
-        is_dark = app_state.theme.is_dark_mode
         i18n_prefix = self._get_i18n_key_prefix()
-
-        # Header con título y botón crear
-        header = ft.Row(
-            controls=[
-                ft.Text(
-                    t(f"{i18n_prefix}.list_title"),
-                    size=LayoutConstants.FONT_SIZE_DISPLAY_MD,
-                    weight=LayoutConstants.FONT_WEIGHT_BOLD,
-                    color=ColorConstants.get_color_for_theme("ON_SURFACE", is_dark),
-                    expand=True,
-                ),
-                ft.FloatingActionButton(
-                    icon=ft.Icons.ADD,
-                    text=t(f"{i18n_prefix}.create"),
-                    on_click=self._on_create_company,
-                    bgcolor=ColorConstants.PRIMARY,
-                ),
-            ],
-            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-        )
 
         # SearchBar
         self._search_bar = SearchBar(
@@ -125,12 +118,12 @@ class CompanyListView(ft.Container):
         filters_config = [
             {
                 "key": "status",
-                "label": "Estado",
+                "label": "companies.filters.status",
                 "type": "dropdown",
                 "options": [
-                    {"label": "Todas", "value": "all"},
-                    {"label": "Activas", "value": "active"},
-                    {"label": "Inactivas", "value": "inactive"},
+                    {"label": "companies.filters.all", "value": "all"},
+                    {"label": "companies.filters.active", "value": "active"},
+                    {"label": "companies.filters.inactive", "value": "inactive"},
                 ],
                 "default": "all",
             },
@@ -140,20 +133,20 @@ class CompanyListView(ft.Container):
         if not self._is_type_locked:
             filters_config.append({
                 "key": "type",
-                "label": "Tipo",
+                "label": "companies.filters.type",
                 "type": "dropdown",
                 "options": [
-                    {"label": "Todas", "value": "all"},
-                    {"label": "Cliente", "value": "CLIENT"},
-                    {"label": "Proveedor", "value": "SUPPLIER"},
-                    {"label": "Ambos", "value": "BOTH"},
+                    {"label": "companies.filters.all", "value": "all"},
+                    {"label": "companies.filters.customer", "value": "CLIENT"},
+                    {"label": "companies.filters.supplier", "value": "SUPPLIER"},
+                    {"label": "companies.filters.both", "value": "BOTH"},
                 ],
                 "default": "all",
             })
 
         filters_config.append({
             "key": "country",
-            "label": "País",
+            "label": "companies.filters.country",
             "type": "dropdown",
             "options": [],  # Se cargarán dinámicamente
             "default": "all",
@@ -167,12 +160,12 @@ class CompanyListView(ft.Container):
         # DataTable con columnas de empresas
         self._data_table = DataTable(
             columns=[
-                {"key": "name", "label": "Nombre", "sortable": True},
-                {"key": "trigram", "label": "Trigrama", "sortable": True},
-                {"key": "type", "label": "Tipo", "sortable": True},
-                {"key": "phone", "label": "Teléfono", "sortable": False},
-                {"key": "email", "label": "Email", "sortable": False},
-                {"key": "status", "label": "Estado", "sortable": True},
+                {"key": "name", "label": "companies.columns.name", "sortable": True},
+                {"key": "trigram", "label": "companies.columns.trigram", "sortable": True},
+                {"key": "type", "label": "companies.columns.type", "sortable": True},
+                {"key": "phone", "label": "companies.columns.phone", "sortable": False},
+                {"key": "email", "label": "companies.columns.email", "sortable": False},
+                {"key": "status", "label": "companies.columns.status", "sortable": True},
             ],
             on_row_click=self._on_row_click,
             on_edit=self._on_edit_company,
@@ -181,55 +174,14 @@ class CompanyListView(ft.Container):
             on_page_change=self._on_page_change,
         )
 
-        # Contenido principal
-        content = ft.Column(
-            controls=[
-                header,
-                self._search_bar,
-                self._filter_panel,
-                self._data_table,
-            ],
-            spacing=LayoutConstants.SPACING_MD,
-            scroll=ft.ScrollMode.AUTO,
-            expand=True,
-        )
+        # Configurar propiedades del contenedor
+        self.expand = True
+        self.padding = LayoutConstants.PADDING_LG
 
-        # Estados de carga/error/vacío
-        if self._is_loading:
-            loading_message = "Cargando " + t(f"{i18n_prefix}.title").lower() + "..."
-            return ft.Container(
-                content=LoadingSpinner(message=loading_message),
-                expand=True,
-                alignment=ft.alignment.center,
-            )
-        elif self._error_message:
-            return ft.Container(
-                content=ErrorDisplay(
-                    message=self._error_message,
-                    on_retry=self.load_companies,
-                ),
-                expand=True,
-                alignment=ft.alignment.center,
-            )
-        elif not self._companies:
-            # Icono según el tipo
-            icon = ft.Icons.PEOPLE_OUTLINED if self._type_filter == "CLIENT" else (
-                ft.Icons.FACTORY_OUTLINED if self._type_filter == "SUPPLIER" else
-                ft.Icons.BUSINESS_OUTLINED
-            )
+        # Establecer contenido inicial (loading)
+        self._rebuild_content()
 
-            return ft.Container(
-                content=EmptyState(
-                    icon=icon,
-                    message=t(f"{i18n_prefix}.no_{i18n_prefix}"),
-                    action_label=t(f"{i18n_prefix}.create_first"),
-                    on_action=self._on_create_company,
-                ),
-                expand=True,
-                alignment=ft.alignment.center,
-            )
-        else:
-            return content
+        return self
 
     def did_mount(self) -> None:
         """
@@ -278,9 +230,9 @@ class CompanyListView(ft.Container):
 
             # Actualizar opciones del filtro de país
             if self._filter_panel and countries:
-                country_options = [{"label": "Todos", "value": "all"}]
+                country_options = [{"label": "companies.filters.all", "value": "all"}]
                 country_options.extend([
-                    {"label": c["name"], "value": c["code"]}
+                    {"label": c["name"], "value": str(c["id"])}
                     for c in countries
                 ])
 
@@ -333,14 +285,6 @@ class CompanyListView(ft.Container):
             self._companies = response.get("items", [])
             self._total_companies = response.get("total", 0)
 
-            # Actualizar DataTable
-            if self._data_table:
-                self._data_table.set_data(
-                    self._format_companies_for_table(self._companies),
-                    total=self._total_companies,
-                    current_page=self._current_page,
-                )
-
             logger.success(
                 f"Loaded {len(self._companies)} companies "
                 f"(total: {self._total_companies})"
@@ -348,13 +292,108 @@ class CompanyListView(ft.Container):
 
             self._is_loading = False
 
+            # Reconstruir el contenido de la vista
+            self._rebuild_content()
+
+            # Actualizar DataTable con los datos formateados
+            if self._data_table:
+                formatted_data = self._format_companies_for_table(self._companies)
+                logger.debug(f"Setting {len(formatted_data)} formatted rows to DataTable")
+                self._data_table.set_data(
+                    formatted_data,
+                    total=self._total_companies,
+                    current_page=self._current_page,
+                )
+
         except Exception as e:
             logger.exception(f"Error loading companies: {e}")
             self._error_message = f"Error al cargar empresas: {str(e)}"
             self._is_loading = False
+            self._rebuild_content()
 
         if self.page:
             self.update()
+
+    def _rebuild_content(self) -> None:
+        """Reconstruye el contenido de la vista según el estado actual."""
+        is_dark = app_state.theme.is_dark_mode
+        i18n_prefix = self._get_i18n_key_prefix()
+
+        # Estados de carga/error/vacío
+        if self._is_loading:
+            loading_message = "Cargando " + t(f"{i18n_prefix}.title").lower() + "..."
+            self.content = ft.Container(
+                content=LoadingSpinner(message=loading_message),
+                expand=True,
+                alignment=ft.alignment.center,
+            )
+        elif self._error_message:
+            self.content = ft.Container(
+                content=ErrorDisplay(
+                    message=self._error_message,
+                    on_retry=self.load_companies,
+                ),
+                expand=True,
+                alignment=ft.alignment.center,
+            )
+        elif not self._companies:
+            # Icono y mensajes según el tipo
+            if self._type_filter == "CLIENT":
+                icon = ft.Icons.PEOPLE_OUTLINED
+                empty_message = t("clients.no_clients")
+                action_label = t("clients.create_first")
+            elif self._type_filter == "SUPPLIER":
+                icon = ft.Icons.FACTORY_OUTLINED
+                empty_message = t("suppliers.no_suppliers")
+                action_label = t("suppliers.create_first")
+            else:
+                icon = ft.Icons.BUSINESS_OUTLINED
+                empty_message = t("companies.no_companies")
+                action_label = t("companies.create_first")
+
+            self.content = ft.Container(
+                content=EmptyState(
+                    icon=icon,
+                    message=empty_message,
+                    action_label=action_label,
+                    on_action=self._on_create_company,
+                ),
+                expand=True,
+                alignment=ft.alignment.center,
+            )
+        else:
+            # Header con título y botón crear
+            header = ft.Row(
+                controls=[
+                    ft.Text(
+                        t(f"{i18n_prefix}.list_title"),
+                        size=LayoutConstants.FONT_SIZE_DISPLAY_MD,
+                        weight=LayoutConstants.FONT_WEIGHT_BOLD,
+                        color=ColorConstants.get_color_for_theme("ON_SURFACE", is_dark),
+                        expand=True,
+                    ),
+                    ft.FloatingActionButton(
+                        icon=ft.Icons.ADD,
+                        text=t(f"{i18n_prefix}.create"),
+                        on_click=self._on_create_company,
+                        bgcolor=ColorConstants.PRIMARY,
+                    ),
+                ],
+                alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+            )
+
+            # Contenido principal con datos
+            self.content = ft.Column(
+                controls=[
+                    header,
+                    self._search_bar,
+                    self._filter_panel,
+                    self._data_table,
+                ],
+                spacing=LayoutConstants.SPACING_MD,
+                scroll=ft.ScrollMode.AUTO,
+                expand=True,
+            )
 
     def _format_companies_for_table(self, companies: list[dict]) -> list[dict]:
         """
@@ -410,7 +449,9 @@ class CompanyListView(ft.Container):
             filters["is_active"] = self._status_filter == "active"
 
         if self._type_filter != "all":
-            filters["company_type"] = self._type_filter
+            # Mapear tipo de empresa a ID (CLIENT=1, SUPPLIER=2)
+            type_map = {"CLIENT": 1, "SUPPLIER": 2}
+            filters["company_type_id"] = type_map.get(self._type_filter)
 
         if self._country_filter != "all":
             filters["country_code"] = self._country_filter
@@ -476,15 +517,17 @@ class CompanyListView(ft.Container):
         company_id = row_data.get("id")
         logger.info(f"Company row clicked: ID={company_id}")
 
-        # TODO: Navegar a vista de detalle
-        # app_state.navigation.set_route(f"/companies/{company_id}")
+        # Navegar a vista de detalle
+        if self._on_view_detail_callback:
+            self._on_view_detail_callback(company_id, self._type_filter)
 
     def _on_create_company(self, e: ft.ControlEvent | None = None) -> None:
         """Callback para crear nueva empresa."""
         logger.info("Create company button clicked")
 
-        # TODO: Navegar a formulario de creación
-        # app_state.navigation.set_route("/companies/new")
+        # Navegar a formulario de creación
+        if self._on_create_callback:
+            self._on_create_callback(self._type_filter)
 
     def _on_edit_company(self, row_data: dict) -> None:
         """
@@ -496,8 +539,9 @@ class CompanyListView(ft.Container):
         company_id = row_data.get("id")
         logger.info(f"Edit company clicked: ID={company_id}")
 
-        # TODO: Navegar a formulario de edición
-        # app_state.navigation.set_route(f"/companies/{company_id}/edit")
+        # Navegar a formulario de edición
+        if self._on_edit_callback:
+            self._on_edit_callback(company_id, self._type_filter)
 
     def _on_delete_company(self, row_data: dict) -> None:
         """

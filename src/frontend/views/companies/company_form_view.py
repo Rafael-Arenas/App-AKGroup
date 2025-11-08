@@ -35,12 +35,22 @@ class CompanyFormView(ft.Container):
     def __init__(
         self,
         company_id: int | None = None,
+        default_type: str = "CLIENT",
         on_save: Callable[[dict], None] | None = None,
         on_cancel: Callable[[], None] | None = None,
     ):
-        """Inicializa el formulario de empresa."""
+        """
+        Inicializa el formulario de empresa.
+
+        Args:
+            company_id: ID de la empresa a editar (None para crear)
+            default_type: Tipo por defecto ("CLIENT" o "SUPPLIER")
+            on_save: Callback cuando se guarda
+            on_cancel: Callback cuando se cancela
+        """
         super().__init__()
         self.company_id = company_id
+        self.default_type = default_type
         self.on_save = on_save
         self.on_cancel = on_cancel
 
@@ -66,7 +76,8 @@ class CompanyFormView(ft.Container):
 
         logger.info(
             f"CompanyFormView initialized: "
-            f"company_id={company_id}, mode={'edit' if company_id else 'create'}"
+            f"company_id={company_id}, default_type={default_type}, "
+            f"mode={'edit' if company_id else 'create'}"
         )
 
     def build(self) -> ft.Control:
@@ -108,6 +119,7 @@ class CompanyFormView(ft.Container):
             label="Tipo de Empresa *",
             options=[],  # Se cargarán dinámicamente
             required=True,
+            value=self.default_type,  # Valor por defecto
         )
 
         self._phone_field = ValidatedTextField(
