@@ -11,6 +11,7 @@ from src.frontend.app_state import app_state
 from src.frontend.color_constants import ColorConstants
 from src.frontend.layout_constants import LayoutConstants
 from src.frontend.navigation_config import get_navigation_item_by_index
+from src.frontend.i18n.translation_manager import t
 from src.frontend.components.navigation import (
     CustomAppBar,
     CustomNavigationRail,
@@ -61,6 +62,7 @@ class MainView(ft.Container):
         self._app_bar: CustomAppBar | None = None
         self._navigation_rail: CustomNavigationRail | None = None
         self._breadcrumb: Breadcrumb | None = None
+        self._breadcrumb_container: ft.Container | None = None
         self._content_area: ft.Container | None = None
         self._current_view: ft.Control | None = None
 
@@ -90,8 +92,22 @@ class MainView(ft.Container):
             on_destination_change=self._on_destination_change,
         )
 
-        # Crear Breadcrumb
+        # Crear Breadcrumb con contenedor
         self._breadcrumb = Breadcrumb()
+        self._breadcrumb_container = ft.Container(
+            content=self._breadcrumb,
+            bgcolor=ColorConstants.get_color_for_theme("SURFACE", is_dark),
+            padding=ft.padding.symmetric(
+                horizontal=LayoutConstants.PADDING_LG,
+                vertical=LayoutConstants.PADDING_SM,
+            ),
+            border=ft.border.only(
+                bottom=ft.BorderSide(
+                    1,
+                    ColorConstants.get_color_for_theme("DIVIDER", is_dark),
+                ),
+            ),
+        )
 
         # Crear área de contenido
         self._content_area = ft.Container(
@@ -116,11 +132,11 @@ class MainView(ft.Container):
                         self._navigation_rail,
                         ft.Column(
                             controls=[
-                                self._breadcrumb,
+                                self._breadcrumb_container,
                                 self._content_area,
                             ],
                             expand=True,
-                            spacing=LayoutConstants.SPACING_SM,
+                            spacing=0,
                         ),
                     ],
                     expand=True,
@@ -147,6 +163,9 @@ class MainView(ft.Container):
 
         # Suscribirse a cambios de navegación
         app_state.navigation.add_observer(self._on_navigation_changed)
+
+        # Actualizar breadcrumb inicial
+        self._update_breadcrumb()
 
         # Suscribirse a cambios de idioma
         app_state.i18n.add_observer(self._on_i18n_changed)
@@ -247,7 +266,8 @@ class MainView(ft.Container):
             Control de Flet con la vista correspondiente
 
         Example:
-            >>> view = self._get_view_for_section(1)  # CompanyListView
+            >>> view = self._get_view_for_section(1)  # Clientes
+            >>> view = self._get_view_for_section(2)  # Proveedores
         """
         # Lazy import para evitar imports circulares
         from src.frontend.views.dashboard.dashboard_view import DashboardView
@@ -259,9 +279,22 @@ class MainView(ft.Container):
                 logger.debug("Creating DashboardView")
                 return DashboardView()
             case 1:
-                logger.debug("Creating CompanyListView")
-                return CompanyListView()
+                logger.debug("Creating CompanyListView (Clientes)")
+                return CompanyListView(
+                    default_type_filter="CLIENT",
+                    on_view_detail=self.navigate_to_company_detail,
+                    on_create=lambda ctype: self.navigate_to_company_form(None, ctype),
+                    on_edit=self.navigate_to_company_form,
+                )
             case 2:
+                logger.debug("Creating CompanyListView (Proveedores)")
+                return CompanyListView(
+                    default_type_filter="SUPPLIER",
+                    on_view_detail=self.navigate_to_company_detail,
+                    on_create=lambda ctype: self.navigate_to_company_form(None, ctype),
+                    on_edit=self.navigate_to_company_form,
+                )
+            case 3:
                 logger.debug("Creating ProductListView")
                 return ProductListView()
             case _:
@@ -318,6 +351,20 @@ class MainView(ft.Container):
             alignment=ft.alignment.center,
         )
 
+    def _update_breadcrumb(self) -> None:
+        """Actualiza el breadcrumb con el estado actual de navegación."""
+        if self._breadcrumb:
+            breadcrumb_path = app_state.navigation.breadcrumb_path
+            translated_path = [
+                {
+                    "label": t(item["label"]),
+                    "route": item.get("route")
+                }
+                for item in breadcrumb_path
+            ]
+            self._breadcrumb.update_path(translated_path)
+            logger.debug(f"Breadcrumb updated with {len(translated_path)} items: {[p['label'] for p in translated_path]}")
+
     def _on_navigation_changed(self) -> None:
         """
         Observer: Se ejecuta cuando cambia el estado de navegación.
@@ -325,6 +372,10 @@ class MainView(ft.Container):
         Actualiza el breadcrumb y el navigation rail.
         """
         logger.debug("Navigation state changed, updating UI")
+
+        # Actualizar breadcrumb
+        self._update_breadcrumb()
+
         if self.page:
             self.update()
 
@@ -335,6 +386,10 @@ class MainView(ft.Container):
         Actualiza todos los textos de la interfaz.
         """
         logger.debug("Language changed, updating UI")
+
+        # Actualizar breadcrumb con nuevas traducciones
+        self._update_breadcrumb()
+
         if self.page:
             self.update()
 
@@ -345,12 +400,28 @@ class MainView(ft.Container):
         Actualiza los colores de la interfaz.
         """
         logger.debug("Theme changed, updating UI")
+        is_dark = app_state.theme.is_dark_mode
+
+        # Actualizar colores del área de contenido
         if self._content_area:
-            is_dark = app_state.theme.is_dark_mode
             self._content_area.bgcolor = ColorConstants.get_color_for_theme(
                 "BACKGROUND",
                 is_dark,
             )
+
+        # Actualizar colores del contenedor del breadcrumb
+        if self._breadcrumb_container:
+            self._breadcrumb_container.bgcolor = ColorConstants.get_color_for_theme(
+                "SURFACE",
+                is_dark,
+            )
+            self._breadcrumb_container.border = ft.border.only(
+                bottom=ft.BorderSide(
+                    1,
+                    ColorConstants.get_color_for_theme("DIVIDER", is_dark),
+                ),
+            )
+
         if self.page:
             self.update()
 
@@ -412,3 +483,124 @@ class MainView(ft.Container):
             self.navigate_to(nav_item["index"])
         else:
             logger.warning(f"Route not found: {route}")
+
+    def navigate_to_company_detail(
+        self,
+        company_id: int,
+        company_type: str = "CLIENT",
+    ) -> None:
+        """
+        Navega a la vista de detalle de una empresa.
+
+        Args:
+            company_id: ID de la empresa
+            company_type: Tipo de empresa ("CLIENT" o "SUPPLIER")
+
+        Example:
+            >>> main_view.navigate_to_company_detail(123, "CLIENT")
+        """
+        from src.frontend.views.companies.company_detail_view import CompanyDetailView
+
+        logger.info(f"Navigating to company detail: ID={company_id}, type={company_type}")
+
+        # Crear vista de detalle
+        detail_view = CompanyDetailView(
+            company_id=company_id,
+            on_edit=lambda cid: self.navigate_to_company_form(cid, company_type),
+            on_delete=lambda cid: self._on_company_deleted(cid, company_type),
+            on_back=lambda: self._on_back_to_company_list(company_type),
+        )
+
+        # Actualizar contenido y breadcrumb
+        if self._content_area:
+            self._content_area.content = detail_view
+            if self.page:
+                self.update()
+
+        # Actualizar breadcrumb
+        section_key = "clients" if company_type == "CLIENT" else "suppliers"
+        app_state.navigation.set_breadcrumb([
+            {"label": f"{section_key}.title", "route": f"/companies/{company_type.lower()}s"},
+            {"label": "common.view", "route": None},
+        ])
+
+    def navigate_to_company_form(
+        self,
+        company_id: int | None = None,
+        company_type: str = "CLIENT",
+    ) -> None:
+        """
+        Navega a la vista de formulario de empresa (crear/editar).
+
+        Args:
+            company_id: ID de la empresa a editar (None para crear)
+            company_type: Tipo de empresa ("CLIENT" o "SUPPLIER")
+
+        Example:
+            >>> main_view.navigate_to_company_form(None, "CLIENT")  # Crear cliente
+            >>> main_view.navigate_to_company_form(123, "SUPPLIER")  # Editar proveedor
+        """
+        from src.frontend.views.companies.company_form_view import CompanyFormView
+
+        logger.info(
+            f"Navigating to company form: ID={company_id}, type={company_type}, "
+            f"mode={'edit' if company_id else 'create'}"
+        )
+
+        # Crear vista de formulario
+        form_view = CompanyFormView(
+            company_id=company_id,
+            default_type=company_type,
+            on_save=lambda company: self._on_company_saved(company, company_type),
+            on_cancel=lambda: self._on_back_to_company_list(company_type),
+        )
+
+        # Actualizar contenido y breadcrumb
+        if self._content_area:
+            self._content_area.content = form_view
+            if self.page:
+                self.update()
+
+        # Actualizar breadcrumb
+        section_key = "clients" if company_type == "CLIENT" else "suppliers"
+        action_key = "common.edit" if company_id else "common.create"
+        app_state.navigation.set_breadcrumb([
+            {"label": f"{section_key}.title", "route": f"/companies/{company_type.lower()}s"},
+            {"label": action_key, "route": None},
+        ])
+
+    def _on_company_saved(self, company: dict, company_type: str) -> None:
+        """
+        Callback cuando se guarda una empresa exitosamente.
+
+        Args:
+            company: Datos de la empresa guardada
+            company_type: Tipo de empresa
+        """
+        logger.success(f"Company saved: {company.get('name')}")
+        # Volver a la lista
+        self._on_back_to_company_list(company_type)
+
+    def _on_company_deleted(self, company_id: int, company_type: str) -> None:
+        """
+        Callback cuando se elimina una empresa.
+
+        Args:
+            company_id: ID de la empresa eliminada
+            company_type: Tipo de empresa
+        """
+        logger.success(f"Company deleted: ID={company_id}")
+        # Volver a la lista
+        self._on_back_to_company_list(company_type)
+
+    def _on_back_to_company_list(self, company_type: str) -> None:
+        """
+        Navega de vuelta a la lista de empresas.
+
+        Args:
+            company_type: Tipo de empresa ("CLIENT" o "SUPPLIER")
+        """
+        logger.info(f"Navigating back to company list: type={company_type}")
+        # Navegar al índice correspondiente
+        index = 1 if company_type == "CLIENT" else 2
+        self.navigate_to(index)
