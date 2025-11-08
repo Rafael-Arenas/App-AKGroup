@@ -38,15 +38,24 @@ NAVIGATION_STRUCTURE = [
         "items": [
             {
                 "index": 1,
-                "icon": ft.Icons.BUSINESS_OUTLINED,
-                "icon_selected": ft.Icons.BUSINESS,
-                "label": "companies.title",
-                "route": "/companies",
-                "description": "companies.description",
+                "icon": ft.Icons.PEOPLE_OUTLINED,
+                "icon_selected": ft.Icons.PEOPLE,
+                "label": "clients.title",
+                "route": "/companies/clients",
+                "description": "clients.description",
                 "badge": None,
             },
             {
                 "index": 2,
+                "icon": ft.Icons.FACTORY_OUTLINED,
+                "icon_selected": ft.Icons.FACTORY,
+                "label": "suppliers.title",
+                "route": "/companies/suppliers",
+                "description": "suppliers.description",
+                "badge": None,
+            },
+            {
+                "index": 3,
                 "icon": ft.Icons.INVENTORY_2_OUTLINED,
                 "icon_selected": ft.Icons.INVENTORY_2,
                 "label": "products.title",
@@ -55,7 +64,7 @@ NAVIGATION_STRUCTURE = [
                 "badge": None,
             },
             {
-                "index": 3,
+                "index": 4,
                 "icon": ft.Icons.DESCRIPTION_OUTLINED,
                 "icon_selected": ft.Icons.DESCRIPTION,
                 "label": "quotes.title",
@@ -64,7 +73,7 @@ NAVIGATION_STRUCTURE = [
                 "badge": None,
             },
             {
-                "index": 4,
+                "index": 5,
                 "icon": ft.Icons.SHOPPING_CART_OUTLINED,
                 "icon_selected": ft.Icons.SHOPPING_CART,
                 "label": "orders.title",
@@ -73,7 +82,7 @@ NAVIGATION_STRUCTURE = [
                 "badge": None,
             },
             {
-                "index": 5,
+                "index": 6,
                 "icon": ft.Icons.LOCAL_SHIPPING_OUTLINED,
                 "icon_selected": ft.Icons.LOCAL_SHIPPING,
                 "label": "deliveries.title",
@@ -82,7 +91,7 @@ NAVIGATION_STRUCTURE = [
                 "badge": None,
             },
             {
-                "index": 6,
+                "index": 7,
                 "icon": ft.Icons.RECEIPT_LONG_OUTLINED,
                 "icon_selected": ft.Icons.RECEIPT_LONG,
                 "label": "invoices.title",
@@ -97,16 +106,16 @@ NAVIGATION_STRUCTURE = [
         "group_label": "navigation.settings",  # i18n key
         "items": [
             {
-                "index": 7,
-                "icon": ft.Icons.PEOPLE_OUTLINED,
-                "icon_selected": ft.Icons.PEOPLE,
+                "index": 8,
+                "icon": ft.Icons.BADGE_OUTLINED,
+                "icon_selected": ft.Icons.BADGE,
                 "label": "staff.title",
                 "route": "/staff",
                 "description": "staff.description",
                 "badge": None,
             },
             {
-                "index": 8,
+                "index": 9,
                 "icon": ft.Icons.SETTINGS_OUTLINED,
                 "icon_selected": ft.Icons.SETTINGS,
                 "label": "settings.title",
@@ -173,7 +182,7 @@ def get_all_navigation_items() -> list[dict]:
     Example:
         >>> items = get_all_navigation_items()
         >>> len(items)
-        9
+        10
     """
     items = []
     for group in NAVIGATION_STRUCTURE:

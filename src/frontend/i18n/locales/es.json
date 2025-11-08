@@ -85,6 +85,34 @@
       "is_active": "Activo"
     }
   },
+  "clients": {
+    "title": "Clientes",
+    "description": "Gestión de empresas cliente",
+    "list_title": "Lista de Clientes",
+    "create": "Crear Cliente",
+    "create_new": "Nuevo Cliente",
+    "edit": "Editar Cliente",
+    "delete": "Eliminar Cliente",
+    "view": "Ver Cliente",
+    "no_clients": "No hay clientes registrados",
+    "no_clients_message": "Comienza creando tu primer cliente",
+    "create_first": "Crear Primer Cliente",
+    "search_placeholder": "Buscar clientes por nombre, trigrama..."
+  },
+  "suppliers": {
+    "title": "Proveedores",
+    "description": "Gestión de empresas proveedoras",
+    "list_title": "Lista de Proveedores",
+    "create": "Crear Proveedor",
+    "create_new": "Nuevo Proveedor",
+    "edit": "Editar Proveedor",
+    "delete": "Eliminar Proveedor",
+    "view": "Ver Proveedor",
+    "no_suppliers": "No hay proveedores registrados",
+    "no_suppliers_message": "Comienza creando tu primer proveedor",
+    "create_first": "Crear Primer Proveedor",
+    "search_placeholder": "Buscar proveedores por nombre, trigrama..."
+  },
   "products": {
     "title": "Productos",
     "description": "Gestión de productos y nomenclaturas",
@@ -265,6 +293,8 @@
   "breadcrumb": {
     "home": "Inicio",
     "companies": "Empresas",
+    "clients": "Clientes",
+    "suppliers": "Proveedores",
     "products": "Productos",
     "quotes": "Cotizaciones",
     "orders": "Órdenes",

@@ -10,6 +10,7 @@ from loguru import logger
 from src.frontend.app_state import app_state
 from src.frontend.color_constants import ColorConstants
 from src.frontend.layout_constants import LayoutConstants
+from src.frontend.i18n.translation_manager import t
 from src.frontend.components.common import (
     SearchBar,
     FilterPanel,
@@ -37,8 +38,14 @@ class CompanyListView(ft.Container):
         >>> page.add(company_list)
     """
 
-    def __init__(self):
-        """Inicializa la vista de listado de empresas."""
+    def __init__(self, default_type_filter: str = "all"):
+        """
+        Inicializa la vista de listado de empresas.
+
+        Args:
+            default_type_filter: Filtro inicial de tipo ("all", "CLIENT", "SUPPLIER")
+                                Si es diferente de "all", el filtro de tipo se bloquea
+        """
         super().__init__()
 
         # Estado
@@ -52,8 +59,9 @@ class CompanyListView(ft.Container):
         # Filtros
         self._search_query: str = ""
         self._status_filter: str = "all"
-        self._type_filter: str = "all"
+        self._type_filter: str = default_type_filter
         self._country_filter: str = "all"
+        self._is_type_locked: bool = default_type_filter != "all"
 
         # Componentes
         self._search_bar: SearchBar | None = None
@@ -61,7 +69,21 @@ class CompanyListView(ft.Container):
         self._data_table: DataTable | None = None
         self._confirm_dialog: ConfirmDialog | None = None
 
-        logger.info("CompanyListView initialized")
+        logger.info(f"CompanyListView initialized with type_filter={self._type_filter}")
+
+    def _get_i18n_key_prefix(self) -> str:
+        """
+        Obtiene el prefijo de clave i18n según el tipo de filtro.
+
+        Returns:
+            "clients", "suppliers" o "companies"
+        """
+        if self._type_filter == "CLIENT":
+            return "clients"
+        elif self._type_filter == "SUPPLIER":
+            return "suppliers"
+        else:
+            return "companies"
 
     def build(self) -> ft.Control:
         """
@@ -71,12 +93,13 @@ class CompanyListView(ft.Container):
             Control de Flet con la vista completa
         """
         is_dark = app_state.theme.is_dark_mode
+        i18n_prefix = self._get_i18n_key_prefix()
 
         # Header con título y botón crear
         header = ft.Row(
             controls=[
                 ft.Text(
-                    "Empresas",
+                    t(f"{i18n_prefix}.list_title"),
                     size=LayoutConstants.FONT_SIZE_DISPLAY_MD,
                     weight=LayoutConstants.FONT_WEIGHT_BOLD,
                     color=ColorConstants.get_color_for_theme("ON_SURFACE", is_dark),
@@ -84,7 +107,7 @@ class CompanyListView(ft.Container):
                 ),
                 ft.FloatingActionButton(
                     icon=ft.Icons.ADD,
-                    text="Crear Empresa",
+                    text=t(f"{i18n_prefix}.create"),
                     on_click=self._on_create_company,
                     bgcolor=ColorConstants.PRIMARY,
                 ),
@@ -94,44 +117,50 @@ class CompanyListView(ft.Container):
 
         # SearchBar
         self._search_bar = SearchBar(
-            placeholder="Buscar empresas por nombre o trigrama...",
+            placeholder=t(f"{i18n_prefix}.search_placeholder"),
             on_search=self._on_search,
         )
 
         # FilterPanel con filtros
+        filters_config = [
+            {
+                "key": "status",
+                "label": "Estado",
+                "type": "dropdown",
+                "options": [
+                    {"label": "Todas", "value": "all"},
+                    {"label": "Activas", "value": "active"},
+                    {"label": "Inactivas", "value": "inactive"},
+                ],
+                "default": "all",
+            },
+        ]
+
+        # Solo agregar filtro de tipo si no está bloqueado
+        if not self._is_type_locked:
+            filters_config.append({
+                "key": "type",
+                "label": "Tipo",
+                "type": "dropdown",
+                "options": [
+                    {"label": "Todas", "value": "all"},
+                    {"label": "Cliente", "value": "CLIENT"},
+                    {"label": "Proveedor", "value": "SUPPLIER"},
+                    {"label": "Ambos", "value": "BOTH"},
+                ],
+                "default": "all",
+            })
+
+        filters_config.append({
+            "key": "country",
+            "label": "País",
+            "type": "dropdown",
+            "options": [],  # Se cargarán dinámicamente
+            "default": "all",
+        })
+
         self._filter_panel = FilterPanel(
-            filters=[
-                {
-                    "key": "status",
-                    "label": "Estado",
-                    "type": "dropdown",
-                    "options": [
-                        {"label": "Todas", "value": "all"},
-                        {"label": "Activas", "value": "active"},
-                        {"label": "Inactivas", "value": "inactive"},
-                    ],
-                    "default": "all",
-                },
-                {
-                    "key": "type",
-                    "label": "Tipo",
-                    "type": "dropdown",
-                    "options": [
-                        {"label": "Todas", "value": "all"},
-                        {"label": "Cliente", "value": "CLIENT"},
-                        {"label": "Proveedor", "value": "SUPPLIER"},
-                        {"label": "Ambos", "value": "BOTH"},
-                    ],
-                    "default": "all",
-                },
-                {
-                    "key": "country",
-                    "label": "País",
-                    "type": "dropdown",
-                    "options": [],  # Se cargarán dinámicamente
-                    "default": "all",
-                },
-            ],
+            filters=filters_config,
             on_filter_change=self._on_filter_change,
         )
 
@@ -167,8 +196,9 @@ class CompanyListView(ft.Container):
 
         # Estados de carga/error/vacío
         if self._is_loading:
+            loading_message = "Cargando " + t(f"{i18n_prefix}.title").lower() + "..."
             return ft.Container(
-                content=LoadingSpinner(message="Cargando empresas..."),
+                content=LoadingSpinner(message=loading_message),
                 expand=True,
                 alignment=ft.alignment.center,
             )
@@ -182,11 +212,17 @@ class CompanyListView(ft.Container):
                 alignment=ft.alignment.center,
             )
         elif not self._companies:
+            # Icono según el tipo
+            icon = ft.Icons.PEOPLE_OUTLINED if self._type_filter == "CLIENT" else (
+                ft.Icons.FACTORY_OUTLINED if self._type_filter == "SUPPLIER" else
+                ft.Icons.BUSINESS_OUTLINED
+            )
+
             return ft.Container(
                 content=EmptyState(
-                    icon=ft.Icons.BUSINESS_OUTLINED,
-                    message="No hay empresas registradas",
-                    action_label="Crear Primera Empresa",
+                    icon=icon,
+                    message=t(f"{i18n_prefix}.no_{i18n_prefix}"),
+                    action_label=t(f"{i18n_prefix}.create_first"),
                     on_action=self._on_create_company,
                 ),
                 expand=True,
@@ -474,10 +510,13 @@ class CompanyListView(ft.Container):
         company_name = row_data.get("name")
         logger.info(f"Delete company clicked: ID={company_id}")
 
+        i18n_prefix = self._get_i18n_key_prefix()
+
         # Mostrar diálogo de confirmación
+        entity_type = t(f"{i18n_prefix}.title").lower()[:-1]  # Quitar la 's' final
         self._confirm_dialog = ConfirmDialog(
-            title="Eliminar Empresa",
-            message=f"¿Está seguro de que desea eliminar la empresa '{company_name}'?",
+            title=t(f"{i18n_prefix}.delete"),
+            message=f"¿Está seguro de que desea eliminar {entity_type} '{company_name}'?",
             on_confirm=lambda: self._confirm_delete_company(company_id),
         )
 

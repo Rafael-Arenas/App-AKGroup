@@ -85,6 +85,34 @@
       "is_active": "Active"
     }
   },
+  "clients": {
+    "title": "Clients",
+    "description": "Client company management",
+    "list_title": "Client List",
+    "create": "Create Client",
+    "create_new": "New Client",
+    "edit": "Edit Client",
+    "delete": "Delete Client",
+    "view": "View Client",
+    "no_clients": "No clients registered",
+    "no_clients_message": "Start by creating your first client",
+    "create_first": "Create First Client",
+    "search_placeholder": "Search clients by name, trigram..."
+  },
+  "suppliers": {
+    "title": "Suppliers",
+    "description": "Supplier company management",
+    "list_title": "Supplier List",
+    "create": "Create Supplier",
+    "create_new": "New Supplier",
+    "edit": "Edit Supplier",
+    "delete": "Delete Supplier",
+    "view": "View Supplier",
+    "no_suppliers": "No suppliers registered",
+    "no_suppliers_message": "Start by creating your first supplier",
+    "create_first": "Create First Supplier",
+    "search_placeholder": "Search suppliers by name, trigram..."
+  },
   "products": {
     "title": "Products",
     "description": "Product and nomenclature management",
@@ -249,6 +277,8 @@
   "breadcrumb": {
     "home": "Home",
     "companies": "Companies",
+    "clients": "Clients",
+    "suppliers": "Suppliers",
     "products": "Products",
     "quotes": "Quotes",
     "orders": "Orders",

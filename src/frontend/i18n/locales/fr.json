@@ -85,6 +85,34 @@
       "is_active": "Actif"
     }
   },
+  "clients": {
+    "title": "Clients",
+    "description": "Gestion des entreprises clientes",
+    "list_title": "Liste des Clients",
+    "create": "Créer Client",
+    "create_new": "Nouveau Client",
+    "edit": "Modifier Client",
+    "delete": "Supprimer Client",
+    "view": "Voir Client",
+    "no_clients": "Aucun client enregistré",
+    "no_clients_message": "Commencez par créer votre premier client",
+    "create_first": "Créer Premier Client",
+    "search_placeholder": "Rechercher clients par nom, trigramme..."
+  },
+  "suppliers": {
+    "title": "Fournisseurs",
+    "description": "Gestion des entreprises fournisseurs",
+    "list_title": "Liste des Fournisseurs",
+    "create": "Créer Fournisseur",
+    "create_new": "Nouveau Fournisseur",
+    "edit": "Modifier Fournisseur",
+    "delete": "Supprimer Fournisseur",
+    "view": "Voir Fournisseur",
+    "no_suppliers": "Aucun fournisseur enregistré",
+    "no_suppliers_message": "Commencez par créer votre premier fournisseur",
+    "create_first": "Créer Premier Fournisseur",
+    "search_placeholder": "Rechercher fournisseurs par nom, trigramme..."
+  },
   "products": {
     "title": "Produits",
     "description": "Gestion des produits et nomenclatures",
@@ -249,6 +277,8 @@
   "breadcrumb": {
     "home": "Accueil",
     "companies": "Entreprises",
+    "clients": "Clients",
+    "suppliers": "Fournisseurs",
     "products": "Produits",
     "quotes": "Devis",
     "orders": "Commandes",
