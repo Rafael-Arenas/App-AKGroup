@@ -55,7 +55,7 @@ class CompanyCard(ft.Container):
                 "Activa" if is_active else "Inactiva",
                 size=LayoutConstants.FONT_SIZE_XS,
                 weight=LayoutConstants.FONT_WEIGHT_SEMIBOLD,
-                color=ft.colors.WHITE,
+                color=ft.Colors.WHITE,
             ),
             bgcolor=ColorConstants.SUCCESS if is_active else ColorConstants.ERROR,
             padding=ft.padding.symmetric(
@@ -150,7 +150,7 @@ class CompanyCard(ft.Container):
                 label,
                 size=LayoutConstants.FONT_SIZE_XS,
                 weight=LayoutConstants.FONT_WEIGHT_SEMIBOLD,
-                color=ft.colors.WHITE,
+                color=ft.Colors.WHITE,
             ),
             bgcolor=color,
             padding=ft.padding.symmetric(
