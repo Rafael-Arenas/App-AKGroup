@@ -191,8 +191,9 @@ class DashboardView(ft.Container):
         app_state.theme.add_observer(self._on_state_changed)
         app_state.i18n.add_observer(self._on_state_changed)
 
-        # Cargar datos
-        self.load_dashboard_data()
+        # Cargar datos (async)
+        if self.page:
+            self.page.run_task(self.load_dashboard_data)
 
     def will_unmount(self) -> None:
         """
