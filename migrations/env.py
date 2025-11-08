@@ -20,14 +20,14 @@ import sys
 from pathlib import Path
 
 # Add src to path
-sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 # Import Base and ALL models to ensure they're registered in metadata
-from models import Base
+from src.backend.models import Base
 # Explicitly import all model modules to register them
-import models.lookups  # noqa: F401
-import models.core  # noqa: F401
-import models.business  # noqa: F401
+import src.backend.models.lookups  # noqa: F401
+import src.backend.models.core  # noqa: F401
+import src.backend.models.business  # noqa: F401
 
 target_metadata = Base.metadata
 
