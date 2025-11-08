@@ -11,7 +11,10 @@ from sqlalchemy.orm import Session
 
 from src.backend.api.dependencies import get_database, get_current_user_id
 from src.backend.services.core.product_service import ProductService
-from src.backend.repositories.core.product_repository import ProductRepository
+from src.backend.repositories.core.product_repository import (
+    ProductRepository,
+    ProductComponentRepository,
+)
 from src.shared.schemas.core.product import (
     ProductCreate,
     ProductUpdate,
@@ -36,8 +39,13 @@ def get_product_service(db: Session = Depends(get_database)) -> ProductService:
     Returns:
         Instancia configurada de ProductService
     """
-    repository = ProductRepository(db)
-    return ProductService(repository=repository, session=db)
+    product_repository = ProductRepository(db)
+    component_repository = ProductComponentRepository(db)
+    return ProductService(
+        product_repository=product_repository,
+        component_repository=component_repository,
+        session=db
+    )
 
 
 @router.get("/", response_model=List[ProductResponse])
@@ -63,7 +71,7 @@ def get_products(
     logger.info(f"GET /products - skip={skip}, limit={limit}")
 
     # Service injected via dependency
-    products = facade.get_all(skip=skip, limit=limit)
+    products = service.get_all(skip=skip, limit=limit)
 
     logger.info(f"Retornando {len(products)} producto(s)")
     return products
@@ -90,7 +98,7 @@ def search_products(
     logger.info(f"GET /products/search?q={q}")
 
     # Service injected via dependency
-    products = facade.search(q)
+    products = service.search(q)
 
     logger.info(f"Búsqueda '{q}' retornó {len(products)} producto(s)")
     return products
@@ -122,7 +130,7 @@ def get_products_by_type(
     logger.info(f"GET /products/type/{product_type}")
 
     # Service injected via dependency
-    products = facade.get_by_type(product_type, skip, limit)
+    products = service.get_by_type(product_type, skip, limit)
 
     logger.info(f"Retornando {len(products)} producto(s) tipo {product_type}")
     return products
@@ -152,7 +160,7 @@ def get_product_by_code(
     logger.info(f"GET /products/code/{code}")
 
     # Service injected via dependency
-    product = facade.get_by_code(code)
+    product = service.get_by_code(code)
 
     logger.info(f"Producto encontrado: {product.name}")
     return product
@@ -182,7 +190,7 @@ def get_product(
     logger.info(f"GET /products/{product_id}")
 
     # Service injected via dependency
-    product = facade.get_by_id(product_id)
+    product = service.get_by_id(product_id)
 
     logger.info(f"Producto encontrado: {product.name}")
     return product
@@ -212,7 +220,7 @@ def get_product_with_components(
     logger.info(f"GET /products/{product_id}/with-components")
 
     # Service injected via dependency
-    product = facade.get_with_components(product_id)
+    product = service.get_with_components(product_id)
 
     logger.info(f"Producto encontrado con {len(product.components)} componente(s)")
     return product
@@ -262,7 +270,7 @@ def create_product(
     logger.info(f"POST /products - code={product_data.code}")
 
     # Service injected via dependency
-    product = facade.create(product_data.model_dump(), user_id)
+    product = service.create(product_data.model_dump(), user_id)
 
     logger.success(f"Producto creado: id={product.id}, code={product.code}")
     return product
@@ -302,7 +310,7 @@ def update_product(
     logger.info(f"PUT /products/{product_id}")
 
     # Service injected via dependency
-    product = facade.update(product_id, product_data.model_dump(exclude_unset=True), user_id)
+    product = service.update(product_id, product_data.model_dump(exclude_unset=True), user_id)
 
     logger.success(f"Producto actualizado: id={product_id}")
     return product
@@ -389,7 +397,7 @@ def add_component(
     logger.info(f"POST /products/{product_id}/components")
 
     # Service injected via dependency
-    component = facade.add_component(
+    component = service.add_component(
         parent_id=component_data.parent_id,
         component_id=component_data.component_id,
         quantity=float(component_data.quantity),
@@ -434,7 +442,7 @@ def update_component(
     logger.info(f"PUT /products/{product_id}/components/{component_id}")
 
     # Service injected via dependency
-    component = facade.update_component(
+    component = service.update_component(
         parent_id=product_id,
         component_id=component_id,
         quantity=float(component_data.quantity),
@@ -509,7 +517,7 @@ def calculate_bom_cost(
     logger.info(f"GET /products/{product_id}/bom-cost")
 
     # Service injected via dependency
-    cost = facade.calculate_bom_cost(product_id)
+    cost = service.calculate_bom_cost(product_id)
 
     logger.info(f"Costo BOM calculado para product_id={product_id}: {cost}")
 

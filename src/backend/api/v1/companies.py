@@ -37,14 +37,18 @@ def get_company_service(db: Session = Depends(get_database)) -> CompanyService:
 def get_companies(
     skip: int = 0,
     limit: int = 100,
+    company_type_id: int | None = None,
+    is_active: bool | None = None,
     service: CompanyService = Depends(get_company_service),
 ):
     """
-    Obtiene todas las empresas con paginación.
+    Obtiene todas las empresas con paginación y filtros opcionales.
 
     Args:
         skip: Número de registros a saltar (default: 0)
         limit: Número máximo de registros (default: 100, max: 1000)
+        company_type_id: Filtrar por tipo de empresa (1=CLIENT, 2=SUPPLIER)
+        is_active: Filtrar por estado (True=activas, False=inactivas, None=todas)
         service: Servicio de empresas
 
     Returns:
@@ -52,10 +56,34 @@ def get_companies(
 
     Example:
         GET /api/v1/companies?skip=0&limit=50
+        GET /api/v1/companies?company_type_id=1  # Solo clientes
+        GET /api/v1/companies?company_type_id=1&is_active=true  # Solo clientes activos
     """
-    logger.info(f"GET /companies - skip={skip}, limit={limit}")
+    logger.info(
+        f"GET /companies - skip={skip}, limit={limit}, "
+        f"company_type_id={company_type_id}, is_active={is_active}"
+    )
 
-    companies = service.get_all(skip=skip, limit=limit)
+    # Si se especifica tipo, filtrar por tipo
+    if company_type_id is not None:
+        companies = service.get_by_type(
+            company_type_id=company_type_id,
+            skip=skip,
+            limit=limit,
+            is_active=is_active
+        )
+    else:
+        # Si solo se filtra por is_active
+        if is_active is not None:
+            if is_active:
+                companies = service.get_active_companies(skip=skip, limit=limit)
+            else:
+                # Necesitaríamos un método get_inactive_companies
+                # Por ahora, obtener todas y filtrar
+                all_companies = service.get_all(skip=0, limit=1000)
+                companies = [c for c in all_companies if not c.is_active][skip:skip+limit]
+        else:
+            companies = service.get_all(skip=skip, limit=limit)
 
     logger.info(f"Retornando {len(companies)} empresa(s)")
     return companies
