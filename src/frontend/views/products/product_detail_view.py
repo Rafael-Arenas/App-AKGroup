@@ -47,6 +47,13 @@ class ProductDetailView(ft.Container):
         self._product: dict | None = None
         self._bom_components: list[dict] = []
 
+        # Configurar propiedades del contenedor
+        self.expand = True
+        self.padding = LayoutConstants.PADDING_LG
+
+        # Construir contenido inicial (loading)
+        self.content = self.build()
+
         logger.info(f"ProductDetailView initialized: product_id={product_id}")
 
     def build(self) -> ft.Control:
@@ -305,6 +312,8 @@ class ProductDetailView(ft.Container):
         self._is_loading = True
         self._error_message = ""
 
+        # Reconstruir contenido para mostrar loading
+        self.content = self.build()
         if self.page:
             self.update()
 
@@ -328,6 +337,8 @@ class ProductDetailView(ft.Container):
             self._error_message = f"Error al cargar producto: {str(e)}"
             self._is_loading = False
 
+        # Reconstruir contenido con los datos cargados
+        self.content = self.build()
         if self.page:
             self.update()
 
