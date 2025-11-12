@@ -36,7 +36,7 @@ class Settings(BaseSettings):
     database_echo: bool = False
 
     # SQLite settings
-    sqlite_path: str = "akgroup.db"
+    sqlite_path: str = "app_akgroup.db"
 
     # MySQL settings
     mysql_host: str = "localhost"
