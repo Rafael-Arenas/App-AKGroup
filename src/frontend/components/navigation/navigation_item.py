@@ -100,6 +100,7 @@ class NavigationItem(ft.Container):
         icon_widget = ft.Icon(
             self.icon_selected_name if self.is_selected else self.icon_name,
             size=LayoutConstants.ICON_SIZE_MD,
+            color=ft.Colors.ON_PRIMARY_CONTAINER if self.is_selected else None,
         )
 
         # Badge en el icono (visible solo cuando colapsado Y hay badge)
@@ -147,6 +148,7 @@ class NavigationItem(ft.Container):
                     self.label_text,
                     size=LayoutConstants.FONT_SIZE_MD,
                     weight=ft.FontWeight.W_500 if self.is_selected else ft.FontWeight.NORMAL,
+                    color=ft.Colors.ON_PRIMARY_CONTAINER if self.is_selected else None,
                 ),
                 expand=True,
                 opacity=1.0 if self.is_expanded else 0.0,
@@ -186,8 +188,8 @@ class NavigationItem(ft.Container):
     def _apply_styles(self) -> None:
         """Aplica los estilos según el estado."""
         if self.is_selected:
-            # Estado activo - use default Material 3 selection
-            pass
+            # Estado activo - aplicar color de fondo
+            self.bgcolor = ft.Colors.PRIMARY_CONTAINER
         else:
             # Estado normal
             self.bgcolor = None
