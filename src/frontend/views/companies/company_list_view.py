@@ -295,8 +295,8 @@ class CompanyListView(ft.Container):
             # Reconstruir el contenido de la vista
             self._rebuild_content()
 
-            # Actualizar DataTable con los datos formateados
-            if self._data_table:
+            # Actualizar DataTable con los datos formateados (solo si hay empresas)
+            if self._data_table and self._companies:
                 formatted_data = self._format_companies_for_table(self._companies)
                 logger.debug(f"Setting {len(formatted_data)} formatted rows to DataTable")
                 self._data_table.set_data(
@@ -304,6 +304,16 @@ class CompanyListView(ft.Container):
                     total=self._total_companies,
                     current_page=self._current_page,
                 )
+            elif self._data_table and not self._companies:
+                # Si no hay empresas, limpiar el DataTable para evitar conflictos
+                logger.debug("No companies found, DataTable will not be updated")
+
+            # Forzar actualización de la UI
+            if self.page:
+                logger.debug("Updating CompanyListView UI after loading companies")
+                self.update()
+            else:
+                logger.warning("Page is None, cannot update UI")
 
         except Exception as e:
             logger.exception(f"Error loading companies: {e}")
@@ -311,8 +321,12 @@ class CompanyListView(ft.Container):
             self._is_loading = False
             self._rebuild_content()
 
-        if self.page:
-            self.update()
+            # Forzar actualización de la UI en caso de error
+            if self.page:
+                logger.debug("Updating CompanyListView UI after error")
+                self.update()
+            else:
+                logger.warning("Page is None, cannot update UI after error")
 
     def _rebuild_content(self) -> None:
         """Reconstruye el contenido de la vista según el estado actual."""
@@ -340,22 +354,26 @@ class CompanyListView(ft.Container):
             # Icono y mensajes según el tipo
             if self._type_filter == "CLIENT":
                 icon = ft.Icons.PEOPLE_OUTLINED
+                empty_title = t("clients.title")
                 empty_message = t("clients.no_clients")
                 action_label = t("clients.create_first")
             elif self._type_filter == "SUPPLIER":
                 icon = ft.Icons.FACTORY_OUTLINED
+                empty_title = t("suppliers.title")
                 empty_message = t("suppliers.no_suppliers")
                 action_label = t("suppliers.create_first")
             else:
                 icon = ft.Icons.BUSINESS_OUTLINED
+                empty_title = t("companies.title")
                 empty_message = t("companies.no_companies")
                 action_label = t("companies.create_first")
 
             self.content = ft.Container(
                 content=EmptyState(
                     icon=icon,
+                    title=empty_title,
                     message=empty_message,
-                    action_label=action_label,
+                    action_text=action_label,
                     on_action=self._on_create_company,
                 ),
                 expand=True,
