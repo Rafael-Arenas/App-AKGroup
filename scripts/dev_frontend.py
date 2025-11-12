@@ -17,23 +17,23 @@ def main():
     frontend_main = project_root / "src" / "frontend" / "main.py"
 
     if not frontend_main.exists():
-        print(f"❌ Error: No se encuentra {frontend_main}")
+        print(f"Error: No se encuentra {frontend_main}")
         sys.exit(1)
 
     print("=" * 60)
-    print("🚀 AK Group - Frontend Development Server")
+    print("AK Group - Frontend Development Server")
     print("=" * 60)
-    print(f"📁 Ejecutando: {frontend_main}")
-    print("🔗 Asegúrate de que el backend esté corriendo en http://localhost:8000")
+    print(f"Ejecutando: {frontend_main}")
+    print("Asegurate de que el backend este corriendo en http://localhost:8000")
     print("=" * 60)
     print()
 
     try:
         subprocess.run([sys.executable, str(frontend_main)], check=True)
     except KeyboardInterrupt:
-        print("\n\n🛑 Frontend detenido por el usuario")
+        print("\n\nFrontend detenido por el usuario")
     except subprocess.CalledProcessError as e:
-        print(f"\n❌ Error ejecutando frontend: {e}")
+        print(f"\nError ejecutando frontend: {e}")
         sys.exit(1)
 
 
