@@ -54,21 +54,25 @@ class TimestampResponse(BaseSchema):
 
 class BaseResponse(TimestampResponse):
     """
-    Schema base para respuestas con ID y timestamps.
+    Schema base para respuestas con ID, timestamps y auditoría.
 
     Incluye campos comunes para todas las respuestas:
     - id: Identificador único
     - created_at: Fecha de creación
     - updated_at: Fecha de última actualización
+    - created_by: ID del usuario que creó el registro
+    - updated_by: ID del usuario que modificó el registro
 
     Example:
         class CompanyResponse(BaseResponse):
             name: str
             trigram: str
-            # id, created_at, updated_at se heredan
+            # id, created_at, updated_at, created_by, updated_by se heredan
     """
 
     id: int
+    created_by: Optional[int] = None
+    updated_by: Optional[int] = None
 
 
 class PaginatedResponse(BaseSchema):
