@@ -70,13 +70,28 @@ alembic history
 ```
 
 ### Running the Application
-```bash
-# Run main application
-poetry run python main.py
 
-# Or within poetry shell
-python main.py
+The application has 3 convenient entry points in the root directory:
+
+```bash
+# Run complete application (Backend + Frontend)
+python run_app.py
+
+# Run only the backend (FastAPI server on http://localhost:8000)
+python run_backend.py
+
+# Run only the frontend (Flet desktop app)
+python run_frontend.py
 ```
+
+Alternative commands with Poetry:
+```bash
+poetry run python run_app.py      # Complete application
+poetry run python run_backend.py  # Backend only
+poetry run python run_frontend.py # Frontend only
+```
+
+**Note:** When running frontend separately, ensure the backend is running first on http://localhost:8000
 
 ### Testing
 ```bash
