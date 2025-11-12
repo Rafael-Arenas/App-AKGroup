@@ -193,22 +193,26 @@ class ProductResponse(BaseResponse):
 
     Example:
         product = ProductResponse.model_validate(product_orm)
-        print(product.name)
-        print(product.code)
+        print(product.reference)
+        print(product.designation_es)
     """
 
-    code: str
-    name: str
-    description: Optional[str] = None
+    reference: str
+    designation_fr: Optional[str] = None
+    designation_es: Optional[str] = None
+    designation_en: Optional[str] = None
+    short_designation: Optional[str] = None
+    revision: Optional[str] = None
     product_type: str
     cost_price: Optional[Decimal] = None
     sale_price: Optional[Decimal] = None
     stock_quantity: Optional[Decimal] = None
     min_stock: Optional[Decimal] = None
     max_stock: Optional[Decimal] = None
-    unit_id: int
+    unit_id: Optional[int] = None
     family_type_id: Optional[int] = None
     matter_id: Optional[int] = None
+    price_calculation_mode: Optional[str] = None
     is_active: bool
 
     # Relaciones opcionales
