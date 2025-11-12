@@ -106,7 +106,6 @@ class DataTable(ft.Container):
         self._current_page: int = 0
         self._total_items: int = 0
         self._selected_rows: set[int] = set()
-        self._data_table: ft.DataTable | None = None
 
         logger.debug(f"DataTable initialized: {len(self.columns)} columns, {len(self.data)} rows")
 
@@ -138,114 +137,20 @@ class DataTable(ft.Container):
                 message=self.empty_message,
             )
 
-        # Construir columnas
-        dt_columns = []
-        for col in self.columns:
-            label_widget = ft.Text(
-                t(col.label),
-                weight=LayoutConstants.FONT_WEIGHT_SEMIBOLD,
-            )
-
-            if col.sortable:
-                label_widget = ft.Row(
-                    controls=[
-                        label_widget,
-                        ft.Icon(
-                            ft.Icons.ARROW_UPWARD if self._sort_ascending else ft.Icons.ARROW_DOWNWARD,
-                            size=LayoutConstants.ICON_SIZE_SM,
-                            visible=self._sort_column == col.key,
-                        ),
-                    ],
-                    spacing=LayoutConstants.SPACING_XS,
-                )
-
-            dt_columns.append(
-                ft.DataColumn(
-                    label=label_widget,
-                    on_sort=lambda e, k=col.key: self._handle_sort(k) if col.sortable else None,
-                )
-            )
-
-        # Agregar columna de acciones si hay callbacks
-        if self.on_edit or self.on_delete:
-            dt_columns.append(
-                ft.DataColumn(
-                    label=ft.Text(t("common.actions"), weight=LayoutConstants.FONT_WEIGHT_SEMIBOLD)
-                )
-            )
-
-        # Obtener datos paginados y ordenados
-        sorted_data = self._get_sorted_data()
-        paginated_data = self._get_paginated_data(sorted_data)
-
-        # Construir filas
-        dt_rows = []
-        for idx, row_data in enumerate(paginated_data):
-            cells = []
-
-            # Celdas de datos
-            for col in self.columns:
-                value = row_data.get(col.key, "")
-                if col.formatter:
-                    value = col.formatter(value)
-                # Agregar handler de click si existe on_row_click
-                cell = ft.DataCell(
-                    ft.Text(str(value)),
-                    on_tap=lambda e, data=row_data: self._handle_row_click(data) if self.on_row_click else None,
-                )
-                cells.append(cell)
-
-            # Celda de acciones
-            if self.on_edit or self.on_delete:
-                actions = []
-                if self.on_edit:
-                    actions.append(
-                        ft.IconButton(
-                            icon=ft.Icons.EDIT,
-                            icon_size=LayoutConstants.ICON_SIZE_SM,
-                            tooltip=t("common.edit"),
-                            on_click=lambda e, data=row_data: self._handle_edit(data),
-                        )
-                    )
-                if self.on_delete:
-                    actions.append(
-                        ft.IconButton(
-                            icon=ft.Icons.DELETE,
-                            icon_size=LayoutConstants.ICON_SIZE_SM,
-                            tooltip=t("common.delete"),
-                            on_click=lambda e, data=row_data: self._handle_delete(data),
-                        )
-                    )
-                cells.append(
-                    ft.DataCell(
-                        ft.Row(controls=actions, spacing=LayoutConstants.SPACING_XS)
-                    )
-                )
-
-            dt_rows.append(
-                ft.DataRow(
-                    cells=cells,
-                    selected=idx in self._selected_rows if self.selectable else False,
-                    on_select_changed=lambda e, i=idx: self._handle_select(i, e.control.selected) if self.selectable else None,
-                )
-            )
-
-        self._data_table = ft.DataTable(
-            columns=dt_columns,
-            rows=dt_rows,
-            border=ft.border.all(1),
-            border_radius=LayoutConstants.RADIUS_SM,
-            heading_row_height=LayoutConstants.TABLE_HEADER_HEIGHT,
-            data_row_min_height=LayoutConstants.TABLE_ROW_HEIGHT,
-            data_row_max_height=LayoutConstants.TABLE_ROW_HEIGHT,
-            horizontal_lines=ft.border.BorderSide(1),
-            show_checkbox_column=self.selectable,
+        # Construir tabla completa
+        table_content = ft.Column(
+            controls=[
+                self._build_table_header(),
+                *self._build_table_rows(),
+            ],
+            spacing=0,
+            scroll=ft.ScrollMode.AUTO,
         )
 
         # Construir paginación si es necesaria
         pagination = None
         if self.page_size > 0 and len(self.data) > self.page_size:
-            total_pages = (len(sorted_data) + self.page_size - 1) // self.page_size
+            total_pages = (len(self._get_sorted_data()) + self.page_size - 1) // self.page_size
             pagination = ft.Row(
                 controls=[
                     ft.IconButton(
@@ -267,14 +172,9 @@ class DataTable(ft.Container):
                 spacing=LayoutConstants.SPACING_MD,
             )
 
-        # Envolver tabla en ListView para scroll automático
+        # Envolver tabla en contenedor con borde
         table_container = ft.Container(
-            content=ft.ListView(
-                controls=[self._data_table],
-                spacing=0,
-                padding=0,
-                expand=True,
-            ),
+            content=table_content,
             border=ft.border.all(1),
             border_radius=LayoutConstants.RADIUS_SM,
             expand=True,
@@ -290,6 +190,214 @@ class DataTable(ft.Container):
             spacing=LayoutConstants.SPACING_MD,
             expand=True,
         )
+
+    def _build_table_header(self) -> ft.Container:
+        """Construye la fila de encabezados."""
+        header_cells = []
+
+        # Checkbox para seleccionar todo (si es seleccionable)
+        if self.selectable:
+            select_all_checkbox = ft.Checkbox(
+                value=False,
+                on_change=self._on_select_all,
+            )
+            header_cells.append(
+                ft.Container(
+                    content=select_all_checkbox,
+                    width=50,
+                    padding=LayoutConstants.PADDING_SM,
+                )
+            )
+
+        # Celdas de encabezado para cada columna
+        for col in self.columns:
+            header_content = [
+                ft.Text(
+                    t(col.label),
+                    weight=LayoutConstants.FONT_WEIGHT_SEMIBOLD,
+                    size=LayoutConstants.FONT_SIZE_MD,
+                )
+            ]
+
+            # Indicador de ordenamiento si la columna es sortable
+            if col.sortable:
+                sort_icon = ft.Icon(
+                    ft.Icons.UNFOLD_MORE,
+                    size=LayoutConstants.ICON_SIZE_SM,
+                )
+
+                # Actualizar icono si esta columna está ordenada
+                if self._sort_column == col.key:
+                    sort_icon.name = (
+                        ft.Icons.ARROW_UPWARD
+                        if self._sort_ascending
+                        else ft.Icons.ARROW_DOWNWARD
+                    )
+
+                header_content.append(sort_icon)
+
+            header_row = ft.Row(
+                header_content,
+                spacing=LayoutConstants.SPACING_XS,
+            )
+
+            container = ft.Container(
+                content=header_row,
+                padding=LayoutConstants.PADDING_SM,
+                width=col.width,
+                expand=col.width is None,
+                on_click=lambda _, c=col: self._handle_sort(c.key) if c.sortable else None,
+            )
+
+            # Cursor pointer si es sortable
+            if col.sortable:
+                container.cursor = ft.MouseCursor.CLICK
+
+            header_cells.append(container)
+
+        # Columna de acciones (si existe on_edit o on_delete)
+        if self.on_edit or self.on_delete:
+            header_cells.append(
+                ft.Container(
+                    content=ft.Text(
+                        t("common.actions"),
+                        weight=LayoutConstants.FONT_WEIGHT_SEMIBOLD,
+                        size=LayoutConstants.FONT_SIZE_MD,
+                    ),
+                    padding=LayoutConstants.PADDING_SM,
+                    width=120,
+                    alignment=ft.alignment.center,
+                )
+            )
+
+        return ft.Container(
+            content=ft.Row(
+                header_cells,
+                spacing=0,
+            ),
+        )
+
+    def _build_table_rows(self) -> list[ft.Container]:
+        """Construye las filas de datos de la tabla."""
+        rows = []
+
+        # Obtener datos ordenados y paginados
+        sorted_data = self._get_sorted_data()
+        paginated_data = self._get_paginated_data(sorted_data)
+
+        for idx, row_data in enumerate(paginated_data):
+            global_idx = self._current_page * self.page_size + idx
+            row = self._build_data_row(row_data, global_idx, idx)
+            rows.append(row)
+
+        return rows
+
+    def _build_data_row(
+        self, row_data: dict[str, Any], global_idx: int, local_idx: int
+    ) -> ft.Container:
+        """
+        Construye una fila de datos.
+
+        Args:
+            row_data: Datos de la fila
+            global_idx: Índice global de la fila
+            local_idx: Índice local en la página actual
+
+        Returns:
+            Container con la fila
+        """
+        cells = []
+
+        # Checkbox de selección
+        if self.selectable:
+            checkbox = ft.Checkbox(
+                value=global_idx in self._selected_rows,
+                on_change=lambda e: self._on_row_select(global_idx, e.control.value),
+            )
+            cells.append(
+                ft.Container(
+                    content=checkbox,
+                    width=50,
+                    padding=LayoutConstants.PADDING_SM,
+                )
+            )
+
+        # Celdas de datos
+        for col in self.columns:
+            value = row_data.get(col.key, "")
+
+            # Formatear valor si hay formatter
+            if col.formatter:
+                display_value = col.formatter(value)
+            else:
+                display_value = str(value) if value is not None else ""
+
+            cell = ft.Container(
+                content=ft.Text(
+                    display_value,
+                    size=LayoutConstants.FONT_SIZE_MD,
+                ),
+                padding=LayoutConstants.PADDING_SM,
+                width=col.width,
+                expand=col.width is None,
+                alignment=ft.alignment.center_left,
+            )
+            cells.append(cell)
+
+        # Celda de acciones (si existe on_edit o on_delete)
+        if self.on_edit or self.on_delete:
+            actions = []
+            if self.on_edit:
+                actions.append(
+                    ft.IconButton(
+                        icon=ft.Icons.EDIT,
+                        icon_size=LayoutConstants.ICON_SIZE_SM,
+                        tooltip=t("common.edit"),
+                        on_click=lambda e, data=row_data: self._handle_edit(data),
+                    )
+                )
+            if self.on_delete:
+                actions.append(
+                    ft.IconButton(
+                        icon=ft.Icons.DELETE,
+                        icon_size=LayoutConstants.ICON_SIZE_SM,
+                        tooltip=t("common.delete"),
+                        on_click=lambda e, data=row_data: self._handle_delete(data),
+                    )
+                )
+
+            actions_cell = ft.Container(
+                content=ft.Row(
+                    actions,
+                    spacing=LayoutConstants.SPACING_XS,
+                    alignment=ft.MainAxisAlignment.CENTER,
+                ),
+                padding=LayoutConstants.PADDING_SM,
+                width=120,
+                alignment=ft.alignment.center,
+            )
+            cells.append(actions_cell)
+
+        # Container de la fila
+        row_container = ft.Row(
+            cells,
+            spacing=0,
+        )
+
+        # Wrapper con hover y click
+        wrapper = ft.Container(
+            content=row_container,
+            on_click=lambda _, data=row_data: self._handle_row_click(data)
+            if self.on_row_click
+            else None,
+        )
+
+        # Efectos hover y cursor
+        if self.on_row_click:
+            wrapper.cursor = ft.MouseCursor.CLICK
+            wrapper.ink = True
+
+        return wrapper
 
     def _get_sorted_data(self) -> list[dict[str, Any]]:
         """
@@ -409,6 +517,63 @@ class DataTable(ft.Container):
             except Exception as ex:
                 logger.error(f"Error in selection changed callback: {ex}")
 
+    def _on_select_all(self, e: ft.ControlEvent) -> None:
+        """Handler para seleccionar/deseleccionar todo."""
+        if e.control.value:
+            # Seleccionar todos los registros visibles en la página actual
+            sorted_data = self._get_sorted_data()
+            paginated_data = self._get_paginated_data(sorted_data)
+
+            for idx in range(len(paginated_data)):
+                global_idx = self._current_page * self.page_size + idx
+                self._selected_rows.add(global_idx)
+        else:
+            # Deseleccionar todos
+            self._selected_rows.clear()
+
+        # Reconstruir tabla
+        self.content = self.build()
+        if self.page:
+            self.update()
+
+        # Llamar callback si existe
+        if self.on_selection_changed:
+            selected_data = [
+                self.data[idx] for idx in self._selected_rows if idx < len(self.data)
+            ]
+            try:
+                self.on_selection_changed(selected_data)
+            except Exception as ex:
+                logger.error(f"Error in selection changed callback: {ex}")
+
+    def _on_row_select(self, row_idx: int, selected: bool) -> None:
+        """
+        Handler para selección de fila individual.
+
+        Args:
+            row_idx: Índice de la fila
+            selected: Si está seleccionada
+        """
+        if selected:
+            self._selected_rows.add(row_idx)
+        else:
+            self._selected_rows.discard(row_idx)
+
+        # Reconstruir tabla para actualizar checkboxes
+        self.content = self.build()
+        if self.page:
+            self.update()
+
+        # Llamar callback si existe
+        if self.on_selection_changed:
+            selected_data = [
+                self.data[idx] for idx in self._selected_rows if idx < len(self.data)
+            ]
+            try:
+                self.on_selection_changed(selected_data)
+            except Exception as ex:
+                logger.error(f"Error in selection changed callback: {ex}")
+
     def _previous_page(self, e: ft.ControlEvent) -> None:
         """Navega a la página anterior."""
         if self._current_page > 0:
@@ -486,7 +651,7 @@ class DataTable(ft.Container):
         # Siempre reconstruir el contenido cuando cambian los datos
         new_content = self.build()
         self.content = new_content
-        logger.debug(f"DataTable content rebuilt: {type(new_content).__name__}")
+        logger.debug(f"DataTable content rebuilt")
 
         # Solo actualizar si está montado en una página
         if self.page:
