@@ -45,56 +45,59 @@ class EmptyState(ft.Container):
         on_action: Callable[[], None] | None = None,
     ):
         """Inicializa el componente de empty state."""
-        super().__init__()
-        self.icon = icon
-        self.title = title
-        self.message = message
-        self.action_text = action_text
-        self.on_action = on_action
+        self._icon = icon
+        self._title = title
+        self._message = message
+        self._action_text = action_text
+        self._on_action = on_action
         logger.debug(f"EmptyState initialized with title={title}")
 
         # Suscribirse a cambios de tema
         app_state.theme.add_observer(self._on_theme_changed)
 
+        # Construir el contenido inmediatamente
+        super().__init__()
+        self._build_content()
+
     def _on_theme_changed(self) -> None:
         """Callback cuando cambia el tema."""
+        self._build_content()
         if self.page:
             self.update()
 
-    def build(self) -> ft.Control:
+    def _build_content(self) -> None:
         """
         Construye el componente de empty state.
 
-        Returns:
-            Control de Flet con el estado vacío
+        Establece las propiedades del Container directamente.
         """
         is_dark = app_state.theme.is_dark_mode
 
-        content = [
+        controls = [
             ft.Icon(
-                name=self.icon,
+                name=self._icon,
                 size=LayoutConstants.ICON_SIZE_XL * 2,
                 color=ColorConstants.get_color_for_theme("ON_SURFACE_VARIANT", is_dark),
             ),
             ft.Text(
-                self.title,
+                self._title,
                 size=LayoutConstants.FONT_SIZE_XXL,
                 weight=LayoutConstants.FONT_WEIGHT_BOLD,
                 color=ColorConstants.get_color_for_theme("ON_SURFACE", is_dark),
                 text_align=ft.TextAlign.CENTER,
             ),
             ft.Text(
-                self.message,
+                self._message,
                 size=LayoutConstants.FONT_SIZE_MD,
                 color=ColorConstants.get_color_for_theme("ON_SURFACE_VARIANT", is_dark),
                 text_align=ft.TextAlign.CENTER,
             ),
         ]
 
-        if self.action_text and self.on_action:
-            content.append(
+        if self._action_text and self._on_action:
+            controls.append(
                 ft.ElevatedButton(
-                    text=self.action_text,
+                    text=self._action_text,
                     icon=ft.Icons.ADD,
                     on_click=self._handle_action,
                     bgcolor=ColorConstants.PRIMARY,
@@ -102,16 +105,15 @@ class EmptyState(ft.Container):
                 )
             )
 
-        return ft.Container(
-            content=ft.Column(
-                controls=content,
-                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                spacing=LayoutConstants.SPACING_LG,
-            ),
-            alignment=ft.alignment.center,
-            padding=LayoutConstants.PADDING_XL,
-            expand=True,
+        # Establecer las propiedades del Container directamente
+        self.content = ft.Column(
+            controls=controls,
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            spacing=LayoutConstants.SPACING_LG,
         )
+        self.alignment = ft.alignment.center
+        self.padding = LayoutConstants.PADDING_XL
+        self.expand = True
 
     def _handle_action(self, e: ft.ControlEvent) -> None:
         """
@@ -121,9 +123,9 @@ class EmptyState(ft.Container):
             e: Evento de Flet
         """
         logger.info("Empty state action button clicked")
-        if self.on_action:
+        if self._on_action:
             try:
-                self.on_action()
+                self._on_action()
             except Exception as ex:
                 logger.error(f"Error in action callback: {ex}")
 
@@ -146,13 +148,16 @@ class EmptyState(ft.Container):
             >>> empty.update()
         """
         if title is not None:
-            self.title = title
+            self._title = title
         if message is not None:
-            self.message = message
+            self._message = message
         if action_text is not None:
-            self.action_text = action_text
+            self._action_text = action_text
 
-        logger.debug(f"Updated empty state content: title={self.title}")
+        # Reconstruir el contenido con los nuevos valores
+        self._build_content()
+
+        logger.debug(f"Updated empty state content: title={self._title}")
         if self.page:
             self.update()
 
