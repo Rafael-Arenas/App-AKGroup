@@ -110,6 +110,9 @@ class DataTable(ft.Container):
 
         logger.debug(f"DataTable initialized: {len(self.columns)} columns, {len(self.data)} rows")
 
+        # Configurar propiedades del Container
+        self.expand = True
+
         # Suscribirse a cambios de tema
         app_state.theme.add_observer(self._on_theme_changed)
 
@@ -264,16 +267,20 @@ class DataTable(ft.Container):
                 spacing=LayoutConstants.SPACING_MD,
             )
 
-        controls = [
-            ft.Container(
-                content=ft.Column(
-                    controls=[self._data_table],
-                    scroll=ft.ScrollMode.AUTO,
-                ),
-                border=ft.border.all(1),
-                border_radius=LayoutConstants.RADIUS_SM,
-            )
-        ]
+        # Envolver tabla en ListView para scroll automático
+        table_container = ft.Container(
+            content=ft.ListView(
+                controls=[self._data_table],
+                spacing=0,
+                padding=0,
+                expand=True,
+            ),
+            border=ft.border.all(1),
+            border_radius=LayoutConstants.RADIUS_SM,
+            expand=True,
+        )
+
+        controls = [table_container]
 
         if pagination:
             controls.append(pagination)
@@ -281,6 +288,7 @@ class DataTable(ft.Container):
         return ft.Column(
             controls=controls,
             spacing=LayoutConstants.SPACING_MD,
+            expand=True,
         )
 
     def _get_sorted_data(self) -> list[dict[str, Any]]:
