@@ -175,7 +175,7 @@ class CompanyListView(ft.Container):
 
         # Configurar propiedades del contenedor
         self.expand = True
-        self.padding = LayoutConstants.PADDING_LG
+        self.padding = 0
 
         # Establecer contenido inicial (loading)
         self._rebuild_content()
@@ -399,13 +399,33 @@ class CompanyListView(ft.Container):
             # Contenido principal con datos
             self.content = ft.Column(
                 controls=[
-                    header,
-                    self._search_bar,
-                    self._filter_panel,
-                    self._data_table,
+                    ft.Container(
+                        content=header,
+                        padding=ft.padding.only(
+                            left=LayoutConstants.PADDING_LG,
+                            right=LayoutConstants.PADDING_LG,
+                            top=LayoutConstants.PADDING_LG,
+                        ),
+                    ),
+                    ft.Container(
+                        content=self._search_bar,
+                        padding=ft.padding.symmetric(horizontal=LayoutConstants.PADDING_LG),
+                    ),
+                    ft.Container(
+                        content=self._filter_panel,
+                        padding=ft.padding.symmetric(horizontal=LayoutConstants.PADDING_LG),
+                    ),
+                    ft.Container(
+                        content=self._data_table,
+                        padding=ft.padding.only(
+                            left=LayoutConstants.PADDING_LG,
+                            right=LayoutConstants.PADDING_LG,
+                            bottom=LayoutConstants.PADDING_LG,
+                        ),
+                        expand=True,
+                    ),
                 ],
                 spacing=LayoutConstants.SPACING_MD,
-                scroll=ft.ScrollMode.AUTO,
                 expand=True,
             )
 
