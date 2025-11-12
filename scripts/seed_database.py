@@ -67,6 +67,7 @@ from src.backend.models import (
     # Business
     DeliveryDate,
     DeliveryOrder,
+    InvoiceSII,
     Order,
     PaymentCondition,
     Quote,
@@ -756,17 +757,244 @@ def seed_business_models(session: Session, lookups: dict, core: dict, count: int
     session.flush()
     logger.success(f"  ✓ Created {len(quotes)} quotes with {len(quote_products)} quote products")
 
+    # ========== ORDERS ==========
+    orders = []
+    # Crear orders desde algunas quotes aceptadas
+    accepted_quotes = [
+        q for q in quotes
+        if q.status.code == "accepted"
+    ][:15]  # Primeras 15 quotes aceptadas
+
+    for i, quote in enumerate(accepted_quotes):
+        order = Order(
+            order_number=f"O-{year}-{i+1:04d}",
+            revision="A",
+            order_type="sales",
+            quote_id=quote.id,
+            customer_quote_number=f"CQ-{random.randint(1000, 9999)}",
+            project_number=f"PRJ-{random.randint(100, 999)}" if random.random() > 0.5 else None,
+            company_id=quote.company_id,
+            contact_id=quote.contact_id,
+            branch_id=quote.branch_id,
+            staff_id=quote.staff_id,
+            status_id=random.choice(lookups["order_statuses"]).id,
+            payment_status_id=random.choice(lookups["payment_statuses"]).id,
+            order_date=quote.quote_date,
+            required_date=fake.date_between(start_date="+1M", end_date="+4M"),
+            promised_date=fake.date_between(start_date="+2M", end_date="+5M"),
+            incoterm_id=quote.incoterm_id,
+            currency_id=quote.currency_id,
+            exchange_rate=quote.exchange_rate,
+            subtotal=quote.subtotal,
+            tax_percentage=quote.tax_percentage,
+            tax_amount=quote.tax_amount,
+            shipping_cost=Decimal(str(round(random.uniform(50, 500), 2))),
+            other_costs=Decimal(str(round(random.uniform(0, 200), 2))) if random.random() > 0.6 else Decimal("0.00"),
+            total=quote.total + Decimal(str(round(random.uniform(50, 700), 2))),
+            payment_terms="30 días",
+            is_export=random.random() > 0.7,
+            notes=fake.text(max_nb_chars=150) if random.random() > 0.5 else None,
+            internal_notes=fake.text(max_nb_chars=100) if random.random() > 0.7 else None,
+            is_active=True,
+        )
+        session.add(order)
+        orders.append(order)
+
+    session.flush()
+    logger.success(f"  ✓ Created {len(orders)} orders")
+
+    # ========== TRANSPORT ==========
+    transports_data = [
+        {"name": "DHL Express", "contact_name": "Servicio al Cliente", "contact_phone": generate_phone(), "contact_email": "dhl@example.com"},
+        {"name": "FedEx", "contact_name": "Logistics", "contact_phone": generate_phone(), "contact_email": "fedex@example.com"},
+        {"name": "Transporte Propio", "contact_name": "Logística Interna", "contact_phone": generate_phone(), "contact_email": "logistica@akgroup.com"},
+        {"name": "Chilexpress", "contact_name": "Atención", "contact_phone": generate_phone(), "contact_email": "chilexpress@example.com"},
+    ]
+
+    transports = []
+    for data in transports_data:
+        transport = Transport(**data, is_active=True)
+        session.add(transport)
+        transports.append(transport)
+
+    session.flush()
+    logger.success(f"  ✓ Created {len(transports)} transport companies")
+
+    # ========== DELIVERY ORDERS ==========
+    delivery_orders = []
+    for i, order in enumerate(orders[:10]):  # Primeras 10 órdenes
+        # Calcular fecha de entrega real (1-60 días después de la fecha requerida)
+        actual_delivery = None
+        if random.random() > 0.5:
+            days_delay = random.randint(1, 60)
+            actual_delivery = pendulum.instance(order.required_date).add(days=days_delay)
+
+        delivery = DeliveryOrder(
+            delivery_number=f"GD-{year}-{i+1:04d}",
+            revision="A",
+            order_id=order.id,
+            company_id=order.company_id,
+            address_id=core["addresses"][0].id if core["addresses"] else None,  # Primera dirección
+            transport_id=random.choice(transports).id,
+            staff_id=order.staff_id,
+            delivery_date=order.required_date,
+            actual_delivery_date=actual_delivery,
+            status=random.choice(["pending", "in_transit", "delivered"]),
+            tracking_number=f"TRK-{random.randint(100000, 999999)}" if random.random() > 0.4 else None,
+            delivery_instructions=fake.text(max_nb_chars=100) if random.random() > 0.6 else None,
+            signature_name=fake.name() if random.random() > 0.5 else None,
+            notes=fake.text(max_nb_chars=80) if random.random() > 0.7 else None,
+            is_active=True,
+        )
+        session.add(delivery)
+        delivery_orders.append(delivery)
+
+    session.flush()
+    logger.success(f"  ✓ Created {len(delivery_orders)} delivery orders")
+
+    # ========== INVOICES SII ==========
+    invoices_sii = []
+    for i, order in enumerate(orders[:8]):  # Primeras 8 órdenes
+        invoice = InvoiceSII(
+            invoice_number=f"{random.randint(1000, 9999)}{i+1:04d}",  # Número de folio
+            revision="A",
+            invoice_type="33",  # Factura Electrónica
+            order_id=order.id,
+            company_id=order.company_id,
+            branch_id=order.branch_id,
+            staff_id=order.staff_id,
+            payment_status_id=random.choice(lookups["payment_statuses"]).id,
+            invoice_date=order.order_date,
+            due_date=fake.date_between(start_date=order.order_date, end_date="+60d"),
+            paid_date=fake.date_between(start_date=order.order_date, end_date="+90d") if random.random() > 0.5 else None,
+            currency_id=order.currency_id,
+            exchange_rate=order.exchange_rate,
+            subtotal=order.subtotal,
+            tax_amount=order.tax_amount,
+            total=order.total,
+            net_amount=order.subtotal,
+            exempt_amount=Decimal("0.00"),
+            payment_terms=order.payment_terms,
+            sii_status=random.choice(["pending", "accepted"]),
+            sii_track_id=f"SII-{random.randint(1000000, 9999999)}" if random.random() > 0.3 else None,
+            notes=fake.text(max_nb_chars=100) if random.random() > 0.6 else None,
+            is_active=True,
+        )
+        session.add(invoice)
+        invoices_sii.append(invoice)
+
+    session.flush()
+    logger.success(f"  ✓ Created {len(invoices_sii)} SII invoices")
+
     # ========== PAYMENT CONDITIONS ==========
-    # SKIP payment conditions - need to review model fields
+    # Create standard payment condition templates
+    payment_conditions_data = [
+        {
+            "code": "NET30",
+            "name": "Net 30 días",
+            "revision": "A",
+            "description": "Pago completo a 30 días",
+            "days_to_pay": 30,
+            "percentage_advance": Decimal("0.00"),
+            "percentage_on_delivery": Decimal("0.00"),
+            "percentage_after_delivery": Decimal("100.00"),
+            "days_after_delivery": 30,
+            "is_default": True,
+        },
+        {
+            "code": "NET60",
+            "name": "Net 60 días",
+            "revision": "A",
+            "description": "Pago completo a 60 días",
+            "days_to_pay": 60,
+            "percentage_advance": Decimal("0.00"),
+            "percentage_on_delivery": Decimal("0.00"),
+            "percentage_after_delivery": Decimal("100.00"),
+            "days_after_delivery": 60,
+        },
+        {
+            "code": "COD",
+            "name": "Contra entrega",
+            "revision": "A",
+            "description": "Pago al momento de la entrega",
+            "days_to_pay": 0,
+            "percentage_advance": Decimal("0.00"),
+            "percentage_on_delivery": Decimal("100.00"),
+            "percentage_after_delivery": Decimal("0.00"),
+        },
+        {
+            "code": "50-50",
+            "name": "50% Anticipo + 50% Entrega",
+            "revision": "A",
+            "description": "50% al confirmar pedido, 50% al entregar",
+            "percentage_advance": Decimal("50.00"),
+            "percentage_on_delivery": Decimal("50.00"),
+            "percentage_after_delivery": Decimal("0.00"),
+        },
+        {
+            "code": "30-70",
+            "name": "30% Anticipo + 70% a 30 días",
+            "revision": "A",
+            "description": "30% al confirmar, 70% a 30 días de entrega",
+            "percentage_advance": Decimal("30.00"),
+            "percentage_on_delivery": Decimal("0.00"),
+            "percentage_after_delivery": Decimal("70.00"),
+            "days_after_delivery": 30,
+        },
+    ]
+
     payment_conditions = []
-    logger.success(f"  ✓ Skipped payment conditions (need model review)")
+    for data in payment_conditions_data:
+        condition = PaymentCondition(**data)
+        session.add(condition)
+        payment_conditions.append(condition)
+
+    session.flush()
+    logger.success(f"  ✓ Created {len(payment_conditions)} payment condition templates")
+
+    # ========== DELIVERY DATES ==========
+    # Create multiple delivery dates for some delivery orders (partial deliveries)
+    delivery_dates = []
+    for delivery_order in delivery_orders[:5]:  # Primeras 5 órdenes de entrega con entregas parciales
+        num_dates = random.randint(2, 4)  # 2-4 entregas parciales
+        base_date = pendulum.instance(delivery_order.delivery_date)
+
+        for j in range(num_dates):
+            # Fechas de entrega escalonadas cada 1-2 semanas
+            planned = base_date.add(weeks=j * random.randint(1, 2))
+            actual = None
+            status = "pending"
+
+            # Algunas entregas ya completadas
+            if random.random() > 0.5:
+                actual = planned.add(days=random.randint(-3, 10))
+                status = "completed"
+
+            delivery_date = DeliveryDate(
+                delivery_order_id=delivery_order.id,
+                planned_date=planned,
+                actual_date=actual,
+                quantity=Decimal(str(random.randint(10, 500))),
+                status=status,
+                notes=fake.text(max_nb_chars=80) if random.random() > 0.6 else None,
+            )
+            session.add(delivery_date)
+            delivery_dates.append(delivery_date)
+
+    session.flush()
+    logger.success(f"  ✓ Created {len(delivery_dates)} partial delivery dates")
 
     session.commit()
 
     return {
         "quotes": quotes,
         "quote_products": quote_products,
+        "orders": orders,
+        "transports": transports,
+        "delivery_orders": delivery_orders,
+        "invoices_sii": invoices_sii,
         "payment_conditions": payment_conditions,
+        "delivery_dates": delivery_dates,
     }
 
 
@@ -801,6 +1029,65 @@ def _calculate_rut_dv(rut: int) -> str:
         return str(dv)
 
 
+def clear_database(session: Session) -> None:
+    """
+    Limpia todos los datos de la base de datos.
+
+    Elimina los registros en orden inverso de dependencias para evitar
+    errores de foreign key constraints.
+
+    Args:
+        session: Sesión de SQLAlchemy
+    """
+    logger.info("🗑️  Clearing existing database data...")
+
+    try:
+        # Orden inverso de dependencias (de más dependiente a menos)
+        # Business models (más dependientes)
+        session.query(DeliveryDate).delete()
+        session.query(PaymentCondition).delete()
+        session.query(InvoiceSII).delete()
+        session.query(DeliveryOrder).delete()
+        session.query(Order).delete()
+        session.query(QuoteProduct).delete()
+        session.query(Quote).delete()
+
+        # Core models
+        session.query(ProductComponent).delete()
+        session.query(Service).delete()
+        session.query(Product).delete()
+        session.query(Note).delete()
+        session.query(Address).delete()
+        session.query(Contact).delete()
+        session.query(CompanyRut).delete()
+        session.query(Branch).delete()
+        session.query(Company).delete()
+        session.query(Staff).delete()
+
+        # Lookups (menos dependientes)
+        session.query(Transport).delete()
+        session.query(City).delete()
+        session.query(Country).delete()
+        session.query(CompanyType).delete()
+        session.query(Currency).delete()
+        session.query(Incoterm).delete()
+        session.query(Unit).delete()
+        session.query(Matter).delete()
+        session.query(FamilyType).delete()
+        session.query(SalesType).delete()
+        session.query(OrderStatus).delete()
+        session.query(PaymentStatus).delete()
+        session.query(QuoteStatus).delete()
+
+        session.commit()
+        logger.success("  ✓ Database cleared successfully")
+
+    except Exception as e:
+        logger.error(f"  ✗ Error clearing database: {e}")
+        session.rollback()
+        raise
+
+
 def seed_all(
     session: Optional[Session] = None,
     database_url: str = "sqlite:///app_akgroup.db",
@@ -822,6 +1109,11 @@ def seed_all(
     close_session = False
     if session is None:
         engine = create_engine(database_url, echo=False)
+
+        # Crear tablas si no existen
+        from src.backend.models.base.base import Base
+        Base.metadata.create_all(bind=engine)
+
         SessionLocal = sessionmaker(bind=engine)
         session = SessionLocal()
         close_session = True
@@ -830,6 +1122,9 @@ def seed_all(
         logger.info("=" * 60)
         logger.info("🌱 SEEDING DATABASE WITH FAKE DATA")
         logger.info("=" * 60)
+
+        # Limpiar datos existentes
+        clear_database(session)
 
         # Fase 1: Lookups
         lookups = seed_lookups(session)
@@ -842,9 +1137,27 @@ def seed_all(
 
         logger.info("=" * 60)
         logger.success(f"✅ DATABASE SEEDED SUCCESSFULLY!")
-        logger.info(f"   Total companies: {len(core['companies'])}")
-        logger.info(f"   Total products: {len(core['products'])}")
-        logger.info(f"   Total quotes: {len(business['quotes'])}")
+        logger.info("=" * 60)
+        logger.info(f"📊 Summary:")
+        logger.info(f"   Lookups:")
+        logger.info(f"     - Countries: {len(lookups['countries'])}")
+        logger.info(f"     - Cities: {len(lookups['cities'])}")
+        logger.info(f"     - Company Types: {len(lookups['company_types'])}")
+        logger.info(f"     - Currencies: {len(lookups['currencies'])}")
+        logger.info(f"     - Incoterms: {len(lookups['incoterms'])}")
+        logger.info(f"   Core Models:")
+        logger.info(f"     - Staff: {len(core['staff'])}")
+        logger.info(f"     - Companies: {len(core['companies'])}")
+        logger.info(f"     - Contacts: {len(core['contacts'])}")
+        logger.info(f"     - Products: {len(core['products'])}")
+        logger.info(f"     - Addresses: {len(core['addresses'])}")
+        logger.info(f"   Business Models:")
+        logger.info(f"     - Quotes: {len(business['quotes'])}")
+        logger.info(f"     - Quote Products: {len(business['quote_products'])}")
+        logger.info(f"     - Orders: {len(business['orders'])}")
+        logger.info(f"     - Delivery Orders: {len(business['delivery_orders'])}")
+        logger.info(f"     - Invoices: {len(business['invoices_sii'])}")
+        logger.info(f"     - Payment Conditions: {len(business['payment_conditions'])}")
         logger.info("=" * 60)
 
     except Exception as e:
