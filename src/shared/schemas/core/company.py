@@ -125,11 +125,19 @@ class CompanyResponse(BaseResponse):
 
     name: str
     trigram: str
+    main_address: Optional[str] = None
     phone: Optional[str] = None
     website: Optional[str] = None
+    intracommunity_number: Optional[str] = None
     company_type_id: int
     country_id: Optional[int] = None
+    city_id: Optional[int] = None
     is_active: bool
+
+    # Campos calculados para nombres de relaciones
+    company_type: Optional[str] = None
+    country_name: Optional[str] = None
+    city_name: Optional[str] = None
 
     # Relaciones opcionales (eager loading)
     ruts: Optional[List['CompanyRutResponse']] = []
