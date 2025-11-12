@@ -111,7 +111,7 @@ class MainView(ft.Container):
                 expand=True,
             ),
             expand=True,
-            padding=LayoutConstants.PADDING_LG,
+            padding=0,
         )
 
         # Cargar vista inicial (Dashboard)
