@@ -88,24 +88,17 @@ class CompanyDetailView(ft.Container):
                 alignment=ft.alignment.center,
             )
 
-        # Botón volver
-        back_button = ft.IconButton(
-            icon=ft.Icons.ARROW_BACK,
-            tooltip="Volver",
-            on_click=self._on_back_click,
-        )
-
-        # Badges
+        # Badges más pequeños
         status_badge = ft.Container(
             content=ft.Text(
                 "Activa" if self._company.get("is_active") else "Inactiva",
-                size=LayoutConstants.FONT_SIZE_SM,
-                weight=LayoutConstants.FONT_WEIGHT_BOLD,
+                size=LayoutConstants.FONT_SIZE_XS,
+                weight=LayoutConstants.FONT_WEIGHT_SEMIBOLD,
                 color=ft.Colors.WHITE,
             ),
             padding=ft.padding.symmetric(
-                horizontal=LayoutConstants.PADDING_MD,
-                vertical=LayoutConstants.PADDING_SM,
+                horizontal=LayoutConstants.PADDING_SM,
+                vertical=LayoutConstants.PADDING_XS,
             ),
             border_radius=LayoutConstants.RADIUS_FULL,
             bgcolor=ft.Colors.GREEN if self._company.get("is_active") else ft.Colors.RED_400,
@@ -114,76 +107,68 @@ class CompanyDetailView(ft.Container):
         type_badge = ft.Container(
             content=ft.Text(
                 self._format_company_type(self._company.get("company_type", "")),
-                size=LayoutConstants.FONT_SIZE_SM,
-                weight=LayoutConstants.FONT_WEIGHT_BOLD,
+                size=LayoutConstants.FONT_SIZE_XS,
+                weight=LayoutConstants.FONT_WEIGHT_SEMIBOLD,
                 color=ft.Colors.WHITE,
             ),
             padding=ft.padding.symmetric(
-                horizontal=LayoutConstants.PADDING_MD,
-                vertical=LayoutConstants.PADDING_SM,
+                horizontal=LayoutConstants.PADDING_SM,
+                vertical=LayoutConstants.PADDING_XS,
             ),
             border_radius=LayoutConstants.RADIUS_FULL,
             bgcolor=ft.Colors.BLUE,
         )
 
-        # Header con nombre y acciones
+        # Header compacto con iconos de acción a la derecha
         header = ft.Container(
-            content=ft.Column(
+            content=ft.Row(
                 controls=[
+                    ft.Icon(
+                        name=ft.Icons.BUSINESS,
+                        size=LayoutConstants.ICON_SIZE_LG,
+                    ),
+                    ft.Column(
+                        controls=[
+                            ft.Text(
+                                self._company.get("name", ""),
+                                size=LayoutConstants.FONT_SIZE_XL,
+                                weight=LayoutConstants.FONT_WEIGHT_BOLD,
+                            ),
+                            ft.Row(
+                                controls=[
+                                    ft.Text(
+                                        self._company.get("trigram", ""),
+                                        size=LayoutConstants.FONT_SIZE_MD,
+                                    ),
+                                    type_badge,
+                                    status_badge,
+                                ],
+                                spacing=LayoutConstants.SPACING_SM,
+                            ),
+                        ],
+                        spacing=LayoutConstants.SPACING_XS,
+                        expand=True,
+                    ),
                     ft.Row(
                         controls=[
-                            back_button,
-                            ft.Container(expand=True),
                             ft.IconButton(
                                 icon=ft.Icons.EDIT_OUTLINED,
                                 tooltip="Editar empresa",
                                 on_click=self._on_edit_click,
-                                icon_size=LayoutConstants.ICON_SIZE_LG,
                             ),
                             ft.IconButton(
                                 icon=ft.Icons.DELETE_OUTLINE,
                                 tooltip="Eliminar empresa",
                                 on_click=self._on_delete_click,
-                                icon_size=LayoutConstants.ICON_SIZE_LG,
                             ),
                         ],
-                    ),
-                    ft.Divider(height=1),
-                    ft.Row(
-                        controls=[
-                            ft.Icon(
-                                name=ft.Icons.BUSINESS_CENTER,
-                                size=LayoutConstants.ICON_SIZE_XL * 2,
-                            ),
-                            ft.Column(
-                                controls=[
-                                    ft.Text(
-                                        self._company.get("name", ""),
-                                        size=LayoutConstants.FONT_SIZE_DISPLAY_LG,
-                                        weight=LayoutConstants.FONT_WEIGHT_BOLD,
-                                    ),
-                                    ft.Text(
-                                        self._company.get("trigram", ""),
-                                        size=LayoutConstants.FONT_SIZE_XL,
-                                    ),
-                                    ft.Row(
-                                        controls=[
-                                            type_badge,
-                                            status_badge,
-                                        ],
-                                        spacing=LayoutConstants.SPACING_SM,
-                                    ),
-                                ],
-                                spacing=LayoutConstants.SPACING_XS,
-                                expand=True,
-                            ),
-                        ],
-                        spacing=LayoutConstants.SPACING_LG,
+                        spacing=LayoutConstants.SPACING_XS,
                     ),
                 ],
                 spacing=LayoutConstants.SPACING_MD,
+                alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
             ),
-            padding=LayoutConstants.PADDING_LG,
+            padding=LayoutConstants.PADDING_MD,
             border=ft.border.all(1),
             border_radius=LayoutConstants.RADIUS_MD,
         )
@@ -279,7 +264,7 @@ class CompanyDetailView(ft.Container):
             initially_collapsed=True,
         )
 
-        # Layout organizado en una sola columna para mejor legibilidad
+        # Layout organizado
         cards = [
             header,
             general_card,
