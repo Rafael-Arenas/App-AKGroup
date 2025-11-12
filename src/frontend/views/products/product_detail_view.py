@@ -9,7 +9,6 @@ import flet as ft
 from loguru import logger
 
 from src.frontend.app_state import app_state
-from src.frontend.color_constants import ColorConstants
 from src.frontend.layout_constants import LayoutConstants
 from src.frontend.components.common import BaseCard, LoadingSpinner, ErrorDisplay, ConfirmDialog
 
@@ -52,8 +51,6 @@ class ProductDetailView(ft.Container):
 
     def build(self) -> ft.Control:
         """Construye el componente de detalle de producto."""
-        is_dark = app_state.theme.is_dark_mode
-
         if self._is_loading:
             return ft.Container(
                 content=LoadingSpinner(message="Cargando producto..."),
@@ -79,7 +76,6 @@ class ProductDetailView(ft.Container):
                 weight=LayoutConstants.FONT_WEIGHT_SEMIBOLD,
                 color=ft.Colors.WHITE,
             ),
-            bgcolor=ColorConstants.PRIMARY if is_nomenclature else ColorConstants.INFO,
             padding=ft.padding.symmetric(
                 horizontal=LayoutConstants.PADDING_SM,
                 vertical=LayoutConstants.PADDING_XS,
@@ -94,11 +90,6 @@ class ProductDetailView(ft.Container):
                 weight=LayoutConstants.FONT_WEIGHT_SEMIBOLD,
                 color=ft.Colors.WHITE,
             ),
-            bgcolor=(
-                ColorConstants.SUCCESS
-                if self._product.get("is_active")
-                else ColorConstants.ERROR
-            ),
             padding=ft.padding.symmetric(
                 horizontal=LayoutConstants.PADDING_SM,
                 vertical=LayoutConstants.PADDING_XS,
@@ -111,7 +102,6 @@ class ProductDetailView(ft.Container):
             controls=[
                 ft.Icon(
                     name=ft.Icons.INVENTORY_2,
-                    color=ColorConstants.PRIMARY,
                     size=LayoutConstants.ICON_SIZE_XL,
                 ),
                 ft.Column(
@@ -120,16 +110,12 @@ class ProductDetailView(ft.Container):
                             self._product.get("name", ""),
                             size=LayoutConstants.FONT_SIZE_DISPLAY_MD,
                             weight=LayoutConstants.FONT_WEIGHT_BOLD,
-                            color=ColorConstants.get_color_for_theme("ON_SURFACE", is_dark),
                         ),
                         ft.Row(
                             controls=[
                                 ft.Text(
                                     f"Código: {self._product.get('code', '')}",
                                     size=LayoutConstants.FONT_SIZE_MD,
-                                    color=ColorConstants.get_color_for_theme(
-                                        "ON_SURFACE_VARIANT", is_dark
-                                    ),
                                 ),
                                 type_badge,
                                 status_badge,
@@ -146,15 +132,11 @@ class ProductDetailView(ft.Container):
                             icon=ft.Icons.EDIT,
                             tooltip="Editar",
                             on_click=self._on_edit_click,
-                            bgcolor=ColorConstants.PRIMARY,
-                            icon_color=ft.Colors.WHITE,
                         ),
                         ft.IconButton(
                             icon=ft.Icons.DELETE,
                             tooltip="Eliminar",
                             on_click=self._on_delete_click,
-                            bgcolor=ColorConstants.ERROR,
-                            icon_color=ft.Colors.WHITE,
                         ),
                     ],
                     spacing=LayoutConstants.SPACING_SM,
@@ -206,7 +188,6 @@ class ProductDetailView(ft.Container):
                                     f"${total_cost:.2f}",
                                     size=LayoutConstants.FONT_SIZE_LG,
                                     weight=LayoutConstants.FONT_WEIGHT_BOLD,
-                                    color=ColorConstants.PRIMARY,
                                 ),
                             ],
                             alignment=ft.MainAxisAlignment.END,
@@ -239,23 +220,17 @@ class ProductDetailView(ft.Container):
 
     def _create_info_row(self, label: str, value: str) -> ft.Row:
         """Crea una fila de información."""
-        is_dark = app_state.theme.is_dark_mode
-
         return ft.Row(
             controls=[
                 ft.Text(
                     f"{label}:",
                     size=LayoutConstants.FONT_SIZE_MD,
                     weight=LayoutConstants.FONT_WEIGHT_SEMIBOLD,
-                    color=ColorConstants.get_color_for_theme("ON_SURFACE", is_dark),
                     width=150,
                 ),
                 ft.Text(
                     value,
                     size=LayoutConstants.FONT_SIZE_MD,
-                    color=ColorConstants.get_color_for_theme(
-                        "ON_SURFACE_VARIANT", is_dark
-                    ),
                     expand=True,
                 ),
             ],
@@ -300,7 +275,6 @@ class ProductDetailView(ft.Container):
 
         return ft.Container(
             content=table,
-            border=ft.border.all(1, ColorConstants.BORDER_LIGHT),
             border_radius=LayoutConstants.RADIUS_SM,
             padding=LayoutConstants.PADDING_SM,
         )

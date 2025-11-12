@@ -8,7 +8,6 @@ el número de notificaciones no leídas.
 import flet as ft
 from loguru import logger
 
-from src.frontend.color_constants import ColorConstants
 from src.frontend.layout_constants import LayoutConstants
 
 
@@ -59,15 +58,10 @@ class NotificationBadge(ft.Stack):
         controls = []
 
         # Botón base (icono de campana)
-        icon_color = ColorConstants.APPBAR_ON_BACKGROUND if self.count == 0 else (
-            ColorConstants.ERROR if self.has_urgent else ColorConstants.PRIMARY
-        )
-
         self.icon_button = ft.IconButton(
             icon=ft.Icons.NOTIFICATIONS_OUTLINED,
             selected_icon=ft.Icons.NOTIFICATIONS,
             selected=self.count > 0,
-            icon_color=icon_color,
             tooltip="Notificaciones",
             on_click=self._handle_click,
         )
@@ -76,16 +70,12 @@ class NotificationBadge(ft.Stack):
 
         # Badge (solo si count > 0)
         if self.count > 0:
-            badge_color = ColorConstants.ERROR if self.has_urgent else ColorConstants.PRIMARY
-
             badge = ft.Container(
                 content=ft.Text(
                     str(min(self.count, 99)) if self.count < 100 else "99+",
                     size=LayoutConstants.FONT_SIZE_XS,
                     weight=ft.FontWeight.BOLD,
-                    color=ColorConstants.BADGE_TEXT,
                 ),
-                bgcolor=badge_color,
                 border_radius=LayoutConstants.BADGE_SIZE // 2,
                 width=LayoutConstants.BADGE_SIZE,
                 height=LayoutConstants.BADGE_SIZE,

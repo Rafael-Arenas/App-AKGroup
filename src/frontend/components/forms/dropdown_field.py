@@ -6,7 +6,6 @@ Proporciona un campo de selección con validación.
 import flet as ft
 from loguru import logger
 
-from src.frontend.color_constants import ColorConstants
 from src.frontend.layout_constants import LayoutConstants
 from src.frontend.i18n.translation_manager import t
 
@@ -73,15 +72,12 @@ class DropdownField(ft.Container):
             hint_text=self.hint_text,
             options=dropdown_options,
             prefix_icon=self.prefix_icon,
-            border_color=ColorConstants.BORDER_LIGHT,
-            focused_border_color=ColorConstants.PRIMARY,
             on_change=self._on_change,
         )
 
         self._error_text = ft.Text(
             "",
             size=LayoutConstants.FONT_SIZE_SM,
-            color=ColorConstants.ERROR,
             visible=False,
         )
 
@@ -205,9 +201,6 @@ class DropdownField(ft.Container):
         if self._error_text:
             self._error_text.value = message
             self._error_text.visible = True
-        if self._dropdown:
-            self._dropdown.border_color = ColorConstants.ERROR
-            self._dropdown.focused_border_color = ColorConstants.ERROR
 
         logger.debug(f"Validation error set: {message}")
         if self.page:
@@ -223,9 +216,6 @@ class DropdownField(ft.Container):
         self.error_message = ""
         if self._error_text:
             self._error_text.visible = False
-        if self._dropdown:
-            self._dropdown.border_color = ColorConstants.BORDER_LIGHT
-            self._dropdown.focused_border_color = ColorConstants.PRIMARY
 
         if self.page:
             self.update()

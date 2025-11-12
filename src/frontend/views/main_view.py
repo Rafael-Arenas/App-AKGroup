@@ -8,7 +8,6 @@ import flet as ft
 from loguru import logger
 
 from src.frontend.app_state import app_state
-from src.frontend.color_constants import ColorConstants
 from src.frontend.layout_constants import LayoutConstants
 from src.frontend.navigation_config import get_navigation_item_by_index
 from src.frontend.i18n.translation_manager import t
@@ -96,16 +95,12 @@ class MainView(ft.Container):
         self._breadcrumb = Breadcrumb()
         self._breadcrumb_container = ft.Container(
             content=self._breadcrumb,
-            bgcolor=ColorConstants.get_color_for_theme("SURFACE", is_dark),
             padding=ft.padding.symmetric(
                 horizontal=LayoutConstants.PADDING_LG,
                 vertical=LayoutConstants.PADDING_SM,
             ),
             border=ft.border.only(
-                bottom=ft.BorderSide(
-                    1,
-                    ColorConstants.get_color_for_theme("DIVIDER", is_dark),
-                ),
+                bottom=ft.BorderSide(1),
             ),
         )
 
@@ -116,7 +111,6 @@ class MainView(ft.Container):
                 expand=True,
             ),
             expand=True,
-            bgcolor=ColorConstants.get_color_for_theme("BACKGROUND", is_dark),
             padding=LayoutConstants.PADDING_LG,
         )
 
@@ -320,27 +314,15 @@ class MainView(ft.Container):
                     ft.Icon(
                         name=ft.Icons.CONSTRUCTION,
                         size=LayoutConstants.ICON_SIZE_XL,
-                        color=ColorConstants.get_color_for_theme(
-                            "ON_SURFACE_VARIANT",
-                            app_state.theme.is_dark_mode,
-                        ),
                     ),
                     ft.Text(
                         f"{title} - En Construcción",
                         size=LayoutConstants.FONT_SIZE_XL,
                         weight=LayoutConstants.FONT_WEIGHT_BOLD,
-                        color=ColorConstants.get_color_for_theme(
-                            "ON_SURFACE",
-                            app_state.theme.is_dark_mode,
-                        ),
                     ),
                     ft.Text(
                         "Esta sección estará disponible próximamente.",
                         size=LayoutConstants.FONT_SIZE_MD,
-                        color=ColorConstants.get_color_for_theme(
-                            "ON_SURFACE_VARIANT",
-                            app_state.theme.is_dark_mode,
-                        ),
                     ),
                 ],
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
@@ -400,27 +382,6 @@ class MainView(ft.Container):
         Actualiza los colores de la interfaz.
         """
         logger.debug("Theme changed, updating UI")
-        is_dark = app_state.theme.is_dark_mode
-
-        # Actualizar colores del área de contenido
-        if self._content_area:
-            self._content_area.bgcolor = ColorConstants.get_color_for_theme(
-                "BACKGROUND",
-                is_dark,
-            )
-
-        # Actualizar colores del contenedor del breadcrumb
-        if self._breadcrumb_container:
-            self._breadcrumb_container.bgcolor = ColorConstants.get_color_for_theme(
-                "SURFACE",
-                is_dark,
-            )
-            self._breadcrumb_container.border = ft.border.only(
-                bottom=ft.BorderSide(
-                    1,
-                    ColorConstants.get_color_for_theme("DIVIDER", is_dark),
-                ),
-            )
 
         if self.page:
             self.update()

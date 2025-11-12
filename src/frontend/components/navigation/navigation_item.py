@@ -7,7 +7,6 @@ Representa un elemento de navegación con icono, label opcional y badge.
 import flet as ft
 from loguru import logger
 
-from src.frontend.color_constants import ColorConstants
 from src.frontend.layout_constants import LayoutConstants
 from src.frontend.app_state import app_state
 
@@ -97,19 +96,10 @@ class NavigationItem(ft.Container):
         Returns:
             Control con el contenido del item
         """
-        is_dark = app_state.theme.is_dark_mode
-
-        # Icono - mantener color blanco cuando está seleccionado
-        icon_color = (
-            ColorConstants.APPBAR_ON_BACKGROUND
-            if self.is_selected
-            else ColorConstants.get_color_for_theme("ON_SURFACE", is_dark)
-        )
-
+        # Icono
         icon_widget = ft.Icon(
             self.icon_selected_name if self.is_selected else self.icon_name,
             size=LayoutConstants.ICON_SIZE_MD,
-            color=icon_color,
         )
 
         # Badge en el icono (visible solo cuando colapsado Y hay badge)
@@ -127,9 +117,7 @@ class NavigationItem(ft.Container):
                             else "99+",
                             size=LayoutConstants.FONT_SIZE_XS,
                             weight=ft.FontWeight.BOLD,
-                            color=ColorConstants.BADGE_TEXT,
                         ),
-                        bgcolor=ColorConstants.BADGE_BACKGROUND,
                         border_radius=LayoutConstants.BADGE_SIZE_SM // 2,
                         width=LayoutConstants.BADGE_SIZE_SM,
                         height=LayoutConstants.BADGE_SIZE_SM,
@@ -146,11 +134,6 @@ class NavigationItem(ft.Container):
 
         # SIEMPRE usar la misma estructura (Row) para evitar movimiento del icono
         # Los labels y badges simplemente cambian de opacidad
-        label_color = (
-            ColorConstants.APPBAR_ON_BACKGROUND
-            if self.is_selected
-            else ColorConstants.get_color_for_theme("ON_SURFACE", is_dark)
-        )
 
         controls = [
             ft.Container(
@@ -164,7 +147,6 @@ class NavigationItem(ft.Container):
                     self.label_text,
                     size=LayoutConstants.FONT_SIZE_MD,
                     weight=ft.FontWeight.W_500 if self.is_selected else ft.FontWeight.NORMAL,
-                    color=label_color,
                 ),
                 expand=True,
                 opacity=1.0 if self.is_expanded else 0.0,
@@ -182,9 +164,7 @@ class NavigationItem(ft.Container):
                         else "99+",
                         size=LayoutConstants.FONT_SIZE_XS,
                         weight=ft.FontWeight.BOLD,
-                        color=ColorConstants.BADGE_TEXT,
                     ),
-                    bgcolor=ColorConstants.BADGE_BACKGROUND,
                     border_radius=LayoutConstants.BADGE_SIZE // 2,
                     padding=ft.padding.symmetric(
                         horizontal=6,
@@ -205,12 +185,9 @@ class NavigationItem(ft.Container):
 
     def _apply_styles(self) -> None:
         """Aplica los estilos según el estado."""
-        is_dark = app_state.theme.is_dark_mode
-
         if self.is_selected:
-            # Estado activo
-            self.bgcolor = ColorConstants.RAIL_SELECTED_DARK if is_dark else ColorConstants.RAIL_SELECTED_LIGHT
-            self.border = None  # Sin borde lateral
+            # Estado activo - use default Material 3 selection
+            pass
         else:
             # Estado normal
             self.bgcolor = None
@@ -234,19 +211,8 @@ class NavigationItem(ft.Container):
         Args:
             e: Evento de Flet
         """
-        is_dark = app_state.theme.is_dark_mode
-
-        if not self.is_selected:
-            if e.data == "true":
-                # Mouse enter
-                hover_color = ColorConstants.get_color_for_theme("OVERLAY", is_dark)
-                self.bgcolor = hover_color
-            else:
-                # Mouse leave
-                self.bgcolor = None
-            # Solo actualizar si está en la página
-            if self.page:
-                self.update()
+        # Let Flet handle hover states with default Material 3 colors
+        pass
 
     def set_selected(self, selected: bool) -> None:
         """

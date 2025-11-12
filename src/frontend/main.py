@@ -8,7 +8,6 @@ from loguru import logger
 
 from src.frontend.views import MainView
 from src.frontend.app_state import app_state
-from src.frontend.color_constants import ColorConstants
 
 
 def main(page: ft.Page) -> None:
@@ -29,15 +28,13 @@ def main(page: ft.Page) -> None:
     page.spacing = 0
     page.theme_mode = app_state.theme.get_flet_theme_mode()
 
-    # Configurar tema claro
+    # Configurar tema con Material 3 (colores por defecto)
     page.theme = ft.Theme(
-        color_scheme_seed=ColorConstants.PRIMARY,
         use_material3=True,
     )
 
-    # Configurar tema oscuro
+    # Configurar tema oscuro con Material 3 (colores por defecto)
     page.dark_theme = ft.Theme(
-        color_scheme_seed=ColorConstants.PRIMARY,
         use_material3=True,
     )
 

@@ -9,7 +9,6 @@ from datetime import datetime
 import flet as ft
 from loguru import logger
 
-from src.frontend.color_constants import ColorConstants
 from src.frontend.layout_constants import LayoutConstants
 from src.frontend.i18n.translation_manager import t
 from src.frontend.app_state import app_state
@@ -120,8 +119,6 @@ class FilterPanel(ft.Container):
         Returns:
             Control de Flet con el panel de filtros
         """
-        is_dark = app_state.theme.is_dark_mode
-
         # Header del panel
         badge = None
         if self._active_filters_count > 0:
@@ -129,10 +126,8 @@ class FilterPanel(ft.Container):
                 content=ft.Text(
                     str(self._active_filters_count),
                     size=LayoutConstants.FONT_SIZE_XS,
-                    color=ColorConstants.BADGE_TEXT,
                     weight=LayoutConstants.FONT_WEIGHT_BOLD,
                 ),
-                bgcolor=ColorConstants.BADGE_BACKGROUND,
                 width=LayoutConstants.BADGE_SIZE,
                 height=LayoutConstants.BADGE_SIZE,
                 border_radius=LayoutConstants.RADIUS_FULL,
@@ -144,7 +139,6 @@ class FilterPanel(ft.Container):
                 controls=[
                     ft.Icon(
                         ft.Icons.FILTER_LIST,
-                        color=ColorConstants.PRIMARY,
                         size=LayoutConstants.ICON_SIZE_MD,
                     ),
                     ft.Text(
@@ -164,7 +158,7 @@ class FilterPanel(ft.Container):
             ),
             padding=LayoutConstants.PADDING_MD,
             border=ft.border.only(
-                bottom=ft.BorderSide(1, ColorConstants.get_color_for_theme("DIVIDER", is_dark))
+                bottom=ft.BorderSide(1)
             ),
         )
 
@@ -194,8 +188,6 @@ class FilterPanel(ft.Container):
                     ft.ElevatedButton(
                         text=t("common.apply_filters"),
                         icon=ft.Icons.CHECK,
-                        bgcolor=ColorConstants.PRIMARY,
-                        color=ft.Colors.WHITE,
                         on_click=self._handle_apply,
                     ),
                 ],
@@ -218,9 +210,8 @@ class FilterPanel(ft.Container):
                 controls=[header] + content,
                 spacing=0,
             ),
-            border=ft.border.all(1, ColorConstants.get_color_for_theme("DIVIDER", is_dark)),
+            border=ft.border.all(1),
             border_radius=LayoutConstants.RADIUS_SM,
-            bgcolor=ColorConstants.get_color_for_theme("SURFACE", is_dark),
         )
 
     def _create_filter_control(self, config: FilterConfig) -> ft.Control:
@@ -242,14 +233,12 @@ class FilterPanel(ft.Container):
                 label=t(config.label),
                 options=options,
                 value=config.default_value,
-                border_color=ColorConstants.BORDER_LIGHT,
             )
 
         elif config.filter_type == "text":
             return ft.TextField(
                 label=t(config.label),
                 value=config.default_value or "",
-                border_color=ColorConstants.BORDER_LIGHT,
             )
 
         elif config.filter_type == "checkbox":
@@ -268,13 +257,11 @@ class FilterPanel(ft.Container):
                                 label=t("common.from"),
                                 hint_text="YYYY-MM-DD",
                                 width=150,
-                                border_color=ColorConstants.BORDER_LIGHT,
                             ),
                             ft.TextField(
                                 label=t("common.to"),
                                 hint_text="YYYY-MM-DD",
                                 width=150,
-                                border_color=ColorConstants.BORDER_LIGHT,
                             ),
                         ],
                         spacing=LayoutConstants.SPACING_SM,
@@ -286,7 +273,6 @@ class FilterPanel(ft.Container):
         # Default: TextField
         return ft.TextField(
             label=t(config.label),
-            border_color=ColorConstants.BORDER_LIGHT,
         )
 
     def _toggle_collapse(self, e: ft.ControlEvent) -> None:

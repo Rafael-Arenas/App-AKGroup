@@ -7,7 +7,6 @@ from typing import Callable
 import flet as ft
 from loguru import logger
 
-from src.frontend.color_constants import ColorConstants
 from src.frontend.layout_constants import LayoutConstants
 from src.frontend.app_state import app_state
 
@@ -72,8 +71,6 @@ class BaseCard(ft.Container):
         Returns:
             Control de Flet con la tarjeta
         """
-        is_dark = app_state.theme.is_dark_mode
-
         # Header de la tarjeta
         header_controls = []
 
@@ -81,7 +78,6 @@ class BaseCard(ft.Container):
             header_controls.append(
                 ft.Icon(
                     name=self.icon,
-                    color=ColorConstants.PRIMARY,
                     size=LayoutConstants.ICON_SIZE_MD,
                 )
             )
@@ -91,7 +87,6 @@ class BaseCard(ft.Container):
                 self.title,
                 size=LayoutConstants.FONT_SIZE_LG,
                 weight=LayoutConstants.FONT_WEIGHT_SEMIBOLD,
-                color=ColorConstants.get_color_for_theme("ON_SURFACE", is_dark),
                 expand=True,
             )
         )
@@ -114,10 +109,7 @@ class BaseCard(ft.Container):
             ),
             padding=LayoutConstants.PADDING_MD,
             border=ft.border.only(
-                bottom=ft.BorderSide(
-                    1,
-                    ColorConstants.get_color_for_theme("DIVIDER", is_dark),
-                )
+                bottom=ft.BorderSide(1)
             ),
         )
 
@@ -144,10 +136,7 @@ class BaseCard(ft.Container):
                     ),
                     padding=LayoutConstants.PADDING_MD,
                     border=ft.border.only(
-                        top=ft.BorderSide(
-                            1,
-                            ColorConstants.get_color_for_theme("DIVIDER", is_dark),
-                        )
+                        top=ft.BorderSide(1)
                     ),
                 )
             )
@@ -158,7 +147,6 @@ class BaseCard(ft.Container):
                 spacing=0,
             ),
             elevation=self.elevation,
-            color=ColorConstants.get_color_for_theme("CARD_BACKGROUND", is_dark),
         )
 
     def _toggle_collapse(self, e: ft.ControlEvent) -> None:

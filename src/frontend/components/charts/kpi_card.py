@@ -7,7 +7,6 @@ from typing import Literal
 import flet as ft
 from loguru import logger
 
-from src.frontend.color_constants import ColorConstants
 from src.frontend.layout_constants import LayoutConstants
 from src.frontend.app_state import app_state
 
@@ -89,22 +88,15 @@ class KPICard(ft.Container):
         else:
             return f"{val:,.2f}" if isinstance(val, float) else f"{val:,}"
 
-    def _get_trend_color(self) -> str:
+    def _get_trend_color(self) -> str | None:
         """
         Obtiene el color según la tendencia.
 
         Returns:
-            Color hexadecimal
+            Color hexadecimal o None para usar el color por defecto
         """
-        if self.trend == "up":
-            return ColorConstants.SUCCESS
-        elif self.trend == "down":
-            return ColorConstants.ERROR
-        else:
-            return ColorConstants.get_color_for_theme(
-                "ON_SURFACE_VARIANT",
-                app_state.theme.is_dark_mode
-            )
+        # Dejamos que Flet maneje los colores con su tema Material 3
+        return None
 
     def _get_trend_icon(self) -> str:
         """
@@ -127,7 +119,6 @@ class KPICard(ft.Container):
         Returns:
             Control de Flet con la tarjeta KPI
         """
-        is_dark = app_state.theme.is_dark_mode
         trend_color = self._get_trend_color()
         trend_icon = self._get_trend_icon()
 
@@ -136,13 +127,11 @@ class KPICard(ft.Container):
             controls=[
                 ft.Icon(
                     name=self.icon,
-                    color=ColorConstants.PRIMARY,
                     size=LayoutConstants.ICON_SIZE_LG,
                 ),
                 ft.Text(
                     self.label,
                     size=LayoutConstants.FONT_SIZE_MD,
-                    color=ColorConstants.get_color_for_theme("ON_SURFACE_VARIANT", is_dark),
                     weight=LayoutConstants.FONT_WEIGHT_MEDIUM,
                     expand=True,
                 ),
@@ -155,7 +144,6 @@ class KPICard(ft.Container):
             self._format_value(self.value),
             size=LayoutConstants.FONT_SIZE_DISPLAY_SM,
             weight=LayoutConstants.FONT_WEIGHT_BOLD,
-            color=ColorConstants.get_color_for_theme("ON_SURFACE", is_dark),
         )
 
         # Cambio y tendencia
@@ -167,13 +155,11 @@ class KPICard(ft.Container):
                     controls=[
                         ft.Icon(
                             name=trend_icon,
-                            color=trend_color,
                             size=LayoutConstants.ICON_SIZE_SM,
                         ),
                         ft.Text(
                             f"{sign}{self.change_percentage:.1f}%",
                             size=LayoutConstants.FONT_SIZE_MD,
-                            color=trend_color,
                             weight=LayoutConstants.FONT_WEIGHT_SEMIBOLD,
                         ),
                     ],
@@ -188,7 +174,6 @@ class KPICard(ft.Container):
                 ft.Text(
                     change_text,
                     size=LayoutConstants.FONT_SIZE_SM,
-                    color=ColorConstants.get_color_for_theme("ON_SURFACE_VARIANT", is_dark),
                 )
             )
 
@@ -211,7 +196,6 @@ class KPICard(ft.Container):
                 padding=LayoutConstants.PADDING_LG,
             ),
             elevation=self.elevation,
-            color=ColorConstants.get_color_for_theme("CARD_BACKGROUND", is_dark),
         )
 
     def update_value(

@@ -8,7 +8,6 @@ import flet as ft
 from loguru import logger
 
 from src.frontend.app_state import app_state
-from src.frontend.color_constants import ColorConstants
 from src.frontend.layout_constants import LayoutConstants
 from src.frontend.components.common import BaseCard, LoadingSpinner, ErrorDisplay
 from src.frontend.components.forms import ValidatedTextField, DropdownField
@@ -87,7 +86,6 @@ class CompanyFormView(ft.Container):
         Returns:
             Control de Flet con el formulario completo
         """
-        is_dark = app_state.theme.is_dark_mode
         is_edit = self.company_id is not None
 
         # Título
@@ -95,7 +93,6 @@ class CompanyFormView(ft.Container):
             "Editar Empresa" if is_edit else "Crear Empresa",
             size=LayoutConstants.FONT_SIZE_DISPLAY_MD,
             weight=LayoutConstants.FONT_WEIGHT_BOLD,
-            color=ColorConstants.get_color_for_theme("ON_SURFACE", is_dark),
         )
 
         # Campos del formulario

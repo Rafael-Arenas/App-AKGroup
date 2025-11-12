@@ -7,7 +7,6 @@ from typing import Literal
 import flet as ft
 from loguru import logger
 
-from src.frontend.color_constants import ColorConstants
 from src.frontend.layout_constants import LayoutConstants
 
 
@@ -35,7 +34,7 @@ class LoadingSpinner(ft.Container):
         super().__init__()
         self.message = message
         self.size = size
-        self.color = color or ColorConstants.PRIMARY
+        self.color = color
         self._size_map = {
             "small": 24,
             "medium": 40,
@@ -52,21 +51,21 @@ class LoadingSpinner(ft.Container):
         """
         spinner_size = self._size_map.get(self.size, 40)
 
-        content = [
-            ft.ProgressRing(
-                width=spinner_size,
-                height=spinner_size,
-                stroke_width=3 if self.size == "small" else 4,
-                color=self.color,
-            )
-        ]
+        spinner_kwargs = {
+            "width": spinner_size,
+            "height": spinner_size,
+            "stroke_width": 3 if self.size == "small" else 4,
+        }
+        if self.color:
+            spinner_kwargs["color"] = self.color
+
+        content = [ft.ProgressRing(**spinner_kwargs)]
 
         if self.message:
             content.append(
                 ft.Text(
                     self.message,
                     size=LayoutConstants.FONT_SIZE_MD,
-                    color=self.color,
                     text_align=ft.TextAlign.CENTER,
                 )
             )

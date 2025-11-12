@@ -8,7 +8,6 @@ import flet as ft
 from loguru import logger
 
 from src.frontend.app_state import app_state
-from src.frontend.color_constants import ColorConstants
 from src.frontend.layout_constants import LayoutConstants
 from src.frontend.i18n.translation_manager import t
 from src.frontend.components.common import (
@@ -330,7 +329,6 @@ class CompanyListView(ft.Container):
 
     def _rebuild_content(self) -> None:
         """Reconstruye el contenido de la vista según el estado actual."""
-        is_dark = app_state.theme.is_dark_mode
         i18n_prefix = self._get_i18n_key_prefix()
 
         # Estados de carga/error/vacío
@@ -387,14 +385,12 @@ class CompanyListView(ft.Container):
                         t(f"{i18n_prefix}.list_title"),
                         size=LayoutConstants.FONT_SIZE_DISPLAY_MD,
                         weight=LayoutConstants.FONT_WEIGHT_BOLD,
-                        color=ColorConstants.get_color_for_theme("ON_SURFACE", is_dark),
                         expand=True,
                     ),
                     ft.FloatingActionButton(
                         icon=ft.Icons.ADD,
                         text=t(f"{i18n_prefix}.create"),
                         on_click=self._on_create_company,
-                        bgcolor=ColorConstants.PRIMARY,
                     ),
                 ],
                 alignment=ft.MainAxisAlignment.SPACE_BETWEEN,

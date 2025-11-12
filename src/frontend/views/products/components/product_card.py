@@ -8,7 +8,6 @@ import flet as ft
 from loguru import logger
 
 from src.frontend.app_state import app_state
-from src.frontend.color_constants import ColorConstants
 from src.frontend.layout_constants import LayoutConstants
 
 
@@ -42,8 +41,6 @@ class ProductCard(ft.Container):
 
     def build(self) -> ft.Control:
         """Construye el componente de tarjeta de producto."""
-        is_dark = app_state.theme.is_dark_mode
-
         # Badge de tipo
         product_type = self.product.get("product_type", "")
         is_nomenclature = product_type == "NOMENCLATURE"
@@ -55,7 +52,6 @@ class ProductCard(ft.Container):
                 weight=LayoutConstants.FONT_WEIGHT_SEMIBOLD,
                 color=ft.Colors.WHITE,
             ),
-            bgcolor=ColorConstants.PRIMARY if is_nomenclature else ColorConstants.INFO,
             padding=ft.padding.symmetric(
                 horizontal=LayoutConstants.PADDING_XS,
                 vertical=2,
@@ -70,7 +66,6 @@ class ProductCard(ft.Container):
                 content=ft.Icon(
                     name=ft.Icons.LIST_ALT,
                     size=LayoutConstants.ICON_SIZE_SM,
-                    color=ColorConstants.PRIMARY,
                 ),
                 tooltip="Tiene lista de materiales",
             )
@@ -81,7 +76,6 @@ class ProductCard(ft.Container):
             f"${cost:.2f}",
             size=LayoutConstants.FONT_SIZE_LG,
             weight=LayoutConstants.FONT_WEIGHT_BOLD,
-            color=ColorConstants.PRIMARY,
         )
 
         # Contenido de la tarjeta
@@ -93,14 +87,12 @@ class ProductCard(ft.Container):
                         controls=[
                             ft.Icon(
                                 name=ft.Icons.INVENTORY_2,
-                                color=ColorConstants.PRIMARY,
                                 size=LayoutConstants.ICON_SIZE_LG,
                             ),
                             ft.Text(
                                 self.product.get("code", ""),
                                 size=LayoutConstants.FONT_SIZE_MD,
                                 weight=LayoutConstants.FONT_WEIGHT_BOLD,
-                                color=ColorConstants.PRIMARY,
                             ),
                             bom_indicator if bom_indicator else ft.Container(),
                         ],
@@ -111,7 +103,6 @@ class ProductCard(ft.Container):
                         self.product.get("name", ""),
                         size=LayoutConstants.FONT_SIZE_LG,
                         weight=LayoutConstants.FONT_WEIGHT_SEMIBOLD,
-                        color=ColorConstants.get_color_for_theme("ON_SURFACE", is_dark),
                         max_lines=2,
                         overflow=ft.TextOverflow.ELLIPSIS,
                     ),
@@ -125,17 +116,11 @@ class ProductCard(ft.Container):
                                     ft.Text(
                                         "Unidad:",
                                         size=LayoutConstants.FONT_SIZE_SM,
-                                        color=ColorConstants.get_color_for_theme(
-                                            "ON_SURFACE_VARIANT", is_dark
-                                        ),
                                     ),
                                     ft.Text(
                                         self.product.get("unit", "-"),
                                         size=LayoutConstants.FONT_SIZE_MD,
                                         weight=LayoutConstants.FONT_WEIGHT_SEMIBOLD,
-                                        color=ColorConstants.get_color_for_theme(
-                                            "ON_SURFACE", is_dark
-                                        ),
                                     ),
                                 ],
                                 spacing=2,
@@ -146,9 +131,6 @@ class ProductCard(ft.Container):
                                     ft.Text(
                                         "Costo:",
                                         size=LayoutConstants.FONT_SIZE_SM,
-                                        color=ColorConstants.get_color_for_theme(
-                                            "ON_SURFACE_VARIANT", is_dark
-                                        ),
                                     ),
                                     cost_text,
                                 ],
@@ -168,7 +150,6 @@ class ProductCard(ft.Container):
         card = ft.Card(
             content=card_content,
             elevation=LayoutConstants.ELEVATION_LOW,
-            color=ColorConstants.get_color_for_theme("CARD_BACKGROUND", is_dark),
         )
 
         # Contenedor clickeable

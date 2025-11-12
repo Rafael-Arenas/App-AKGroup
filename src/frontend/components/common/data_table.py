@@ -8,7 +8,6 @@ from dataclasses import dataclass
 import flet as ft
 from loguru import logger
 
-from src.frontend.color_constants import ColorConstants
 from src.frontend.layout_constants import LayoutConstants
 from src.frontend.i18n.translation_manager import t
 from src.frontend.app_state import app_state
@@ -136,8 +135,6 @@ class DataTable(ft.Container):
                 message=self.empty_message,
             )
 
-        is_dark = app_state.theme.is_dark_mode
-
         # Construir columnas
         dt_columns = []
         for col in self.columns:
@@ -212,7 +209,6 @@ class DataTable(ft.Container):
                         ft.IconButton(
                             icon=ft.Icons.DELETE,
                             icon_size=LayoutConstants.ICON_SIZE_SM,
-                            icon_color=ColorConstants.ERROR,
                             tooltip=t("common.delete"),
                             on_click=lambda e, data=row_data: self._handle_delete(data),
                         )
@@ -234,13 +230,12 @@ class DataTable(ft.Container):
         self._data_table = ft.DataTable(
             columns=dt_columns,
             rows=dt_rows,
-            border=ft.border.all(1, ColorConstants.get_color_for_theme("DIVIDER", is_dark)),
+            border=ft.border.all(1),
             border_radius=LayoutConstants.RADIUS_SM,
-            heading_row_color=ColorConstants.get_color_for_theme("TABLE_HEADER", is_dark),
             heading_row_height=LayoutConstants.TABLE_HEADER_HEIGHT,
             data_row_min_height=LayoutConstants.TABLE_ROW_HEIGHT,
             data_row_max_height=LayoutConstants.TABLE_ROW_HEIGHT,
-            horizontal_lines=ft.border.BorderSide(1, ColorConstants.get_color_for_theme("DIVIDER", is_dark)),
+            horizontal_lines=ft.border.BorderSide(1),
             show_checkbox_column=self.selectable,
         )
 
@@ -275,7 +270,7 @@ class DataTable(ft.Container):
                     controls=[self._data_table],
                     scroll=ft.ScrollMode.AUTO,
                 ),
-                border=ft.border.all(1, ColorConstants.get_color_for_theme("DIVIDER", is_dark)),
+                border=ft.border.all(1),
                 border_radius=LayoutConstants.RADIUS_SM,
             )
         ]

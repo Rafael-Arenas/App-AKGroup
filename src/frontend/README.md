@@ -17,7 +17,6 @@ El frontend sigue la arquitectura probada de Planificador3 con los siguientes pa
 src/frontend/
 ├── main.py                      # Entry point de la aplicación
 ├── app_state.py                 # Estado global (Singleton + Observer)
-├── color_constants.py           # Paleta de colores
 ├── layout_constants.py          # Dimensiones y espaciado
 ├── navigation_config.py         # Configuración de navegación
 │
@@ -293,8 +292,9 @@ class MyView(ft.Container):
 4. **Async/Await**: Todas las llamadas a API deben ser async
 5. **Estados**: Manejar loading, error y empty states
 6. **Observers**: Limpiar observers en `will_unmount()`
-7. **Constantes**: Usar ColorConstants y LayoutConstants
-8. **i18n**: Todos los textos deben ser traducibles con `t()`
+7. **Constantes**: Usar LayoutConstants para dimensiones y espaciado
+8. **Theming**: Dejar que Flet maneje los colores con Material 3
+9. **i18n**: Todos los textos deben ser traducibles con `t()`
 
 ## Contribuir
 

@@ -7,7 +7,6 @@ from typing import Callable
 import flet as ft
 from loguru import logger
 
-from src.frontend.color_constants import ColorConstants
 from src.frontend.layout_constants import LayoutConstants
 from src.frontend.i18n.translation_manager import t
 
@@ -54,13 +53,11 @@ class ErrorDisplay(ft.Container):
         content = [
             ft.Icon(
                 name=ft.Icons.ERROR_OUTLINE,
-                color=ColorConstants.ERROR,
                 size=LayoutConstants.ICON_SIZE_XL,
             ),
             ft.Text(
                 self.message,
                 size=LayoutConstants.FONT_SIZE_LG,
-                color=ColorConstants.ERROR,
                 text_align=ft.TextAlign.CENTER,
                 weight=LayoutConstants.FONT_WEIGHT_MEDIUM,
             ),
@@ -72,8 +69,6 @@ class ErrorDisplay(ft.Container):
                     text=t("common.retry"),
                     icon=ft.Icons.REFRESH,
                     on_click=self._handle_retry,
-                    bgcolor=ColorConstants.ERROR,
-                    color=ft.Colors.WHITE,
                 )
             )
 

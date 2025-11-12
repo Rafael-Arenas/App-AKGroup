@@ -9,7 +9,6 @@ import flet as ft
 from loguru import logger
 
 from src.frontend.app_state import app_state
-from src.frontend.color_constants import ColorConstants
 from src.frontend.layout_constants import LayoutConstants
 from src.frontend.components.common import (
     SearchBar,
@@ -54,22 +53,18 @@ class ProductListView(ft.Container):
 
     def build(self) -> ft.Control:
         """Construye el componente de listado de productos."""
-        is_dark = app_state.theme.is_dark_mode
-
         header = ft.Row(
             controls=[
                 ft.Text(
                     "Productos",
                     size=LayoutConstants.FONT_SIZE_DISPLAY_MD,
                     weight=LayoutConstants.FONT_WEIGHT_BOLD,
-                    color=ColorConstants.get_color_for_theme("ON_SURFACE", is_dark),
                     expand=True,
                 ),
                 ft.FloatingActionButton(
                     icon=ft.Icons.ADD,
                     text="Crear Producto",
                     on_click=self._on_create_product,
-                    bgcolor=ColorConstants.PRIMARY,
                 ),
             ],
         )

@@ -9,7 +9,6 @@ import flet as ft
 from loguru import logger
 
 from src.frontend.app_state import app_state
-from src.frontend.color_constants import ColorConstants
 from src.frontend.i18n.translation_manager import t
 from src.frontend.layout_constants import LayoutConstants
 
@@ -93,19 +92,16 @@ class UserProfileMenu(ft.PopupMenuButton):
         else:
             # Avatar con iniciales
             initials = self._get_initials(self.user_name)
-            is_dark = app_state.theme.is_dark_mode
 
             return ft.Container(
                 content=ft.Text(
                     initials,
                     size=16,
                     weight=ft.FontWeight.BOLD,
-                    color=ColorConstants.APPBAR_ON_BACKGROUND,
                 ),
                 width=avatar_size,
                 height=avatar_size,
                 border_radius=avatar_size // 2,
-                bgcolor=ColorConstants.PRIMARY,
                 alignment=ft.alignment.center,
             )
 
@@ -139,8 +135,6 @@ class UserProfileMenu(ft.PopupMenuButton):
             Lista de items del menú
         """
         items = []
-        is_dark = app_state.theme.is_dark_mode
-        secondary_color = ColorConstants.get_color_for_theme("ON_SURFACE_VARIANT", is_dark)
 
         # Header con nombre y rol
         items.append(
@@ -155,7 +149,6 @@ class UserProfileMenu(ft.PopupMenuButton):
                         ft.Text(
                             self.user_role,
                             size=12,
-                            color=secondary_color,
                         ),
                     ],
                     spacing=2,

@@ -8,7 +8,6 @@ import flet as ft
 from loguru import logger
 
 from src.frontend.app_state import app_state
-from src.frontend.color_constants import ColorConstants
 from src.frontend.layout_constants import LayoutConstants
 from src.frontend.components.common import (
     BaseCard,
@@ -66,8 +65,6 @@ class CompanyDetailView(ft.Container):
         Returns:
             Control de Flet con la vista completa
         """
-        is_dark = app_state.theme.is_dark_mode
-
         if self._is_loading:
             return ft.Container(
                 content=LoadingSpinner(message="Cargando empresa..."),
@@ -92,11 +89,6 @@ class CompanyDetailView(ft.Container):
                 weight=LayoutConstants.FONT_WEIGHT_SEMIBOLD,
                 color=ft.Colors.WHITE,
             ),
-            bgcolor=(
-                ColorConstants.SUCCESS
-                if self._company.get("is_active")
-                else ColorConstants.ERROR
-            ),
             padding=ft.padding.symmetric(
                 horizontal=LayoutConstants.PADDING_SM,
                 vertical=LayoutConstants.PADDING_XS,
@@ -108,7 +100,6 @@ class CompanyDetailView(ft.Container):
             controls=[
                 ft.Icon(
                     name=ft.Icons.BUSINESS,
-                    color=ColorConstants.PRIMARY,
                     size=LayoutConstants.ICON_SIZE_XL,
                 ),
                 ft.Column(
@@ -117,16 +108,12 @@ class CompanyDetailView(ft.Container):
                             self._company.get("name", ""),
                             size=LayoutConstants.FONT_SIZE_DISPLAY_MD,
                             weight=LayoutConstants.FONT_WEIGHT_BOLD,
-                            color=ColorConstants.get_color_for_theme("ON_SURFACE", is_dark),
                         ),
                         ft.Row(
                             controls=[
                                 ft.Text(
                                     f"Trigrama: {self._company.get('trigram', '')}",
                                     size=LayoutConstants.FONT_SIZE_MD,
-                                    color=ColorConstants.get_color_for_theme(
-                                        "ON_SURFACE_VARIANT", is_dark
-                                    ),
                                 ),
                                 status_badge,
                             ],
@@ -142,15 +129,11 @@ class CompanyDetailView(ft.Container):
                             icon=ft.Icons.EDIT,
                             tooltip="Editar",
                             on_click=self._on_edit_click,
-                            bgcolor=ColorConstants.PRIMARY,
-                            icon_color=ft.Colors.WHITE,
                         ),
                         ft.IconButton(
                             icon=ft.Icons.DELETE,
                             tooltip="Eliminar",
                             on_click=self._on_delete_click,
-                            bgcolor=ColorConstants.ERROR,
-                            icon_color=ft.Colors.WHITE,
                         ),
                     ],
                     spacing=LayoutConstants.SPACING_SM,
@@ -213,23 +196,17 @@ class CompanyDetailView(ft.Container):
         Returns:
             Row con label y value
         """
-        is_dark = app_state.theme.is_dark_mode
-
         return ft.Row(
             controls=[
                 ft.Text(
                     f"{label}:",
                     size=LayoutConstants.FONT_SIZE_MD,
                     weight=LayoutConstants.FONT_WEIGHT_SEMIBOLD,
-                    color=ColorConstants.get_color_for_theme("ON_SURFACE", is_dark),
                     width=150,
                 ),
                 ft.Text(
                     value,
                     size=LayoutConstants.FONT_SIZE_MD,
-                    color=ColorConstants.get_color_for_theme(
-                        "ON_SURFACE_VARIANT", is_dark
-                    ),
                     expand=True,
                 ),
             ],

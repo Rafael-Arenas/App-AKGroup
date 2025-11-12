@@ -8,7 +8,6 @@ import flet as ft
 from loguru import logger
 import pendulum
 
-from src.frontend.color_constants import ColorConstants
 from src.frontend.layout_constants import LayoutConstants
 from src.frontend.i18n.translation_manager import t
 
@@ -71,8 +70,6 @@ class DatePickerField(ft.Container):
             label=self.label,
             hint_text=self.hint_text,
             read_only=True,
-            border_color=ColorConstants.BORDER_LIGHT,
-            focused_border_color=ColorConstants.PRIMARY,
             suffix_icon=ft.Icons.CALENDAR_TODAY,
             on_click=self._open_date_picker,
         )
@@ -80,7 +77,6 @@ class DatePickerField(ft.Container):
         self._error_text = ft.Text(
             "",
             size=LayoutConstants.FONT_SIZE_SM,
-            color=ColorConstants.ERROR,
             visible=False,
         )
 
@@ -277,9 +273,6 @@ class DatePickerField(ft.Container):
         if self._error_text:
             self._error_text.value = message
             self._error_text.visible = True
-        if self._text_field:
-            self._text_field.border_color = ColorConstants.ERROR
-            self._text_field.focused_border_color = ColorConstants.ERROR
 
         logger.debug(f"Validation error set: {message}")
         if self.page:
@@ -295,9 +288,6 @@ class DatePickerField(ft.Container):
         self.error_message = ""
         if self._error_text:
             self._error_text.visible = False
-        if self._text_field:
-            self._text_field.border_color = ColorConstants.BORDER_LIGHT
-            self._text_field.focused_border_color = ColorConstants.PRIMARY
 
         if self.page:
             self.update()

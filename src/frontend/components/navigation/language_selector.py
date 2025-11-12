@@ -10,7 +10,6 @@ import flet as ft
 from loguru import logger
 
 from src.frontend.app_state import app_state
-from src.frontend.color_constants import ColorConstants
 from src.frontend.i18n.translation_manager import translation_manager
 
 
@@ -46,7 +45,6 @@ class LanguageSelector(ft.PopupMenuButton):
 
         # Configuración
         self.icon = ft.Icons.LANGUAGE
-        self.icon_color = ColorConstants.APPBAR_ON_BACKGROUND
         self.tooltip = "Cambiar idioma"
 
         # Construir items del menú
@@ -78,7 +76,7 @@ class LanguageSelector(ft.PopupMenuButton):
                         ft.Container(width=8),
                         ft.Text(lang_name, size=14),
                         ft.Container(expand=True),
-                        ft.Icon(ft.Icons.CHECK, size=18, color=ColorConstants.SUCCESS),
+                        ft.Icon(ft.Icons.CHECK, size=18),
                     ],
                     spacing=0,
                     alignment=ft.MainAxisAlignment.START,

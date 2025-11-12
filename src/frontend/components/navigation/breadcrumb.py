@@ -7,7 +7,6 @@ Muestra la ruta de navegación actual y permite navegar a niveles superiores.
 import flet as ft
 from loguru import logger
 
-from src.frontend.color_constants import ColorConstants
 from src.frontend.layout_constants import LayoutConstants
 from src.frontend.app_state import app_state
 
@@ -73,7 +72,6 @@ class Breadcrumb(ft.Row):
             return []
 
         controls = []
-        is_dark = app_state.theme.is_dark_mode
 
         for i, item in enumerate(self.path):
             is_last = (i == len(self.path) - 1)
@@ -82,33 +80,21 @@ class Breadcrumb(ft.Row):
             # Item del breadcrumb
             if is_last or not has_route:
                 # Último item o sin ruta: no clickeable, estilo diferente
-                text_color = ColorConstants.get_color_for_theme("ON_SURFACE", is_dark)
                 controls.append(
                     ft.Text(
                         item["label"],
                         size=LayoutConstants.FONT_SIZE_MD,
                         weight=ft.FontWeight.W_600,
-                        color=text_color,
                     )
                 )
-                logger.debug(f"Breadcrumb item (current): {item['label']} - color: {text_color}")
+                logger.debug(f"Breadcrumb item (current): {item['label']}")
             else:
                 # Items anteriores con ruta: clickeables
-                link_color = ColorConstants.PRIMARY
-                hover_bg = ColorConstants.get_color_for_theme("OVERLAY", is_dark)
-
                 controls.append(
                     ft.TextButton(
                         text=item["label"],
                         on_click=lambda e, route=item["route"]: self._handle_navigate(route),
                         style=ft.ButtonStyle(
-                            color={
-                                ft.ControlState.DEFAULT: link_color,
-                                ft.ControlState.HOVERED: link_color,
-                            },
-                            overlay_color={
-                                ft.ControlState.HOVERED: hover_bg,
-                            },
                             padding=ft.padding.symmetric(
                                 horizontal=LayoutConstants.PADDING_SM,
                                 vertical=LayoutConstants.PADDING_XS,
@@ -119,12 +105,10 @@ class Breadcrumb(ft.Row):
 
             # Separador (si no es el último)
             if not is_last:
-                separator_color = ColorConstants.get_color_for_theme("ON_SURFACE_VARIANT", is_dark)
                 controls.append(
                     ft.Icon(
                         ft.Icons.CHEVRON_RIGHT,
                         size=16,
-                        color=separator_color,
                     )
                 )
 

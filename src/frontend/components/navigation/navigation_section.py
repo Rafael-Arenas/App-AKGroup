@@ -7,7 +7,6 @@ Agrupa items de navegación relacionados con un label opcional.
 import flet as ft
 from loguru import logger
 
-from src.frontend.color_constants import ColorConstants
 from src.frontend.layout_constants import LayoutConstants
 from src.frontend.app_state import app_state
 from src.frontend.components.navigation.navigation_item import NavigationItem
@@ -74,20 +73,16 @@ class NavigationSection(ft.Column):
             Lista de controles para la sección
         """
         controls = []
-        is_dark = app_state.theme.is_dark_mode
 
         # Label del grupo - SIEMPRE agregar el espacio para mantener posición fija
         # Usar opacidad animada para transición suave
         if self.group_label_text:
-            label_color = ColorConstants.get_color_for_theme("ON_SURFACE_VARIANT", is_dark)
-
             controls.append(
                 ft.Container(
                     content=ft.Text(
                         self.group_label_text,
                         size=LayoutConstants.FONT_SIZE_XS + 1,  # 11px
                         weight=ft.FontWeight.W_600,
-                        color=label_color,
                     ),
                     padding=ft.padding.only(
                         left=LayoutConstants.PADDING_MD,

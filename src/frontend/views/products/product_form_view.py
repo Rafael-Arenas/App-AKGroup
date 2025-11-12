@@ -9,7 +9,6 @@ import flet as ft
 from loguru import logger
 
 from src.frontend.app_state import app_state
-from src.frontend.color_constants import ColorConstants
 from src.frontend.layout_constants import LayoutConstants
 from src.frontend.components.common import BaseCard, LoadingSpinner, ErrorDisplay
 from src.frontend.components.forms import ValidatedTextField, DropdownField
@@ -63,14 +62,12 @@ class ProductFormView(ft.Container):
 
     def build(self) -> ft.Control:
         """Construye el componente del formulario."""
-        is_dark = app_state.theme.is_dark_mode
         is_edit = self.product_id is not None
 
         title = ft.Text(
             "Editar Producto" if is_edit else "Crear Producto",
             size=LayoutConstants.FONT_SIZE_DISPLAY_MD,
             weight=LayoutConstants.FONT_WEIGHT_BOLD,
-            color=ColorConstants.get_color_for_theme("ON_SURFACE", is_dark),
         )
 
         # Campos básicos

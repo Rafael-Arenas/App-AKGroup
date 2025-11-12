@@ -7,7 +7,6 @@ import flet as ft
 from loguru import logger
 
 from src.frontend.app_state import app_state
-from src.frontend.color_constants import ColorConstants
 from src.frontend.layout_constants import LayoutConstants
 from src.frontend.components.charts import KPICard
 from src.frontend.components.common import LoadingSpinner, ErrorDisplay
@@ -53,14 +52,11 @@ class DashboardView(ft.Container):
         Returns:
             Control de Flet con el dashboard completo
         """
-        is_dark = app_state.theme.is_dark_mode
-
         # Header
         header = ft.Text(
             "Bienvenido a AK Group",
             size=LayoutConstants.FONT_SIZE_DISPLAY_MD,
             weight=LayoutConstants.FONT_WEIGHT_BOLD,
-            color=ColorConstants.get_color_for_theme("ON_SURFACE", is_dark),
         )
 
         # Crear KPI Cards
@@ -124,20 +120,14 @@ class DashboardView(ft.Container):
                         "Actividad Reciente",
                         size=LayoutConstants.FONT_SIZE_XL,
                         weight=LayoutConstants.FONT_WEIGHT_SEMIBOLD,
-                        color=ColorConstants.get_color_for_theme("ON_SURFACE", is_dark),
                     ),
                     ft.Container(
                         content=ft.Text(
                             "No hay actividad reciente para mostrar",
                             size=LayoutConstants.FONT_SIZE_MD,
-                            color=ColorConstants.get_color_for_theme(
-                                "ON_SURFACE_VARIANT",
-                                is_dark,
-                            ),
                         ),
                         padding=LayoutConstants.PADDING_XL,
                         alignment=ft.alignment.center,
-                        bgcolor=ColorConstants.get_color_for_theme("SURFACE", is_dark),
                         border_radius=LayoutConstants.RADIUS_MD,
                     ),
                 ],

@@ -8,7 +8,6 @@ import asyncio
 import flet as ft
 from loguru import logger
 
-from src.frontend.color_constants import ColorConstants
 from src.frontend.layout_constants import LayoutConstants
 from src.frontend.i18n.translation_manager import t
 
@@ -84,8 +83,6 @@ class SearchBar(ft.Container):
             hint_text=self.placeholder,
             prefix_icon=ft.Icons.SEARCH,
             border=ft.InputBorder.OUTLINE,
-            border_color=ColorConstants.BORDER_LIGHT,
-            focused_border_color=ColorConstants.PRIMARY,
             on_change=self._on_change,
             on_submit=self._on_submit,
             autofocus=self.autofocus,

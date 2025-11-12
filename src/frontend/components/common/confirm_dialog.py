@@ -7,7 +7,6 @@ from typing import Callable, Literal
 import flet as ft
 from loguru import logger
 
-from src.frontend.color_constants import ColorConstants
 from src.frontend.layout_constants import LayoutConstants
 from src.frontend.i18n.translation_manager import t
 
@@ -58,19 +57,15 @@ class ConfirmDialog:
         self._dialog: ft.AlertDialog | None = None
         logger.debug(f"ConfirmDialog initialized with variant={variant}")
 
-    def _get_variant_color(self) -> str:
+    def _get_variant_color(self) -> str | None:
         """
         Obtiene el color según la variante.
 
         Returns:
-            Color hexadecimal según la variante
+            Color según la variante o None para usar el tema por defecto
         """
-        color_map = {
-            "default": ColorConstants.PRIMARY,
-            "warning": ColorConstants.WARNING,
-            "danger": ColorConstants.ERROR,
-        }
-        return color_map.get(self.variant, ColorConstants.PRIMARY)
+        # Return None to use default theme colors
+        return None
 
     def _get_variant_icon(self) -> str:
         """
@@ -137,7 +132,6 @@ class ConfirmDialog:
         Example:
             >>> dialog.show(page)
         """
-        variant_color = self._get_variant_color()
         variant_icon = self._get_variant_icon()
 
         self._dialog = ft.AlertDialog(
@@ -146,7 +140,6 @@ class ConfirmDialog:
                 controls=[
                     ft.Icon(
                         name=variant_icon,
-                        color=variant_color,
                         size=LayoutConstants.ICON_SIZE_LG,
                     ),
                     ft.Text(
@@ -168,8 +161,6 @@ class ConfirmDialog:
                 ),
                 ft.ElevatedButton(
                     text=self.confirm_text,
-                    bgcolor=variant_color,
-                    color=ft.Colors.WHITE,
                     on_click=self._handle_confirm,
                 ),
             ],

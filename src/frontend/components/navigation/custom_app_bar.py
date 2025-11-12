@@ -9,7 +9,6 @@ import flet as ft
 from loguru import logger
 
 from src.frontend.app_state import app_state
-from src.frontend.color_constants import ColorConstants
 from src.frontend.layout_constants import LayoutConstants
 from src.frontend.i18n.translation_manager import t
 from src.frontend.components.navigation.language_selector import LanguageSelector
@@ -71,16 +70,8 @@ class CustomAppBar(ft.Container):
 
         # Configurar container
         self.height = LayoutConstants.APPBAR_HEIGHT
-        is_dark = app_state.theme.is_dark_mode
-        self.bgcolor = ColorConstants.get_color_for_theme("APPBAR_BACKGROUND", is_dark)
         self.padding = ft.padding.symmetric(
             horizontal=LayoutConstants.PADDING_LG
-        )
-        self.shadow = ft.BoxShadow(
-            spread_radius=0,
-            blur_radius=4,
-            color=ColorConstants.get_color_for_theme("OVERLAY", is_dark),
-            offset=ft.Offset(0, 2),
         )
 
         # Crear componentes
@@ -140,7 +131,6 @@ class CustomAppBar(ft.Container):
             content=ft.Icon(
                 ft.Icons.BUSINESS_CENTER,
                 size=LayoutConstants.ICON_SIZE_LG,
-                color=ColorConstants.APPBAR_ON_BACKGROUND,
             ),
             width=LayoutConstants.ICON_SIZE_LG,
             height=LayoutConstants.ICON_SIZE_LG,
@@ -157,7 +147,6 @@ class CustomAppBar(ft.Container):
             self.section_title_text,
             size=LayoutConstants.FONT_SIZE_XL,
             weight=ft.FontWeight.BOLD,
-            color=ColorConstants.APPBAR_ON_BACKGROUND,
         )
 
     def _build_theme_selector(self) -> ft.PopupMenuButton:
@@ -183,7 +172,6 @@ class CustomAppBar(ft.Container):
                         ft.Icon(
                             ft.Icons.CHECK,
                             size=18,
-                            color=ColorConstants.SUCCESS,
                             visible=(current_theme == "light"),
                         ),
                     ],
@@ -205,7 +193,6 @@ class CustomAppBar(ft.Container):
                         ft.Icon(
                             ft.Icons.CHECK,
                             size=18,
-                            color=ColorConstants.SUCCESS,
                             visible=(current_theme == "dark"),
                         ),
                     ],
@@ -227,7 +214,6 @@ class CustomAppBar(ft.Container):
                         ft.Icon(
                             ft.Icons.CHECK,
                             size=18,
-                            color=ColorConstants.SUCCESS,
                             visible=(current_theme == "system"),
                         ),
                     ],
@@ -239,7 +225,6 @@ class CustomAppBar(ft.Container):
 
         return ft.PopupMenuButton(
             icon=ft.Icons.BRIGHTNESS_6,
-            icon_color=ColorConstants.APPBAR_ON_BACKGROUND,
             tooltip=t("navigation.theme.title"),
             items=items,
         )
@@ -339,16 +324,7 @@ class CustomAppBar(ft.Container):
 
     def _on_theme_change(self) -> None:
         """Actualiza el AppBar cuando cambia el tema."""
-        is_dark = app_state.theme.is_dark_mode
-        self.bgcolor = ColorConstants.get_color_for_theme("APPBAR_BACKGROUND", is_dark)
-        self.shadow = ft.BoxShadow(
-            spread_radius=0,
-            blur_radius=4,
-            color=ColorConstants.get_color_for_theme("OVERLAY", is_dark),
-            offset=ft.Offset(0, 2),
-        )
-
-        # Reconstruir logo y título con nuevos colores
+        # Reconstruir logo y título
         self.logo = self._build_logo()
         self.title = self._build_title()
         self.theme_selector = self._build_theme_selector()

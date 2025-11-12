@@ -7,7 +7,6 @@ from typing import Callable
 import flet as ft
 from loguru import logger
 
-from src.frontend.color_constants import ColorConstants
 from src.frontend.layout_constants import LayoutConstants
 from src.frontend.app_state import app_state
 
@@ -71,25 +70,20 @@ class EmptyState(ft.Container):
 
         Establece las propiedades del Container directamente.
         """
-        is_dark = app_state.theme.is_dark_mode
-
         controls = [
             ft.Icon(
                 name=self._icon,
                 size=LayoutConstants.ICON_SIZE_XL * 2,
-                color=ColorConstants.get_color_for_theme("ON_SURFACE_VARIANT", is_dark),
             ),
             ft.Text(
                 self._title,
                 size=LayoutConstants.FONT_SIZE_XXL,
                 weight=LayoutConstants.FONT_WEIGHT_BOLD,
-                color=ColorConstants.get_color_for_theme("ON_SURFACE", is_dark),
                 text_align=ft.TextAlign.CENTER,
             ),
             ft.Text(
                 self._message,
                 size=LayoutConstants.FONT_SIZE_MD,
-                color=ColorConstants.get_color_for_theme("ON_SURFACE_VARIANT", is_dark),
                 text_align=ft.TextAlign.CENTER,
             ),
         ]
@@ -100,8 +94,6 @@ class EmptyState(ft.Container):
                     text=self._action_text,
                     icon=ft.Icons.ADD,
                     on_click=self._handle_action,
-                    bgcolor=ColorConstants.PRIMARY,
-                    color=ft.Colors.WHITE,
                 )
             )
 

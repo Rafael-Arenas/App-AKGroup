@@ -8,7 +8,6 @@ import flet as ft
 from loguru import logger
 
 from src.frontend.app_state import app_state
-from src.frontend.color_constants import ColorConstants
 from src.frontend.i18n.translation_manager import t
 from src.frontend.layout_constants import LayoutConstants
 from src.frontend.navigation_config import NAVIGATION_STRUCTURE
@@ -66,15 +65,6 @@ class CustomNavigationRail(ft.Container):
             if expanded
             else LayoutConstants.RAIL_WIDTH_COLLAPSED
         )
-        is_dark = app_state.theme.is_dark_mode
-        self.bgcolor = ColorConstants.get_color_for_theme("RAIL_BACKGROUND", is_dark)
-
-        self.shadow = ft.BoxShadow(
-            spread_radius=0,
-            blur_radius=4,
-            color=ColorConstants.get_color_for_theme("OVERLAY", is_dark),
-            offset=ft.Offset(2, 0),
-        )
         # CLAVE: Animar el ancho para evitar el salto visual
         self.animate = LayoutConstants.get_animation()
 
@@ -115,17 +105,14 @@ class CustomNavigationRail(ft.Container):
 
         # Secciones de navegación con traducciones
         sections = []
-        is_dark = app_state.theme.is_dark_mode
 
         for i, group_data in enumerate(NAVIGATION_STRUCTURE):
             # Agregar divider antes de cada grupo (excepto el primero)
             if i > 0:
-                divider_color = ColorConstants.get_color_for_theme("DIVIDER", is_dark)
                 sections.append(
                     ft.Divider(
                         height=1,
                         thickness=1,
-                        color=divider_color,
                     )
                 )
                 sections.append(
@@ -276,14 +263,6 @@ class CustomNavigationRail(ft.Container):
 
     def _on_theme_change(self):
         """Actualiza el contenido cuando cambia el tema."""
-        is_dark = app_state.theme.is_dark_mode
-        self.bgcolor = ColorConstants.get_color_for_theme("RAIL_BACKGROUND", is_dark)
-        self.shadow = ft.BoxShadow(
-            spread_radius=0,
-            blur_radius=4,
-            color=ColorConstants.get_color_for_theme("OVERLAY", is_dark),
-            offset=ft.Offset(2, 0),
-        )
         self.content = self._build_content()
         if self.page:
             self.update()

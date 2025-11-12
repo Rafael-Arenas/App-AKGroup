@@ -8,7 +8,6 @@ import flet as ft
 from loguru import logger
 
 from src.frontend.app_state import app_state
-from src.frontend.color_constants import ColorConstants
 from src.frontend.layout_constants import LayoutConstants
 
 
@@ -53,16 +52,11 @@ class BOMTable(ft.Container):
 
     def build(self) -> ft.Control:
         """Construye el componente de tabla BOM."""
-        is_dark = app_state.theme.is_dark_mode
-
         if not self.components:
             return ft.Container(
                 content=ft.Text(
                     "No hay componentes en la lista de materiales",
                     size=LayoutConstants.FONT_SIZE_MD,
-                    color=ColorConstants.get_color_for_theme(
-                        "ON_SURFACE_VARIANT", is_dark
-                    ),
                 ),
                 padding=LayoutConstants.PADDING_LG,
                 alignment=ft.alignment.center,
@@ -145,7 +139,6 @@ class BOMTable(ft.Container):
             if self.editable:
                 remove_button = ft.IconButton(
                     icon=ft.Icons.DELETE,
-                    icon_color=ColorConstants.ERROR,
                     tooltip="Eliminar componente",
                     on_click=lambda e, comp=component: self._on_remove_click(comp),
                 )
@@ -157,10 +150,7 @@ class BOMTable(ft.Container):
         table = ft.DataTable(
             columns=columns,
             rows=rows,
-            border=ft.border.all(1, ColorConstants.BORDER_LIGHT),
             border_radius=LayoutConstants.RADIUS_SM,
-            horizontal_lines=ft.BorderSide(1, ColorConstants.DIVIDER),
-            heading_row_color=ColorConstants.get_color_for_theme("SURFACE", is_dark),
         )
 
         # Fila de total
@@ -171,20 +161,17 @@ class BOMTable(ft.Container):
                         "TOTAL:",
                         size=LayoutConstants.FONT_SIZE_LG,
                         weight=LayoutConstants.FONT_WEIGHT_BOLD,
-                        color=ColorConstants.get_color_for_theme("ON_SURFACE", is_dark),
                     ),
                     ft.Text(
                         f"${total_cost:.2f}",
                         size=LayoutConstants.FONT_SIZE_LG,
                         weight=LayoutConstants.FONT_WEIGHT_BOLD,
-                        color=ColorConstants.PRIMARY,
                     ),
                 ],
                 alignment=ft.MainAxisAlignment.END,
                 spacing=LayoutConstants.SPACING_MD,
             ),
             padding=LayoutConstants.PADDING_MD,
-            bgcolor=ColorConstants.get_color_for_theme("SURFACE", is_dark),
             border_radius=LayoutConstants.RADIUS_SM,
         )
 
@@ -193,7 +180,6 @@ class BOMTable(ft.Container):
             controls=[
                 ft.Container(
                     content=table,
-                    border=ft.border.all(1, ColorConstants.BORDER_LIGHT),
                     border_radius=LayoutConstants.RADIUS_SM,
                 ),
                 total_row,
