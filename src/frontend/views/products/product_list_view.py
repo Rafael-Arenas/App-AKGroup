@@ -49,10 +49,48 @@ class ProductListView(ft.Container):
         self._filter_panel: FilterPanel | None = None
         self._data_table: DataTable | None = None
 
+        # Configurar propiedades del contenedor
+        self.expand = True
+        self.padding = 0
+
+        # Construir contenido inicial
+        self.content = self.build()
+
         logger.info("ProductListView initialized")
 
     def build(self) -> ft.Control:
         """Construye el componente de listado de productos."""
+        # Estados de carga/error/vacío
+        if self._is_loading:
+            return ft.Container(
+                content=LoadingSpinner(message="Cargando productos..."),
+                expand=True,
+                alignment=ft.alignment.center,
+            )
+
+        if self._error_message:
+            return ft.Container(
+                content=ErrorDisplay(
+                    message=self._error_message,
+                    on_retry=self.load_products,
+                ),
+                expand=True,
+                alignment=ft.alignment.center,
+            )
+
+        if not self._products:
+            return ft.Container(
+                content=EmptyState(
+                    icon=ft.Icons.INVENTORY_2_OUTLINED,
+                    message="No hay productos registrados",
+                    action_label="Crear Primer Producto",
+                    on_action=self._on_create_product,
+                ),
+                expand=True,
+                alignment=ft.alignment.center,
+            )
+
+        # Contenido principal con datos
         header = ft.Row(
             controls=[
                 ft.Text(
@@ -67,6 +105,7 @@ class ProductListView(ft.Container):
                     on_click=self._on_create_product,
                 ),
             ],
+            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
         )
 
         self._search_bar = SearchBar(
@@ -118,41 +157,49 @@ class ProductListView(ft.Container):
             on_page_change=self._on_page_change,
         )
 
-        content = ft.Column(
-            controls=[header, self._search_bar, self._filter_panel, self._data_table],
-            spacing=LayoutConstants.SPACING_MD,
-            scroll=ft.ScrollMode.AUTO,
-            expand=True,
-        )
+        # Asignar datos al DataTable si hay productos cargados
+        if self._products:
+            formatted_data = self._format_products_for_table(self._products)
+            self._data_table.set_data(
+                formatted_data,
+                total=self._total_products,
+                current_page=self._current_page,
+            )
 
-        if self._is_loading:
-            return ft.Container(
-                content=LoadingSpinner(message="Cargando productos..."),
-                expand=True,
-                alignment=ft.alignment.center,
-            )
-        elif self._error_message:
-            return ft.Container(
-                content=ErrorDisplay(
-                    message=self._error_message,
-                    on_retry=self.load_products,
-                ),
-                expand=True,
-                alignment=ft.alignment.center,
-            )
-        elif not self._products:
-            return ft.Container(
-                content=EmptyState(
-                    icon=ft.Icons.INVENTORY_2_OUTLINED,
-                    message="No hay productos registrados",
-                    action_label="Crear Primer Producto",
-                    on_action=self._on_create_product,
-                ),
-                expand=True,
-                alignment=ft.alignment.center,
-            )
-        else:
-            return content
+        return ft.Container(
+            content=ft.Column(
+                controls=[
+                    ft.Container(
+                        content=header,
+                        padding=ft.padding.only(
+                            left=LayoutConstants.PADDING_LG,
+                            right=LayoutConstants.PADDING_LG,
+                            top=LayoutConstants.PADDING_LG,
+                        ),
+                    ),
+                    ft.Container(
+                        content=self._search_bar,
+                        padding=ft.padding.symmetric(horizontal=LayoutConstants.PADDING_LG),
+                    ),
+                    ft.Container(
+                        content=self._filter_panel,
+                        padding=ft.padding.symmetric(horizontal=LayoutConstants.PADDING_LG),
+                    ),
+                    ft.Container(
+                        content=self._data_table,
+                        padding=ft.padding.only(
+                            left=LayoutConstants.PADDING_LG,
+                            right=LayoutConstants.PADDING_LG,
+                            bottom=LayoutConstants.PADDING_LG,
+                        ),
+                        expand=True,
+                    ),
+                ],
+                spacing=LayoutConstants.SPACING_MD,
+            ),
+            expand=True,
+            padding=0,
+        )
 
     def did_mount(self) -> None:
         """Lifecycle: Se ejecuta cuando el componente se monta."""
@@ -173,6 +220,8 @@ class ProductListView(ft.Container):
         self._is_loading = True
         self._error_message = ""
 
+        # Reconstruir contenido para mostrar loading
+        self.content = self.build()
         if self.page:
             self.update()
 
@@ -194,13 +243,6 @@ class ProductListView(ft.Container):
             self._products = response.get("items", [])
             self._total_products = response.get("total", 0)
 
-            if self._data_table:
-                self._data_table.set_data(
-                    self._format_products_for_table(self._products),
-                    total=self._total_products,
-                    current_page=self._current_page,
-                )
-
             logger.success(f"Loaded {len(self._products)} products")
             self._is_loading = False
 
@@ -209,6 +251,8 @@ class ProductListView(ft.Container):
             self._error_message = f"Error al cargar productos: {str(e)}"
             self._is_loading = False
 
+        # Reconstruir contenido con los datos cargados o error
+        self.content = self.build()
         if self.page:
             self.update()
 

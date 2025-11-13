@@ -82,6 +82,13 @@ class CompanyListView(ft.Container):
         self._data_table: DataTable | None = None
         self._confirm_dialog: ConfirmDialog | None = None
 
+        # Configurar propiedades del contenedor
+        self.expand = True
+        self.padding = 0
+
+        # Construir contenido inicial
+        self.content = self.build()
+
         logger.info(f"CompanyListView initialized with type_filter={self._type_filter}")
 
     def _get_i18n_key_prefix(self) -> str:
@@ -107,6 +114,56 @@ class CompanyListView(ft.Container):
         """
         i18n_prefix = self._get_i18n_key_prefix()
 
+        # Estados de carga/error/vacío
+        if self._is_loading:
+            loading_message = "Cargando " + t(f"{i18n_prefix}.title").lower() + "..."
+            return ft.Container(
+                content=LoadingSpinner(message=loading_message),
+                expand=True,
+                alignment=ft.alignment.center,
+            )
+
+        if self._error_message:
+            return ft.Container(
+                content=ErrorDisplay(
+                    message=self._error_message,
+                    on_retry=self.load_companies,
+                ),
+                expand=True,
+                alignment=ft.alignment.center,
+            )
+
+        if not self._companies:
+            # Icono y mensajes según el tipo
+            if self._type_filter == "CLIENT":
+                icon = ft.Icons.PEOPLE_OUTLINED
+                empty_title = t("clients.title")
+                empty_message = t("clients.no_clients")
+                action_label = t("clients.create_first")
+            elif self._type_filter == "SUPPLIER":
+                icon = ft.Icons.FACTORY_OUTLINED
+                empty_title = t("suppliers.title")
+                empty_message = t("suppliers.no_suppliers")
+                action_label = t("suppliers.create_first")
+            else:
+                icon = ft.Icons.BUSINESS_OUTLINED
+                empty_title = t("companies.title")
+                empty_message = t("companies.no_companies")
+                action_label = t("companies.create_first")
+
+            return ft.Container(
+                content=EmptyState(
+                    icon=icon,
+                    title=empty_title,
+                    message=empty_message,
+                    action_text=action_label,
+                    on_action=self._on_create_company,
+                ),
+                expand=True,
+                alignment=ft.alignment.center,
+            )
+
+        # Contenido principal con datos
         # SearchBar
         self._search_bar = SearchBar(
             placeholder=t(f"{i18n_prefix}.search_placeholder"),
@@ -173,14 +230,68 @@ class CompanyListView(ft.Container):
             on_page_change=self._on_page_change,
         )
 
-        # Configurar propiedades del contenedor
-        self.expand = True
-        self.padding = 0
+        # Asignar datos al DataTable si hay empresas cargadas
+        if self._companies:
+            formatted_data = self._format_companies_for_table(self._companies)
+            self._data_table.set_data(
+                formatted_data,
+                total=self._total_companies,
+                current_page=self._current_page,
+            )
 
-        # Establecer contenido inicial (loading)
-        self._rebuild_content()
+        # Header con título y botón crear
+        header = ft.Row(
+            controls=[
+                ft.Text(
+                    t(f"{i18n_prefix}.list_title"),
+                    size=LayoutConstants.FONT_SIZE_DISPLAY_MD,
+                    weight=LayoutConstants.FONT_WEIGHT_BOLD,
+                    expand=True,
+                ),
+                ft.FloatingActionButton(
+                    icon=ft.Icons.ADD,
+                    text=t(f"{i18n_prefix}.create"),
+                    on_click=self._on_create_company,
+                ),
+            ],
+            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+        )
 
-        return self
+        # Contenido principal
+        return ft.Container(
+            content=ft.Column(
+                controls=[
+                    ft.Container(
+                        content=header,
+                        padding=ft.padding.only(
+                            left=LayoutConstants.PADDING_LG,
+                            right=LayoutConstants.PADDING_LG,
+                            top=LayoutConstants.PADDING_LG,
+                        ),
+                    ),
+                    ft.Container(
+                        content=self._search_bar,
+                        padding=ft.padding.symmetric(horizontal=LayoutConstants.PADDING_LG),
+                    ),
+                    ft.Container(
+                        content=self._filter_panel,
+                        padding=ft.padding.symmetric(horizontal=LayoutConstants.PADDING_LG),
+                    ),
+                    ft.Container(
+                        content=self._data_table,
+                        padding=ft.padding.only(
+                            left=LayoutConstants.PADDING_LG,
+                            right=LayoutConstants.PADDING_LG,
+                            bottom=LayoutConstants.PADDING_LG,
+                        ),
+                        expand=True,
+                    ),
+                ],
+                spacing=LayoutConstants.SPACING_MD,
+            ),
+            expand=True,
+            padding=0,
+        )
 
     def did_mount(self) -> None:
         """
@@ -255,6 +366,8 @@ class CompanyListView(ft.Container):
         self._is_loading = True
         self._error_message = ""
 
+        # Reconstruir contenido para mostrar loading
+        self.content = self.build()
         if self.page:
             self.update()
 
@@ -291,143 +404,15 @@ class CompanyListView(ft.Container):
 
             self._is_loading = False
 
-            # Reconstruir el contenido de la vista
-            self._rebuild_content()
-
-            # Actualizar DataTable con los datos formateados (solo si hay empresas)
-            if self._data_table and self._companies:
-                formatted_data = self._format_companies_for_table(self._companies)
-                logger.debug(f"Setting {len(formatted_data)} formatted rows to DataTable")
-                self._data_table.set_data(
-                    formatted_data,
-                    total=self._total_companies,
-                    current_page=self._current_page,
-                )
-            elif self._data_table and not self._companies:
-                # Si no hay empresas, limpiar el DataTable para evitar conflictos
-                logger.debug("No companies found, DataTable will not be updated")
-
-            # Forzar actualización de la UI
-            if self.page:
-                logger.debug("Updating CompanyListView UI after loading companies")
-                self.update()
-            else:
-                logger.warning("Page is None, cannot update UI")
-
         except Exception as e:
             logger.exception(f"Error loading companies: {e}")
             self._error_message = f"Error al cargar empresas: {str(e)}"
             self._is_loading = False
-            self._rebuild_content()
 
-            # Forzar actualización de la UI en caso de error
-            if self.page:
-                logger.debug("Updating CompanyListView UI after error")
-                self.update()
-            else:
-                logger.warning("Page is None, cannot update UI after error")
-
-    def _rebuild_content(self) -> None:
-        """Reconstruye el contenido de la vista según el estado actual."""
-        i18n_prefix = self._get_i18n_key_prefix()
-
-        # Estados de carga/error/vacío
-        if self._is_loading:
-            loading_message = "Cargando " + t(f"{i18n_prefix}.title").lower() + "..."
-            self.content = ft.Container(
-                content=LoadingSpinner(message=loading_message),
-                expand=True,
-                alignment=ft.alignment.center,
-            )
-        elif self._error_message:
-            self.content = ft.Container(
-                content=ErrorDisplay(
-                    message=self._error_message,
-                    on_retry=self.load_companies,
-                ),
-                expand=True,
-                alignment=ft.alignment.center,
-            )
-        elif not self._companies:
-            # Icono y mensajes según el tipo
-            if self._type_filter == "CLIENT":
-                icon = ft.Icons.PEOPLE_OUTLINED
-                empty_title = t("clients.title")
-                empty_message = t("clients.no_clients")
-                action_label = t("clients.create_first")
-            elif self._type_filter == "SUPPLIER":
-                icon = ft.Icons.FACTORY_OUTLINED
-                empty_title = t("suppliers.title")
-                empty_message = t("suppliers.no_suppliers")
-                action_label = t("suppliers.create_first")
-            else:
-                icon = ft.Icons.BUSINESS_OUTLINED
-                empty_title = t("companies.title")
-                empty_message = t("companies.no_companies")
-                action_label = t("companies.create_first")
-
-            self.content = ft.Container(
-                content=EmptyState(
-                    icon=icon,
-                    title=empty_title,
-                    message=empty_message,
-                    action_text=action_label,
-                    on_action=self._on_create_company,
-                ),
-                expand=True,
-                alignment=ft.alignment.center,
-            )
-        else:
-            # Header con título y botón crear
-            header = ft.Row(
-                controls=[
-                    ft.Text(
-                        t(f"{i18n_prefix}.list_title"),
-                        size=LayoutConstants.FONT_SIZE_DISPLAY_MD,
-                        weight=LayoutConstants.FONT_WEIGHT_BOLD,
-                        expand=True,
-                    ),
-                    ft.FloatingActionButton(
-                        icon=ft.Icons.ADD,
-                        text=t(f"{i18n_prefix}.create"),
-                        on_click=self._on_create_company,
-                    ),
-                ],
-                alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-            )
-
-            # Contenido principal con datos
-            self.content = ft.Column(
-                controls=[
-                    ft.Container(
-                        content=header,
-                        padding=ft.padding.only(
-                            left=LayoutConstants.PADDING_LG,
-                            right=LayoutConstants.PADDING_LG,
-                            top=LayoutConstants.PADDING_LG,
-                        ),
-                    ),
-                    ft.Container(
-                        content=self._search_bar,
-                        padding=ft.padding.symmetric(horizontal=LayoutConstants.PADDING_LG),
-                    ),
-                    ft.Container(
-                        content=self._filter_panel,
-                        padding=ft.padding.symmetric(horizontal=LayoutConstants.PADDING_LG),
-                    ),
-                    ft.Container(
-                        content=self._data_table,
-                        padding=ft.padding.only(
-                            left=LayoutConstants.PADDING_LG,
-                            right=LayoutConstants.PADDING_LG,
-                            bottom=LayoutConstants.PADDING_LG,
-                        ),
-                        expand=True,
-                    ),
-                ],
-                spacing=LayoutConstants.SPACING_MD,
-                expand=True,
-            )
+        # Reconstruir contenido con los datos cargados o error
+        self.content = self.build()
+        if self.page:
+            self.update()
 
     def _format_companies_for_table(self, companies: list[dict]) -> list[dict]:
         """

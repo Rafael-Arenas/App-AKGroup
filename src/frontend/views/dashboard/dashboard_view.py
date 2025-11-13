@@ -43,6 +43,13 @@ class DashboardView(ft.Container):
         self._quotes_kpi: KPICard | None = None
         self._orders_kpi: KPICard | None = None
 
+        # Configurar propiedades del contenedor
+        self.expand = True
+        self.padding = 0
+
+        # Construir contenido inicial
+        self.content = self.build()
+
         logger.info("DashboardView initialized")
 
     def build(self) -> ft.Control:
@@ -52,6 +59,25 @@ class DashboardView(ft.Container):
         Returns:
             Control de Flet con el dashboard completo
         """
+        # Estados de carga/error
+        if self._is_loading:
+            return ft.Container(
+                content=LoadingSpinner(message="Cargando dashboard..."),
+                expand=True,
+                alignment=ft.alignment.center,
+            )
+
+        if self._error_message:
+            return ft.Container(
+                content=ErrorDisplay(
+                    message=self._error_message,
+                    on_retry=self.load_dashboard_data,
+                ),
+                expand=True,
+                alignment=ft.alignment.center,
+            )
+
+        # Contenido principal
         # Header
         header = ft.Text(
             "Bienvenido a AK Group",
@@ -59,32 +85,37 @@ class DashboardView(ft.Container):
             weight=LayoutConstants.FONT_WEIGHT_BOLD,
         )
 
-        # Crear KPI Cards
+        # Crear KPI Cards con datos si están disponibles
+        companies_count = self._dashboard_data.get("companies_count", 0) if self._dashboard_data else 0
+        products_count = self._dashboard_data.get("products_count", 0) if self._dashboard_data else 0
+        quotes_count = self._dashboard_data.get("quotes_count", 0) if self._dashboard_data else 0
+        orders_count = self._dashboard_data.get("orders_count", 0) if self._dashboard_data else 0
+
         self._companies_kpi = KPICard(
             icon=ft.Icons.BUSINESS,
             label="Total Empresas",
-            value=0,
+            value=companies_count,
             trend="neutral",
         )
 
         self._products_kpi = KPICard(
             icon=ft.Icons.INVENTORY_2,
             label="Total Productos",
-            value=0,
+            value=products_count,
             trend="neutral",
         )
 
         self._quotes_kpi = KPICard(
             icon=ft.Icons.DESCRIPTION,
             label="Cotizaciones Activas",
-            value=0,
+            value=quotes_count,
             trend="neutral",
         )
 
         self._orders_kpi = KPICard(
             icon=ft.Icons.SHOPPING_CART,
             label="Pedidos Totales",
-            value=0,
+            value=orders_count,
             trend="neutral",
         )
 
@@ -136,38 +167,20 @@ class DashboardView(ft.Container):
             margin=ft.margin.only(top=LayoutConstants.SPACING_XL),
         )
 
-        # Contenido principal
-        content = ft.Column(
-            controls=[
-                header,
-                kpi_row,
-                activity_section,
-            ],
-            spacing=LayoutConstants.SPACING_LG,
-            scroll=ft.ScrollMode.AUTO,
+        # Retornar contenido
+        return ft.Container(
+            content=ft.Column(
+                controls=[
+                    header,
+                    kpi_row,
+                    activity_section,
+                ],
+                spacing=LayoutConstants.SPACING_LG,
+                scroll=ft.ScrollMode.AUTO,
+            ),
             expand=True,
+            padding=LayoutConstants.PADDING_LG,
         )
-
-        # Contenedor con estados
-        if self._is_loading:
-            return ft.Container(
-                content=LoadingSpinner(
-                    message="Cargando dashboard...",
-                ),
-                expand=True,
-                alignment=ft.alignment.center,
-            )
-        elif self._error_message:
-            return ft.Container(
-                content=ErrorDisplay(
-                    message=self._error_message,
-                    on_retry=self.load_dashboard_data,
-                ),
-                expand=True,
-                alignment=ft.alignment.center,
-            )
-        else:
-            return content
 
     def did_mount(self) -> None:
         """
@@ -205,6 +218,8 @@ class DashboardView(ft.Container):
         self._is_loading = True
         self._error_message = ""
 
+        # Reconstruir contenido para mostrar loading
+        self.content = self.build()
         if self.page:
             self.update()
 
@@ -229,18 +244,13 @@ class DashboardView(ft.Container):
             quotes_count = 0
             orders_count = 0
 
-            # Actualizar KPIs
-            if self._companies_kpi:
-                self._companies_kpi.update_value(companies_count)
-
-            if self._products_kpi:
-                self._products_kpi.update_value(products_count)
-
-            if self._quotes_kpi:
-                self._quotes_kpi.update_value(quotes_count)
-
-            if self._orders_kpi:
-                self._orders_kpi.update_value(orders_count)
+            # Guardar datos en el estado
+            self._dashboard_data = {
+                "companies_count": companies_count,
+                "products_count": products_count,
+                "quotes_count": quotes_count,
+                "orders_count": orders_count,
+            }
 
             logger.success(
                 f"Dashboard data loaded: {companies_count} companies, "
@@ -254,6 +264,8 @@ class DashboardView(ft.Container):
             self._error_message = f"Error al cargar datos del dashboard: {str(e)}"
             self._is_loading = False
 
+        # Reconstruir contenido con los datos cargados o error
+        self.content = self.build()
         if self.page:
             self.update()
 

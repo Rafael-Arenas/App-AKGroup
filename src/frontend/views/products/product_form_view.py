@@ -58,10 +58,36 @@ class ProductFormView(ft.Container):
         self._is_active_switch: ft.Switch | None = None
         self._bom_section: ft.Container | None = None
 
+        # Configurar propiedades del contenedor
+        self.expand = True
+        self.padding = 0
+
+        # Construir contenido inicial
+        self.content = self.build()
+
         logger.info(f"ProductFormView initialized: product_id={product_id}")
 
     def build(self) -> ft.Control:
         """Construye el componente del formulario."""
+        # Estados de carga/error
+        if self._is_loading:
+            return ft.Container(
+                content=LoadingSpinner(message="Cargando formulario..."),
+                expand=True,
+                alignment=ft.alignment.center,
+            )
+
+        if self._error_message:
+            return ft.Container(
+                content=ErrorDisplay(
+                    message=self._error_message,
+                    on_retry=self._load_form_data,
+                ),
+                expand=True,
+                alignment=ft.alignment.center,
+            )
+
+        # Formulario principal
         is_edit = self.product_id is not None
 
         title = ft.Text(
@@ -174,30 +200,16 @@ class ProductFormView(ft.Container):
             alignment=ft.MainAxisAlignment.END,
         )
 
-        content = ft.Column(
-            controls=[title, basic_section, self._bom_section, actions],
-            spacing=LayoutConstants.SPACING_LG,
-            scroll=ft.ScrollMode.AUTO,
+        # Contenido principal del formulario
+        return ft.Container(
+            content=ft.Column(
+                controls=[title, basic_section, self._bom_section, actions],
+                spacing=LayoutConstants.SPACING_LG,
+                scroll=ft.ScrollMode.AUTO,
+            ),
             expand=True,
+            padding=LayoutConstants.PADDING_LG,
         )
-
-        if self._is_loading:
-            return ft.Container(
-                content=LoadingSpinner(message="Cargando formulario..."),
-                expand=True,
-                alignment=ft.alignment.center,
-            )
-        elif self._error_message:
-            return ft.Container(
-                content=ErrorDisplay(
-                    message=self._error_message,
-                    on_retry=self._load_form_data,
-                ),
-                expand=True,
-                alignment=ft.alignment.center,
-            )
-        else:
-            return content
 
     def did_mount(self) -> None:
         """Lifecycle: Se ejecuta cuando el componente se monta."""
@@ -216,6 +228,9 @@ class ProductFormView(ft.Container):
         """Carga los datos del formulario."""
         self._is_loading = True
         self._error_message = ""
+
+        # Reconstruir contenido para mostrar loading
+        self.content = self.build()
         if self.page:
             self.update()
 
@@ -229,8 +244,14 @@ class ProductFormView(ft.Container):
             self._error_message = f"Error al cargar datos: {str(e)}"
             self._is_loading = False
 
+        # Reconstruir contenido con los datos cargados o error
+        self.content = self.build()
         if self.page:
             self.update()
+
+        # Poblar los campos después de que se hayan creado
+        if self.product_id and self._product_data:
+            self._populate_form_fields()
 
     async def _load_lookups(self) -> None:
         """Carga los datos de lookups."""
@@ -263,6 +284,15 @@ class ProductFormView(ft.Container):
         product_api = ProductAPI()
         self._product_data = await product_api.get_by_id(self.product_id)
 
+        logger.success(f"Product data loaded: {self._product_data.get('name')}")
+
+    def _populate_form_fields(self) -> None:
+        """Pobla los campos del formulario con los datos cargados."""
+        if not self._product_data:
+            return
+
+        logger.debug("Populating form fields with product data")
+
         # Poblar campos
         if self._code_field:
             self._code_field.set_value(self._product_data.get("code", ""))
@@ -282,6 +312,12 @@ class ProductFormView(ft.Container):
         # Mostrar BOM si es nomenclatura
         if self._product_data.get("product_type") == "NOMENCLATURE":
             self._show_bom_section()
+
+        logger.success("Form fields populated successfully")
+
+        # Actualizar la UI después de poblar los campos
+        if self.page:
+            self.update()
 
     def _on_type_change(self, value: str) -> None:
         """Callback cuando cambia el tipo de producto."""

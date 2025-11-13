@@ -73,6 +73,13 @@ class CompanyFormView(ft.Container):
         self._country_field: DropdownField | None = None
         self._is_active_switch: ft.Switch | None = None
 
+        # Configurar propiedades del contenedor
+        self.expand = True
+        self.padding = 0
+
+        # Construir contenido inicial
+        self.content = self.build()
+
         logger.info(
             f"CompanyFormView initialized: "
             f"company_id={company_id}, default_type={default_type}, "
@@ -86,6 +93,25 @@ class CompanyFormView(ft.Container):
         Returns:
             Control de Flet con el formulario completo
         """
+        # Estados de carga/error
+        if self._is_loading:
+            return ft.Container(
+                content=LoadingSpinner(message="Cargando formulario..."),
+                expand=True,
+                alignment=ft.alignment.center,
+            )
+
+        if self._error_message:
+            return ft.Container(
+                content=ErrorDisplay(
+                    message=self._error_message,
+                    on_retry=self._load_form_data,
+                ),
+                expand=True,
+                alignment=ft.alignment.center,
+            )
+
+        # Formulario principal
         is_edit = self.company_id is not None
 
         # Título
@@ -211,49 +237,20 @@ class CompanyFormView(ft.Container):
         )
 
         # Contenido principal del formulario
-        self._form_content = ft.Column(
-            controls=[
-                title,
-                basic_info_section,
-                contact_info_section,
-                location_section,
-                action_buttons,
-            ],
-            spacing=LayoutConstants.SPACING_LG,
-            scroll=ft.ScrollMode.AUTO,
-            expand=True,
-            visible=not self._is_loading and not self._error_message,
-        )
-
-        # Loading spinner
-        self._loading_container = ft.Container(
-            content=LoadingSpinner(
-                message="Cargando formulario...",
+        return ft.Container(
+            content=ft.Column(
+                controls=[
+                    title,
+                    basic_info_section,
+                    contact_info_section,
+                    location_section,
+                    action_buttons,
+                ],
+                spacing=LayoutConstants.SPACING_LG,
+                scroll=ft.ScrollMode.AUTO,
             ),
             expand=True,
-            alignment=ft.alignment.center,
-            visible=self._is_loading,
-        )
-
-        # Error display
-        self._error_container = ft.Container(
-            content=ErrorDisplay(
-                message=self._error_message if self._error_message else "Error desconocido",
-                on_retry=self._load_form_data,
-            ),
-            expand=True,
-            alignment=ft.alignment.center,
-            visible=bool(self._error_message),
-        )
-
-        # Stack con todos los estados
-        return ft.Stack(
-            controls=[
-                self._form_content,
-                self._loading_container,
-                self._error_container,
-            ],
-            expand=True,
+            padding=LayoutConstants.PADDING_LG,
         )
 
     def did_mount(self) -> None:
@@ -288,12 +285,8 @@ class CompanyFormView(ft.Container):
         self._is_loading = True
         self._error_message = ""
 
-        # Actualizar visibilidad de contenedores
-        if hasattr(self, '_form_content'):
-            self._form_content.visible = False
-            self._loading_container.visible = True
-            self._error_container.visible = False
-
+        # Reconstruir contenido para mostrar loading
+        self.content = self.build()
         if self.page:
             self.update()
 
@@ -308,28 +301,19 @@ class CompanyFormView(ft.Container):
             self._is_loading = False
             self._error_message = ""
 
-            # Mostrar formulario
-            if hasattr(self, '_form_content'):
-                self._form_content.visible = True
-                self._loading_container.visible = False
-                self._error_container.visible = False
-
         except Exception as e:
             logger.exception(f"Error loading form data: {e}")
             self._error_message = f"Error al cargar datos del formulario: {str(e)}"
             self._is_loading = False
 
-            # Mostrar error
-            if hasattr(self, '_error_container'):
-                self._form_content.visible = False
-                self._loading_container.visible = False
-                self._error_container.visible = True
-                # Actualizar mensaje de error
-                if hasattr(self._error_container.content, 'message'):
-                    self._error_container.content.message = self._error_message
-
+        # Reconstruir contenido con los datos cargados o error
+        self.content = self.build()
         if self.page:
             self.update()
+
+        # Poblar los campos después de que se hayan creado
+        if self.company_id and self._company_data:
+            self._populate_form_fields()
 
     async def _load_lookups(self) -> None:
         """Carga los datos de lookups (tipos de empresa y países)."""
@@ -391,42 +375,55 @@ class CompanyFormView(ft.Container):
             company_api = CompanyAPI()
             self._company_data = await company_api.get_by_id(self.company_id)
 
-            # Poblar campos con datos existentes
-            if self._name_field:
-                self._name_field.set_value(self._company_data.get("name", ""))
-
-            if self._trigram_field:
-                self._trigram_field.set_value(self._company_data.get("trigram", ""))
-
-            if self._company_type_field:
-                # El API devuelve company_type_id como entero
-                company_type_id = self._company_data.get("company_type_id")
-                if company_type_id:
-                    self._company_type_field.set_value(str(company_type_id))
-
-            if self._phone_field:
-                self._phone_field.set_value(self._company_data.get("phone", ""))
-
-            if self._email_field:
-                self._email_field.set_value(self._company_data.get("email", ""))
-
-            if self._website_field:
-                self._website_field.set_value(self._company_data.get("website", ""))
-
-            if self._country_field:
-                # El API devuelve country_id como entero
-                country_id = self._company_data.get("country_id")
-                if country_id:
-                    self._country_field.set_value(str(country_id))
-
-            if self._is_active_switch:
-                self._is_active_switch.value = self._company_data.get("is_active", True)
-
             logger.success(f"Company data loaded: {self._company_data.get('name')}")
 
         except Exception as e:
             logger.exception(f"Error loading company data: {e}")
             raise
+
+    def _populate_form_fields(self) -> None:
+        """Pobla los campos del formulario con los datos cargados."""
+        if not self._company_data:
+            return
+
+        logger.debug("Populating form fields with company data")
+
+        # Poblar campos con datos existentes
+        if self._name_field:
+            self._name_field.set_value(self._company_data.get("name", ""))
+
+        if self._trigram_field:
+            self._trigram_field.set_value(self._company_data.get("trigram", ""))
+
+        if self._company_type_field:
+            # El API devuelve company_type_id como entero
+            company_type_id = self._company_data.get("company_type_id")
+            if company_type_id:
+                self._company_type_field.set_value(str(company_type_id))
+
+        if self._phone_field:
+            self._phone_field.set_value(self._company_data.get("phone", ""))
+
+        if self._email_field:
+            self._email_field.set_value(self._company_data.get("email", ""))
+
+        if self._website_field:
+            self._website_field.set_value(self._company_data.get("website", ""))
+
+        if self._country_field:
+            # El API devuelve country_id como entero
+            country_id = self._company_data.get("country_id")
+            if country_id:
+                self._country_field.set_value(str(country_id))
+
+        if self._is_active_switch:
+            self._is_active_switch.value = self._company_data.get("is_active", True)
+
+        logger.success("Form fields populated successfully")
+
+        # Actualizar la UI después de poblar los campos
+        if self.page:
+            self.update()
 
     def _validate_form(self) -> bool:
         """
