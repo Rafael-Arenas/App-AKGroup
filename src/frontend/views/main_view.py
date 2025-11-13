@@ -92,7 +92,7 @@ class MainView(ft.Container):
         )
 
         # Crear Breadcrumb con contenedor
-        self._breadcrumb = Breadcrumb()
+        self._breadcrumb = Breadcrumb(on_navigate=self._on_breadcrumb_navigate)
         self._breadcrumb_container = ft.Container(
             content=self._breadcrumb,
             padding=ft.padding.symmetric(
@@ -347,6 +347,40 @@ class MainView(ft.Container):
             self._breadcrumb.update_path(translated_path)
             logger.debug(f"Breadcrumb updated with {len(translated_path)} items: {[p['label'] for p in translated_path]}")
 
+    def _on_breadcrumb_navigate(self, route: str) -> None:
+        """
+        Maneja la navegación cuando se hace clic en un item del breadcrumb.
+
+        Args:
+            route: Ruta a la que navegar
+
+        Example:
+            >>> _on_breadcrumb_navigate("/companies/clients")
+        """
+        logger.info(f"Breadcrumb navigation to: {route}")
+
+        # Mapear rutas a índices de navegación
+        route_mapping = {
+            "/": 0,  # Dashboard
+            "/companies/clients": 1,  # Clientes
+            "/companies/suppliers": 2,  # Proveedores
+            "/products": 3,  # Productos
+            "/quotes": 4,  # Cotizaciones
+            "/orders": 5,  # Órdenes
+            "/deliveries": 6,  # Entregas
+            "/invoices": 7,  # Facturas
+            "/staff": 8,  # Personal
+            "/settings": 9,  # Configuración
+        }
+
+        # Obtener el índice correspondiente a la ruta
+        index = route_mapping.get(route)
+        if index is not None:
+            # Usar el método existente de navegación
+            self._on_destination_change(index)
+        else:
+            logger.warning(f"Unknown route in breadcrumb: {route}")
+
     def _on_navigation_changed(self) -> None:
         """
         Observer: Se ejecuta cuando cambia el estado de navegación.
@@ -482,7 +516,7 @@ class MainView(ft.Container):
         section_key = "clients" if company_type == "CLIENT" else "suppliers"
         app_state.navigation.set_breadcrumb([
             {"label": f"{section_key}.title", "route": f"/companies/{company_type.lower()}s"},
-            {"label": "common.view", "route": None},
+            {"label": f"{section_key}.detail", "route": None},
         ])
 
     def navigate_to_company_form(
@@ -524,7 +558,7 @@ class MainView(ft.Container):
 
         # Actualizar breadcrumb
         section_key = "clients" if company_type == "CLIENT" else "suppliers"
-        action_key = "common.edit" if company_id else "common.create"
+        action_key = f"{section_key}.edit" if company_id else f"{section_key}.create"
         app_state.navigation.set_breadcrumb([
             {"label": f"{section_key}.title", "route": f"/companies/{company_type.lower()}s"},
             {"label": action_key, "route": None},

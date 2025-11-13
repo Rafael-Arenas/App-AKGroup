@@ -116,7 +116,6 @@ class CompanyFormView(ft.Container):
             label="Tipo de Empresa *",
             options=[],  # Se cargarán dinámicamente
             required=True,
-            value=self.default_type,  # Valor por defecto
         )
 
         self._phone_field = ValidatedTextField(
@@ -192,27 +191,27 @@ class CompanyFormView(ft.Container):
         )
 
         # Botones de acción
-        save_button = ft.ElevatedButton(
+        self._save_button = ft.ElevatedButton(
             text="Guardar",
             icon=ft.Icons.SAVE,
             on_click=self._on_save_click,
             disabled=self._is_saving,
         )
 
-        cancel_button = ft.TextButton(
+        self._cancel_button = ft.TextButton(
             text="Cancelar",
             on_click=self._on_cancel_click,
             disabled=self._is_saving,
         )
 
         action_buttons = ft.Row(
-            controls=[save_button, cancel_button],
+            controls=[self._save_button, self._cancel_button],
             spacing=LayoutConstants.SPACING_SM,
             alignment=ft.MainAxisAlignment.END,
         )
 
-        # Contenido principal
-        content = ft.Column(
+        # Contenido principal del formulario
+        self._form_content = ft.Column(
             controls=[
                 title,
                 basic_info_section,
@@ -223,28 +222,39 @@ class CompanyFormView(ft.Container):
             spacing=LayoutConstants.SPACING_LG,
             scroll=ft.ScrollMode.AUTO,
             expand=True,
+            visible=not self._is_loading and not self._error_message,
         )
 
-        # Estados
-        if self._is_loading:
-            return ft.Container(
-                content=LoadingSpinner(
-                    message="Cargando formulario...",
-                ),
-                expand=True,
-                alignment=ft.alignment.center,
-            )
-        elif self._error_message:
-            return ft.Container(
-                content=ErrorDisplay(
-                    message=self._error_message,
-                    on_retry=self._load_form_data,
-                ),
-                expand=True,
-                alignment=ft.alignment.center,
-            )
-        else:
-            return content
+        # Loading spinner
+        self._loading_container = ft.Container(
+            content=LoadingSpinner(
+                message="Cargando formulario...",
+            ),
+            expand=True,
+            alignment=ft.alignment.center,
+            visible=self._is_loading,
+        )
+
+        # Error display
+        self._error_container = ft.Container(
+            content=ErrorDisplay(
+                message=self._error_message if self._error_message else "Error desconocido",
+                on_retry=self._load_form_data,
+            ),
+            expand=True,
+            alignment=ft.alignment.center,
+            visible=bool(self._error_message),
+        )
+
+        # Stack con todos los estados
+        return ft.Stack(
+            controls=[
+                self._form_content,
+                self._loading_container,
+                self._error_container,
+            ],
+            expand=True,
+        )
 
     def did_mount(self) -> None:
         """
@@ -278,6 +288,12 @@ class CompanyFormView(ft.Container):
         self._is_loading = True
         self._error_message = ""
 
+        # Actualizar visibilidad de contenedores
+        if hasattr(self, '_form_content'):
+            self._form_content.visible = False
+            self._loading_container.visible = True
+            self._error_container.visible = False
+
         if self.page:
             self.update()
 
@@ -290,11 +306,27 @@ class CompanyFormView(ft.Container):
                 await self._load_company_data()
 
             self._is_loading = False
+            self._error_message = ""
+
+            # Mostrar formulario
+            if hasattr(self, '_form_content'):
+                self._form_content.visible = True
+                self._loading_container.visible = False
+                self._error_container.visible = False
 
         except Exception as e:
             logger.exception(f"Error loading form data: {e}")
             self._error_message = f"Error al cargar datos del formulario: {str(e)}"
             self._is_loading = False
+
+            # Mostrar error
+            if hasattr(self, '_error_container'):
+                self._form_content.visible = False
+                self._loading_container.visible = False
+                self._error_container.visible = True
+                # Actualizar mensaje de error
+                if hasattr(self._error_container.content, 'message'):
+                    self._error_container.content.message = self._error_message
 
         if self.page:
             self.update()
@@ -312,16 +344,27 @@ class CompanyFormView(ft.Container):
             self._company_types = await lookup_api.get_lookup("company_types")
             if self._company_type_field:
                 type_options = [
-                    {"label": ct["name"], "value": ct["code"]}
+                    {"label": ct["name"], "value": str(ct["id"])}
                     for ct in self._company_types
                 ]
                 self._company_type_field.set_options(type_options)
+
+                # Establecer valor por defecto si es formulario de creación
+                # default_type puede ser "CLIENT" o "SUPPLIER", buscar el ID correspondiente
+                if not self.company_id and self.default_type:
+                    # Buscar el tipo por nombre
+                    matching_type = next(
+                        (ct for ct in self._company_types if ct["name"].upper() == self.default_type),
+                        None
+                    )
+                    if matching_type:
+                        self._company_type_field.set_value(str(matching_type["id"]))
 
             # Cargar países
             self._countries = await lookup_api.get_lookup("countries")
             if self._country_field:
                 country_options = [
-                    {"label": c["name"], "value": c["code"]}
+                    {"label": c["name"], "value": str(c["id"])}
                     for c in self._countries
                 ]
                 self._country_field.set_options(country_options)
@@ -356,9 +399,10 @@ class CompanyFormView(ft.Container):
                 self._trigram_field.set_value(self._company_data.get("trigram", ""))
 
             if self._company_type_field:
-                self._company_type_field.set_value(
-                    self._company_data.get("company_type", "")
-                )
+                # El API devuelve company_type_id como entero
+                company_type_id = self._company_data.get("company_type_id")
+                if company_type_id:
+                    self._company_type_field.set_value(str(company_type_id))
 
             if self._phone_field:
                 self._phone_field.set_value(self._company_data.get("phone", ""))
@@ -370,9 +414,10 @@ class CompanyFormView(ft.Container):
                 self._website_field.set_value(self._company_data.get("website", ""))
 
             if self._country_field:
-                self._country_field.set_value(
-                    self._company_data.get("country_code", "")
-                )
+                # El API devuelve country_id como entero
+                country_id = self._company_data.get("country_id")
+                if country_id:
+                    self._country_field.set_value(str(country_id))
 
             if self._is_active_switch:
                 self._is_active_switch.value = self._company_data.get("is_active", True)
@@ -427,22 +472,29 @@ class CompanyFormView(ft.Container):
         Returns:
             Diccionario con los datos del formulario
         """
-        return {
+        # Obtener y convertir company_type_id
+        company_type_value = self._company_type_field.get_value() if self._company_type_field else None
+        company_type_id = int(company_type_value) if company_type_value else None
+
+        # Obtener y convertir country_id
+        country_value = self._country_field.get_value() if self._country_field else None
+        country_id = int(country_value) if country_value else None
+
+        data = {
             "name": self._name_field.get_value() if self._name_field else "",
             "trigram": self._trigram_field.get_value() if self._trigram_field else "",
-            "company_type": (
-                self._company_type_field.get_value() if self._company_type_field else ""
-            ),
-            "phone": self._phone_field.get_value() if self._phone_field else "",
-            "email": self._email_field.get_value() if self._email_field else "",
-            "website": self._website_field.get_value() if self._website_field else "",
-            "country_code": (
-                self._country_field.get_value() if self._country_field else ""
-            ),
+            "company_type_id": company_type_id,
+            "phone": self._phone_field.get_value() if self._phone_field else None,
+            "email": self._email_field.get_value() if self._email_field else None,
+            "website": self._website_field.get_value() if self._website_field else None,
+            "country_id": country_id,
             "is_active": (
                 self._is_active_switch.value if self._is_active_switch else True
             ),
         }
+
+        # Eliminar campos None para actualización parcial
+        return {k: v for k, v in data.items() if v is not None or k == "is_active"}
 
     def _on_save_click(self, e: ft.ControlEvent) -> None:
         """Callback cuando se hace click en guardar."""
@@ -466,6 +518,12 @@ class CompanyFormView(ft.Container):
             return
 
         self._is_saving = True
+
+        # Deshabilitar botones
+        if hasattr(self, '_save_button'):
+            self._save_button.disabled = True
+            self._cancel_button.disabled = True
+
         if self.page:
             self.update()
 
@@ -499,6 +557,12 @@ class CompanyFormView(ft.Container):
 
         finally:
             self._is_saving = False
+
+            # Rehabilitar botones
+            if hasattr(self, '_save_button'):
+                self._save_button.disabled = False
+                self._cancel_button.disabled = False
+
             if self.page:
                 self.update()
 
