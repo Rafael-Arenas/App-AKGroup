@@ -302,7 +302,7 @@ def update_company(
     """
     logger.info(f"PUT /companies/{company_id}")
 
-    company = service.update(company_id, company_data.model_dump(exclude_unset=True), user_id)
+    company = service.update(company_id, company_data, user_id)
 
     logger.success(f"Empresa actualizada: id={company_id}")
     return company

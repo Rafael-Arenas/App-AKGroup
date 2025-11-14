@@ -3,6 +3,7 @@ Componente de Dropdown con validación.
 
 Proporciona un campo de selección con validación.
 """
+from typing import Callable
 import flet as ft
 from loguru import logger
 
@@ -42,6 +43,7 @@ class DropdownField(ft.Container):
         options: list[dict[str, str]] | None = None,
         required: bool = False,
         prefix_icon: str | None = None,
+        on_change: Callable[[str], None] | None = None,
     ):
         """Inicializa el dropdown field."""
         super().__init__()
@@ -50,20 +52,15 @@ class DropdownField(ft.Container):
         self.options = options or []
         self.required = required
         self.prefix_icon = prefix_icon
+        self.on_change_callback = on_change
         self.error_message = ""
-        self._dropdown: ft.Dropdown | None = None
-        self._error_text: ft.Text | None = None
-        logger.debug(f"DropdownField initialized: label={label}, options={len(options)}")
 
-    def build(self) -> ft.Control:
-        """
-        Construye el componente de dropdown.
-
-        Returns:
-            Control de Flet con el dropdown
-        """
+        # Inicializar controles internos inmediatamente
         dropdown_options = [
-            ft.dropdown.Option(key=opt["value"], text=opt["text"])
+            ft.dropdown.Option(
+                key=opt["value"],
+                text=opt.get("text", opt.get("label", ""))
+            )
             for opt in self.options
         ]
 
@@ -81,13 +78,16 @@ class DropdownField(ft.Container):
             visible=False,
         )
 
-        return ft.Column(
+        # Establecer content del Container
+        self.content = ft.Column(
             controls=[
                 self._dropdown,
                 self._error_text,
             ],
             spacing=LayoutConstants.SPACING_XS,
         )
+
+        logger.debug(f"DropdownField initialized: label={label}, options={len(options)}")
 
     def _on_change(self, e: ft.ControlEvent) -> None:
         """
@@ -99,6 +99,11 @@ class DropdownField(ft.Container):
         # Limpiar error al seleccionar
         if self.error_message:
             self.clear_error()
+
+        # Llamar al callback personalizado si existe
+        if self.on_change_callback:
+            value = self.get_value()
+            self.on_change_callback(value)
 
     def validate(self) -> bool:
         """
@@ -147,7 +152,7 @@ class DropdownField(ft.Container):
         value = self.get_value()
         for opt in self.options:
             if opt["value"] == value:
-                return opt["text"]
+                return opt.get("text", opt.get("label", ""))
         return ""
 
     def set_value(self, value: str) -> None:
@@ -181,7 +186,10 @@ class DropdownField(ft.Container):
         self.options = options
         if self._dropdown:
             self._dropdown.options = [
-                ft.dropdown.Option(key=opt["value"], text=opt["text"])
+                ft.dropdown.Option(
+                    key=opt["value"],
+                    text=opt.get("text", opt.get("label", ""))
+                )
                 for opt in options
             ]
             if self.page:

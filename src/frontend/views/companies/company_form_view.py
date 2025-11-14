@@ -13,12 +13,13 @@ from src.frontend.components.common import BaseCard, LoadingSpinner, ErrorDispla
 from src.frontend.components.forms import ValidatedTextField, DropdownField
 
 
-class CompanyFormView(ft.Container):
+class CompanyFormView(ft.Column):
     """
     Vista de formulario para crear/editar empresas.
 
     Args:
         company_id: ID de la empresa a editar (None para crear nueva)
+        default_type: Tipo por defecto ("CLIENT" o "SUPPLIER")
         on_save: Callback cuando se guarda exitosamente
         on_cancel: Callback cuando se cancela
 
@@ -50,8 +51,8 @@ class CompanyFormView(ft.Container):
         super().__init__()
         self.company_id = company_id
         self.default_type = default_type
-        self.on_save = on_save
-        self.on_cancel = on_cancel
+        self.on_save_callback = on_save
+        self.on_cancel_callback = on_cancel
 
         # Estado
         self._is_loading: bool = True
@@ -63,22 +64,26 @@ class CompanyFormView(ft.Container):
         self._company_types: list[dict] = []
         self._countries: list[dict] = []
 
-        # Campos del formulario
-        self._name_field: ValidatedTextField | None = None
-        self._trigram_field: ValidatedTextField | None = None
-        self._company_type_field: DropdownField | None = None
-        self._phone_field: ValidatedTextField | None = None
-        self._email_field: ValidatedTextField | None = None
-        self._website_field: ValidatedTextField | None = None
-        self._country_field: DropdownField | None = None
-        self._is_active_switch: ft.Switch | None = None
-
-        # Configurar propiedades del contenedor
+        # Configuración del layout
+        self.spacing = LayoutConstants.SPACING_MD
         self.expand = True
-        self.padding = 0
+        self.scroll = ft.ScrollMode.AUTO
 
-        # Construir contenido inicial
-        self.content = self.build()
+        # Suscribirse a cambios de estado
+        app_state.theme.add_observer(self._on_state_changed)
+        app_state.i18n.add_observer(self._on_state_changed)
+
+        # Construir componentes
+        self._build_components()
+
+        # Contenedor para el formulario
+        self.form_container = ft.Column(
+            spacing=LayoutConstants.SPACING_LG,
+            expand=True,
+        )
+
+        # Construir layout inicial
+        self.controls = self._build_layout()
 
         logger.info(
             f"CompanyFormView initialized: "
@@ -86,41 +91,8 @@ class CompanyFormView(ft.Container):
             f"mode={'edit' if company_id else 'create'}"
         )
 
-    def build(self) -> ft.Control:
-        """
-        Construye el componente del formulario.
-
-        Returns:
-            Control de Flet con el formulario completo
-        """
-        # Estados de carga/error
-        if self._is_loading:
-            return ft.Container(
-                content=LoadingSpinner(message="Cargando formulario..."),
-                expand=True,
-                alignment=ft.alignment.center,
-            )
-
-        if self._error_message:
-            return ft.Container(
-                content=ErrorDisplay(
-                    message=self._error_message,
-                    on_retry=self._load_form_data,
-                ),
-                expand=True,
-                alignment=ft.alignment.center,
-            )
-
-        # Formulario principal
-        is_edit = self.company_id is not None
-
-        # Título
-        title = ft.Text(
-            "Editar Empresa" if is_edit else "Crear Empresa",
-            size=LayoutConstants.FONT_SIZE_DISPLAY_MD,
-            weight=LayoutConstants.FONT_WEIGHT_BOLD,
-        )
-
+    def _build_components(self) -> None:
+        """Crea los componentes del formulario."""
         # Campos del formulario
         self._name_field = ValidatedTextField(
             label="Nombre *",
@@ -175,6 +147,105 @@ class CompanyFormView(ft.Container):
             value=True,
         )
 
+        # Botones de acción
+        self._save_button = ft.ElevatedButton(
+            text="Guardar",
+            icon=ft.Icons.SAVE,
+            on_click=self._on_save_click,
+        )
+
+        self._cancel_button = ft.TextButton(
+            text="Cancelar",
+            on_click=self._on_cancel_click,
+        )
+
+    def _build_layout(self) -> list[ft.Control]:
+        """Construye el layout de la vista."""
+        is_edit = self.company_id is not None
+
+        # Título
+        title = ft.Container(
+            content=ft.Row(
+                controls=[
+                    ft.Icon(
+                        ft.Icons.EDIT if is_edit else ft.Icons.ADD_BUSINESS,
+                        size=32,
+                    ),
+                    ft.Text(
+                        "Editar Empresa" if is_edit else "Crear Empresa",
+                        size=LayoutConstants.FONT_SIZE_DISPLAY_MD,
+                        weight=LayoutConstants.FONT_WEIGHT_BOLD,
+                    ),
+                ],
+                spacing=LayoutConstants.SPACING_SM,
+            ),
+            padding=LayoutConstants.PADDING_MD,
+        )
+
+        # Contenedor para el formulario o estados de loading/error
+        form_content = ft.Container(
+            content=self.form_container,
+            padding=LayoutConstants.PADDING_LG,
+            expand=True,
+        )
+
+        return [
+            title,
+            ft.Divider(height=1, opacity=0.2),
+            form_content,
+        ]
+
+    def did_mount(self) -> None:
+        """
+        Lifecycle: Se ejecuta cuando el componente se monta.
+
+        Carga los lookups y datos de la empresa si es edición.
+        """
+        logger.info("CompanyFormView mounted, loading form data")
+
+        # Cargar datos del formulario
+        if self.page:
+            self.page.run_task(self._load_form_data)
+
+    def will_unmount(self) -> None:
+        """
+        Lifecycle: Se ejecuta cuando el componente se desmonta.
+
+        Limpia los observers.
+        """
+        logger.info("CompanyFormView unmounting")
+        app_state.theme.remove_observer(self._on_state_changed)
+        app_state.i18n.remove_observer(self._on_state_changed)
+
+    def _show_loading(self) -> None:
+        """Muestra el indicador de carga."""
+        self.form_container.controls = [
+            ft.Container(
+                content=LoadingSpinner(message="Cargando formulario..."),
+                expand=True,
+                alignment=ft.alignment.center,
+            )
+        ]
+        if self.page:
+            self.update()
+
+    def _show_error(self) -> None:
+        """Muestra el error."""
+        self.form_container.controls = [
+            ft.Container(
+                content=ErrorDisplay(
+                    message=self._error_message,
+                    on_retry=self._load_form_data,
+                ),
+                expand=True,
+                alignment=ft.alignment.center,
+            )
+        ]
+        if self.page:
+            self.update()
+
+    def _build_form(self) -> None:
+        """Construye el formulario completo."""
         # Sección: Información Básica
         basic_info_section = BaseCard(
             title="Información Básica",
@@ -217,67 +288,22 @@ class CompanyFormView(ft.Container):
         )
 
         # Botones de acción
-        self._save_button = ft.ElevatedButton(
-            text="Guardar",
-            icon=ft.Icons.SAVE,
-            on_click=self._on_save_click,
-            disabled=self._is_saving,
-        )
-
-        self._cancel_button = ft.TextButton(
-            text="Cancelar",
-            on_click=self._on_cancel_click,
-            disabled=self._is_saving,
-        )
-
         action_buttons = ft.Row(
             controls=[self._save_button, self._cancel_button],
             spacing=LayoutConstants.SPACING_SM,
             alignment=ft.MainAxisAlignment.END,
         )
 
-        # Contenido principal del formulario
-        return ft.Container(
-            content=ft.Column(
-                controls=[
-                    title,
-                    basic_info_section,
-                    contact_info_section,
-                    location_section,
-                    action_buttons,
-                ],
-                spacing=LayoutConstants.SPACING_LG,
-                scroll=ft.ScrollMode.AUTO,
-            ),
-            expand=True,
-            padding=LayoutConstants.PADDING_LG,
-        )
+        # Actualizar el contenedor del formulario
+        self.form_container.controls = [
+            basic_info_section,
+            contact_info_section,
+            location_section,
+            action_buttons,
+        ]
 
-    def did_mount(self) -> None:
-        """
-        Lifecycle: Se ejecuta cuando el componente se monta.
-
-        Carga los lookups y datos de la empresa si es edición.
-        """
-        logger.info("CompanyFormView mounted, loading form data")
-
-        # Suscribirse a cambios de estado
-        app_state.theme.add_observer(self._on_state_changed)
-        app_state.i18n.add_observer(self._on_state_changed)
-
-        # Cargar datos del formulario
         if self.page:
-            self.page.run_task(self._load_form_data)
-
-    def will_unmount(self) -> None:
-        """
-        Lifecycle: Se ejecuta cuando el componente se desmonta.
-
-        Limpia los observers.
-        """
-        logger.info("CompanyFormView unmounting")
-        app_state.theme.remove_observer(self._on_state_changed)
-        app_state.i18n.remove_observer(self._on_state_changed)
+            self.update()
 
     async def _load_form_data(self) -> None:
         """Carga los datos del formulario (lookups y empresa si es edición)."""
@@ -285,10 +311,8 @@ class CompanyFormView(ft.Container):
         self._is_loading = True
         self._error_message = ""
 
-        # Reconstruir contenido para mostrar loading
-        self.content = self.build()
-        if self.page:
-            self.update()
+        # Mostrar loading
+        self._show_loading()
 
         try:
             # Cargar lookups
@@ -301,19 +325,18 @@ class CompanyFormView(ft.Container):
             self._is_loading = False
             self._error_message = ""
 
+            # Construir el formulario
+            self._build_form()
+
+            # Poblar los campos si es edición
+            if self.company_id and self._company_data:
+                self._populate_form()
+
         except Exception as e:
             logger.exception(f"Error loading form data: {e}")
             self._error_message = f"Error al cargar datos del formulario: {str(e)}"
             self._is_loading = False
-
-        # Reconstruir contenido con los datos cargados o error
-        self.content = self.build()
-        if self.page:
-            self.update()
-
-        # Poblar los campos después de que se hayan creado
-        if self.company_id and self._company_data:
-            self._populate_form_fields()
+            self._show_error()
 
     async def _load_lookups(self) -> None:
         """Carga los datos de lookups (tipos de empresa y países)."""
@@ -326,32 +349,28 @@ class CompanyFormView(ft.Container):
 
             # Cargar tipos de empresa
             self._company_types = await lookup_api.get_lookup("company_types")
-            if self._company_type_field:
-                type_options = [
-                    {"label": ct["name"], "value": str(ct["id"])}
-                    for ct in self._company_types
-                ]
-                self._company_type_field.set_options(type_options)
+            type_options = [
+                {"label": ct["name"], "value": str(ct["id"])}
+                for ct in self._company_types
+            ]
+            self._company_type_field.set_options(type_options)
 
-                # Establecer valor por defecto si es formulario de creación
-                # default_type puede ser "CLIENT" o "SUPPLIER", buscar el ID correspondiente
-                if not self.company_id and self.default_type:
-                    # Buscar el tipo por nombre
-                    matching_type = next(
-                        (ct for ct in self._company_types if ct["name"].upper() == self.default_type),
-                        None
-                    )
-                    if matching_type:
-                        self._company_type_field.set_value(str(matching_type["id"]))
+            # Establecer valor por defecto si es formulario de creación
+            if not self.company_id and self.default_type:
+                matching_type = next(
+                    (ct for ct in self._company_types if ct["name"].upper() == self.default_type),
+                    None
+                )
+                if matching_type:
+                    self._company_type_field.set_value(str(matching_type["id"]))
 
             # Cargar países
             self._countries = await lookup_api.get_lookup("countries")
-            if self._country_field:
-                country_options = [
-                    {"label": c["name"], "value": str(c["id"])}
-                    for c in self._countries
-                ]
-                self._country_field.set_options(country_options)
+            country_options = [
+                {"label": c["name"], "value": str(c["id"])}
+                for c in self._countries
+            ]
+            self._country_field.set_options(country_options)
 
             logger.success(
                 f"Lookups loaded: {len(self._company_types)} types, "
@@ -381,7 +400,7 @@ class CompanyFormView(ft.Container):
             logger.exception(f"Error loading company data: {e}")
             raise
 
-    def _populate_form_fields(self) -> None:
+    def _populate_form(self) -> None:
         """Pobla los campos del formulario con los datos cargados."""
         if not self._company_data:
             return
@@ -389,35 +408,24 @@ class CompanyFormView(ft.Container):
         logger.debug("Populating form fields with company data")
 
         # Poblar campos con datos existentes
-        if self._name_field:
-            self._name_field.set_value(self._company_data.get("name", ""))
+        self._name_field.set_value(self._company_data.get("name", ""))
+        self._trigram_field.set_value(self._company_data.get("trigram", ""))
 
-        if self._trigram_field:
-            self._trigram_field.set_value(self._company_data.get("trigram", ""))
+        # El API devuelve company_type_id como entero
+        company_type_id = self._company_data.get("company_type_id")
+        if company_type_id:
+            self._company_type_field.set_value(str(company_type_id))
 
-        if self._company_type_field:
-            # El API devuelve company_type_id como entero
-            company_type_id = self._company_data.get("company_type_id")
-            if company_type_id:
-                self._company_type_field.set_value(str(company_type_id))
+        self._phone_field.set_value(self._company_data.get("phone", ""))
+        self._email_field.set_value(self._company_data.get("email", ""))
+        self._website_field.set_value(self._company_data.get("website", ""))
 
-        if self._phone_field:
-            self._phone_field.set_value(self._company_data.get("phone", ""))
+        # El API devuelve country_id como entero
+        country_id = self._company_data.get("country_id")
+        if country_id:
+            self._country_field.set_value(str(country_id))
 
-        if self._email_field:
-            self._email_field.set_value(self._company_data.get("email", ""))
-
-        if self._website_field:
-            self._website_field.set_value(self._company_data.get("website", ""))
-
-        if self._country_field:
-            # El API devuelve country_id como entero
-            country_id = self._company_data.get("country_id")
-            if country_id:
-                self._country_field.set_value(str(country_id))
-
-        if self._is_active_switch:
-            self._is_active_switch.value = self._company_data.get("is_active", True)
+        self._is_active_switch.value = self._company_data.get("is_active", True)
 
         logger.success("Form fields populated successfully")
 
@@ -437,25 +445,25 @@ class CompanyFormView(ft.Container):
         is_valid = True
 
         # Validar campos requeridos
-        if self._name_field and not self._name_field.validate():
+        if not self._name_field.validate():
             is_valid = False
 
-        if self._trigram_field and not self._trigram_field.validate():
+        if not self._trigram_field.validate():
             is_valid = False
 
-        if self._company_type_field and not self._company_type_field.validate():
+        if not self._company_type_field.validate():
             is_valid = False
 
         # Validar campos opcionales con validators
-        if self._phone_field and self._phone_field.get_value():
+        if self._phone_field.get_value():
             if not self._phone_field.validate():
                 is_valid = False
 
-        if self._email_field and self._email_field.get_value():
+        if self._email_field.get_value():
             if not self._email_field.validate():
                 is_valid = False
 
-        if self._website_field and self._website_field.get_value():
+        if self._website_field.get_value():
             if not self._website_field.validate():
                 is_valid = False
 
@@ -470,24 +478,22 @@ class CompanyFormView(ft.Container):
             Diccionario con los datos del formulario
         """
         # Obtener y convertir company_type_id
-        company_type_value = self._company_type_field.get_value() if self._company_type_field else None
+        company_type_value = self._company_type_field.get_value()
         company_type_id = int(company_type_value) if company_type_value else None
 
         # Obtener y convertir country_id
-        country_value = self._country_field.get_value() if self._country_field else None
+        country_value = self._country_field.get_value()
         country_id = int(country_value) if country_value else None
 
         data = {
-            "name": self._name_field.get_value() if self._name_field else "",
-            "trigram": self._trigram_field.get_value() if self._trigram_field else "",
+            "name": self._name_field.get_value(),
+            "trigram": self._trigram_field.get_value(),
             "company_type_id": company_type_id,
-            "phone": self._phone_field.get_value() if self._phone_field else None,
-            "email": self._email_field.get_value() if self._email_field else None,
-            "website": self._website_field.get_value() if self._website_field else None,
+            "phone": self._phone_field.get_value() or None,
+            "email": self._email_field.get_value() or None,
+            "website": self._website_field.get_value() or None,
             "country_id": country_id,
-            "is_active": (
-                self._is_active_switch.value if self._is_active_switch else True
-            ),
+            "is_active": self._is_active_switch.value,
         }
 
         # Eliminar campos None para actualización parcial
@@ -511,15 +517,14 @@ class CompanyFormView(ft.Container):
         # Validar formulario
         if not self._validate_form():
             logger.warning("Form validation failed")
-            # TODO: Mostrar notificación de error
             return
 
         self._is_saving = True
 
         # Deshabilitar botones
-        if hasattr(self, '_save_button'):
-            self._save_button.disabled = True
-            self._cancel_button.disabled = True
+        self._save_button.disabled = True
+        self._save_button.text = "Guardando..."
+        self._cancel_button.disabled = True
 
         if self.page:
             self.update()
@@ -535,40 +540,65 @@ class CompanyFormView(ft.Container):
                 logger.debug(f"Updating company ID={self.company_id}")
                 updated_company = await company_api.update(self.company_id, form_data)
                 logger.success(f"Company updated: {updated_company.get('name')}")
+                message = f"Empresa '{updated_company.get('name')}' actualizada exitosamente"
             else:
                 # Crear nueva empresa
                 logger.debug("Creating new company")
                 new_company = await company_api.create(form_data)
                 logger.success(f"Company created: {new_company.get('name')}")
                 updated_company = new_company
+                message = f"Empresa '{new_company.get('name')}' creada exitosamente"
+
+            # Mostrar mensaje de éxito
+            if self.page:
+                snackbar = ft.SnackBar(
+                    content=ft.Text(message),
+                    bgcolor=ft.Colors.GREEN,
+                    duration=3000,
+                )
+                self.page.overlay.append(snackbar)
+                snackbar.open = True
+                self.page.update()
 
             # Llamar callback de guardado
-            if self.on_save:
-                self.on_save(updated_company)
-
-            # TODO: Mostrar notificación de éxito
+            if self.on_save_callback:
+                self.on_save_callback(updated_company)
 
         except Exception as e:
             logger.exception(f"Error saving company: {e}")
-            # TODO: Mostrar notificación de error
+
+            # Mostrar mensaje de error
+            if self.page:
+                snackbar = ft.SnackBar(
+                    content=ft.Text(f"Error: {str(e)}"),
+                    bgcolor=ft.Colors.RED,
+                    duration=5000,
+                )
+                self.page.overlay.append(snackbar)
+                snackbar.open = True
+                self.page.update()
 
         finally:
             self._is_saving = False
 
             # Rehabilitar botones
-            if hasattr(self, '_save_button'):
-                self._save_button.disabled = False
-                self._cancel_button.disabled = False
+            self._save_button.disabled = False
+            self._save_button.text = "Guardar"
+            self._cancel_button.disabled = False
 
             if self.page:
-                self.update()
+                try:
+                    self.update()
+                except AssertionError:
+                    # El control ya fue removido de la página
+                    pass
 
     def _on_cancel_click(self, e: ft.ControlEvent) -> None:
         """Callback cuando se hace click en cancelar."""
         logger.info("Cancel button clicked")
 
-        if self.on_cancel:
-            self.on_cancel()
+        if self.on_cancel_callback:
+            self.on_cancel_callback()
 
     def _on_state_changed(self) -> None:
         """

@@ -71,17 +71,8 @@ class ValidatedTextField(ft.Container):
         self.prefix_icon = prefix_icon
         self.suffix_icon = suffix_icon
         self.error_message = ""
-        self._text_field: ft.TextField | None = None
-        self._error_text: ft.Text | None = None
-        logger.debug(f"ValidatedTextField initialized: label={label}, validators={validators}")
 
-    def build(self) -> ft.Control:
-        """
-        Construye el componente de text field.
-
-        Returns:
-            Control de Flet con el campo de texto
-        """
+        # Inicializar controles internos inmediatamente
         self._text_field = ft.TextField(
             label=self.label,
             hint_text=self.hint_text,
@@ -101,13 +92,16 @@ class ValidatedTextField(ft.Container):
             visible=False,
         )
 
-        return ft.Column(
+        # Establecer content del Container
+        self.content = ft.Column(
             controls=[
                 self._text_field,
                 self._error_text,
             ],
             spacing=LayoutConstants.SPACING_XS,
         )
+
+        logger.debug(f"ValidatedTextField initialized: label={label}, validators={validators}")
 
     def _on_change(self, e: ft.ControlEvent) -> None:
         """

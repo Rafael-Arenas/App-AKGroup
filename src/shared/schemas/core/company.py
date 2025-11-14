@@ -5,8 +5,9 @@ Define los schemas de validación para operaciones CRUD sobre empresas,
 sus RUTs y sucursales.
 """
 
-from typing import Optional, List
-from pydantic import Field, field_validator, HttpUrl
+from typing import Optional, List, Any
+from pydantic import Field, field_validator, field_serializer, model_validator, HttpUrl
+from sqlalchemy import inspect
 
 from src.shared.schemas.base import BaseSchema, BaseResponse
 
@@ -142,6 +143,72 @@ class CompanyResponse(BaseResponse):
     # Relaciones opcionales (eager loading)
     ruts: Optional[List['CompanyRutResponse']] = []
     branches: Optional[List['BranchResponse']] = []
+
+    @model_validator(mode='before')
+    @classmethod
+    def extract_relationship_names(cls, data: Any) -> Any:
+        """Extrae nombres de objetos de relación antes de la validación."""
+        if isinstance(data, dict):
+            return data
+
+        # Si es un objeto ORM, convertir a diccionario sin modificar el objeto
+        if hasattr(data, '__dict__'):
+            # Crear un nuevo diccionario con los datos
+            result = {}
+
+            # Usar SQLAlchemy inspect para obtener solo columnas, no relaciones
+            mapper = inspect(data.__class__)
+
+            # Copiar valores de columnas (no relaciones)
+            for column in mapper.columns:
+                result[column.name] = getattr(data, column.name, None)
+
+            # Extraer company_type name (de la relación)
+            if hasattr(data, 'company_type') and data.company_type is not None:
+                if not isinstance(data.company_type, str):
+                    result['company_type'] = getattr(data.company_type, 'name', None)
+
+            # Extraer country name (de la relación)
+            if hasattr(data, 'country') and data.country is not None:
+                result['country_name'] = getattr(data.country, 'name', None)
+
+            # Extraer city name (de la relación)
+            if hasattr(data, 'city') and data.city is not None:
+                result['city_name'] = getattr(data.city, 'name', None)
+
+            return result
+
+        return data
+
+    @field_serializer('company_type')
+    def serialize_company_type(self, company_type: Any, _info):
+        """Serializa el objeto CompanyType a string (nombre)."""
+        if company_type is None:
+            return None
+        if isinstance(company_type, str):
+            return company_type
+        # Si es un objeto ORM, extraer el nombre
+        return getattr(company_type, 'name', None)
+
+    @field_serializer('country_name')
+    def serialize_country_name(self, country_name: Any, _info):
+        """Serializa el objeto Country a string (nombre)."""
+        if country_name is None:
+            return None
+        if isinstance(country_name, str):
+            return country_name
+        # Si es un objeto ORM, extraer el nombre
+        return getattr(country_name, 'name', None)
+
+    @field_serializer('city_name')
+    def serialize_city_name(self, city_name: Any, _info):
+        """Serializa el objeto City a string (nombre)."""
+        if city_name is None:
+            return None
+        if isinstance(city_name, str):
+            return city_name
+        # Si es un objeto ORM, extraer el nombre
+        return getattr(city_name, 'name', None)
 
 
 # ============================================================================

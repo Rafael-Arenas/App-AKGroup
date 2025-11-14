@@ -310,7 +310,7 @@ def update_product(
     logger.info(f"PUT /products/{product_id}")
 
     # Service injected via dependency
-    product = service.update(product_id, product_data.model_dump(exclude_unset=True), user_id)
+    product = service.update(product_id, product_data, user_id)
 
     logger.success(f"Producto actualizado: id={product_id}")
     return product
