@@ -49,6 +49,7 @@
       "type": "Type",
       "phone": "Téléphone",
       "email": "Email",
+      "city": "Ville",
       "website": "Site Web",
       "country": "Pays",
       "status": "Statut",

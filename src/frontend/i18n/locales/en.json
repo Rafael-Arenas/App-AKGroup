@@ -49,6 +49,7 @@
       "type": "Type",
       "phone": "Phone",
       "email": "Email",
+      "city": "City",
       "website": "Website",
       "country": "Country",
       "status": "Status",

@@ -63,6 +63,7 @@ class CompanyFormView(ft.Column):
         # Lookups
         self._company_types: list[dict] = []
         self._countries: list[dict] = []
+        self._cities: list[dict] = []
 
         # Configuración del layout
         self.spacing = LayoutConstants.SPACING_MD
@@ -123,13 +124,6 @@ class CompanyFormView(ft.Column):
             prefix_icon=ft.Icons.PHONE,
         )
 
-        self._email_field = ValidatedTextField(
-            label="Email",
-            hint_text="contacto@empresa.com",
-            validators=["email"],
-            prefix_icon=ft.Icons.EMAIL,
-        )
-
         self._website_field = ValidatedTextField(
             label="Sitio Web",
             hint_text="https://www.empresa.com",
@@ -139,6 +133,12 @@ class CompanyFormView(ft.Column):
 
         self._country_field = DropdownField(
             label="País",
+            options=[],  # Se cargarán dinámicamente
+            on_change=self._on_country_change,
+        )
+
+        self._city_field = DropdownField(
+            label="Ciudad",
             options=[],  # Se cargarán dinámicamente
         )
 
@@ -267,7 +267,6 @@ class CompanyFormView(ft.Column):
             content=ft.Column(
                 controls=[
                     self._phone_field,
-                    self._email_field,
                     self._website_field,
                 ],
                 spacing=LayoutConstants.SPACING_MD,
@@ -281,6 +280,7 @@ class CompanyFormView(ft.Column):
             content=ft.Column(
                 controls=[
                     self._country_field,
+                    self._city_field,
                     self._is_active_switch,
                 ],
                 spacing=LayoutConstants.SPACING_MD,
@@ -372,9 +372,17 @@ class CompanyFormView(ft.Column):
             ]
             self._country_field.set_options(country_options)
 
+            # Cargar ciudades
+            self._cities = await lookup_api.get_lookup("cities")
+            city_options = [
+                {"label": c["name"], "value": str(c["id"])}
+                for c in self._cities
+            ]
+            self._city_field.set_options(city_options)
+
             logger.success(
                 f"Lookups loaded: {len(self._company_types)} types, "
-                f"{len(self._countries)} countries"
+                f"{len(self._countries)} countries, {len(self._cities)} cities"
             )
 
         except Exception as e:
@@ -417,13 +425,21 @@ class CompanyFormView(ft.Column):
             self._company_type_field.set_value(str(company_type_id))
 
         self._phone_field.set_value(self._company_data.get("phone", ""))
-        self._email_field.set_value(self._company_data.get("email", ""))
         self._website_field.set_value(self._company_data.get("website", ""))
 
         # El API devuelve country_id como entero
+        # Primero establecer el país (esto filtrará las ciudades automáticamente)
         country_id = self._company_data.get("country_id")
         if country_id:
             self._country_field.set_value(str(country_id))
+            # Filtrar ciudades manualmente ya que set_value no dispara on_change
+            self._on_country_change(str(country_id))
+
+        # El API devuelve city_id como entero
+        # Establecer la ciudad después de filtrar por país
+        city_id = self._company_data.get("city_id")
+        if city_id:
+            self._city_field.set_value(str(city_id))
 
         self._is_active_switch.value = self._company_data.get("is_active", True)
 
@@ -459,10 +475,6 @@ class CompanyFormView(ft.Column):
             if not self._phone_field.validate():
                 is_valid = False
 
-        if self._email_field.get_value():
-            if not self._email_field.validate():
-                is_valid = False
-
         if self._website_field.get_value():
             if not self._website_field.validate():
                 is_valid = False
@@ -485,14 +497,18 @@ class CompanyFormView(ft.Column):
         country_value = self._country_field.get_value()
         country_id = int(country_value) if country_value else None
 
+        # Obtener y convertir city_id
+        city_value = self._city_field.get_value()
+        city_id = int(city_value) if city_value else None
+
         data = {
             "name": self._name_field.get_value(),
             "trigram": self._trigram_field.get_value(),
             "company_type_id": company_type_id,
             "phone": self._phone_field.get_value() or None,
-            "email": self._email_field.get_value() or None,
             "website": self._website_field.get_value() or None,
             "country_id": country_id,
+            "city_id": city_id,
             "is_active": self._is_active_switch.value,
         }
 
@@ -592,6 +608,42 @@ class CompanyFormView(ft.Column):
                 except AssertionError:
                     # El control ya fue removido de la página
                     pass
+
+    def _on_country_change(self, country_id: str) -> None:
+        """
+        Callback cuando cambia el país seleccionado.
+
+        Filtra las ciudades para mostrar solo las del país seleccionado.
+
+        Args:
+            country_id: ID del país seleccionado
+        """
+        logger.debug(f"Country changed to: {country_id}")
+
+        # Limpiar la ciudad seleccionada
+        self._city_field.clear()
+
+        # Filtrar ciudades por país
+        if country_id and self._cities:
+            filtered_cities = [
+                city for city in self._cities
+                if str(city.get("country_id")) == country_id
+            ]
+
+            city_options = [
+                {"label": c["name"], "value": str(c["id"])}
+                for c in filtered_cities
+            ]
+
+            self._city_field.set_options(city_options)
+            logger.debug(f"Filtered {len(filtered_cities)} cities for country {country_id}")
+        else:
+            # Si no hay país seleccionado, mostrar todas las ciudades
+            city_options = [
+                {"label": c["name"], "value": str(c["id"])}
+                for c in self._cities
+            ]
+            self._city_field.set_options(city_options)
 
     def _on_cancel_click(self, e: ft.ControlEvent) -> None:
         """Callback cuando se hace click en cancelar."""

@@ -220,7 +220,7 @@ class CompanyListView(ft.Container):
                 {"key": "trigram", "label": "companies.columns.trigram", "sortable": True},
                 {"key": "type", "label": "companies.columns.type", "sortable": True},
                 {"key": "phone", "label": "companies.columns.phone", "sortable": False},
-                {"key": "email", "label": "companies.columns.email", "sortable": False},
+                {"key": "city", "label": "companies.columns.city", "sortable": True},
                 {"key": "status", "label": "companies.columns.status", "sortable": True},
             ],
             on_row_click=self._on_row_click,
@@ -432,7 +432,7 @@ class CompanyListView(ft.Container):
                 "trigram": company.get("trigram", ""),
                 "type": self._format_company_type(company.get("company_type", "")),
                 "phone": company.get("phone", "-"),
-                "email": company.get("email", "-"),
+                "city": company.get("city_name", "-"),
                 "status": "Activa" if company.get("is_active") else "Inactiva",
                 "_original": company,  # Guardar datos originales
             })

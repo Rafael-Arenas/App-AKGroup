@@ -101,6 +101,37 @@ class LookupAPIService:
             logger.error("Error al obtener países | error={}", str(e))
             raise
 
+    async def get_cities(self) -> list[dict[str, Any]]:
+        """
+        Obtiene todas las ciudades disponibles.
+
+        Returns:
+            Lista de ciudades con estructura:
+                - id: int
+                - name: str
+                - country_id: int
+
+        Raises:
+            NetworkException: Error de red/conexión
+            APIException: Error de API
+
+        Example:
+            >>> cities = await service.get_cities()
+            >>> for city in cities:
+            ...     print(f"{city['id']}: {city['name']}")
+        """
+        logger.info("Obteniendo ciudades")
+
+        try:
+            cities = await self._client.get("/lookups/cities/")
+
+            logger.success("Ciudades obtenidas | total={}", len(cities))
+            return cities
+
+        except Exception as e:
+            logger.error("Error al obtener ciudades | error={}", str(e))
+            raise
+
     async def get_units(self) -> list[dict[str, Any]]:
         """
         Obtiene todas las unidades de medida disponibles.
@@ -139,7 +170,7 @@ class LookupAPIService:
 
         Args:
             lookup_type: Tipo de lookup a obtener.
-                Valores válidos: "countries", "company_types", "units"
+                Valores válidos: "countries", "cities", "company_types", "units"
 
         Returns:
             Lista de elementos del tipo de lookup solicitado
@@ -151,6 +182,7 @@ class LookupAPIService:
 
         Example:
             >>> countries = await service.get_lookup("countries")
+            >>> cities = await service.get_lookup("cities")
             >>> company_types = await service.get_lookup("company_types")
             >>> units = await service.get_lookup("units")
         """
@@ -158,6 +190,8 @@ class LookupAPIService:
 
         if lookup_type == "countries":
             return await self.get_countries()
+        elif lookup_type == "cities":
+            return await self.get_cities()
         elif lookup_type == "company_types":
             return await self.get_company_types()
         elif lookup_type == "units":
