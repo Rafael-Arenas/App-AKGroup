@@ -1,80 +1,129 @@
 """
 Constantes de negocio para la aplicación AK Group.
 
-Define constantes utilizadas en toda la aplicación para valores de negocio,
-estados, tipos, y configuraciones que no deben cambiar frecuentemente.
+Este módulo re-exporta las constantes compartidas desde src.shared.constants
+para mantener compatibilidad con código existente del backend.
+
+Para nuevos desarrollos, importa directamente desde src.shared.constants
 """
 
-# Monedas
-DEFAULT_CURRENCY = "CLP"
-SUPPORTED_CURRENCIES = ["CLP", "USD", "EUR"]
+# Re-exportar todas las constantes desde shared
+from src.shared.constants import (
+    # Monedas
+    DEFAULT_CURRENCY,
+    SUPPORTED_CURRENCIES,
+    DEFAULT_TAX_RATE,
+    # Paginación
+    DEFAULT_PAGINATION_LIMIT,
+    MAX_PAGINATION_LIMIT,
+    # Estados
+    QUOTE_STATUS_DRAFT,
+    QUOTE_STATUS_SENT,
+    QUOTE_STATUS_ACCEPTED,
+    QUOTE_STATUS_REJECTED,
+    QUOTE_STATUS_EXPIRED,
+    ORDER_STATUS_PENDING,
+    ORDER_STATUS_CONFIRMED,
+    ORDER_STATUS_IN_PRODUCTION,
+    ORDER_STATUS_READY,
+    ORDER_STATUS_SHIPPED,
+    ORDER_STATUS_DELIVERED,
+    ORDER_STATUS_CANCELLED,
+    PAYMENT_STATUS_PENDING,
+    PAYMENT_STATUS_PARTIAL,
+    PAYMENT_STATUS_PAID,
+    PAYMENT_STATUS_OVERDUE,
+    DELIVERY_STATUS_PENDING,
+    DELIVERY_STATUS_IN_TRANSIT,
+    DELIVERY_STATUS_DELIVERED,
+    DELIVERY_STATUS_CANCELLED,
+    # Tipos
+    COMPANY_TYPE_CUSTOMER,
+    COMPANY_TYPE_SUPPLIER,
+    COMPANY_TYPE_BOTH,
+    PRODUCT_TYPE_ARTICLE,
+    PRODUCT_TYPE_NOMENCLATURE,
+    PRODUCT_TYPE_SERVICE,
+    ADDRESS_TYPE_DELIVERY,
+    ADDRESS_TYPE_BILLING,
+    ADDRESS_TYPE_HEADQUARTERS,
+    ADDRESS_TYPE_BRANCH,
+    TRANSPORT_TYPE_OWN,
+    TRANSPORT_TYPE_CARRIER,
+    TRANSPORT_TYPE_COURIER,
+    TRANSPORT_TYPE_FREIGHT_FORWARDER,
+    # Límites
+    MIN_PASSWORD_LENGTH,
+    MAX_DISCOUNT_PERCENTAGE,
+    MIN_PRODUCT_QUANTITY,
+    MAX_PRODUCT_QUANTITY,
+    # Formatos
+    DATE_FORMAT,
+    DATETIME_FORMAT,
+    RUT_REGEX,
+    PHONE_REGEX,
+    EMAIL_REGEX,
+)
 
-# Impuestos
-DEFAULT_TAX_RATE = 19.0  # IVA Chile
-
-# Paginación
-DEFAULT_PAGINATION_LIMIT = 100
-MAX_PAGINATION_LIMIT = 1000
-
-# Estados de cotización
-QUOTE_STATUS_DRAFT = "draft"
-QUOTE_STATUS_SENT = "sent"
-QUOTE_STATUS_ACCEPTED = "accepted"
-QUOTE_STATUS_REJECTED = "rejected"
-QUOTE_STATUS_EXPIRED = "expired"
-
-# Estados de orden
-ORDER_STATUS_PENDING = "pending"
-ORDER_STATUS_CONFIRMED = "confirmed"
-ORDER_STATUS_IN_PRODUCTION = "in_production"
-ORDER_STATUS_READY = "ready"
-ORDER_STATUS_SHIPPED = "shipped"
-ORDER_STATUS_DELIVERED = "delivered"
-ORDER_STATUS_CANCELLED = "cancelled"
-
-# Estados de pago
-PAYMENT_STATUS_PENDING = "pending"
-PAYMENT_STATUS_PARTIAL = "partial"
-PAYMENT_STATUS_PAID = "paid"
-PAYMENT_STATUS_OVERDUE = "overdue"
-
-# Estados de entrega
-DELIVERY_STATUS_PENDING = "pending"
-DELIVERY_STATUS_IN_TRANSIT = "in_transit"
-DELIVERY_STATUS_DELIVERED = "delivered"
-DELIVERY_STATUS_CANCELLED = "cancelled"
-
-# Tipos de empresa
-COMPANY_TYPE_CUSTOMER = "customer"
-COMPANY_TYPE_SUPPLIER = "supplier"
-COMPANY_TYPE_BOTH = "both"
-
-# Tipos de producto
-PRODUCT_TYPE_ARTICLE = "ARTICLE"
-PRODUCT_TYPE_NOMENCLATURE = "NOMENCLATURE"
-PRODUCT_TYPE_SERVICE = "SERVICE"
-
-# Tipos de dirección
-ADDRESS_TYPE_DELIVERY = "delivery"
-ADDRESS_TYPE_BILLING = "billing"
-ADDRESS_TYPE_HEADQUARTERS = "headquarters"
-ADDRESS_TYPE_BRANCH = "branch"
-
-# Tipos de transporte
-TRANSPORT_TYPE_OWN = "own"
-TRANSPORT_TYPE_CARRIER = "carrier"
-TRANSPORT_TYPE_COURIER = "courier"
-TRANSPORT_TYPE_FREIGHT_FORWARDER = "freight_forwarder"
-
-# Límites y validaciones
-MIN_PASSWORD_LENGTH = 8
-MAX_DISCOUNT_PERCENTAGE = 50.0
-MIN_PRODUCT_QUANTITY = 0.001
-MAX_PRODUCT_QUANTITY = 999999.999
-
-# Formatos
-DATE_FORMAT = "%Y-%m-%d"
-DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
-RUT_REGEX = r'^\d{1,8}-[\dkK]$'
-PHONE_REGEX = r'^\+?[1-9]\d{1,14}$'
-EMAIL_REGEX = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+__all__ = [
+    # Monedas
+    "DEFAULT_CURRENCY",
+    "SUPPORTED_CURRENCIES",
+    "DEFAULT_TAX_RATE",
+    # Paginación
+    "DEFAULT_PAGINATION_LIMIT",
+    "MAX_PAGINATION_LIMIT",
+    # Estados de cotización
+    "QUOTE_STATUS_DRAFT",
+    "QUOTE_STATUS_SENT",
+    "QUOTE_STATUS_ACCEPTED",
+    "QUOTE_STATUS_REJECTED",
+    "QUOTE_STATUS_EXPIRED",
+    # Estados de orden
+    "ORDER_STATUS_PENDING",
+    "ORDER_STATUS_CONFIRMED",
+    "ORDER_STATUS_IN_PRODUCTION",
+    "ORDER_STATUS_READY",
+    "ORDER_STATUS_SHIPPED",
+    "ORDER_STATUS_DELIVERED",
+    "ORDER_STATUS_CANCELLED",
+    # Estados de pago
+    "PAYMENT_STATUS_PENDING",
+    "PAYMENT_STATUS_PARTIAL",
+    "PAYMENT_STATUS_PAID",
+    "PAYMENT_STATUS_OVERDUE",
+    # Estados de entrega
+    "DELIVERY_STATUS_PENDING",
+    "DELIVERY_STATUS_IN_TRANSIT",
+    "DELIVERY_STATUS_DELIVERED",
+    "DELIVERY_STATUS_CANCELLED",
+    # Tipos de empresa
+    "COMPANY_TYPE_CUSTOMER",
+    "COMPANY_TYPE_SUPPLIER",
+    "COMPANY_TYPE_BOTH",
+    # Tipos de producto
+    "PRODUCT_TYPE_ARTICLE",
+    "PRODUCT_TYPE_NOMENCLATURE",
+    "PRODUCT_TYPE_SERVICE",
+    # Tipos de dirección
+    "ADDRESS_TYPE_DELIVERY",
+    "ADDRESS_TYPE_BILLING",
+    "ADDRESS_TYPE_HEADQUARTERS",
+    "ADDRESS_TYPE_BRANCH",
+    # Tipos de transporte
+    "TRANSPORT_TYPE_OWN",
+    "TRANSPORT_TYPE_CARRIER",
+    "TRANSPORT_TYPE_COURIER",
+    "TRANSPORT_TYPE_FREIGHT_FORWARDER",
+    # Límites y validaciones
+    "MIN_PASSWORD_LENGTH",
+    "MAX_DISCOUNT_PERCENTAGE",
+    "MIN_PRODUCT_QUANTITY",
+    "MAX_PRODUCT_QUANTITY",
+    # Formatos
+    "DATE_FORMAT",
+    "DATETIME_FORMAT",
+    "RUT_REGEX",
+    "PHONE_REGEX",
+    "EMAIL_REGEX",
+]

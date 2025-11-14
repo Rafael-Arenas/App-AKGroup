@@ -5,29 +5,11 @@ Sistema polimórfico de notas que puede asociarse a cualquier entidad
 del sistema (Company, Product, Quote, Order, etc.)
 """
 
-import enum
-
 from sqlalchemy import Column, Enum as SQLEnum, Index, Integer, String, Text
 from sqlalchemy.orm import validates
 
+from src.shared.enums import NotePriority
 from ..base import AuditMixin, Base, TimestampMixin
-
-
-class NotePriority(str, enum.Enum):
-    """
-    Prioridad de una nota.
-
-    Values:
-        LOW: Prioridad baja
-        NORMAL: Prioridad normal (default)
-        HIGH: Prioridad alta
-        URGENT: Urgente
-    """
-
-    LOW = "low"
-    NORMAL = "normal"
-    HIGH = "high"
-    URGENT = "urgent"
 
 
 class Note(Base, TimestampMixin, AuditMixin):

@@ -4,7 +4,6 @@ Address model - Company addresses.
 Modelo para gestionar direcciones de empresas (entregas, facturación, etc.)
 """
 
-import enum
 from typing import Optional
 
 from sqlalchemy import (
@@ -20,24 +19,8 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import relationship, validates
 
+from src.shared.enums import AddressType
 from ..base import AuditMixin, Base, TimestampMixin
-
-
-class AddressType(str, enum.Enum):
-    """
-    Tipos de dirección.
-
-    Values:
-        DELIVERY: Dirección de entrega
-        BILLING: Dirección de facturación
-        HEADQUARTERS: Sede central/matriz
-        BRANCH: Sucursal
-    """
-
-    DELIVERY = "delivery"
-    BILLING = "billing"
-    HEADQUARTERS = "headquarters"
-    BRANCH = "branch"
 
 
 class Address(Base, TimestampMixin, AuditMixin):

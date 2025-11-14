@@ -8,7 +8,7 @@ from typing import Optional
 
 from pydantic import Field, field_validator
 
-from src.backend.models.core.notes import NotePriority
+from src.shared.enums import NotePriority
 from src.shared.schemas.base import BaseSchema, BaseResponse
 
 

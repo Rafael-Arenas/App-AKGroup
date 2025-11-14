@@ -8,7 +8,7 @@ from typing import Optional
 
 from pydantic import Field, field_validator
 
-from src.backend.models.core.addresses import AddressType
+from src.shared.enums import AddressType
 from src.shared.schemas.base import BaseSchema, BaseResponse
 
 

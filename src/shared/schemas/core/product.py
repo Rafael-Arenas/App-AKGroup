@@ -10,7 +10,7 @@ from decimal import Decimal
 from pydantic import Field, field_validator
 
 from src.shared.schemas.base import BaseSchema, BaseResponse
-from src.backend.config.constants import PRODUCT_TYPE_ARTICLE, PRODUCT_TYPE_NOMENCLATURE
+from src.shared.constants import PRODUCT_TYPE_ARTICLE, PRODUCT_TYPE_NOMENCLATURE
 
 
 # ============================================================================
