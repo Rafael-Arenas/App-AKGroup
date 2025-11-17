@@ -218,7 +218,6 @@ class CompanyListView(ft.Container):
             columns=[
                 {"key": "name", "label": "companies.columns.name", "sortable": True},
                 {"key": "trigram", "label": "companies.columns.trigram", "sortable": True},
-                {"key": "type", "label": "companies.columns.type", "sortable": True},
                 {"key": "phone", "label": "companies.columns.phone", "sortable": False},
                 {"key": "city", "label": "companies.columns.city", "sortable": True},
                 {"key": "status", "label": "companies.columns.status", "sortable": True},
@@ -430,30 +429,12 @@ class CompanyListView(ft.Container):
                 "id": company.get("id"),
                 "name": company.get("name", ""),
                 "trigram": company.get("trigram", ""),
-                "type": self._format_company_type(company.get("company_type", "")),
                 "phone": company.get("phone", "-"),
                 "city": company.get("city_name", "-"),
                 "status": "Activa" if company.get("is_active") else "Inactiva",
                 "_original": company,  # Guardar datos originales
             })
         return formatted
-
-    def _format_company_type(self, type_code: str) -> str:
-        """
-        Formatea el tipo de empresa para display.
-
-        Args:
-            type_code: Código del tipo (CLIENT, SUPPLIER, BOTH)
-
-        Returns:
-            Texto formateado
-        """
-        type_map = {
-            "CLIENT": "Cliente",
-            "SUPPLIER": "Proveedor",
-            "BOTH": "Cliente/Proveedor",
-        }
-        return type_map.get(type_code, type_code)
 
     def _get_active_filters(self) -> dict[str, Any]:
         """
