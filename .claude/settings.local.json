@@ -13,7 +13,9 @@
       "Bash(poetry check:*)",
       "Read(//c/Users/raare/Documents/Personal/01Trabajo/AkGroup/Planificador3/src/planificador/ui/**)",
       "Read(//c/Users/raare/Documents/Personal/01Trabajo/AkGroup/Planificador3/**)",
-      "Bash(if exist srcfrontend rmdir /s /q srcfrontend)"
+      "Bash(if exist srcfrontend rmdir /s /q srcfrontend)",
+      "WebFetch(domain:docs.flet.dev)",
+      "WebFetch(domain:flet.dev)"
     ],
     "deny": [],
     "ask": []

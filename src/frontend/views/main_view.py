@@ -289,7 +289,10 @@ class MainView(ft.Container):
                     on_edit=self.navigate_to_company_form,
                 )
             case 3:
-                logger.debug("Creating ProductListView")
+                logger.debug("Creating ProductListView (Artículos)")
+                return ProductListView()
+            case 4:
+                logger.debug("Creating ProductListView (Nomenclaturas)")
                 return ProductListView()
             case _:
                 logger.warning(f"No view implemented for index: {index}")
@@ -364,13 +367,14 @@ class MainView(ft.Container):
             "/": 0,  # Dashboard
             "/companies/clients": 1,  # Clientes
             "/companies/suppliers": 2,  # Proveedores
-            "/products": 3,  # Productos
-            "/quotes": 4,  # Cotizaciones
-            "/orders": 5,  # Órdenes
-            "/deliveries": 6,  # Entregas
-            "/invoices": 7,  # Facturas
-            "/staff": 8,  # Personal
-            "/settings": 9,  # Configuración
+            "/articles": 3,  # Artículos
+            "/nomenclatures": 4,  # Nomenclaturas
+            "/quotes": 5,  # Cotizaciones
+            "/orders": 6,  # Órdenes
+            "/deliveries": 7,  # Entregas
+            "/invoices": 8,  # Facturas
+            "/staff": 9,  # Personal
+            "/settings": 10,  # Configuración
         }
 
         # Obtener el índice correspondiente a la ruta

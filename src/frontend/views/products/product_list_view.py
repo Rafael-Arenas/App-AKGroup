@@ -10,6 +10,7 @@ from loguru import logger
 
 from src.frontend.app_state import app_state
 from src.frontend.layout_constants import LayoutConstants
+from src.frontend.i18n.translation_manager import t
 from src.frontend.components.common import (
     SearchBar,
     FilterPanel,
@@ -63,7 +64,7 @@ class ProductListView(ft.Container):
         # Estados de carga/error/vacío
         if self._is_loading:
             return ft.Container(
-                content=LoadingSpinner(message="Cargando productos..."),
+                content=LoadingSpinner(message=f"Cargando {t('articles.title').lower()}..."),
                 expand=True,
                 alignment=ft.alignment.center,
             )
@@ -82,8 +83,9 @@ class ProductListView(ft.Container):
             return ft.Container(
                 content=EmptyState(
                     icon=ft.Icons.INVENTORY_2_OUTLINED,
-                    message="No hay productos registrados",
-                    action_label="Crear Primer Producto",
+                    title=t("articles.title"),
+                    message=t("articles.no_articles_message"),
+                    action_text=t("articles.create_first"),
                     on_action=self._on_create_product,
                 ),
                 expand=True,
@@ -94,14 +96,14 @@ class ProductListView(ft.Container):
         header = ft.Row(
             controls=[
                 ft.Text(
-                    "Productos",
+                    t("articles.list_title"),
                     size=LayoutConstants.FONT_SIZE_DISPLAY_MD,
                     weight=LayoutConstants.FONT_WEIGHT_BOLD,
                     expand=True,
                 ),
                 ft.FloatingActionButton(
                     icon=ft.Icons.ADD,
-                    text="Crear Producto",
+                    text=t("articles.create"),
                     on_click=self._on_create_product,
                 ),
             ],
@@ -109,7 +111,7 @@ class ProductListView(ft.Container):
         )
 
         self._search_bar = SearchBar(
-            placeholder="Buscar productos por código o nombre...",
+            placeholder=t("articles.search_placeholder"),
             on_search=self._on_search,
         )
 
@@ -117,23 +119,23 @@ class ProductListView(ft.Container):
             filters=[
                 {
                     "key": "status",
-                    "label": "products.filters.status",
+                    "label": "articles.filters.status",
                     "type": "dropdown",
                     "options": [
-                        {"label": "products.filters.all", "value": "all"},
-                        {"label": "products.filters.active", "value": "active"},
-                        {"label": "products.filters.inactive", "value": "inactive"},
+                        {"label": "articles.filters.all", "value": "all"},
+                        {"label": "articles.filters.active", "value": "active"},
+                        {"label": "articles.filters.inactive", "value": "inactive"},
                     ],
                     "default": "all",
                 },
                 {
                     "key": "type",
-                    "label": "products.filters.type",
+                    "label": "common.filters",
                     "type": "dropdown",
                     "options": [
-                        {"label": "products.filters.all", "value": "all"},
-                        {"label": "products.filters.article", "value": "ARTICLE"},
-                        {"label": "products.filters.nomenclature", "value": "NOMENCLATURE"},
+                        {"label": "articles.filters.all", "value": "all"},
+                        {"label": "articles.filters.article", "value": "article"},
+                        {"label": "articles.filters.nomenclature", "value": "nomenclature"},
                     ],
                     "default": "all",
                 },
@@ -143,12 +145,11 @@ class ProductListView(ft.Container):
 
         self._data_table = DataTable(
             columns=[
-                {"key": "code", "label": "products.columns.code", "sortable": True},
-                {"key": "name", "label": "products.columns.name", "sortable": True},
-                {"key": "type", "label": "products.columns.type", "sortable": True},
-                {"key": "unit", "label": "products.columns.unit", "sortable": False},
-                {"key": "cost", "label": "products.columns.cost", "sortable": True},
-                {"key": "status", "label": "products.columns.status", "sortable": True},
+                {"key": "code", "label": "articles.columns.code", "sortable": True},
+                {"key": "name", "label": "articles.columns.name", "sortable": True},
+                {"key": "unit", "label": "articles.columns.unit", "sortable": False},
+                {"key": "cost", "label": "articles.columns.cost", "sortable": True},
+                {"key": "status", "label": "articles.columns.status", "sortable": True},
             ],
             on_row_click=self._on_row_click,
             on_edit=self._on_edit_product,
@@ -262,16 +263,15 @@ class ProductListView(ft.Container):
         for product in products:
             # Indicador de BOM
             has_bom_icon = (
-                "📋 " if product.get("product_type") == "NOMENCLATURE" else ""
+                "📋 " if product.get("product_type") == "nomenclature" else ""
             )
 
             formatted.append({
                 "id": product.get("id"),
-                "code": product.get("code", ""),
-                "name": has_bom_icon + product.get("name", ""),
-                "type": self._format_product_type(product.get("product_type", "")),
+                "code": product.get("reference", ""),
+                "name": has_bom_icon + product.get("designation_es", ""),
                 "unit": product.get("unit", "-"),
-                "cost": f"${product.get('cost', 0):.2f}",
+                "cost": f"${float(product.get('cost_price', 0)):.2f}",
                 "status": "Activo" if product.get("is_active") else "Inactivo",
                 "_original": product,
             })
@@ -279,7 +279,7 @@ class ProductListView(ft.Container):
 
     def _format_product_type(self, type_code: str) -> str:
         """Formatea el tipo de producto."""
-        return "Nomenclatura" if type_code == "NOMENCLATURE" else "Artículo"
+        return "Nomenclatura" if type_code == "nomenclature" else "Artículo"
 
     def _get_active_filters(self) -> dict[str, Any]:
         """Obtiene los filtros activos."""
