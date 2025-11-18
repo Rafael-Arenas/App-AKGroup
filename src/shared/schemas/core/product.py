@@ -24,39 +24,37 @@ class ProductCreate(BaseSchema):
     Example:
         # Producto simple (ARTICLE)
         data = ProductCreate(
-            code="PROD-001",
-            name="Tornillo M6",
+            reference="PROD-001",
+            designation_es="Tornillo M6",
             product_type="ARTICLE",
             cost_price=Decimal("100.00"),
-            sale_price=Decimal("150.00"),
-            unit_id=1
+            sale_price=Decimal("150.00")
         )
 
         # Producto con BOM (NOMENCLATURE)
         data = ProductCreate(
-            code="ASSEM-001",
-            name="Ensamble Completo",
-            product_type="NOMENCLATURE",
-            unit_id=1
+            reference="ASSEM-001",
+            designation_es="Ensamble Completo",
+            product_type="NOMENCLATURE"
         )
     """
 
-    code: str = Field(
+    reference: str = Field(
         ...,
         min_length=1,
         max_length=50,
         description="Código único del producto"
     )
-    name: str = Field(
+    designation_es: str = Field(
         ...,
         min_length=2,
         max_length=200,
-        description="Nombre del producto"
+        description="Nombre del producto en español"
     )
-    description: Optional[str] = Field(
+    short_designation: Optional[str] = Field(
         None,
-        max_length=1000,
-        description="Descripción detallada"
+        max_length=100,
+        description="Descripción corta"
     )
     product_type: str = Field(
         ...,
@@ -80,22 +78,11 @@ class ProductCreate(BaseSchema):
         decimal_places=3,
         description="Cantidad en stock"
     )
-    min_stock: Optional[Decimal] = Field(
+    minimum_stock: Optional[Decimal] = Field(
         None,
         ge=0,
         decimal_places=3,
         description="Stock mínimo"
-    )
-    max_stock: Optional[Decimal] = Field(
-        None,
-        ge=0,
-        decimal_places=3,
-        description="Stock máximo"
-    )
-    unit_id: int = Field(
-        ...,
-        gt=0,
-        description="ID de la unidad de medida"
     )
     family_type_id: Optional[int] = Field(
         None,
@@ -108,15 +95,15 @@ class ProductCreate(BaseSchema):
         description="ID del material/materia"
     )
 
-    @field_validator('code')
+    @field_validator('reference')
     @classmethod
-    def code_uppercase(cls, v: str) -> str:
-        """Convierte el código a mayúsculas."""
+    def reference_uppercase(cls, v: str) -> str:
+        """Convierte la referencia a mayúsculas."""
         return v.upper().strip()
 
-    @field_validator('name')
+    @field_validator('designation_es')
     @classmethod
-    def name_not_empty(cls, v: str) -> str:
+    def designation_not_empty(cls, v: str) -> str:
         """Asegura que el nombre no sea solo espacios."""
         if not v.strip():
             raise ValueError("El nombre del producto no puede estar vacío")
@@ -142,35 +129,33 @@ class ProductUpdate(BaseSchema):
 
     Example:
         data = ProductUpdate(
-            name="Nuevo Nombre",
+            designation_es="Nuevo Nombre",
             sale_price=Decimal("200.00")
         )
     """
 
-    code: Optional[str] = Field(None, min_length=1, max_length=50)
-    name: Optional[str] = Field(None, min_length=2, max_length=200)
-    description: Optional[str] = Field(None, max_length=1000)
+    reference: Optional[str] = Field(None, min_length=1, max_length=50)
+    designation_es: Optional[str] = Field(None, min_length=2, max_length=200)
+    short_designation: Optional[str] = Field(None, max_length=100)
     product_type: Optional[str] = None
     cost_price: Optional[Decimal] = Field(None, ge=0, decimal_places=2)
     sale_price: Optional[Decimal] = Field(None, ge=0, decimal_places=2)
     stock_quantity: Optional[Decimal] = Field(None, ge=0, decimal_places=3)
-    min_stock: Optional[Decimal] = Field(None, ge=0, decimal_places=3)
-    max_stock: Optional[Decimal] = Field(None, ge=0, decimal_places=3)
-    unit_id: Optional[int] = Field(None, gt=0)
+    minimum_stock: Optional[Decimal] = Field(None, ge=0, decimal_places=3)
     family_type_id: Optional[int] = Field(None, gt=0)
     matter_id: Optional[int] = Field(None, gt=0)
     is_active: Optional[bool] = None
 
-    @field_validator('code')
+    @field_validator('reference')
     @classmethod
-    def code_uppercase(cls, v: Optional[str]) -> Optional[str]:
+    def reference_uppercase(cls, v: Optional[str]) -> Optional[str]:
         if v:
             return v.upper().strip()
         return v
 
-    @field_validator('name')
+    @field_validator('designation_es')
     @classmethod
-    def name_not_empty(cls, v: Optional[str]) -> Optional[str]:
+    def designation_not_empty(cls, v: Optional[str]) -> Optional[str]:
         if v and not v.strip():
             raise ValueError("El nombre del producto no puede estar vacío")
         return v.strip() if v else v
@@ -204,15 +189,19 @@ class ProductResponse(BaseResponse):
     short_designation: Optional[str] = None
     revision: Optional[str] = None
     product_type: str
+    purchase_price: Optional[Decimal] = None
     cost_price: Optional[Decimal] = None
     sale_price: Optional[Decimal] = None
+    sale_price_eur: Optional[Decimal] = None
+    price_calculation_mode: Optional[str] = None
+    margin_percentage: Optional[Decimal] = None
     stock_quantity: Optional[Decimal] = None
-    min_stock: Optional[Decimal] = None
-    max_stock: Optional[Decimal] = None
-    unit_id: Optional[int] = None
+    minimum_stock: Optional[Decimal] = None
+    stock_location: Optional[str] = None
     family_type_id: Optional[int] = None
     matter_id: Optional[int] = None
-    price_calculation_mode: Optional[str] = None
+    sales_type_id: Optional[int] = None
+    company_id: Optional[int] = None
     is_active: bool
 
     # Relaciones opcionales
