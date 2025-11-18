@@ -9,9 +9,9 @@ como por el backend, garantizando consistencia en toda la aplicación.
 # TIPOS DE PRODUCTO
 # ============================================================================
 
-PRODUCT_TYPE_ARTICLE = "ARTICLE"
-PRODUCT_TYPE_NOMENCLATURE = "NOMENCLATURE"
-PRODUCT_TYPE_SERVICE = "SERVICE"
+PRODUCT_TYPE_ARTICLE = "article"
+PRODUCT_TYPE_NOMENCLATURE = "nomenclature"
+PRODUCT_TYPE_SERVICE = "service"
 
 # ============================================================================
 # TIPOS DE DIRECCIÓN
