@@ -129,10 +129,10 @@ class ProductAPIService:
             product = await self._client.get(f"/products/{product_id}")
 
             logger.success(
-                "Producto obtenido exitosamente | id={} code={} name={}",
+                "Producto obtenido exitosamente | id={} reference={} designation_es={}",
                 product_id,
-                product.get("code"),
-                product.get("name"),
+                product.get("reference"),
+                product.get("designation_es"),
             )
             return product
 
@@ -165,7 +165,7 @@ class ProductAPIService:
         logger.info("Obteniendo productos por tipo | product_type={}", product_type)
 
         # Validar tipo de producto
-        valid_types = ["ARTICLE", "NOMENCLATURE"]
+        valid_types = ["article", "nomenclature"]
         if product_type not in valid_types:
             logger.error("Tipo de producto inválido | product_type={}", product_type)
             raise ValueError(
@@ -292,19 +292,19 @@ class ProductAPIService:
             >>> print(f"Producto creado con ID: {new_product['id']}")
         """
         logger.info(
-            "Creando nuevo producto | code={} name={}",
-            data.get("code"),
-            data.get("name"),
+            "Creando nuevo producto | reference={} designation_es={}",
+            data.get("reference"),
+            data.get("designation_es"),
         )
 
         try:
             product = await self._client.post("/products/", json=data)
 
             logger.success(
-                "Producto creado exitosamente | id={} code={} name={}",
+                "Producto creado exitosamente | id={} reference={} designation_es={}",
                 product.get("id"),
-                product.get("code"),
-                product.get("name"),
+                product.get("reference"),
+                product.get("designation_es"),
             )
             return product
 
@@ -353,10 +353,10 @@ class ProductAPIService:
             product = await self._client.put(f"/products/{product_id}", json=data)
 
             logger.success(
-                "Producto actualizado exitosamente | id={} code={} name={}",
+                "Producto actualizado exitosamente | id={} reference={} designation_es={}",
                 product_id,
-                product.get("code"),
-                product.get("name"),
+                product.get("reference"),
+                product.get("designation_es"),
             )
             return product
 
