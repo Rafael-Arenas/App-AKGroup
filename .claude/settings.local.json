@@ -15,7 +15,8 @@
       "Read(//c/Users/raare/Documents/Personal/01Trabajo/AkGroup/Planificador3/**)",
       "Bash(if exist srcfrontend rmdir /s /q srcfrontend)",
       "WebFetch(domain:docs.flet.dev)",
-      "WebFetch(domain:flet.dev)"
+      "WebFetch(domain:flet.dev)",
+      "Bash(cat:*)"
     ],
     "deny": [],
     "ask": []
