@@ -301,6 +301,7 @@ class MainView(ft.Container):
                     on_view_detail=self.navigate_to_product_detail,
                     on_create=lambda: self.navigate_to_product_form(None),
                     on_edit=self.navigate_to_product_form,
+                    view_mode="nomenclatures",
                 )
             case _:
                 logger.warning(f"No view implemented for index: {index}")
