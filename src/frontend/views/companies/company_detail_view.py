@@ -781,8 +781,12 @@ class CompanyDetailView(ft.Container):
     # ========================================================================
 
     def _on_add_address(self, e: ft.ControlEvent) -> None:
-        """Abre el diálogo para agregar una nueva dirección."""
+        """Abre el bottom sheet para agregar una nueva dirección."""
         logger.info(f"Add address clicked for company ID={self.company_id}")
+
+        # Diccionario para almacenar países y sus ciudades  (se carga dinámicamente)
+        countries_data = {}  # {country_id: country_name}
+        cities_by_country = {}  # {country_id: [city_objects]}
 
         # Crear campos del formulario
         address_field = ft.TextField(
@@ -791,9 +795,88 @@ class CompanyDetailView(ft.Container):
             min_lines=2,
             max_lines=4,
         )
-        city_field = ft.TextField(label="Ciudad")
+
         postal_code_field = ft.TextField(label="Código Postal", max_length=20)
-        country_field = ft.TextField(label="País")
+
+        # Dropdown de ciudades (inicialmente vacío)
+        city_dropdown = ft.Dropdown(
+            label="Ciudad",
+            options=[],
+            disabled=True,
+        )
+
+        # Dropdown de países (se cargará con datos de la API)
+        country_dropdown = ft.Dropdown(
+            label="País *",
+            options=[],
+            disabled=True,
+        )
+
+        async def load_countries():
+            """Carga los países desde la API."""
+            try:
+                import httpx
+                async with httpx.AsyncClient(base_url="http://localhost:8000") as client:
+                    response = await client.get("/api/v1/lookups/countries/")
+                    if response.status_code == 200:
+                        countries = response.json()
+                        for country in countries:
+                            countries_data[country["id"]] = country["name"]
+
+                        # Actualizar dropdown de países
+                        country_dropdown.options = [
+                            ft.dropdown.Option(str(cid), cname)
+                            for cid, cname in sorted(countries_data.items(), key=lambda x: x[1])
+                        ]
+                        country_dropdown.disabled = False
+                        country_dropdown.update()
+                        logger.success(f"Loaded {len(countries_data)} countries from API")
+                    else:
+                        logger.error(f"Error loading countries: {response.status_code}")
+            except Exception as ex:
+                logger.exception(f"Error loading countries: {ex}")
+
+        async def load_cities(country_id: int):
+            """Carga las ciudades de un país desde la API."""
+            try:
+                import httpx
+                async with httpx.AsyncClient(base_url="http://localhost:8000") as client:
+                    response = await client.get(f"/api/v1/lookups/cities/?country_id={country_id}")
+                    if response.status_code == 200:
+                        cities = response.json()
+                        cities_by_country[country_id] = cities
+
+                        # Actualizar dropdown de ciudades
+                        city_dropdown.options = [
+                            ft.dropdown.Option(city["name"], city["name"])
+                            for city in sorted(cities, key=lambda x: x["name"])
+                        ]
+                        city_dropdown.disabled = False
+                        city_dropdown.value = None
+                        city_dropdown.update()
+                        logger.success(f"Loaded {len(cities)} cities for country {country_id}")
+                    else:
+                        logger.error(f"Error loading cities: {response.status_code}")
+            except Exception as ex:
+                logger.exception(f"Error loading cities: {ex}")
+
+        def on_country_change(e):
+            """Maneja el cambio de país."""
+            selected_country_id = e.control.value
+            if selected_country_id:
+                # Cargar ciudades del país seleccionado
+                self.page.run_task(load_cities, int(selected_country_id))
+            else:
+                city_dropdown.options = []
+                city_dropdown.disabled = True
+                city_dropdown.value = None
+                city_dropdown.update()
+
+        country_dropdown.on_change = on_country_change
+
+        # Cargar países al abrir el bottom sheet
+        self.page.run_task(load_countries)
+
         type_dropdown = ft.Dropdown(
             label="Tipo de Dirección *",
             options=[
@@ -806,95 +889,124 @@ class CompanyDetailView(ft.Container):
         )
         is_default_checkbox = ft.Checkbox(label="Dirección principal", value=False)
 
-        def close_dialog():
-            self.page.dialog.open = False
-            self.page.update()
+        def close_bottom_sheet():
+            self.page.close(bottom_sheet)
 
         async def save_address():
             # Validación simple
-            if not address_field.value or not type_dropdown.value:
-                self.page.show_snack_bar(
-                    ft.SnackBar(
-                        content=ft.Text("Por favor complete los campos obligatorios"),
-                        bgcolor=ft.Colors.RED_400,
-                    )
+            if not address_field.value or not type_dropdown.value or not country_dropdown.value:
+                snack = ft.SnackBar(
+                    content=ft.Text("Por favor complete los campos obligatorios"),
+                    bgcolor=ft.Colors.RED_400,
                 )
+                self.page.snack_bar = snack
+                snack.open = True
+                self.page.update()
                 return
 
             try:
                 import httpx
+                # Obtener el nombre del país seleccionado
+                country_id = int(country_dropdown.value)
+                country_name = countries_data.get(country_id, "")
+
                 data = {
                     "address": address_field.value,
-                    "city": city_field.value or None,
+                    "city": city_dropdown.value or None,
                     "postal_code": postal_code_field.value or None,
-                    "country": country_field.value or None,
+                    "country": country_name,
                     "is_default": is_default_checkbox.value,
                     "address_type": type_dropdown.value,
                     "company_id": self.company_id,
                 }
 
-                async with httpx.AsyncClient(base_url="http://localhost:8000") as client:
-                    response = await client.post("/api/v1/addresses", json=data)
+                async with httpx.AsyncClient(base_url="http://localhost:8000", follow_redirects=True) as client:
+                    response = await client.post("/api/v1/addresses/", json=data)
                     if response.status_code == 201:
-                        close_dialog()
+                        close_bottom_sheet()
                         await self._on_address_saved()
                     else:
-                        error_detail = response.json().get("detail", "Error desconocido")
-                        self.page.show_snack_bar(
-                            ft.SnackBar(
-                                content=ft.Text(f"Error: {error_detail}"),
-                                bgcolor=ft.Colors.RED_400,
-                            )
+                        try:
+                            error_detail = response.json().get("detail", "Error desconocido")
+                        except Exception:
+                            error_detail = f"Error {response.status_code}"
+
+                        snack = ft.SnackBar(
+                            content=ft.Text(f"Error: {error_detail}"),
+                            bgcolor=ft.Colors.RED_400,
                         )
+                        self.page.snack_bar = snack
+                        snack.open = True
+                        self.page.update()
             except Exception as ex:
                 logger.exception(f"Error saving address: {ex}")
-                self.page.show_snack_bar(
-                    ft.SnackBar(
-                        content=ft.Text(f"Error de conexión: {str(ex)}"),
-                        bgcolor=ft.Colors.RED_400,
-                    )
+                snack = ft.SnackBar(
+                    content=ft.Text(f"Error de conexión: {str(ex)}"),
+                    bgcolor=ft.Colors.RED_400,
                 )
+                self.page.snack_bar = snack
+                snack.open = True
+                self.page.update()
 
-        # Crear el dialog directamente (como en schedule_grid_view.py)
-        dialog = ft.AlertDialog(
-            modal=True,
-            title=ft.Text("Agregar Dirección", size=20),
-            content=ft.Column(
-                controls=[
-                    address_field,
-                    ft.Row(
-                        controls=[
-                            ft.Container(content=city_field, expand=2),
-                            ft.Container(content=postal_code_field, expand=1),
-                        ],
-                        spacing=10,
-                    ),
-                    country_field,
-                    type_dropdown,
-                    is_default_checkbox,
-                ],
-                spacing=10,
-                tight=True,
-            ),
-            actions=[
-                ft.TextButton("Cancelar", on_click=lambda _: close_dialog()),
-                ft.ElevatedButton(
-                    "Guardar",
-                    icon=ft.Icons.SAVE,
-                    on_click=lambda _: self.page.run_task(save_address),
+        # Crear BottomSheet en lugar de AlertDialog
+        bottom_sheet = ft.BottomSheet(
+            content=ft.Container(
+                content=ft.Column(
+                    controls=[
+                        ft.Row(
+                            controls=[
+                                ft.Text("Agregar Dirección", size=20, weight=ft.FontWeight.BOLD),
+                                ft.IconButton(
+                                    icon=ft.Icons.CLOSE,
+                                    on_click=lambda _: close_bottom_sheet(),
+                                ),
+                            ],
+                            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                        ),
+                        ft.Divider(),
+                        address_field,
+                        country_dropdown,
+                        ft.Row(
+                            controls=[
+                                ft.Container(content=city_dropdown, expand=2),
+                                ft.Container(content=postal_code_field, expand=1),
+                            ],
+                            spacing=10,
+                        ),
+                        type_dropdown,
+                        is_default_checkbox,
+                        ft.Row(
+                            controls=[
+                                ft.TextButton("Cancelar", on_click=lambda _: close_bottom_sheet()),
+                                ft.ElevatedButton(
+                                    "Guardar",
+                                    icon=ft.Icons.SAVE,
+                                    on_click=lambda _: self.page.run_task(save_address),
+                                ),
+                            ],
+                            alignment=ft.MainAxisAlignment.END,
+                            spacing=10,
+                        ),
+                    ],
+                    spacing=15,
+                    scroll=ft.ScrollMode.AUTO,
                 ),
-            ],
+                padding=20,
+            ),
         )
 
-        self.page.dialog = dialog
-        dialog.open = True
-        self.page.update()
+        self.page.open(bottom_sheet)
+        logger.info("BottomSheet opened for adding address")
 
     def _on_edit_address(self, e: ft.ControlEvent, address: dict) -> None:
-        """Abre el diálogo para editar una dirección."""
+        """Abre el bottom sheet para editar una dirección."""
         logger.info(f"Edit address clicked: ID={address.get('id')}")
 
         address_id = address.get("id")
+
+        # Diccionario para almacenar países y sus ciudades (se carga dinámicamente)
+        countries_data = {}  # {country_id: country_name}
+        cities_by_country = {}  # {country_id: [city_objects]}
 
         # Crear campos del formulario con datos iniciales
         address_field = ft.TextField(
@@ -904,13 +1016,116 @@ class CompanyDetailView(ft.Container):
             min_lines=2,
             max_lines=4,
         )
-        city_field = ft.TextField(label="Ciudad", value=address.get("city", ""))
+
         postal_code_field = ft.TextField(
             label="Código Postal",
             value=address.get("postal_code", ""),
             max_length=20,
         )
-        country_field = ft.TextField(label="País", value=address.get("country", ""))
+
+        # Obtener país y ciudad actuales
+        current_country_name = address.get("country", "")
+        current_city_name = address.get("city", "")
+
+        # Dropdown de ciudades (se cargará después de cargar el país)
+        city_dropdown = ft.Dropdown(
+            label="Ciudad",
+            options=[],
+            disabled=True,
+        )
+
+        # Dropdown de países (se cargará con datos de la API)
+        country_dropdown = ft.Dropdown(
+            label="País *",
+            options=[],
+            disabled=True,
+        )
+
+        async def load_countries():
+            """Carga los países desde la API."""
+            try:
+                import httpx
+                async with httpx.AsyncClient(base_url="http://localhost:8000") as client:
+                    response = await client.get("/api/v1/lookups/countries/")
+                    if response.status_code == 200:
+                        countries = response.json()
+                        current_country_id = None
+
+                        for country in countries:
+                            countries_data[country["id"]] = country["name"]
+                            # Encontrar el ID del país actual
+                            if country["name"] == current_country_name:
+                                current_country_id = country["id"]
+
+                        # Actualizar dropdown de países
+                        country_dropdown.options = [
+                            ft.dropdown.Option(str(cid), cname)
+                            for cid, cname in sorted(countries_data.items(), key=lambda x: x[1])
+                        ]
+                        country_dropdown.disabled = False
+
+                        # Establecer el país actual si existe
+                        if current_country_id:
+                            country_dropdown.value = str(current_country_id)
+                            # Cargar ciudades del país actual
+                            await load_cities(current_country_id, set_current=True)
+
+                        country_dropdown.update()
+                        logger.success(f"Loaded {len(countries_data)} countries from API")
+                    else:
+                        logger.error(f"Error loading countries: {response.status_code}")
+            except Exception as ex:
+                logger.exception(f"Error loading countries: {ex}")
+
+        async def load_cities(country_id: int, set_current: bool = False):
+            """Carga las ciudades de un país desde la API."""
+            try:
+                import httpx
+                async with httpx.AsyncClient(base_url="http://localhost:8000") as client:
+                    response = await client.get(f"/api/v1/lookups/cities/?country_id={country_id}")
+                    if response.status_code == 200:
+                        cities = response.json()
+                        cities_by_country[country_id] = cities
+
+                        # Actualizar dropdown de ciudades
+                        city_dropdown.options = [
+                            ft.dropdown.Option(city["name"], city["name"])
+                            for city in sorted(cities, key=lambda x: x["name"])
+                        ]
+                        city_dropdown.disabled = False
+
+                        # Si estamos cargando inicialmente, establecer la ciudad actual
+                        if set_current and current_city_name:
+                            city_names = [c["name"] for c in cities]
+                            if current_city_name in city_names:
+                                city_dropdown.value = current_city_name
+                        else:
+                            city_dropdown.value = None
+
+                        city_dropdown.update()
+                        logger.success(f"Loaded {len(cities)} cities for country {country_id}")
+                    else:
+                        logger.error(f"Error loading cities: {response.status_code}")
+            except Exception as ex:
+                logger.exception(f"Error loading cities: {ex}")
+
+        def on_country_change(e):
+            """Maneja el cambio de país."""
+            selected_country_id = e.control.value
+            if selected_country_id:
+                # Cargar ciudades del país seleccionado
+                self.page.run_task(load_cities, int(selected_country_id), False)
+            else:
+                city_dropdown.options = []
+                city_dropdown.disabled = True
+                city_dropdown.value = None
+                city_dropdown.update()
+
+        country_dropdown.on_change = on_country_change
+
+        # Cargar países al abrir el bottom sheet
+        self.page.run_task(load_countries)
+
         type_dropdown = ft.Dropdown(
             label="Tipo de Dirección *",
             value=address.get("address_type", "delivery"),
@@ -926,90 +1141,115 @@ class CompanyDetailView(ft.Container):
             value=address.get("is_default", False),
         )
 
-        def close_dialog():
-            self.page.dialog.open = False
-            self.page.update()
+        def close_bottom_sheet():
+            self.page.close(bottom_sheet)
 
         async def save_address():
             # Validación simple
-            if not address_field.value or not type_dropdown.value:
-                self.page.show_snack_bar(
-                    ft.SnackBar(
-                        content=ft.Text("Por favor complete los campos obligatorios"),
-                        bgcolor=ft.Colors.RED_400,
-                    )
+            if not address_field.value or not type_dropdown.value or not country_dropdown.value:
+                snack = ft.SnackBar(
+                    content=ft.Text("Por favor complete los campos obligatorios"),
+                    bgcolor=ft.Colors.RED_400,
                 )
+                self.page.snack_bar = snack
+                snack.open = True
+                self.page.update()
                 return
 
             try:
                 import httpx
+                # Obtener el nombre del país seleccionado
+                country_id = int(country_dropdown.value)
+                country_name = countries_data.get(country_id, "")
+
                 data = {
                     "address": address_field.value,
-                    "city": city_field.value or None,
+                    "city": city_dropdown.value or None,
                     "postal_code": postal_code_field.value or None,
-                    "country": country_field.value or None,
+                    "country": country_name,
                     "is_default": is_default_checkbox.value,
                     "address_type": type_dropdown.value,
                 }
 
-                async with httpx.AsyncClient(base_url="http://localhost:8000") as client:
+                async with httpx.AsyncClient(base_url="http://localhost:8000", follow_redirects=True) as client:
                     response = await client.put(
-                        f"/api/v1/addresses/{address_id}", json=data
+                        f"/api/v1/addresses/{address_id}/", json=data
                     )
                     if response.status_code == 200:
-                        close_dialog()
+                        close_bottom_sheet()
                         await self._on_address_saved()
                     else:
-                        error_detail = response.json().get("detail", "Error desconocido")
-                        self.page.show_snack_bar(
-                            ft.SnackBar(
-                                content=ft.Text(f"Error: {error_detail}"),
-                                bgcolor=ft.Colors.RED_400,
-                            )
+                        try:
+                            error_detail = response.json().get("detail", "Error desconocido")
+                        except Exception:
+                            error_detail = f"Error {response.status_code}"
+
+                        snack = ft.SnackBar(
+                            content=ft.Text(f"Error: {error_detail}"),
+                            bgcolor=ft.Colors.RED_400,
                         )
+                        self.page.snack_bar = snack
+                        snack.open = True
+                        self.page.update()
             except Exception as ex:
                 logger.exception(f"Error saving address: {ex}")
-                self.page.show_snack_bar(
-                    ft.SnackBar(
-                        content=ft.Text(f"Error de conexión: {str(ex)}"),
-                        bgcolor=ft.Colors.RED_400,
-                    )
+                snack = ft.SnackBar(
+                    content=ft.Text(f"Error de conexión: {str(ex)}"),
+                    bgcolor=ft.Colors.RED_400,
                 )
+                self.page.snack_bar = snack
+                snack.open = True
+                self.page.update()
 
-        # Crear el dialog directamente
-        dialog = ft.AlertDialog(
-            modal=True,
-            title=ft.Text("Editar Dirección", size=20),
-            content=ft.Column(
-                controls=[
-                    address_field,
-                    ft.Row(
-                        controls=[
-                            ft.Container(content=city_field, expand=2),
-                            ft.Container(content=postal_code_field, expand=1),
-                        ],
-                        spacing=10,
-                    ),
-                    country_field,
-                    type_dropdown,
-                    is_default_checkbox,
-                ],
-                spacing=10,
-                tight=True,
-            ),
-            actions=[
-                ft.TextButton("Cancelar", on_click=lambda _: close_dialog()),
-                ft.ElevatedButton(
-                    "Guardar",
-                    icon=ft.Icons.SAVE,
-                    on_click=lambda _: self.page.run_task(save_address),
+        # Crear BottomSheet
+        bottom_sheet = ft.BottomSheet(
+            content=ft.Container(
+                content=ft.Column(
+                    controls=[
+                        ft.Row(
+                            controls=[
+                                ft.Text("Editar Dirección", size=20, weight=ft.FontWeight.BOLD),
+                                ft.IconButton(
+                                    icon=ft.Icons.CLOSE,
+                                    on_click=lambda _: close_bottom_sheet(),
+                                ),
+                            ],
+                            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                        ),
+                        ft.Divider(),
+                        address_field,
+                        country_dropdown,
+                        ft.Row(
+                            controls=[
+                                ft.Container(content=city_dropdown, expand=2),
+                                ft.Container(content=postal_code_field, expand=1),
+                            ],
+                            spacing=10,
+                        ),
+                        type_dropdown,
+                        is_default_checkbox,
+                        ft.Row(
+                            controls=[
+                                ft.TextButton("Cancelar", on_click=lambda _: close_bottom_sheet()),
+                                ft.ElevatedButton(
+                                    "Guardar",
+                                    icon=ft.Icons.SAVE,
+                                    on_click=lambda _: self.page.run_task(save_address),
+                                ),
+                            ],
+                            alignment=ft.MainAxisAlignment.END,
+                            spacing=10,
+                        ),
+                    ],
+                    spacing=15,
+                    scroll=ft.ScrollMode.AUTO,
                 ),
-            ],
+                padding=20,
+            ),
         )
 
-        self.page.dialog = dialog
-        dialog.open = True
-        self.page.update()
+        self.page.open(bottom_sheet)
+        logger.info("BottomSheet opened for editing address")
 
     def _on_delete_address(self, e: ft.ControlEvent, address: dict) -> None:
         """Muestra confirmación para eliminar una dirección."""
@@ -1031,15 +1271,18 @@ class CompanyDetailView(ft.Container):
         try:
             import httpx
 
-            async with httpx.AsyncClient(base_url="http://localhost:8000") as client:
-                response = await client.delete(f"/api/v1/addresses/{address_id}")
+            async with httpx.AsyncClient(base_url="http://localhost:8000", follow_redirects=True) as client:
+                response = await client.delete(f"/api/v1/addresses/{address_id}/")
 
                 if response.status_code == 200:
                     logger.success(f"Address {address_id} deleted successfully")
                     await self._on_address_saved()
                     self._show_snackbar("Dirección eliminada exitosamente", ft.Colors.GREEN)
                 else:
-                    error_detail = response.json().get("detail", "Error desconocido")
+                    try:
+                        error_detail = response.json().get("detail", "Error desconocido")
+                    except Exception:
+                        error_detail = f"Error {response.status_code}"
                     logger.error(f"Error deleting address: {response.status_code} - {error_detail}")
                     self._show_snackbar(f"Error al eliminar: {error_detail}", ft.Colors.RED_400)
 
@@ -1058,8 +1301,8 @@ class CompanyDetailView(ft.Container):
         try:
             import httpx
 
-            async with httpx.AsyncClient(base_url="http://localhost:8000") as client:
-                response = await client.get(f"/api/v1/addresses/company/{self.company_id}")
+            async with httpx.AsyncClient(base_url="http://localhost:8000", follow_redirects=True) as client:
+                response = await client.get(f"/api/v1/addresses/company/{self.company_id}/")
                 if response.status_code == 200:
                     self._addresses = response.json()
                     logger.success(f"Reloaded {len(self._addresses)} addresses")
@@ -1081,7 +1324,7 @@ class CompanyDetailView(ft.Container):
     # ========================================================================
 
     def _on_add_contact(self, e: ft.ControlEvent) -> None:
-        """Abre el diálogo para agregar un nuevo contacto."""
+        """Abre el bottom sheet para agregar un nuevo contacto."""
         logger.info(f"Add contact clicked for company ID={self.company_id}")
 
         # Crear campos del formulario
@@ -1092,19 +1335,19 @@ class CompanyDetailView(ft.Container):
         mobile_field = ft.TextField(label="Móvil", max_length=20)
         position_field = ft.TextField(label="Cargo")
 
-        def close_dialog():
-            self.page.dialog.open = False
-            self.page.update()
+        def close_bottom_sheet():
+            self.page.close(bottom_sheet)
 
         async def save_contact():
             # Validación simple
             if not first_name_field.value or not last_name_field.value:
-                self.page.show_snack_bar(
-                    ft.SnackBar(
-                        content=ft.Text("Por favor complete los campos obligatorios"),
-                        bgcolor=ft.Colors.RED_400,
-                    )
+                snack = ft.SnackBar(
+                    content=ft.Text("Por favor complete los campos obligatorios"),
+                    bgcolor=ft.Colors.RED_400,
                 )
+                self.page.snack_bar = snack
+                snack.open = True
+                self.page.update()
                 return
 
             try:
@@ -1119,70 +1362,91 @@ class CompanyDetailView(ft.Container):
                     "company_id": self.company_id,
                 }
 
-                async with httpx.AsyncClient(base_url="http://localhost:8000") as client:
-                    response = await client.post("/api/v1/contacts", json=data)
+                async with httpx.AsyncClient(base_url="http://localhost:8000", follow_redirects=True) as client:
+                    response = await client.post("/api/v1/contacts/", json=data)
                     if response.status_code == 201:
-                        close_dialog()
+                        close_bottom_sheet()
                         await self._on_contact_saved()
                     else:
-                        error_detail = response.json().get("detail", "Error desconocido")
-                        self.page.show_snack_bar(
-                            ft.SnackBar(
-                                content=ft.Text(f"Error: {error_detail}"),
-                                bgcolor=ft.Colors.RED_400,
-                            )
+                        try:
+                            error_detail = response.json().get("detail", "Error desconocido")
+                        except Exception:
+                            error_detail = f"Error {response.status_code}"
+
+                        snack = ft.SnackBar(
+                            content=ft.Text(f"Error: {error_detail}"),
+                            bgcolor=ft.Colors.RED_400,
                         )
+                        self.page.snack_bar = snack
+                        snack.open = True
+                        self.page.update()
             except Exception as ex:
                 logger.exception(f"Error saving contact: {ex}")
-                self.page.show_snack_bar(
-                    ft.SnackBar(
-                        content=ft.Text(f"Error de conexión: {str(ex)}"),
-                        bgcolor=ft.Colors.RED_400,
-                    )
+                snack = ft.SnackBar(
+                    content=ft.Text(f"Error de conexión: {str(ex)}"),
+                    bgcolor=ft.Colors.RED_400,
                 )
+                self.page.snack_bar = snack
+                snack.open = True
+                self.page.update()
 
-        # Crear el dialog directamente
-        dialog = ft.AlertDialog(
-            modal=True,
-            title=ft.Text("Agregar Contacto", size=20),
-            content=ft.Column(
-                controls=[
-                    ft.Row(
-                        controls=[
-                            ft.Container(content=first_name_field, expand=1),
-                            ft.Container(content=last_name_field, expand=1),
-                        ],
-                        spacing=10,
-                    ),
-                    email_field,
-                    ft.Row(
-                        controls=[
-                            ft.Container(content=phone_field, expand=1),
-                            ft.Container(content=mobile_field, expand=1),
-                        ],
-                        spacing=10,
-                    ),
-                    position_field,
-                ],
-                spacing=10,
-                tight=True,
-            ),
-            actions=[
-                ft.TextButton("Cancelar", on_click=lambda _: close_dialog()),
-                ft.ElevatedButton(
-                    "Guardar",
-                    icon=ft.Icons.SAVE,
-                    on_click=lambda _: self.page.run_task(save_contact),
+        # Crear BottomSheet
+        bottom_sheet = ft.BottomSheet(
+            content=ft.Container(
+                content=ft.Column(
+                    controls=[
+                        ft.Row(
+                            controls=[
+                                ft.Text("Agregar Contacto", size=20, weight=ft.FontWeight.BOLD),
+                                ft.IconButton(
+                                    icon=ft.Icons.CLOSE,
+                                    on_click=lambda _: close_bottom_sheet(),
+                                ),
+                            ],
+                            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                        ),
+                        ft.Divider(),
+                        ft.Row(
+                            controls=[
+                                ft.Container(content=first_name_field, expand=1),
+                                ft.Container(content=last_name_field, expand=1),
+                            ],
+                            spacing=10,
+                        ),
+                        email_field,
+                        ft.Row(
+                            controls=[
+                                ft.Container(content=phone_field, expand=1),
+                                ft.Container(content=mobile_field, expand=1),
+                            ],
+                            spacing=10,
+                        ),
+                        position_field,
+                        ft.Row(
+                            controls=[
+                                ft.TextButton("Cancelar", on_click=lambda _: close_bottom_sheet()),
+                                ft.ElevatedButton(
+                                    "Guardar",
+                                    icon=ft.Icons.SAVE,
+                                    on_click=lambda _: self.page.run_task(save_contact),
+                                ),
+                            ],
+                            alignment=ft.MainAxisAlignment.END,
+                            spacing=10,
+                        ),
+                    ],
+                    spacing=15,
+                    scroll=ft.ScrollMode.AUTO,
                 ),
-            ],
+                padding=20,
+            ),
         )
 
-        self.page.dialog = dialog
-        dialog.open = True
-        self.page.update()
+        self.page.open(bottom_sheet)
+        logger.info("BottomSheet opened for adding contact")
 
     def _on_edit_contact(self, e: ft.ControlEvent, contact: dict) -> None:
-        """Abre el diálogo para editar un contacto."""
+        """Abre el bottom sheet para editar un contacto."""
         logger.info(f"Edit contact clicked: ID={contact.get('id')}")
 
         contact_id = contact.get("id")
@@ -1209,19 +1473,19 @@ class CompanyDetailView(ft.Container):
             label="Cargo", value=contact.get("position", "")
         )
 
-        def close_dialog():
-            self.page.dialog.open = False
-            self.page.update()
+        def close_bottom_sheet():
+            self.page.close(bottom_sheet)
 
         async def save_contact():
             # Validación simple
             if not first_name_field.value or not last_name_field.value:
-                self.page.show_snack_bar(
-                    ft.SnackBar(
-                        content=ft.Text("Por favor complete los campos obligatorios"),
-                        bgcolor=ft.Colors.RED_400,
-                    )
+                snack = ft.SnackBar(
+                    content=ft.Text("Por favor complete los campos obligatorios"),
+                    bgcolor=ft.Colors.RED_400,
                 )
+                self.page.snack_bar = snack
+                snack.open = True
+                self.page.update()
                 return
 
             try:
@@ -1235,69 +1499,90 @@ class CompanyDetailView(ft.Container):
                     "position": position_field.value or None,
                 }
 
-                async with httpx.AsyncClient(base_url="http://localhost:8000") as client:
+                async with httpx.AsyncClient(base_url="http://localhost:8000", follow_redirects=True) as client:
                     response = await client.put(
-                        f"/api/v1/contacts/{contact_id}", json=data
+                        f"/api/v1/contacts/{contact_id}/", json=data
                     )
                     if response.status_code == 200:
-                        close_dialog()
+                        close_bottom_sheet()
                         await self._on_contact_saved()
                     else:
-                        error_detail = response.json().get("detail", "Error desconocido")
-                        self.page.show_snack_bar(
-                            ft.SnackBar(
-                                content=ft.Text(f"Error: {error_detail}"),
-                                bgcolor=ft.Colors.RED_400,
-                            )
+                        try:
+                            error_detail = response.json().get("detail", "Error desconocido")
+                        except Exception:
+                            error_detail = f"Error {response.status_code}"
+
+                        snack = ft.SnackBar(
+                            content=ft.Text(f"Error: {error_detail}"),
+                            bgcolor=ft.Colors.RED_400,
                         )
+                        self.page.snack_bar = snack
+                        snack.open = True
+                        self.page.update()
             except Exception as ex:
                 logger.exception(f"Error saving contact: {ex}")
-                self.page.show_snack_bar(
-                    ft.SnackBar(
-                        content=ft.Text(f"Error de conexión: {str(ex)}"),
-                        bgcolor=ft.Colors.RED_400,
-                    )
+                snack = ft.SnackBar(
+                    content=ft.Text(f"Error de conexión: {str(ex)}"),
+                    bgcolor=ft.Colors.RED_400,
                 )
+                self.page.snack_bar = snack
+                snack.open = True
+                self.page.update()
 
-        # Crear el dialog directamente
-        dialog = ft.AlertDialog(
-            modal=True,
-            title=ft.Text("Editar Contacto", size=20),
-            content=ft.Column(
-                controls=[
-                    ft.Row(
-                        controls=[
-                            ft.Container(content=first_name_field, expand=1),
-                            ft.Container(content=last_name_field, expand=1),
-                        ],
-                        spacing=10,
-                    ),
-                    email_field,
-                    ft.Row(
-                        controls=[
-                            ft.Container(content=phone_field, expand=1),
-                            ft.Container(content=mobile_field, expand=1),
-                        ],
-                        spacing=10,
-                    ),
-                    position_field,
-                ],
-                spacing=10,
-                tight=True,
-            ),
-            actions=[
-                ft.TextButton("Cancelar", on_click=lambda _: close_dialog()),
-                ft.ElevatedButton(
-                    "Guardar",
-                    icon=ft.Icons.SAVE,
-                    on_click=lambda _: self.page.run_task(save_contact),
+        # Crear BottomSheet
+        bottom_sheet = ft.BottomSheet(
+            content=ft.Container(
+                content=ft.Column(
+                    controls=[
+                        ft.Row(
+                            controls=[
+                                ft.Text("Editar Contacto", size=20, weight=ft.FontWeight.BOLD),
+                                ft.IconButton(
+                                    icon=ft.Icons.CLOSE,
+                                    on_click=lambda _: close_bottom_sheet(),
+                                ),
+                            ],
+                            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                        ),
+                        ft.Divider(),
+                        ft.Row(
+                            controls=[
+                                ft.Container(content=first_name_field, expand=1),
+                                ft.Container(content=last_name_field, expand=1),
+                            ],
+                            spacing=10,
+                        ),
+                        email_field,
+                        ft.Row(
+                            controls=[
+                                ft.Container(content=phone_field, expand=1),
+                                ft.Container(content=mobile_field, expand=1),
+                            ],
+                            spacing=10,
+                        ),
+                        position_field,
+                        ft.Row(
+                            controls=[
+                                ft.TextButton("Cancelar", on_click=lambda _: close_bottom_sheet()),
+                                ft.ElevatedButton(
+                                    "Guardar",
+                                    icon=ft.Icons.SAVE,
+                                    on_click=lambda _: self.page.run_task(save_contact),
+                                ),
+                            ],
+                            alignment=ft.MainAxisAlignment.END,
+                            spacing=10,
+                        ),
+                    ],
+                    spacing=15,
+                    scroll=ft.ScrollMode.AUTO,
                 ),
-            ],
+                padding=20,
+            ),
         )
 
-        self.page.dialog = dialog
-        dialog.open = True
-        self.page.update()
+        self.page.open(bottom_sheet)
+        logger.info("BottomSheet opened for editing contact")
 
     def _on_delete_contact(self, e: ft.ControlEvent, contact: dict) -> None:
         """Muestra confirmación para eliminar un contacto."""
@@ -1320,15 +1605,18 @@ class CompanyDetailView(ft.Container):
         try:
             import httpx
 
-            async with httpx.AsyncClient(base_url="http://localhost:8000") as client:
-                response = await client.delete(f"/api/v1/contacts/{contact_id}")
+            async with httpx.AsyncClient(base_url="http://localhost:8000", follow_redirects=True) as client:
+                response = await client.delete(f"/api/v1/contacts/{contact_id}/")
 
                 if response.status_code == 200:
                     logger.success(f"Contact {contact_id} deleted successfully")
                     await self._on_contact_saved()
                     self._show_snackbar("Contacto eliminado exitosamente", ft.Colors.GREEN)
                 else:
-                    error_detail = response.json().get("detail", "Error desconocido")
+                    try:
+                        error_detail = response.json().get("detail", "Error desconocido")
+                    except Exception:
+                        error_detail = f"Error {response.status_code}"
                     logger.error(f"Error deleting contact: {response.status_code} - {error_detail}")
                     self._show_snackbar(f"Error al eliminar: {error_detail}", ft.Colors.RED_400)
 
@@ -1347,8 +1635,8 @@ class CompanyDetailView(ft.Container):
         try:
             import httpx
 
-            async with httpx.AsyncClient(base_url="http://localhost:8000") as client:
-                response = await client.get(f"/api/v1/contacts/company/{self.company_id}")
+            async with httpx.AsyncClient(base_url="http://localhost:8000", follow_redirects=True) as client:
+                response = await client.get(f"/api/v1/contacts/company/{self.company_id}/")
                 if response.status_code == 200:
                     self._contacts = response.json()
                     logger.success(f"Reloaded {len(self._contacts)} contacts")
