@@ -290,10 +290,18 @@ class MainView(ft.Container):
                 )
             case 3:
                 logger.debug("Creating ProductListView (Artículos)")
-                return ProductListView()
+                return ProductListView(
+                    on_view_detail=self.navigate_to_product_detail,
+                    on_create=lambda: self.navigate_to_product_form(None),
+                    on_edit=self.navigate_to_product_form,
+                )
             case 4:
                 logger.debug("Creating ProductListView (Nomenclaturas)")
-                return ProductListView()
+                return ProductListView(
+                    on_view_detail=self.navigate_to_product_detail,
+                    on_create=lambda: self.navigate_to_product_form(None),
+                    on_edit=self.navigate_to_product_form,
+                )
             case _:
                 logger.warning(f"No view implemented for index: {index}")
                 return self._create_placeholder_view(index)
@@ -603,3 +611,109 @@ class MainView(ft.Container):
         # Navegar al índice correspondiente
         index = 1 if company_type == "CLIENT" else 2
         self.navigate_to(index)
+
+    # =========================================================================
+    # NAVEGACIÓN DE PRODUCTOS
+    # =========================================================================
+
+    def navigate_to_product_detail(self, product_id: int) -> None:
+        """
+        Navega a la vista de detalle de un producto.
+
+        Args:
+            product_id: ID del producto a mostrar
+
+        Example:
+            >>> main_view.navigate_to_product_detail(123)
+        """
+        from src.frontend.views.products.product_detail_view import ProductDetailView
+
+        logger.info(f"Navigating to product detail: ID={product_id}")
+
+        # Crear vista de detalle
+        detail_view = ProductDetailView(
+            product_id=product_id,
+            on_edit=lambda pid: self.navigate_to_product_form(pid),
+            on_delete=lambda pid: self._on_product_deleted(pid),
+            on_back=lambda: self._on_back_to_product_list(),
+        )
+
+        # Actualizar contenido y breadcrumb
+        if self._content_area:
+            self._content_area.content = detail_view
+            if self.page:
+                self.update()
+
+        # Actualizar breadcrumb
+        app_state.navigation.set_breadcrumb([
+            {"label": "articles.title", "route": "/articles"},
+            {"label": "articles.detail", "route": None},
+        ])
+
+    def navigate_to_product_form(self, product_id: int | None) -> None:
+        """
+        Navega a la vista de formulario de producto.
+
+        Args:
+            product_id: ID del producto a editar (None para crear nuevo)
+
+        Example:
+            >>> main_view.navigate_to_product_form(None)  # Crear nuevo
+            >>> main_view.navigate_to_product_form(123)   # Editar existente
+        """
+        from src.frontend.views.products.product_form_view import ProductFormView
+
+        logger.info(
+            f"Navigating to product form: ID={product_id}, "
+            f"mode={'edit' if product_id else 'create'}"
+        )
+
+        # Crear vista de formulario
+        form_view = ProductFormView(
+            product_id=product_id,
+            on_save=lambda product: self._on_product_saved(product),
+            on_cancel=lambda: self._on_back_to_product_list(),
+        )
+
+        # Actualizar contenido y breadcrumb
+        if self._content_area:
+            self._content_area.content = form_view
+            if self.page:
+                self.update()
+
+        # Actualizar breadcrumb
+        action_key = "articles.edit" if product_id else "articles.create"
+        app_state.navigation.set_breadcrumb([
+            {"label": "articles.title", "route": "/articles"},
+            {"label": action_key, "route": None},
+        ])
+
+    def _on_product_saved(self, product: dict) -> None:
+        """
+        Callback cuando se guarda un producto exitosamente.
+
+        Args:
+            product: Datos del producto guardado
+        """
+        logger.success(f"Product saved: {product.get('reference', product.get('code'))}")
+        # Volver a la lista
+        self._on_back_to_product_list()
+
+    def _on_product_deleted(self, product_id: int) -> None:
+        """
+        Callback cuando se elimina un producto.
+
+        Args:
+            product_id: ID del producto eliminado
+        """
+        logger.success(f"Product deleted: ID={product_id}")
+        # Volver a la lista
+        self._on_back_to_product_list()
+
+    def _on_back_to_product_list(self) -> None:
+        """
+        Navega de vuelta a la lista de productos (artículos).
+        """
+        logger.info("Navigating back to product list")
+        # Navegar al índice de artículos (3)
+        self.navigate_to(3)
