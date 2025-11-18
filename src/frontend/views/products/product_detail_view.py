@@ -75,7 +75,7 @@ class ProductDetailView(ft.Container):
             )
 
         # Badge de tipo
-        is_nomenclature = self._product.get("product_type") == "NOMENCLATURE"
+        is_nomenclature = self._product.get("product_type") == "nomenclature"
         type_badge = ft.Container(
             content=ft.Text(
                 "Nomenclatura" if is_nomenclature else "Artículo",
@@ -114,14 +114,14 @@ class ProductDetailView(ft.Container):
                 ft.Column(
                     controls=[
                         ft.Text(
-                            self._product.get("name", ""),
+                            self._product.get("designation_es", ""),
                             size=LayoutConstants.FONT_SIZE_DISPLAY_MD,
                             weight=LayoutConstants.FONT_WEIGHT_BOLD,
                         ),
                         ft.Row(
                             controls=[
                                 ft.Text(
-                                    f"Código: {self._product.get('code', '')}",
+                                    f"Código: {self._product.get('reference', '')}",
                                     size=LayoutConstants.FONT_SIZE_MD,
                                 ),
                                 type_badge,
@@ -152,23 +152,69 @@ class ProductDetailView(ft.Container):
             alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
         )
 
-        # Información del producto
-        info_content = ft.Column(
+        # Información general del producto
+        general_info = ft.Column(
             controls=[
-                self._create_info_row("Descripción", self._product.get("description", "-")),
-                ft.Divider(),
-                self._create_info_row("Unidad", self._product.get("unit", "-")),
+                self._create_info_row("Descripción", self._product.get("short_designation", "-") or "-"),
+                self._create_info_row("Revisión", self._product.get("revision", "-") or "-"),
+            ],
+            spacing=LayoutConstants.SPACING_SM,
+        )
+
+        general_card = BaseCard(
+            title="Información General",
+            icon=ft.Icons.INFO_OUTLINED,
+            content=general_info,
+        )
+
+        # Información de precios
+        pricing_info = ft.Column(
+            controls=[
                 self._create_info_row(
-                    "Costo", f"${self._product.get('cost', 0):.2f}"
+                    "Precio Compra", f"${float(self._product.get('purchase_price', 0) or 0):.2f}"
+                ),
+                self._create_info_row(
+                    "Precio Costo", f"${float(self._product.get('cost_price', 0) or 0):.2f}"
+                ),
+                self._create_info_row(
+                    "Precio Venta", f"${float(self._product.get('sale_price', 0) or 0):.2f}"
+                ),
+                self._create_info_row(
+                    "Precio Venta EUR", f"€{float(self._product.get('sale_price_eur', 0) or 0):.2f}"
+                ),
+                self._create_info_row(
+                    "Margen %", f"{float(self._product.get('margin_percentage', 0) or 0):.1f}%"
                 ),
             ],
             spacing=LayoutConstants.SPACING_SM,
         )
 
-        info_card = BaseCard(
-            title="Información del Producto",
-            icon=ft.Icons.INFO_OUTLINED,
-            content=info_content,
+        pricing_card = BaseCard(
+            title="Precios",
+            icon=ft.Icons.ATTACH_MONEY,
+            content=pricing_info,
+        )
+
+        # Información de stock
+        stock_info = ft.Column(
+            controls=[
+                self._create_info_row(
+                    "Cantidad en Stock", f"{float(self._product.get('stock_quantity', 0) or 0):.3f}"
+                ),
+                self._create_info_row(
+                    "Stock Mínimo", f"{float(self._product.get('minimum_stock', 0) or 0):.3f}"
+                ),
+                self._create_info_row(
+                    "Ubicación", self._product.get("stock_location", "-") or "-"
+                ),
+            ],
+            spacing=LayoutConstants.SPACING_SM,
+        )
+
+        stock_card = BaseCard(
+            title="Inventario",
+            icon=ft.Icons.INVENTORY,
+            content=stock_info,
         )
 
         # Sección BOM (solo si es nomenclatura)
@@ -204,15 +250,8 @@ class ProductDetailView(ft.Container):
                 ),
             )
 
-        # Botón volver
-        back_button = ft.TextButton(
-            text="Volver",
-            icon=ft.Icons.ARROW_BACK,
-            on_click=self._on_back_click,
-        )
-
         # Contenido
-        controls = [back_button, header, info_card]
+        controls = [header, general_card, pricing_card, stock_card]
         if bom_section:
             controls.append(bom_section)
 
@@ -324,12 +363,12 @@ class ProductDetailView(ft.Container):
             self._product = await product_api.get_by_id(self.product_id)
 
             # Si es nomenclatura, cargar componentes BOM
-            if self._product.get("product_type") == "NOMENCLATURE":
+            if self._product.get("product_type") == "nomenclature":
                 self._bom_components = await product_api.get_bom_components(
                     self.product_id
                 )
 
-            logger.success(f"Product loaded: {self._product.get('name')}")
+            logger.success(f"Product loaded: {self._product.get('designation_es')}")
             self._is_loading = False
 
         except Exception as e:
