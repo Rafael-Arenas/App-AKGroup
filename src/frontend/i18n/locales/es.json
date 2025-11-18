@@ -122,7 +122,9 @@
     "list_title": "Lista de Artículos",
     "create": "Crear Artículo",
     "create_new": "Nuevo Artículo",
+    "create_title": "Crear Artículo",
     "edit": "Editar Artículo",
+    "edit_title": "Editar Artículo",
     "delete": "Eliminar Artículo",
     "view": "Ver Artículo",
     "detail": "Detalles del Artículo",
@@ -149,18 +151,41 @@
       "article": "Artículos",
       "nomenclature": "Nomenclaturas"
     },
+    "types": {
+      "article": "Artículo",
+      "nomenclature": "Nomenclatura"
+    },
     "form": {
       "basic_info": "Información Básica",
+      "classification": "Clasificación",
+      "pricing": "Precios",
+      "stock_section": "Stock e Inventario",
+      "bom_section": "Lista de Materiales (BOM)",
+      "bom_placeholder": "Componentes del producto...",
+      "add_component": "Agregar Componente",
       "code": "Código",
       "code_hint": "Código único del artículo",
       "name": "Nombre",
       "name_hint": "Nombre descriptivo",
       "description": "Descripción",
       "description_hint": "Descripción detallada",
+      "type": "Tipo de Producto",
       "unit": "Unidad de Medida",
-      "cost": "Costo",
-      "cost_hint": "0.00",
-      "is_active": "Activo"
+      "family_type": "Familia",
+      "matter": "Material/Materia",
+      "cost_price": "Precio de Costo",
+      "sale_price": "Precio de Venta",
+      "stock_quantity": "Cantidad en Stock",
+      "min_stock": "Stock Mínimo",
+      "max_stock": "Stock Máximo",
+      "is_active": "Producto Activo"
+    },
+    "messages": {
+      "created": "Artículo '{name}' creado exitosamente",
+      "updated": "Artículo '{name}' actualizado exitosamente",
+      "deleted": "Artículo eliminado exitosamente",
+      "confirm_delete": "¿Está seguro de eliminar este artículo?",
+      "confirm_delete_message": "Esta acción no se puede deshacer"
     }
   },
   "nomenclatures": {
