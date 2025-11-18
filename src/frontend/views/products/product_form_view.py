@@ -12,6 +12,7 @@ from src.frontend.app_state import app_state
 from src.frontend.layout_constants import LayoutConstants
 from src.frontend.components.common import BaseCard, LoadingSpinner, ErrorDisplay
 from src.frontend.components.forms import ValidatedTextField, DropdownField
+from src.frontend.i18n.translation_manager import t
 
 
 class ProductFormView(ft.Column):
@@ -47,9 +48,9 @@ class ProductFormView(ft.Column):
         self._product_data: dict | None = None
 
         # Lookups
-        self._product_types: list[dict] = []
         self._units: list[dict] = []
-        self._components: list[dict] = []
+        self._family_types: list[dict] = []
+        self._matters: list[dict] = []
 
         # Configuración del layout
         self.spacing = LayoutConstants.SPACING_MD
@@ -76,62 +77,119 @@ class ProductFormView(ft.Column):
 
     def _build_components(self) -> None:
         """Crea los componentes del formulario."""
-        # Campos del formulario
+        # Campos de información básica
         self._code_field = ValidatedTextField(
-            label="Código *",
-            hint_text="Código único del producto",
+            label=t("articles.form.code") + " *",
+            hint_text=t("articles.form.code_hint"),
             required=True,
             prefix_icon=ft.Icons.TAG,
+            max_length=50,
         )
 
         self._name_field = ValidatedTextField(
-            label="Nombre *",
-            hint_text="Nombre del producto",
+            label=t("articles.form.name") + " *",
+            hint_text=t("articles.form.name_hint"),
             required=True,
             prefix_icon=ft.Icons.INVENTORY_2,
+            max_length=200,
         )
 
         self._description_field = ValidatedTextField(
-            label="Descripción",
-            hint_text="Descripción detallada",
+            label=t("articles.form.description"),
+            hint_text=t("articles.form.description_hint"),
             multiline=True,
+            max_length=1000,
         )
 
         self._type_field = DropdownField(
-            label="Tipo *",
-            options=[],
+            label=t("articles.form.type") + " *",
+            options=[
+                {"label": t("articles.types.article"), "value": "article"},
+                {"label": t("articles.types.nomenclature"), "value": "nomenclature"},
+            ],
             required=True,
             on_change=self._on_type_change,
         )
 
+        # Campo de unidad (opcional - no está en el modelo actual)
         self._unit_field = DropdownField(
-            label="Unidad *",
+            label=t("articles.form.unit"),
             options=[],
-            required=True,
+            required=False,
         )
 
-        self._cost_field = ValidatedTextField(
-            label="Costo *",
+        # Campos de clasificación (opcionales)
+        self._family_type_field = DropdownField(
+            label=t("articles.form.family_type"),
+            options=[],
+        )
+
+        self._matter_field = DropdownField(
+            label=t("articles.form.matter"),
+            options=[],
+        )
+
+        # Campos de precios
+        self._cost_price_field = ValidatedTextField(
+            label=t("articles.form.cost_price"),
             hint_text="0.00",
-            required=True,
             prefix_icon=ft.Icons.ATTACH_MONEY,
+            validators=["numeric"],
+        )
+
+        self._sale_price_field = ValidatedTextField(
+            label=t("articles.form.sale_price"),
+            hint_text="0.00",
+            prefix_icon=ft.Icons.SELL,
+            validators=["numeric"],
+        )
+
+        # Campos de stock (solo para ARTICLE)
+        self._stock_quantity_field = ValidatedTextField(
+            label=t("articles.form.stock_quantity"),
+            hint_text="0.000",
+            prefix_icon=ft.Icons.INVENTORY,
+            validators=["numeric"],
+        )
+
+        self._min_stock_field = ValidatedTextField(
+            label=t("articles.form.min_stock"),
+            hint_text="0.000",
+            prefix_icon=ft.Icons.TRENDING_DOWN,
+            validators=["numeric"],
+        )
+
+        # Contenedor de campos de stock (se oculta/muestra según el tipo)
+        self._stock_section = ft.Container(
+            content=BaseCard(
+                title=t("articles.form.stock_section"),
+                icon=ft.Icons.WAREHOUSE,
+                content=ft.Column(
+                    controls=[
+                        self._stock_quantity_field,
+                        self._min_stock_field,
+                    ],
+                    spacing=LayoutConstants.SPACING_MD,
+                ),
+            ),
+            visible=True,  # Por defecto visible para ARTICLE
         )
 
         self._is_active_switch = ft.Switch(
-            label="Producto Activo",
+            label=t("articles.form.is_active"),
             value=True,
         )
 
         # Sección BOM (se muestra solo si es nomenclatura)
         self._bom_section = ft.Container(
             content=BaseCard(
-                title="Lista de Materiales (BOM)",
+                title=t("articles.form.bom_section"),
                 icon=ft.Icons.LIST_ALT,
                 content=ft.Column(
                     controls=[
-                        ft.Text("Componentes del producto..."),
+                        ft.Text(t("articles.form.bom_placeholder")),
                         ft.ElevatedButton(
-                            text="Agregar Componente",
+                            text=t("articles.form.add_component"),
                             icon=ft.Icons.ADD,
                             on_click=self._on_add_component,
                         ),
@@ -144,13 +202,13 @@ class ProductFormView(ft.Column):
 
         # Botones de acción
         self._save_button = ft.ElevatedButton(
-            text="Guardar",
+            text=t("common.save"),
             icon=ft.Icons.SAVE,
             on_click=self._on_save_click,
         )
 
         self._cancel_button = ft.TextButton(
-            text="Cancelar",
+            text=t("common.cancel"),
             on_click=self._on_cancel_click,
         )
 
@@ -167,7 +225,7 @@ class ProductFormView(ft.Column):
                         size=32,
                     ),
                     ft.Text(
-                        "Editar Producto" if is_edit else "Crear Producto",
+                        t("articles.edit_title") if is_edit else t("articles.create_title"),
                         size=LayoutConstants.FONT_SIZE_DISPLAY_MD,
                         weight=LayoutConstants.FONT_WEIGHT_BOLD,
                     ),
@@ -208,7 +266,7 @@ class ProductFormView(ft.Column):
         """Muestra el indicador de carga."""
         self.form_container.controls = [
             ft.Container(
-                content=LoadingSpinner(message="Cargando formulario..."),
+                content=LoadingSpinner(message=t("common.loading")),
                 expand=True,
                 alignment=ft.alignment.center,
             )
@@ -235,20 +293,64 @@ class ProductFormView(ft.Column):
         """Construye el formulario completo."""
         # Sección información básica
         basic_section = BaseCard(
-            title="Información Básica",
+            title=t("articles.form.basic_info"),
             icon=ft.Icons.INFO_OUTLINED,
             content=ft.Column(
                 controls=[
-                    self._code_field,
+                    ft.Row(
+                        controls=[
+                            ft.Container(content=self._code_field, expand=True),
+                            ft.Container(content=self._type_field, expand=True),
+                        ],
+                        spacing=LayoutConstants.SPACING_MD,
+                    ),
                     self._name_field,
                     self._description_field,
-                    self._type_field,
-                    self._unit_field,
-                    self._cost_field,
-                    self._is_active_switch,
                 ],
                 spacing=LayoutConstants.SPACING_MD,
             ),
+        )
+
+        # Sección clasificación
+        classification_section = BaseCard(
+            title=t("articles.form.classification"),
+            icon=ft.Icons.CATEGORY,
+            content=ft.Column(
+                controls=[
+                    ft.Row(
+                        controls=[
+                            ft.Container(content=self._family_type_field, expand=True),
+                            ft.Container(content=self._matter_field, expand=True),
+                        ],
+                        spacing=LayoutConstants.SPACING_MD,
+                    ),
+                ],
+                spacing=LayoutConstants.SPACING_MD,
+            ),
+        )
+
+        # Sección precios
+        pricing_section = BaseCard(
+            title=t("articles.form.pricing"),
+            icon=ft.Icons.MONETIZATION_ON,
+            content=ft.Column(
+                controls=[
+                    ft.Row(
+                        controls=[
+                            ft.Container(content=self._cost_price_field, expand=True),
+                            ft.Container(content=self._sale_price_field, expand=True),
+                        ],
+                        spacing=LayoutConstants.SPACING_MD,
+                    ),
+                ],
+                spacing=LayoutConstants.SPACING_MD,
+            ),
+        )
+
+        # Estado activo
+        status_section = ft.Container(
+            content=self._is_active_switch,
+            padding=ft.padding.only(left=LayoutConstants.PADDING_MD),
         )
 
         # Botones de acción
@@ -261,7 +363,11 @@ class ProductFormView(ft.Column):
         # Actualizar el contenedor del formulario
         self.form_container.controls = [
             basic_section,
+            classification_section,
+            pricing_section,
+            self._stock_section,
             self._bom_section,
+            status_section,
             action_buttons,
         ]
 
@@ -294,6 +400,10 @@ class ProductFormView(ft.Column):
             # Poblar los campos si es edición
             if self.product_id and self._product_data:
                 self._populate_form()
+            else:
+                # Establecer tipo por defecto para creación
+                self._type_field.set_value("article")
+                self._update_visibility_for_type("article")
 
         except Exception as e:
             logger.exception(f"Error loading form data: {e}")
@@ -310,24 +420,41 @@ class ProductFormView(ft.Column):
 
             lookup_api = LookupAPI()
 
-            # Cargar tipos de producto
-            self._product_types = await lookup_api.get_lookup("product_types")
-            type_options = [
-                {"label": pt["name"], "value": pt["code"]}
-                for pt in self._product_types
-            ]
-            self._type_field.set_options(type_options)
-
             # Cargar unidades
             self._units = await lookup_api.get_lookup("units")
             unit_options = [
-                {"label": u["name"], "value": u["code"]} for u in self._units
+                {"label": u.get("name", u.get("code", "")), "value": str(u["id"])}
+                for u in self._units
             ]
             self._unit_field.set_options(unit_options)
 
+            # Cargar familias de producto
+            try:
+                self._family_types = await lookup_api.get_lookup("family_types")
+                family_options = [
+                    {"label": f.get("name", ""), "value": str(f["id"])}
+                    for f in self._family_types
+                ]
+                self._family_type_field.set_options(family_options)
+            except Exception as e:
+                logger.warning(f"Could not load family_types: {e}")
+                self._family_types = []
+
+            # Cargar materias
+            try:
+                self._matters = await lookup_api.get_lookup("matters")
+                matter_options = [
+                    {"label": m.get("name", ""), "value": str(m["id"])}
+                    for m in self._matters
+                ]
+                self._matter_field.set_options(matter_options)
+            except Exception as e:
+                logger.warning(f"Could not load matters: {e}")
+                self._matters = []
+
             logger.success(
-                f"Lookups loaded: {len(self._product_types)} types, "
-                f"{len(self._units)} units"
+                f"Lookups loaded: {len(self._units)} units, "
+                f"{len(self._family_types)} families, {len(self._matters)} matters"
             )
 
         except Exception as e:
@@ -347,7 +474,7 @@ class ProductFormView(ft.Column):
             product_api = ProductAPI()
             self._product_data = await product_api.get_by_id(self.product_id)
 
-            logger.success(f"Product data loaded: {self._product_data.get('name')}")
+            logger.success(f"Product data loaded: {self._product_data.get('reference')}")
 
         except Exception as e:
             logger.exception(f"Error loading product data: {e}")
@@ -360,18 +487,45 @@ class ProductFormView(ft.Column):
 
         logger.debug("Populating form fields with product data")
 
-        # Poblar campos
-        self._code_field.set_value(self._product_data.get("code", ""))
-        self._name_field.set_value(self._product_data.get("name", ""))
-        self._description_field.set_value(self._product_data.get("description", ""))
-        self._type_field.set_value(self._product_data.get("product_type", ""))
-        self._unit_field.set_value(self._product_data.get("unit", ""))
-        self._cost_field.set_value(str(self._product_data.get("cost", 0)))
-        self._is_active_switch.value = self._product_data.get("is_active", True)
+        # Campos básicos - mapear desde el API
+        self._code_field.set_value(self._product_data.get("reference", ""))
+        self._name_field.set_value(self._product_data.get("designation_es", ""))
+        self._description_field.set_value(self._product_data.get("short_designation", ""))
 
-        # Mostrar BOM si es nomenclatura
-        if self._product_data.get("product_type") == "NOMENCLATURE":
-            self._show_bom_section()
+        # Tipo de producto
+        product_type = self._product_data.get("product_type", "ARTICLE")
+        self._type_field.set_value(product_type)
+        self._update_visibility_for_type(product_type)
+
+        # Clasificación
+        family_type_id = self._product_data.get("family_type_id")
+        if family_type_id:
+            self._family_type_field.set_value(str(family_type_id))
+
+        matter_id = self._product_data.get("matter_id")
+        if matter_id:
+            self._matter_field.set_value(str(matter_id))
+
+        # Precios
+        cost_price = self._product_data.get("cost_price")
+        if cost_price is not None:
+            self._cost_price_field.set_value(str(cost_price))
+
+        sale_price = self._product_data.get("sale_price")
+        if sale_price is not None:
+            self._sale_price_field.set_value(str(sale_price))
+
+        # Stock
+        stock_quantity = self._product_data.get("stock_quantity")
+        if stock_quantity is not None:
+            self._stock_quantity_field.set_value(str(stock_quantity))
+
+        minimum_stock = self._product_data.get("minimum_stock")
+        if minimum_stock is not None:
+            self._min_stock_field.set_value(str(minimum_stock))
+
+        # Estado
+        self._is_active_switch.value = self._product_data.get("is_active", True)
 
         logger.success("Form fields populated successfully")
 
@@ -381,24 +535,22 @@ class ProductFormView(ft.Column):
 
     def _on_type_change(self, value: str) -> None:
         """Callback cuando cambia el tipo de producto."""
-        if value == "NOMENCLATURE":
-            self._show_bom_section()
-        else:
-            self._hide_bom_section()
+        self._update_visibility_for_type(value)
 
-    def _show_bom_section(self) -> None:
-        """Muestra la sección de BOM."""
-        if self._bom_section:
-            self._bom_section.visible = True
-            if self.page:
-                self.update()
+    def _update_visibility_for_type(self, product_type: str) -> None:
+        """Actualiza la visibilidad de secciones según el tipo."""
+        is_nomenclature = product_type == "nomenclature"
 
-    def _hide_bom_section(self) -> None:
-        """Oculta la sección de BOM."""
+        # Stock solo para article
+        if self._stock_section:
+            self._stock_section.visible = not is_nomenclature
+
+        # BOM solo para nomenclature
         if self._bom_section:
-            self._bom_section.visible = False
-            if self.page:
-                self.update()
+            self._bom_section.visible = is_nomenclature
+
+        if self.page:
+            self.update()
 
     def _on_add_component(self, e: ft.ControlEvent) -> None:
         """Callback para agregar componente a BOM."""
@@ -421,26 +573,82 @@ class ProductFormView(ft.Column):
         if not self._type_field.validate():
             is_valid = False
 
-        if not self._unit_field.validate():
-            is_valid = False
+        # Validar campos numéricos opcionales
+        if self._cost_price_field.get_value():
+            if not self._cost_price_field.validate():
+                is_valid = False
 
-        if not self._cost_field.validate():
-            is_valid = False
+        if self._sale_price_field.get_value():
+            if not self._sale_price_field.validate():
+                is_valid = False
 
         logger.debug(f"Form validation result: {is_valid}")
         return is_valid
 
     def _get_form_data(self) -> dict:
-        """Obtiene los datos del formulario."""
-        return {
-            "code": self._code_field.get_value(),
-            "name": self._name_field.get_value(),
-            "description": self._description_field.get_value() or None,
-            "product_type": self._type_field.get_value(),
-            "unit": self._unit_field.get_value(),
-            "cost": float(self._cost_field.get_value() or 0),
+        """Obtiene los datos del formulario mapeados para el API."""
+        # Obtener valores de campos
+        reference = self._code_field.get_value()
+        designation_es = self._name_field.get_value()
+        short_designation = self._description_field.get_value()
+        product_type = self._type_field.get_value()
+
+        # Obtener IDs de lookups
+        family_value = self._family_type_field.get_value()
+        family_type_id = int(family_value) if family_value else None
+
+        matter_value = self._matter_field.get_value()
+        matter_id = int(matter_value) if matter_value else None
+
+        # Obtener precios
+        cost_price_str = self._cost_price_field.get_value()
+        cost_price = float(cost_price_str) if cost_price_str else None
+
+        sale_price_str = self._sale_price_field.get_value()
+        sale_price = float(sale_price_str) if sale_price_str else None
+
+        # Obtener stock (solo para article)
+        stock_quantity = None
+        minimum_stock = None
+
+        if product_type == "article":
+            stock_str = self._stock_quantity_field.get_value()
+            stock_quantity = float(stock_str) if stock_str else 0
+
+            min_str = self._min_stock_field.get_value()
+            minimum_stock = float(min_str) if min_str else None
+
+        # Construir datos - usar nombres del schema ProductCreate
+        data = {
+            "reference": reference,
+            "designation_es": designation_es,
+            "product_type": product_type,
             "is_active": self._is_active_switch.value,
         }
+
+        # Agregar campos opcionales solo si tienen valor
+        if short_designation:
+            data["short_designation"] = short_designation
+
+        if cost_price is not None:
+            data["cost_price"] = cost_price
+
+        if sale_price is not None:
+            data["sale_price"] = sale_price
+
+        if stock_quantity is not None:
+            data["stock_quantity"] = stock_quantity
+
+        if minimum_stock is not None:
+            data["minimum_stock"] = minimum_stock
+
+        if family_type_id:
+            data["family_type_id"] = family_type_id
+
+        if matter_id:
+            data["matter_id"] = matter_id
+
+        return data
 
     def _on_save_click(self, e: ft.ControlEvent) -> None:
         """Callback cuando se hace click en guardar."""
@@ -462,7 +670,7 @@ class ProductFormView(ft.Column):
 
         # Deshabilitar botones
         self._save_button.disabled = True
-        self._save_button.text = "Guardando..."
+        self._save_button.text = t("common.saving")
         self._cancel_button.disabled = True
 
         if self.page:
@@ -478,15 +686,19 @@ class ProductFormView(ft.Column):
                 # Actualizar producto existente
                 logger.debug(f"Updating product ID={self.product_id}")
                 updated_product = await product_api.update(self.product_id, form_data)
-                logger.success(f"Product updated: {updated_product.get('name')}")
-                message = f"Producto '{updated_product.get('name')}' actualizado exitosamente"
+                logger.success(f"Product updated: {updated_product.get('reference')}")
+                message = t("articles.messages.updated").format(
+                    name=updated_product.get("designation_es", updated_product.get("reference", ""))
+                )
             else:
                 # Crear nuevo producto
                 logger.debug("Creating new product")
                 new_product = await product_api.create(form_data)
-                logger.success(f"Product created: {new_product.get('name')}")
+                logger.success(f"Product created: {new_product.get('reference')}")
                 updated_product = new_product
-                message = f"Producto '{new_product.get('name')}' creado exitosamente"
+                message = t("articles.messages.created").format(
+                    name=new_product.get("designation_es", new_product.get("reference", ""))
+                )
 
             # Mostrar mensaje de éxito
             if self.page:
@@ -522,7 +734,7 @@ class ProductFormView(ft.Column):
 
             # Rehabilitar botones
             self._save_button.disabled = False
-            self._save_button.text = "Guardar"
+            self._save_button.text = t("common.save")
             self._cancel_button.disabled = False
 
             if self.page:
