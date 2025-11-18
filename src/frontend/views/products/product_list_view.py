@@ -4,7 +4,7 @@ Vista de listado de productos.
 Muestra una tabla de productos con filtros, búsqueda y paginación.
 Similar a CompanyListView pero con campos específicos de productos.
 """
-from typing import Any
+from typing import Any, Callable
 import flet as ft
 from loguru import logger
 
@@ -26,15 +26,44 @@ class ProductListView(ft.Container):
     """
     Vista de listado de productos con filtros y paginación.
 
+    Muestra tabla de productos con:
+    - Búsqueda por código/nombre
+    - Filtros por estado y tipo
+    - Paginación
+    - Acciones de editar/eliminar
+    - Botón para crear nuevo producto
+
     Example:
-        >>> product_list = ProductListView()
+        >>> product_list = ProductListView(
+        ...     on_create=lambda: navigate_to_form(),
+        ...     on_edit=lambda id: navigate_to_edit(id),
+        ...     on_view_detail=lambda id: navigate_to_detail(id),
+        ... )
         >>> page.add(product_list)
     """
 
-    def __init__(self):
-        """Inicializa la vista de listado de productos."""
+    def __init__(
+        self,
+        on_view_detail: Callable[[int], None] | None = None,
+        on_create: Callable[[], None] | None = None,
+        on_edit: Callable[[int], None] | None = None,
+    ):
+        """
+        Inicializa la vista de listado de productos.
+
+        Args:
+            on_view_detail: Callback para ver detalle (product_id)
+            on_create: Callback para crear nuevo producto
+            on_edit: Callback para editar producto (product_id)
+        """
         super().__init__()
 
+        # Callbacks de navegación
+        self._on_view_detail_callback = on_view_detail
+        self._on_create_callback = on_create
+        self._on_edit_callback = on_edit
+
+        # Estado
         self._is_loading: bool = True
         self._error_message: str = ""
         self._products: list[dict] = []
@@ -42,13 +71,18 @@ class ProductListView(ft.Container):
         self._current_page: int = 1
         self._page_size: int = 20
 
+        # Filtros
         self._search_query: str = ""
         self._status_filter: str = "all"
         self._type_filter: str = "all"
 
+        # Componentes
         self._search_bar: SearchBar | None = None
         self._filter_panel: FilterPanel | None = None
         self._data_table: DataTable | None = None
+
+        # ID del producto pendiente de eliminar
+        self._pending_delete_id: int | None = None
 
         # Configurar propiedades del contenedor
         self.expand = True
@@ -271,15 +305,15 @@ class ProductListView(ft.Container):
                 "code": product.get("reference", ""),
                 "name": has_bom_icon + product.get("designation_es", ""),
                 "unit": product.get("unit", "-"),
-                "cost": f"${float(product.get('cost_price', 0)):.2f}",
-                "status": "Activo" if product.get("is_active") else "Inactivo",
+                "cost": f"${float(product.get('cost_price', 0) or 0):.2f}",
+                "status": t("common.active") if product.get("is_active") else t("common.inactive"),
                 "_original": product,
             })
         return formatted
 
     def _format_product_type(self, type_code: str) -> str:
         """Formatea el tipo de producto."""
-        return "Nomenclatura" if type_code == "nomenclature" else "Artículo"
+        return t("articles.types.nomenclature") if type_code == "nomenclature" else t("articles.types.article")
 
     def _get_active_filters(self) -> dict[str, Any]:
         """Obtiene los filtros activos."""
@@ -287,7 +321,7 @@ class ProductListView(ft.Container):
         if self._status_filter != "all":
             filters["is_active"] = self._status_filter == "active"
         if self._type_filter != "all":
-            filters["product_type"] = self._type_filter
+            filters["product_type"] = self._type_filter.lower()
         return filters
 
     def _on_search(self, query: str) -> None:
@@ -322,24 +356,102 @@ class ProductListView(ft.Container):
         """Callback cuando se hace click en una fila."""
         product_id = row_data.get("id")
         logger.info(f"Product row clicked: ID={product_id}")
-        # TODO: Navegar a detalle
+
+        if self._on_view_detail_callback and product_id:
+            self._on_view_detail_callback(product_id)
 
     def _on_create_product(self, e: ft.ControlEvent | None = None) -> None:
         """Callback para crear nuevo producto."""
         logger.info("Create product button clicked")
-        # TODO: Navegar a formulario
+
+        if self._on_create_callback:
+            self._on_create_callback()
 
     def _on_edit_product(self, row_data: dict) -> None:
         """Callback para editar un producto."""
         product_id = row_data.get("id")
         logger.info(f"Edit product clicked: ID={product_id}")
-        # TODO: Navegar a formulario de edición
+
+        if self._on_edit_callback and product_id:
+            self._on_edit_callback(product_id)
 
     def _on_delete_product(self, row_data: dict) -> None:
         """Callback para eliminar un producto."""
         product_id = row_data.get("id")
+        product_name = row_data.get("name", "")
         logger.info(f"Delete product clicked: ID={product_id}")
-        # TODO: Mostrar diálogo de confirmación
+
+        # Guardar ID para la confirmación
+        self._pending_delete_id = product_id
+
+        # Crear y mostrar diálogo de confirmación
+        if self.page:
+            confirm_dialog = ConfirmDialog(
+                title=t("common.confirm_delete"),
+                message=t("articles.messages.confirm_delete_message"),
+                confirm_text=t("common.delete"),
+                cancel_text=t("common.cancel"),
+                on_confirm=self._on_confirm_delete,
+                on_cancel=self._on_cancel_delete,
+                variant="danger",
+            )
+            confirm_dialog.show(self.page)
+
+    def _on_confirm_delete(self) -> None:
+        """Callback cuando se confirma la eliminación."""
+        if self._pending_delete_id and self.page:
+            self.page.run_task(self._delete_product)
+
+    def _on_cancel_delete(self) -> None:
+        """Callback cuando se cancela la eliminación."""
+        self._pending_delete_id = None
+
+    async def _delete_product(self) -> None:
+        """Elimina el producto pendiente."""
+        if not self._pending_delete_id:
+            return
+
+        product_id = self._pending_delete_id
+        logger.info(f"Deleting product ID={product_id}")
+
+        try:
+            from src.frontend.services.api import ProductAPI
+
+            product_api = ProductAPI()
+            await product_api.delete(product_id)
+
+            logger.success(f"Product deleted: ID={product_id}")
+
+            # Mostrar mensaje de éxito
+            if self.page:
+                snackbar = ft.SnackBar(
+                    content=ft.Text(t("articles.messages.deleted")),
+                    bgcolor=ft.Colors.GREEN,
+                    duration=3000,
+                )
+                self.page.overlay.append(snackbar)
+                snackbar.open = True
+                self.page.update()
+
+            # Recargar lista
+            await self.load_products()
+
+        except Exception as e:
+            logger.exception(f"Error deleting product: {e}")
+
+            # Mostrar mensaje de error
+            if self.page:
+                snackbar = ft.SnackBar(
+                    content=ft.Text(f"Error: {str(e)}"),
+                    bgcolor=ft.Colors.RED,
+                    duration=5000,
+                )
+                self.page.overlay.append(snackbar)
+                snackbar.open = True
+                self.page.update()
+
+        finally:
+            self._pending_delete_id = None
 
     def _on_state_changed(self) -> None:
         """Observer: Se ejecuta cuando cambia el estado."""
