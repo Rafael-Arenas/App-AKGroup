@@ -136,16 +136,16 @@ def get_products_by_type(
     return products
 
 
-@router.get("/code/{code}", response_model=ProductResponse)
-def get_product_by_code(
-    code: str,
+@router.get("/reference/{reference}", response_model=ProductResponse)
+def get_product_by_reference(
+    reference: str,
     service: ProductService = Depends(get_product_service),
 ):
     """
-    Obtiene un producto por su código.
+    Obtiene un producto por su referencia.
 
     Args:
-        code: Código del producto (ej: "PROD-001")
+        reference: Referencia del producto (ej: "PROD-001")
         db: Sesión de base de datos
 
     Returns:
@@ -155,14 +155,14 @@ def get_product_by_code(
         404: Si no se encuentra el producto
 
     Example:
-        GET /api/v1/products/code/PROD-001
+        GET /api/v1/products/reference/PROD-001
     """
-    logger.info(f"GET /products/code/{code}")
+    logger.info(f"GET /products/reference/{reference}")
 
     # Service injected via dependency
-    product = service.get_by_code(code)
+    product = service.get_by_reference(reference)
 
-    logger.info(f"Producto encontrado: {product.name}")
+    logger.info(f"Producto encontrado: {product.reference}")
     return product
 
 
@@ -192,7 +192,7 @@ def get_product(
     # Service injected via dependency
     product = service.get_by_id(product_id)
 
-    logger.info(f"Producto encontrado: {product.name}")
+    logger.info(f"Producto encontrado: {product.reference}")
     return product
 
 
