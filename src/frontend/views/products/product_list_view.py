@@ -47,6 +47,7 @@ class ProductListView(ft.Container):
         on_view_detail: Callable[[int], None] | None = None,
         on_create: Callable[[], None] | None = None,
         on_edit: Callable[[int], None] | None = None,
+        view_mode: str = "articles",
     ):
         """
         Inicializa la vista de listado de productos.
@@ -55,8 +56,13 @@ class ProductListView(ft.Container):
             on_view_detail: Callback para ver detalle (product_id)
             on_create: Callback para crear nuevo producto
             on_edit: Callback para editar producto (product_id)
+            view_mode: Modo de vista ("articles" o "nomenclatures")
         """
         super().__init__()
+
+        # Modo de vista (artículos o nomenclaturas)
+        self._view_mode = view_mode
+        self._is_nomenclatures = view_mode == "nomenclatures"
 
         # Callbacks de navegación
         self._on_view_detail_callback = on_view_detail
@@ -95,10 +101,26 @@ class ProductListView(ft.Container):
 
     def build(self) -> ft.Control:
         """Construye el componente de listado de productos."""
+        # Determinar textos según el modo
+        if self._is_nomenclatures:
+            title_key = "nomenclatures.title"
+            list_title_key = "nomenclatures.list_title"
+            no_items_message = t("nomenclatures.no_nomenclatures_message")
+            create_first_text = t("nomenclatures.create_first")
+            create_text = t("nomenclatures.create")
+            search_placeholder = t("nomenclatures.search_placeholder")
+        else:
+            title_key = "articles.title"
+            list_title_key = "articles.list_title"
+            no_items_message = t("articles.no_articles_message")
+            create_first_text = t("articles.create_first")
+            create_text = t("articles.create")
+            search_placeholder = t("articles.search_placeholder")
+
         # Estados de carga/error/vacío
         if self._is_loading:
             return ft.Container(
-                content=LoadingSpinner(message=f"Cargando {t('articles.title').lower()}..."),
+                content=LoadingSpinner(message=f"Cargando {t(title_key).lower()}..."),
                 expand=True,
                 alignment=ft.alignment.center,
             )
@@ -117,9 +139,9 @@ class ProductListView(ft.Container):
             return ft.Container(
                 content=EmptyState(
                     icon=ft.Icons.INVENTORY_2_OUTLINED,
-                    title=t("articles.title"),
-                    message=t("articles.no_articles_message"),
-                    action_text=t("articles.create_first"),
+                    title=t(title_key),
+                    message=no_items_message,
+                    action_text=create_first_text,
                     on_action=self._on_create_product,
                 ),
                 expand=True,
@@ -130,14 +152,14 @@ class ProductListView(ft.Container):
         header = ft.Row(
             controls=[
                 ft.Text(
-                    t("articles.list_title"),
+                    t(list_title_key),
                     size=LayoutConstants.FONT_SIZE_DISPLAY_MD,
                     weight=LayoutConstants.FONT_WEIGHT_BOLD,
                     expand=True,
                 ),
                 ft.FloatingActionButton(
                     icon=ft.Icons.ADD,
-                    text=t("articles.create"),
+                    text=create_text,
                     on_click=self._on_create_product,
                 ),
             ],
@@ -145,7 +167,7 @@ class ProductListView(ft.Container):
         )
 
         self._search_bar = SearchBar(
-            placeholder=t("articles.search_placeholder"),
+            placeholder=search_placeholder,
             on_search=self._on_search,
         )
 
@@ -159,17 +181,6 @@ class ProductListView(ft.Container):
                         {"label": "articles.filters.all", "value": "all"},
                         {"label": "articles.filters.active", "value": "active"},
                         {"label": "articles.filters.inactive", "value": "inactive"},
-                    ],
-                    "default": "all",
-                },
-                {
-                    "key": "type",
-                    "label": "common.filters",
-                    "type": "dropdown",
-                    "options": [
-                        {"label": "articles.filters.all", "value": "all"},
-                        {"label": "articles.filters.article", "value": "article"},
-                        {"label": "articles.filters.nomenclature", "value": "nomenclature"},
                     ],
                     "default": "all",
                 },
@@ -320,8 +331,13 @@ class ProductListView(ft.Container):
         filters: dict[str, Any] = {}
         if self._status_filter != "all":
             filters["is_active"] = self._status_filter == "active"
-        if self._type_filter != "all":
-            filters["product_type"] = self._type_filter.lower()
+
+        # Filtrar por tipo de producto según el modo de vista
+        if self._is_nomenclatures:
+            filters["product_type"] = "nomenclature"
+        else:
+            filters["product_type"] = "article"
+
         return filters
 
     def _on_search(self, query: str) -> None:
