@@ -164,13 +164,70 @@ class LookupAPIService:
             logger.error("Error al obtener unidades | error={}", str(e))
             raise
 
+    async def get_family_types(self) -> list[dict[str, Any]]:
+        """
+        Obtiene los tipos de familia de productos.
+
+        Returns:
+            Lista de tipos de familia con estructura:
+                - id: int
+                - name: str
+
+        Raises:
+            NetworkException: Error de red/conexión
+            APIException: Error de API
+
+        Example:
+            >>> family_types = await service.get_family_types()
+        """
+        logger.info("Obteniendo tipos de familia")
+
+        try:
+            family_types = await self._client.get("/lookups/family-types/")
+
+            logger.success("Tipos de familia obtenidos | total={}", len(family_types))
+            return family_types
+
+        except Exception as e:
+            logger.error("Error al obtener tipos de familia | error={}", str(e))
+            raise
+
+    async def get_matters(self) -> list[dict[str, Any]]:
+        """
+        Obtiene los materiales/materias.
+
+        Returns:
+            Lista de materiales con estructura:
+                - id: int
+                - name: str
+
+        Raises:
+            NetworkException: Error de red/conexión
+            APIException: Error de API
+
+        Example:
+            >>> matters = await service.get_matters()
+        """
+        logger.info("Obteniendo materiales")
+
+        try:
+            matters = await self._client.get("/lookups/matters/")
+
+            logger.success("Materiales obtenidos | total={}", len(matters))
+            return matters
+
+        except Exception as e:
+            logger.error("Error al obtener materiales | error={}", str(e))
+            raise
+
     async def get_lookup(self, lookup_type: str) -> list[dict[str, Any]]:
         """
         Obtiene datos de lookup por tipo.
 
         Args:
             lookup_type: Tipo de lookup a obtener.
-                Valores válidos: "countries", "cities", "company_types", "units"
+                Valores válidos: "countries", "cities", "company_types", "units",
+                "family_types", "matters"
 
         Returns:
             Lista de elementos del tipo de lookup solicitado
@@ -185,6 +242,8 @@ class LookupAPIService:
             >>> cities = await service.get_lookup("cities")
             >>> company_types = await service.get_lookup("company_types")
             >>> units = await service.get_lookup("units")
+            >>> family_types = await service.get_lookup("family_types")
+            >>> matters = await service.get_lookup("matters")
         """
         logger.info("Obteniendo lookup | lookup_type={}", lookup_type)
 
@@ -196,6 +255,10 @@ class LookupAPIService:
             return await self.get_company_types()
         elif lookup_type == "units":
             return await self.get_units()
+        elif lookup_type == "family_types":
+            return await self.get_family_types()
+        elif lookup_type == "matters":
+            return await self.get_matters()
         else:
             logger.error("Tipo de lookup desconocido | lookup_type={}", lookup_type)
             raise ValueError(f"Unknown lookup type: {lookup_type}")

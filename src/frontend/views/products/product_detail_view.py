@@ -10,6 +10,7 @@ from loguru import logger
 
 from src.frontend.app_state import app_state
 from src.frontend.layout_constants import LayoutConstants
+from src.frontend.i18n.translation_manager import t
 from src.frontend.components.common import BaseCard, LoadingSpinner, ErrorDisplay, ConfirmDialog
 
 
@@ -60,7 +61,7 @@ class ProductDetailView(ft.Container):
         """Construye el componente de detalle de producto."""
         if self._is_loading:
             return ft.Container(
-                content=LoadingSpinner(message="Cargando producto..."),
+                content=LoadingSpinner(message=t("common.loading")),
                 expand=True,
                 alignment=ft.alignment.center,
             )
@@ -78,7 +79,7 @@ class ProductDetailView(ft.Container):
         is_nomenclature = self._product.get("product_type") == "nomenclature"
         type_badge = ft.Container(
             content=ft.Text(
-                "Nomenclatura" if is_nomenclature else "Artículo",
+                t("articles.types.nomenclature") if is_nomenclature else t("articles.types.article"),
                 size=LayoutConstants.FONT_SIZE_SM,
                 weight=LayoutConstants.FONT_WEIGHT_SEMIBOLD,
                 color=ft.Colors.WHITE,
@@ -92,7 +93,7 @@ class ProductDetailView(ft.Container):
 
         status_badge = ft.Container(
             content=ft.Text(
-                "Activo" if self._product.get("is_active") else "Inactivo",
+                t("common.active") if self._product.get("is_active") else t("common.inactive"),
                 size=LayoutConstants.FONT_SIZE_SM,
                 weight=LayoutConstants.FONT_WEIGHT_SEMIBOLD,
                 color=ft.Colors.WHITE,
@@ -137,12 +138,12 @@ class ProductDetailView(ft.Container):
                     controls=[
                         ft.IconButton(
                             icon=ft.Icons.EDIT,
-                            tooltip="Editar",
+                            tooltip=t("common.edit"),
                             on_click=self._on_edit_click,
                         ),
                         ft.IconButton(
                             icon=ft.Icons.DELETE,
-                            tooltip="Eliminar",
+                            tooltip=t("common.delete"),
                             on_click=self._on_delete_click,
                         ),
                     ],
@@ -155,14 +156,14 @@ class ProductDetailView(ft.Container):
         # Información general del producto
         general_info = ft.Column(
             controls=[
-                self._create_info_row("Descripción", self._product.get("short_designation", "-") or "-"),
-                self._create_info_row("Revisión", self._product.get("revision", "-") or "-"),
+                self._create_info_row(t("articles.form.description"), self._product.get("short_designation", "-") or "-"),
+                self._create_info_row(t("product_detail.revision"), self._product.get("revision", "-") or "-"),
             ],
             spacing=LayoutConstants.SPACING_SM,
         )
 
         general_card = BaseCard(
-            title="Información General",
+            title=t("articles.form.basic_info"),
             icon=ft.Icons.INFO_OUTLINED,
             content=general_info,
         )
@@ -171,26 +172,26 @@ class ProductDetailView(ft.Container):
         pricing_info = ft.Column(
             controls=[
                 self._create_info_row(
-                    "Precio Compra", f"${float(self._product.get('purchase_price', 0) or 0):.2f}"
+                    t("product_detail.purchase_price"), f"${float(self._product.get('purchase_price', 0) or 0):.2f}"
                 ),
                 self._create_info_row(
-                    "Precio Costo", f"${float(self._product.get('cost_price', 0) or 0):.2f}"
+                    t("articles.form.cost_price"), f"${float(self._product.get('cost_price', 0) or 0):.2f}"
                 ),
                 self._create_info_row(
-                    "Precio Venta", f"${float(self._product.get('sale_price', 0) or 0):.2f}"
+                    t("articles.form.sale_price"), f"${float(self._product.get('sale_price', 0) or 0):.2f}"
                 ),
                 self._create_info_row(
-                    "Precio Venta EUR", f"€{float(self._product.get('sale_price_eur', 0) or 0):.2f}"
+                    t("product_detail.sale_price_eur"), f"€{float(self._product.get('sale_price_eur', 0) or 0):.2f}"
                 ),
                 self._create_info_row(
-                    "Margen %", f"{float(self._product.get('margin_percentage', 0) or 0):.1f}%"
+                    t("product_detail.margin_percentage"), f"{float(self._product.get('margin_percentage', 0) or 0):.1f}%"
                 ),
             ],
             spacing=LayoutConstants.SPACING_SM,
         )
 
         pricing_card = BaseCard(
-            title="Precios",
+            title=t("articles.form.pricing"),
             icon=ft.Icons.ATTACH_MONEY,
             content=pricing_info,
         )
@@ -199,20 +200,20 @@ class ProductDetailView(ft.Container):
         stock_info = ft.Column(
             controls=[
                 self._create_info_row(
-                    "Cantidad en Stock", f"{float(self._product.get('stock_quantity', 0) or 0):.3f}"
+                    t("articles.form.stock_quantity"), f"{float(self._product.get('stock_quantity', 0) or 0):.3f}"
                 ),
                 self._create_info_row(
-                    "Stock Mínimo", f"{float(self._product.get('minimum_stock', 0) or 0):.3f}"
+                    t("articles.form.min_stock"), f"{float(self._product.get('minimum_stock', 0) or 0):.3f}"
                 ),
                 self._create_info_row(
-                    "Ubicación", self._product.get("stock_location", "-") or "-"
+                    t("product_detail.stock_location"), self._product.get("stock_location", "-") or "-"
                 ),
             ],
             spacing=LayoutConstants.SPACING_SM,
         )
 
         stock_card = BaseCard(
-            title="Inventario",
+            title=t("articles.form.stock_section"),
             icon=ft.Icons.INVENTORY,
             content=stock_info,
         )
@@ -224,7 +225,7 @@ class ProductDetailView(ft.Container):
             total_cost = self._calculate_total_cost()
 
             bom_section = BaseCard(
-                title="Lista de Materiales (BOM)",
+                title=t("nomenclatures.bom"),
                 icon=ft.Icons.LIST_ALT,
                 content=ft.Column(
                     controls=[
@@ -233,7 +234,7 @@ class ProductDetailView(ft.Container):
                         ft.Row(
                             controls=[
                                 ft.Text(
-                                    "Costo Total:",
+                                    f"{t('product_detail.total_cost')}:",
                                     size=LayoutConstants.FONT_SIZE_LG,
                                     weight=LayoutConstants.FONT_WEIGHT_BOLD,
                                 ),

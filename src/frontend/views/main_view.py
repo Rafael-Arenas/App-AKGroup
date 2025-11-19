@@ -291,14 +291,14 @@ class MainView(ft.Container):
             case 3:
                 logger.debug("Creating ProductListView (Artículos)")
                 return ProductListView(
-                    on_view_detail=self.navigate_to_product_detail,
+                    on_view_detail=lambda pid: self.navigate_to_product_detail(pid, "articles"),
                     on_create=lambda: self.navigate_to_product_form(None),
                     on_edit=self.navigate_to_product_form,
                 )
             case 4:
                 logger.debug("Creating ProductListView (Nomenclaturas)")
                 return ProductListView(
-                    on_view_detail=self.navigate_to_product_detail,
+                    on_view_detail=lambda pid: self.navigate_to_product_detail(pid, "nomenclatures"),
                     on_create=lambda: self.navigate_to_product_form(None),
                     on_edit=self.navigate_to_product_form,
                     view_mode="nomenclatures",
@@ -617,19 +617,20 @@ class MainView(ft.Container):
     # NAVEGACIÓN DE PRODUCTOS
     # =========================================================================
 
-    def navigate_to_product_detail(self, product_id: int) -> None:
+    def navigate_to_product_detail(self, product_id: int, view_mode: str = "articles") -> None:
         """
         Navega a la vista de detalle de un producto.
 
         Args:
             product_id: ID del producto a mostrar
+            view_mode: Modo de vista ("articles" o "nomenclatures")
 
         Example:
-            >>> main_view.navigate_to_product_detail(123)
+            >>> main_view.navigate_to_product_detail(123, "articles")
         """
         from src.frontend.views.products.product_detail_view import ProductDetailView
 
-        logger.info(f"Navigating to product detail: ID={product_id}")
+        logger.info(f"Navigating to product detail: ID={product_id}, mode={view_mode}")
 
         # Crear vista de detalle
         detail_view = ProductDetailView(
@@ -645,11 +646,17 @@ class MainView(ft.Container):
             if self.page:
                 self.update()
 
-        # Actualizar breadcrumb
-        app_state.navigation.set_breadcrumb([
-            {"label": "articles.title", "route": "/articles"},
-            {"label": "articles.detail", "route": None},
-        ])
+        # Actualizar breadcrumb según el modo
+        if view_mode == "nomenclatures":
+            app_state.navigation.set_breadcrumb([
+                {"label": "nomenclatures.title", "route": "/nomenclatures"},
+                {"label": "nomenclatures.detail", "route": None},
+            ])
+        else:
+            app_state.navigation.set_breadcrumb([
+                {"label": "articles.title", "route": "/articles"},
+                {"label": "articles.detail", "route": None},
+            ])
 
     def navigate_to_product_form(self, product_id: int | None) -> None:
         """

@@ -235,6 +235,14 @@
       "is_active": "Activo"
     }
   },
+  "product_detail": {
+    "revision": "Revisión",
+    "purchase_price": "Precio Compra",
+    "sale_price_eur": "Precio Venta EUR",
+    "margin_percentage": "Margen %",
+    "stock_location": "Ubicación",
+    "total_cost": "Costo Total"
+  },
   "quotes": {
     "title": "Cotizaciones",
     "description": "Gestión de cotizaciones",
