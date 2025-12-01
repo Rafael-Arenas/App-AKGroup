@@ -292,15 +292,15 @@ class MainView(ft.Container):
                 logger.debug("Creating ProductListView (Artículos)")
                 return ProductListView(
                     on_view_detail=lambda pid: self.navigate_to_product_detail(pid, "articles"),
-                    on_create=lambda: self.navigate_to_product_form(None),
-                    on_edit=self.navigate_to_product_form,
+                    on_create=lambda: self.navigate_to_product_form(None, "articles"),
+                    on_edit=lambda pid: self.navigate_to_product_form(pid, "articles"),
                 )
             case 4:
                 logger.debug("Creating ProductListView (Nomenclaturas)")
                 return ProductListView(
                     on_view_detail=lambda pid: self.navigate_to_product_detail(pid, "nomenclatures"),
-                    on_create=lambda: self.navigate_to_product_form(None),
-                    on_edit=self.navigate_to_product_form,
+                    on_create=lambda: self.navigate_to_product_form(None, "nomenclatures"),
+                    on_edit=lambda pid: self.navigate_to_product_form(pid, "nomenclatures"),
                     view_mode="nomenclatures",
                 )
             case _:
@@ -658,22 +658,24 @@ class MainView(ft.Container):
                 {"label": "articles.detail", "route": None},
             ])
 
-    def navigate_to_product_form(self, product_id: int | None) -> None:
+    def navigate_to_product_form(self, product_id: int | None, view_mode: str = "articles") -> None:
         """
         Navega a la vista de formulario de producto.
 
         Args:
             product_id: ID del producto a editar (None para crear nuevo)
+            view_mode: Modo de vista ("articles" o "nomenclatures")
 
         Example:
-            >>> main_view.navigate_to_product_form(None)  # Crear nuevo
+            >>> main_view.navigate_to_product_form(None)  # Crear nuevo artículo
             >>> main_view.navigate_to_product_form(123)   # Editar existente
+            >>> main_view.navigate_to_product_form(None, "nomenclatures")  # Crear nomenclatura
         """
         from src.frontend.views.products.product_form_view import ProductFormView
 
         logger.info(
             f"Navigating to product form: ID={product_id}, "
-            f"mode={'edit' if product_id else 'create'}"
+            f"mode={'edit' if product_id else 'create'}, view_mode={view_mode}"
         )
 
         # Crear vista de formulario
@@ -681,6 +683,7 @@ class MainView(ft.Container):
             product_id=product_id,
             on_save=lambda product: self._on_product_saved(product),
             on_cancel=lambda: self._on_back_to_product_list(),
+            view_mode=view_mode,
         )
 
         # Actualizar contenido y breadcrumb
@@ -689,12 +692,19 @@ class MainView(ft.Container):
             if self.page:
                 self.update()
 
-        # Actualizar breadcrumb
-        action_key = "articles.edit" if product_id else "articles.create"
-        app_state.navigation.set_breadcrumb([
-            {"label": "articles.title", "route": "/articles"},
-            {"label": action_key, "route": None},
-        ])
+        # Actualizar breadcrumb según el modo
+        if view_mode == "nomenclatures":
+            action_key = "nomenclatures.edit" if product_id else "nomenclatures.create"
+            app_state.navigation.set_breadcrumb([
+                {"label": "nomenclatures.title", "route": "/nomenclatures"},
+                {"label": action_key, "route": None},
+            ])
+        else:
+            action_key = "articles.edit" if product_id else "articles.create"
+            app_state.navigation.set_breadcrumb([
+                {"label": "articles.title", "route": "/articles"},
+                {"label": action_key, "route": None},
+            ])
 
     def _on_product_saved(self, product: dict) -> None:
         """
