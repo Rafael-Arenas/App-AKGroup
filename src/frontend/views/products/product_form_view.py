@@ -13,6 +13,7 @@ from src.frontend.layout_constants import LayoutConstants
 from src.frontend.components.common import BaseCard, LoadingSpinner, ErrorDisplay
 from src.frontend.components.forms import ValidatedTextField, DropdownField
 from src.frontend.i18n.translation_manager import t
+from src.frontend.views.products.components import BOMComponentRow, ArticleSelectorDialog
 
 
 class ProductFormView(ft.Column):
@@ -23,6 +24,7 @@ class ProductFormView(ft.Column):
         product_id: ID del producto a editar (None para crear nuevo)
         on_save: Callback cuando se guarda exitosamente
         on_cancel: Callback cuando se cancela
+        view_mode: Modo de vista ("articles" o "nomenclatures")
 
     Example:
         >>> form = ProductFormView(product_id=123, on_save=handle_save)
@@ -34,12 +36,15 @@ class ProductFormView(ft.Column):
         product_id: int | None = None,
         on_save: Callable[[dict], None] | None = None,
         on_cancel: Callable[[], None] | None = None,
+        view_mode: str = "articles",
     ):
         """Inicializa el formulario de producto."""
         super().__init__()
         self.product_id = product_id
         self.on_save_callback = on_save
         self.on_cancel_callback = on_cancel
+        self._view_mode = view_mode
+        self._is_nomenclatures = view_mode == "nomenclatures"
 
         # Estado
         self._is_loading: bool = True
@@ -51,6 +56,10 @@ class ProductFormView(ft.Column):
         self._units: list[dict] = []
         self._family_types: list[dict] = []
         self._matters: list[dict] = []
+        
+        # BOM components state
+        self._bom_components: list[dict] = []  # Lista de componentes agregados
+        self._bom_rows: list[BOMComponentRow] = []  # Filas de componentes en UI
 
         # Configuración del layout
         self.spacing = LayoutConstants.SPACING_MD
@@ -181,18 +190,27 @@ class ProductFormView(ft.Column):
         )
 
         # Sección BOM (se muestra solo si es nomenclatura)
+        # Contenedor para las filas de componentes
+        self._bom_components_container = ft.Column(
+            controls=[],
+            spacing=LayoutConstants.SPACING_SM,
+        )
+        
+        # Botón para agregar componentes
+        self._add_component_button = ft.ElevatedButton(
+            text=t("articles.form.add_component"),
+            icon=ft.Icons.ADD,
+            on_click=self._on_add_component,
+        )
+        
         self._bom_section = ft.Container(
             content=BaseCard(
                 title=t("articles.form.bom_section"),
                 icon=ft.Icons.LIST_ALT,
                 content=ft.Column(
                     controls=[
-                        ft.Text(t("articles.form.bom_placeholder")),
-                        ft.ElevatedButton(
-                            text=t("articles.form.add_component"),
-                            icon=ft.Icons.ADD,
-                            on_click=self._on_add_component,
-                        ),
+                        self._bom_components_container,
+                        self._add_component_button,
                     ],
                     spacing=LayoutConstants.SPACING_MD,
                 ),
@@ -216,6 +234,12 @@ class ProductFormView(ft.Column):
         """Construye el layout de la vista."""
         is_edit = self.product_id is not None
 
+        # Determinar claves de traducción según el modo
+        if self._is_nomenclatures:
+            title_key = "nomenclatures.edit_title" if is_edit else "nomenclatures.create_title"
+        else:
+            title_key = "articles.edit_title" if is_edit else "articles.create_title"
+
         # Título
         title = ft.Container(
             content=ft.Row(
@@ -225,7 +249,7 @@ class ProductFormView(ft.Column):
                         size=32,
                     ),
                     ft.Text(
-                        t("articles.edit_title") if is_edit else t("articles.create_title"),
+                        t(title_key),
                         size=LayoutConstants.FONT_SIZE_DISPLAY_MD,
                         weight=LayoutConstants.FONT_WEIGHT_BOLD,
                     ),
@@ -555,7 +579,98 @@ class ProductFormView(ft.Column):
     def _on_add_component(self, e: ft.ControlEvent) -> None:
         """Callback para agregar componente a BOM."""
         logger.info("Add component clicked")
-        # TODO: Mostrar diálogo para agregar componente
+        
+        # Obtener IDs de artículos ya agregados
+        excluded_ids = [comp.get("id") for comp in self._bom_components]
+        
+        # Crear y mostrar diálogo de selección
+        dialog = ArticleSelectorDialog(
+            on_select=self._on_article_selected,
+            excluded_ids=excluded_ids,
+        )
+        
+        if self.page:
+            self.page.overlay.append(dialog)
+            dialog.open = True
+            self.page.update()
+            
+            # Cargar artículos
+            self.page.run_task(dialog.load_articles)
+    
+    def _on_article_selected(
+        self,
+        article_id: int,
+        article_code: str,
+        article_name: str,
+        quantity: float,
+    ) -> None:
+        """Callback cuando se selecciona un artículo en el diálogo."""
+        logger.info(
+            f"Article selected: id={article_id}, code={article_code}, quantity={quantity}"
+        )
+        
+        # Agregar componente a la lista
+        component_data = {
+            "id": article_id,
+            "code": article_code,
+            "name": article_name,
+            "quantity": quantity,
+        }
+        self._bom_components.append(component_data)
+        
+        # Crear fila de componente
+        self._add_component_row(component_data, len(self._bom_components) - 1)
+        
+        logger.success(f"Component added to BOM: {article_code}")
+    
+    def _add_component_row(self, component_data: dict, index: int) -> None:
+        """Agrega una fila de componente a la UI."""
+        row = BOMComponentRow(
+            component_data=component_data,
+            on_quantity_change=self._on_component_quantity_change,
+            on_remove=self._on_component_remove,
+            index=index,
+        )
+        
+        self._bom_rows.append(row)
+        self._bom_components_container.controls.append(row)
+        
+        if self.page:
+            self._bom_components_container.update()
+    
+    def _on_component_quantity_change(self, index: int, quantity: float) -> None:
+        """Callback cuando cambia la cantidad de un componente."""
+        if 0 <= index < len(self._bom_components):
+            self._bom_components[index]["quantity"] = quantity
+            logger.debug(f"Component quantity updated: index={index}, quantity={quantity}")
+    
+    def _on_component_remove(self, index: int) -> None:
+        """Callback cuando se elimina un componente."""
+        logger.info(f"Removing component at index={index}")
+        
+        if 0 <= index < len(self._bom_components):
+            # Eliminar de la lista de datos
+            removed = self._bom_components.pop(index)
+            
+            # Eliminar de la lista de filas
+            if index < len(self._bom_rows):
+                self._bom_rows.pop(index)
+            
+            # Reconstruir la UI
+            self._rebuild_bom_components()
+            
+            logger.success(f"Component removed: {removed.get('code')}")
+    
+    def _rebuild_bom_components(self) -> None:
+        """Reconstruye la lista de componentes en la UI."""
+        self._bom_components_container.controls.clear()
+        self._bom_rows.clear()
+        
+        for index, component_data in enumerate(self._bom_components):
+            self._add_component_row(component_data, index)
+        
+        if self.page:
+            self._bom_components_container.update()
 
     def _validate_form(self) -> bool:
         """Valida todos los campos del formulario."""
@@ -647,6 +762,16 @@ class ProductFormView(ft.Column):
 
         if matter_id:
             data["matter_id"] = matter_id
+        
+        # Agregar componentes si es nomenclatura
+        if product_type == "nomenclature" and self._bom_components:
+            data["components"] = [
+                {
+                    "component_id": comp["id"],
+                    "quantity": comp["quantity"],
+                }
+                for comp in self._bom_components
+            ]
 
         return data
 
@@ -681,12 +806,18 @@ class ProductFormView(ft.Column):
 
             product_api = ProductAPI()
             form_data = self._get_form_data()
+            
+            # Extraer componentes del form_data para manejarlos por separado
+            components_data = form_data.pop("components", [])
 
             if self.product_id:
                 # Actualizar producto existente
                 logger.debug(f"Updating product ID={self.product_id}")
                 updated_product = await product_api.update(self.product_id, form_data)
                 logger.success(f"Product updated: {updated_product.get('reference')}")
+                
+                # TODO: Actualizar componentes (requiere lógica adicional para comparar y actualizar)
+                
                 message = t("articles.messages.updated").format(
                     name=updated_product.get("designation_es", updated_product.get("reference", ""))
                 )
@@ -696,6 +827,28 @@ class ProductFormView(ft.Column):
                 new_product = await product_api.create(form_data)
                 logger.success(f"Product created: {new_product.get('reference')}")
                 updated_product = new_product
+                
+                # Agregar componentes si es nomenclatura
+                if components_data and updated_product.get("product_type") == "nomenclature":
+                    product_id = updated_product.get("id")
+                    logger.info(f"Adding {len(components_data)} components to product {product_id}")
+                    
+                    for comp_data in components_data:
+                        try:
+                            await product_api.add_component(
+                                product_id,
+                                {
+                                    "parent_id": product_id,
+                                    "component_id": comp_data["component_id"],
+                                    "quantity": comp_data["quantity"],
+                                }
+                            )
+                        except Exception as e:
+                            logger.error(f"Error adding component: {e}")
+                            # Continuar con los demás componentes
+                    
+                    logger.success(f"Components added to product {product_id}")
+                
                 message = t("articles.messages.created").format(
                     name=new_product.get("designation_es", new_product.get("reference", ""))
                 )
