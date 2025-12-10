@@ -13,7 +13,7 @@ from src.frontend.layout_constants import LayoutConstants
 from src.frontend.components.common import BaseCard, LoadingSpinner, ErrorDisplay
 from src.frontend.components.forms import ValidatedTextField, DropdownField
 from src.frontend.i18n.translation_manager import t
-from src.frontend.views.products.components import BOMComponentRow, ArticleSelectorDialog
+from src.frontend.views.products.components import BOMComponentRow  # ArticleSelectorDialog
 
 
 class ProductFormView(ft.Column):
@@ -84,34 +84,41 @@ class ProductFormView(ft.Column):
 
         logger.info(f"ProductFormView initialized: product_id={product_id}")
 
+    def _get_translation_prefix(self) -> str:
+        """Obtiene el prefijo de traducción según el modo de vista."""
+        return "nomenclatures" if self._is_nomenclatures else "articles"
+
     def _build_components(self) -> None:
         """Crea los componentes del formulario."""
+        # Obtener prefijo de traducción
+        prefix = self._get_translation_prefix()
+        
         # Campos de información básica
         self._code_field = ValidatedTextField(
-            label=t("articles.form.code") + " *",
-            hint_text=t("articles.form.code_hint"),
+            label=t(f"{prefix}.form.code") + " *",
+            hint_text=t(f"{prefix}.form.code_hint"),
             required=True,
             prefix_icon=ft.Icons.TAG,
             max_length=50,
         )
 
         self._name_field = ValidatedTextField(
-            label=t("articles.form.name") + " *",
-            hint_text=t("articles.form.name_hint"),
+            label=t(f"{prefix}.form.name") + " *",
+            hint_text=t(f"{prefix}.form.name_hint"),
             required=True,
             prefix_icon=ft.Icons.INVENTORY_2,
             max_length=200,
         )
 
         self._description_field = ValidatedTextField(
-            label=t("articles.form.description"),
-            hint_text=t("articles.form.description_hint"),
+            label=t(f"{prefix}.form.description"),
+            hint_text=t(f"{prefix}.form.description_hint"),
             multiline=True,
             max_length=1000,
         )
 
         self._type_field = DropdownField(
-            label=t("articles.form.type") + " *",
+            label=t(f"{prefix}.form.type") + " *",
             options=[
                 {"label": t("articles.types.article"), "value": "article"},
                 {"label": t("articles.types.nomenclature"), "value": "nomenclature"},
@@ -122,32 +129,32 @@ class ProductFormView(ft.Column):
 
         # Campo de unidad (opcional - no está en el modelo actual)
         self._unit_field = DropdownField(
-            label=t("articles.form.unit"),
+            label=t(f"{prefix}.form.unit"),
             options=[],
             required=False,
         )
 
         # Campos de clasificación (opcionales)
         self._family_type_field = DropdownField(
-            label=t("articles.form.family_type"),
+            label=t(f"{prefix}.form.family_type"),
             options=[],
         )
 
         self._matter_field = DropdownField(
-            label=t("articles.form.matter"),
+            label=t(f"{prefix}.form.matter"),
             options=[],
         )
 
         # Campos de precios
         self._cost_price_field = ValidatedTextField(
-            label=t("articles.form.cost_price"),
+            label=t(f"{prefix}.form.cost_price"),
             hint_text="0.00",
             prefix_icon=ft.Icons.ATTACH_MONEY,
             validators=["numeric"],
         )
 
         self._sale_price_field = ValidatedTextField(
-            label=t("articles.form.sale_price"),
+            label=t(f"{prefix}.form.sale_price"),
             hint_text="0.00",
             prefix_icon=ft.Icons.SELL,
             validators=["numeric"],
@@ -155,14 +162,14 @@ class ProductFormView(ft.Column):
 
         # Campos de stock (solo para ARTICLE)
         self._stock_quantity_field = ValidatedTextField(
-            label=t("articles.form.stock_quantity"),
+            label=t(f"{prefix}.form.stock_quantity"),
             hint_text="0.000",
             prefix_icon=ft.Icons.INVENTORY,
             validators=["numeric"],
         )
 
         self._min_stock_field = ValidatedTextField(
-            label=t("articles.form.min_stock"),
+            label=t(f"{prefix}.form.min_stock"),
             hint_text="0.000",
             prefix_icon=ft.Icons.TRENDING_DOWN,
             validators=["numeric"],
@@ -171,7 +178,7 @@ class ProductFormView(ft.Column):
         # Contenedor de campos de stock (se oculta/muestra según el tipo)
         self._stock_section = ft.Container(
             content=BaseCard(
-                title=t("articles.form.stock_section"),
+                title=t(f"{prefix}.form.stock_section"),
                 icon=ft.Icons.WAREHOUSE,
                 content=ft.Column(
                     controls=[
@@ -185,7 +192,7 @@ class ProductFormView(ft.Column):
         )
 
         self._is_active_switch = ft.Switch(
-            label=t("articles.form.is_active"),
+            label=t(f"{prefix}.form.is_active"),
             value=True,
         )
 
@@ -198,14 +205,14 @@ class ProductFormView(ft.Column):
         
         # Botón para agregar componentes
         self._add_component_button = ft.ElevatedButton(
-            text=t("articles.form.add_component"),
+            text=t(f"{prefix}.form.add_component"),
             icon=ft.Icons.ADD,
             on_click=self._on_add_component,
         )
         
         self._bom_section = ft.Container(
             content=BaseCard(
-                title=t("articles.form.bom_section"),
+                title=t(f"{prefix}.form.bom_section"),
                 icon=ft.Icons.LIST_ALT,
                 content=ft.Column(
                     controls=[
@@ -315,9 +322,12 @@ class ProductFormView(ft.Column):
 
     def _build_form(self) -> None:
         """Construye el formulario completo."""
+        # Obtener prefijo de traducción
+        prefix = self._get_translation_prefix()
+        
         # Sección información básica
         basic_section = BaseCard(
-            title=t("articles.form.basic_info"),
+            title=t(f"{prefix}.form.basic_info"),
             icon=ft.Icons.INFO_OUTLINED,
             content=ft.Column(
                 controls=[
@@ -337,7 +347,7 @@ class ProductFormView(ft.Column):
 
         # Sección clasificación
         classification_section = BaseCard(
-            title=t("articles.form.classification"),
+            title=t(f"{prefix}.form.classification"),
             icon=ft.Icons.CATEGORY,
             content=ft.Column(
                 controls=[
@@ -355,7 +365,7 @@ class ProductFormView(ft.Column):
 
         # Sección precios
         pricing_section = BaseCard(
-            title=t("articles.form.pricing"),
+            title=t(f"{prefix}.form.pricing"),
             icon=ft.Icons.MONETIZATION_ON,
             content=ft.Column(
                 controls=[
@@ -580,22 +590,34 @@ class ProductFormView(ft.Column):
         """Callback para agregar componente a BOM."""
         logger.info("Add component clicked")
         
-        # Obtener IDs de artículos ya agregados
-        excluded_ids = [comp.get("id") for comp in self._bom_components]
-        
-        # Crear y mostrar diálogo de selección
-        dialog = ArticleSelectorDialog(
-            on_select=self._on_article_selected,
-            excluded_ids=excluded_ids,
-        )
-        
+        # TODO: Implementar ArticleSelectorDialog
+        # Por ahora mostramos un mensaje al usuario
         if self.page:
-            self.page.overlay.append(dialog)
-            dialog.open = True
+            snackbar = ft.SnackBar(
+                content=ft.Text("La funcionalidad de agregar componentes está en desarrollo"),
+                bgcolor=ft.Colors.ORANGE,
+                duration=3000,
+            )
+            self.page.overlay.append(snackbar)
+            snackbar.open = True
             self.page.update()
-            
-            # Cargar artículos
-            self.page.run_task(dialog.load_articles)
+        
+        # # Obtener IDs de artículos ya agregados
+        # excluded_ids = [comp.get("id") for comp in self._bom_components]
+        # 
+        # # Crear y mostrar diálogo de selección
+        # dialog = ArticleSelectorDialog(
+        #     on_select=self._on_article_selected,
+        #     excluded_ids=excluded_ids,
+        # )
+        # 
+        # if self.page:
+        #     self.page.overlay.append(dialog)
+        #     dialog.open = True
+        #     self.page.update()
+        #     
+        #     # Cargar artículos
+        #     self.page.run_task(dialog.load_articles)
     
     def _on_article_selected(
         self,
