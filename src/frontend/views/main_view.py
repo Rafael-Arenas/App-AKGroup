@@ -266,7 +266,8 @@ class MainView(ft.Container):
         # Lazy import para evitar imports circulares
         from src.frontend.views.dashboard.dashboard_view import DashboardView
         from src.frontend.views.companies.company_list_view import CompanyListView
-        from src.frontend.views.products.product_list_view import ProductListView
+        from src.frontend.views.articles.article_list_view import ArticleListView
+        from src.frontend.views.nomenclatures.nomenclature_list_view import NomenclatureListView
 
         match index:
             case 0:
@@ -289,19 +290,18 @@ class MainView(ft.Container):
                     on_edit=self.navigate_to_company_form,
                 )
             case 3:
-                logger.debug("Creating ProductListView (Artículos)")
-                return ProductListView(
-                    on_view_detail=lambda pid: self.navigate_to_product_detail(pid, "articles"),
-                    on_create=lambda: self.navigate_to_product_form(None, "articles"),
-                    on_edit=lambda pid: self.navigate_to_product_form(pid, "articles"),
+                logger.debug("Creating ArticleListView")
+                return ArticleListView(
+                    on_view_detail=self.navigate_to_article_detail,
+                    on_create=self.navigate_to_article_form,
+                    on_edit=self.navigate_to_article_form,
                 )
             case 4:
-                logger.debug("Creating ProductListView (Nomenclaturas)")
-                return ProductListView(
-                    on_view_detail=lambda pid: self.navigate_to_product_detail(pid, "nomenclatures"),
-                    on_create=lambda: self.navigate_to_product_form(None, "nomenclatures"),
-                    on_edit=lambda pid: self.navigate_to_product_form(pid, "nomenclatures"),
-                    view_mode="nomenclatures",
+                logger.debug("Creating NomenclatureListView")
+                return NomenclatureListView(
+                    on_view_detail=self.navigate_to_nomenclature_detail,
+                    on_create=self.navigate_to_nomenclature_form,
+                    on_edit=self.navigate_to_nomenclature_form,
                 )
             case _:
                 logger.warning(f"No view implemented for index: {index}")
@@ -614,30 +614,29 @@ class MainView(ft.Container):
         self.navigate_to(index)
 
     # =========================================================================
-    # NAVEGACIÓN DE PRODUCTOS
+    # NAVEGACIÓN DE ARTÍCULOS
     # =========================================================================
 
-    def navigate_to_product_detail(self, product_id: int, view_mode: str = "articles") -> None:
+    def navigate_to_article_detail(self, article_id: int) -> None:
         """
-        Navega a la vista de detalle de un producto.
+        Navega a la vista de detalle de un artículo.
 
         Args:
-            product_id: ID del producto a mostrar
-            view_mode: Modo de vista ("articles" o "nomenclatures")
+            article_id: ID del artículo a mostrar
 
         Example:
-            >>> main_view.navigate_to_product_detail(123, "articles")
+            >>> main_view.navigate_to_article_detail(123)
         """
-        from src.frontend.views.products.product_detail_view import ProductDetailView
+        from src.frontend.views.articles.article_detail_view import ArticleDetailView
 
-        logger.info(f"Navigating to product detail: ID={product_id}, mode={view_mode}")
+        logger.info(f"Navigating to article detail: ID={article_id}")
 
         # Crear vista de detalle
-        detail_view = ProductDetailView(
-            product_id=product_id,
-            on_edit=lambda pid: self.navigate_to_product_form(pid),
-            on_delete=lambda pid: self._on_product_deleted(pid),
-            on_back=lambda: self._on_back_to_product_list(),
+        detail_view = ArticleDetailView(
+            article_id=article_id,
+            on_edit=self.navigate_to_article_form,
+            on_delete=self._on_article_deleted,
+            on_back=self._on_back_to_article_list,
         )
 
         # Actualizar contenido y breadcrumb
@@ -646,44 +645,34 @@ class MainView(ft.Container):
             if self.page:
                 self.update()
 
-        # Actualizar breadcrumb según el modo
-        if view_mode == "nomenclatures":
-            app_state.navigation.set_breadcrumb([
-                {"label": "nomenclatures.title", "route": "/nomenclatures"},
-                {"label": "nomenclatures.detail", "route": None},
-            ])
-        else:
-            app_state.navigation.set_breadcrumb([
-                {"label": "articles.title", "route": "/articles"},
-                {"label": "articles.detail", "route": None},
-            ])
+        app_state.navigation.set_breadcrumb([
+            {"label": "articles.title", "route": "/articles"},
+            {"label": "articles.detail", "route": None},
+        ])
 
-    def navigate_to_product_form(self, product_id: int | None, view_mode: str = "articles") -> None:
+    def navigate_to_article_form(self, article_id: int | None = None) -> None:
         """
-        Navega a la vista de formulario de producto.
+        Navega a la vista de formulario de artículo.
 
         Args:
-            product_id: ID del producto a editar (None para crear nuevo)
-            view_mode: Modo de vista ("articles" o "nomenclatures")
+            article_id: ID del artículo a editar (None para crear nuevo)
 
         Example:
-            >>> main_view.navigate_to_product_form(None)  # Crear nuevo artículo
-            >>> main_view.navigate_to_product_form(123)   # Editar existente
-            >>> main_view.navigate_to_product_form(None, "nomenclatures")  # Crear nomenclatura
+            >>> main_view.navigate_to_article_form(None)  # Crear nuevo
+            >>> main_view.navigate_to_article_form(123)   # Editar existente
         """
-        from src.frontend.views.products.product_form_view import ProductFormView
+        from src.frontend.views.articles.article_form_view import ArticleFormView
 
         logger.info(
-            f"Navigating to product form: ID={product_id}, "
-            f"mode={'edit' if product_id else 'create'}, view_mode={view_mode}"
+            f"Navigating to article form: ID={article_id}, "
+            f"mode={'edit' if article_id else 'create'}"
         )
 
         # Crear vista de formulario
-        form_view = ProductFormView(
-            product_id=product_id,
-            on_save=lambda product: self._on_product_saved(product),
-            on_cancel=lambda: self._on_back_to_product_list(),
-            view_mode=view_mode,
+        form_view = ArticleFormView(
+            article_id=article_id,
+            on_save=self._on_article_saved,
+            on_cancel=self._on_back_to_article_list,
         )
 
         # Actualizar contenido y breadcrumb
@@ -692,46 +681,136 @@ class MainView(ft.Container):
             if self.page:
                 self.update()
 
-        # Actualizar breadcrumb según el modo
-        if view_mode == "nomenclatures":
-            action_key = "nomenclatures.edit" if product_id else "nomenclatures.create"
-            app_state.navigation.set_breadcrumb([
-                {"label": "nomenclatures.title", "route": "/nomenclatures"},
-                {"label": action_key, "route": None},
-            ])
-        else:
-            action_key = "articles.edit" if product_id else "articles.create"
-            app_state.navigation.set_breadcrumb([
-                {"label": "articles.title", "route": "/articles"},
-                {"label": action_key, "route": None},
-            ])
+        action_key = "articles.edit" if article_id else "articles.create"
+        app_state.navigation.set_breadcrumb([
+            {"label": "articles.title", "route": "/articles"},
+            {"label": action_key, "route": None},
+        ])
 
-    def _on_product_saved(self, product: dict) -> None:
+    def _on_article_saved(self, article: dict) -> None:
         """
-        Callback cuando se guarda un producto exitosamente.
+        Callback cuando se guarda un artículo exitosamente.
 
         Args:
-            product: Datos del producto guardado
+            article: Datos del artículo guardado
         """
-        logger.success(f"Product saved: {product.get('reference', product.get('code'))}")
-        # Volver a la lista
-        self._on_back_to_product_list()
+        logger.success(f"Article saved: {article.get('reference', article.get('code'))}")
+        self._on_back_to_article_list()
 
-    def _on_product_deleted(self, product_id: int) -> None:
+    def _on_article_deleted(self, article_id: int) -> None:
         """
-        Callback cuando se elimina un producto.
+        Callback cuando se elimina un artículo.
 
         Args:
-            product_id: ID del producto eliminado
+            article_id: ID del artículo eliminado
         """
-        logger.success(f"Product deleted: ID={product_id}")
-        # Volver a la lista
-        self._on_back_to_product_list()
+        logger.success(f"Article deleted: ID={article_id}")
+        self._on_back_to_article_list()
 
-    def _on_back_to_product_list(self) -> None:
+    def _on_back_to_article_list(self) -> None:
         """
-        Navega de vuelta a la lista de productos (artículos).
+        Navega de vuelta a la lista de artículos.
         """
-        logger.info("Navigating back to product list")
-        # Navegar al índice de artículos (3)
+        logger.info("Navigating back to article list")
         self.navigate_to(3)
+
+    # =========================================================================
+    # NAVEGACIÓN DE NOMENCLATURAS
+    # =========================================================================
+
+    def navigate_to_nomenclature_detail(self, nomenclature_id: int) -> None:
+        """
+        Navega a la vista de detalle de una nomenclatura.
+
+        Args:
+            nomenclature_id: ID de la nomenclatura a mostrar
+
+        Example:
+            >>> main_view.navigate_to_nomenclature_detail(123)
+        """
+        from src.frontend.views.nomenclatures.nomenclature_detail_view import NomenclatureDetailView
+
+        logger.info(f"Navigating to nomenclature detail: ID={nomenclature_id}")
+
+        # Crear vista de detalle
+        detail_view = NomenclatureDetailView(
+            nomenclature_id=nomenclature_id,
+            on_edit=self.navigate_to_nomenclature_form,
+            on_delete=self._on_nomenclature_deleted,
+            on_back=self._on_back_to_nomenclature_list,
+        )
+
+        # Actualizar contenido y breadcrumb
+        if self._content_area:
+            self._content_area.content = detail_view
+            if self.page:
+                self.update()
+
+        app_state.navigation.set_breadcrumb([
+            {"label": "nomenclatures.title", "route": "/nomenclatures"},
+            {"label": "nomenclatures.detail", "route": None},
+        ])
+
+    def navigate_to_nomenclature_form(self, nomenclature_id: int | None = None) -> None:
+        """
+        Navega a la vista de formulario de nomenclatura.
+
+        Args:
+            nomenclature_id: ID de la nomenclatura a editar (None para crear nueva)
+
+        Example:
+            >>> main_view.navigate_to_nomenclature_form(None)  # Crear nueva
+            >>> main_view.navigate_to_nomenclature_form(123)   # Editar existente
+        """
+        from src.frontend.views.nomenclatures.nomenclature_form_view import NomenclatureFormView
+
+        logger.info(
+            f"Navigating to nomenclature form: ID={nomenclature_id}, "
+            f"mode={'edit' if nomenclature_id else 'create'}"
+        )
+
+        # Crear vista de formulario
+        form_view = NomenclatureFormView(
+            nomenclature_id=nomenclature_id,
+            on_save=self._on_nomenclature_saved,
+            on_cancel=self._on_back_to_nomenclature_list,
+        )
+
+        # Actualizar contenido y breadcrumb
+        if self._content_area:
+            self._content_area.content = form_view
+            if self.page:
+                self.update()
+
+        action_key = "nomenclatures.edit" if nomenclature_id else "nomenclatures.create"
+        app_state.navigation.set_breadcrumb([
+            {"label": "nomenclatures.title", "route": "/nomenclatures"},
+            {"label": action_key, "route": None},
+        ])
+
+    def _on_nomenclature_saved(self, nomenclature: dict) -> None:
+        """
+        Callback cuando se guarda una nomenclatura exitosamente.
+
+        Args:
+            nomenclature: Datos de la nomenclatura guardada
+        """
+        logger.success(f"Nomenclature saved: {nomenclature.get('reference', nomenclature.get('code'))}")
+        self._on_back_to_nomenclature_list()
+
+    def _on_nomenclature_deleted(self, nomenclature_id: int) -> None:
+        """
+        Callback cuando se elimina una nomenclatura.
+
+        Args:
+            nomenclature_id: ID de la nomenclatura eliminada
+        """
+        logger.success(f"Nomenclature deleted: ID={nomenclature_id}")
+        self._on_back_to_nomenclature_list()
+
+    def _on_back_to_nomenclature_list(self) -> None:
+        """
+        Navega de vuelta a la lista de nomenclaturas.
+        """
+        logger.info("Navigating back to nomenclature list")
+        self.navigate_to(4)

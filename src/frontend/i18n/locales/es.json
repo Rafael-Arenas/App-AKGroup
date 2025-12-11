@@ -217,10 +217,15 @@
       "name": "Nombre",
       "unit": "Unidad",
       "components": "Componentes",
+      "quantity": "Cantidad",
+      "unit_cost": "Costo Unit.",
+      "total_cost": "Costo Total",
+      "cost": "Costo",
       "status": "Estado",
       "created_at": "Fecha Creación",
       "actions": "Acciones"
     },
+    "no_components": "No hay componentes en esta nomenclatura",
     "filters": {
       "all": "Todas",
       "active": "Activas",
