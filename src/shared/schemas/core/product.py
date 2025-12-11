@@ -94,6 +94,16 @@ class ProductCreate(BaseSchema):
         gt=0,
         description="ID del material/materia"
     )
+    image_url: Optional[str] = Field(
+        None,
+        max_length=500,
+        description="URL de la imagen del producto"
+    )
+    plan_url: Optional[str] = Field(
+        None,
+        max_length=500,
+        description="URL del plano/diseño del producto"
+    )
 
     @field_validator('reference')
     @classmethod
@@ -144,6 +154,8 @@ class ProductUpdate(BaseSchema):
     minimum_stock: Optional[Decimal] = Field(None, ge=0, decimal_places=3)
     family_type_id: Optional[int] = Field(None, gt=0)
     matter_id: Optional[int] = Field(None, gt=0)
+    image_url: Optional[str] = Field(None, max_length=500)
+    plan_url: Optional[str] = Field(None, max_length=500)
     is_active: Optional[bool] = None
 
     @field_validator('reference')
@@ -202,6 +214,8 @@ class ProductResponse(BaseResponse):
     matter_id: Optional[int] = None
     sales_type_id: Optional[int] = None
     company_id: Optional[int] = None
+    image_url: Optional[str] = None
+    plan_url: Optional[str] = None
     is_active: bool
 
     # Relaciones opcionales
