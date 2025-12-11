@@ -4,10 +4,10 @@ Script para insertar países sudamericanos en la base de datos.
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from src.models.lookups.lookups import Country
+from src.backend.models.lookups.lookups import Country
 
 # Crear engine y sesión
-engine = create_engine('sqlite:///akgroup.db', echo=False)
+engine = create_engine('sqlite:///app_akgroup.db', echo=False)
 SessionLocal = sessionmaker(bind=engine)
 db = SessionLocal()
 

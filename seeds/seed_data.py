@@ -4,11 +4,11 @@ Script para insertar datos iniciales en la base de datos.
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from src.models.core.companies import Company
-from src.models.lookups.lookups import CompanyType, Unit
+from src.backend.models.core.companies import Company
+from src.backend.models.lookups.lookups import CompanyType, Unit
 
 # Crear engine y sesión
-engine = create_engine('sqlite:///akgroup.db', echo=False)
+engine = create_engine('sqlite:///app_akgroup.db', echo=False)
 SessionLocal = sessionmaker(bind=engine)
 db = SessionLocal()
 
