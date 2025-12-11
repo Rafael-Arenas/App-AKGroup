@@ -353,6 +353,18 @@ class Product(Base, TimestampMixin, AuditMixin, ActiveMixin):
     )
 
     # ========== ADDITIONAL ==========
+    image_url = Column(
+        String(500),
+        nullable=True,
+        comment="URL of the product image",
+    )
+
+    plan_url = Column(
+        String(500),
+        nullable=True,
+        comment="URL of the product plan/blueprint",
+    )
+
     notes = Column(
         Text,
         nullable=True,
