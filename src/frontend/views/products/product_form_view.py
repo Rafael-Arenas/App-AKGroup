@@ -126,6 +126,27 @@ class ProductFormView(ft.Column):
             required=True,
             on_change=self._on_type_change,
         )
+        
+        # Campo de tipo como texto estático (para modo edición)
+        self._type_text = ft.Container(
+            content=ft.Column(
+                controls=[
+                    ft.Text(
+                        t(f"{prefix}.form.type"),
+                        size=12,
+                        color=ft.Colors.with_opacity(0.6, ft.Colors.ON_SURFACE),
+                    ),
+                    ft.Text(
+                        "",  # Se llenará dinámicamente
+                        size=16,
+                        weight=ft.FontWeight.W_500,
+                    ),
+                ],
+                spacing=4,
+            ),
+            padding=ft.padding.only(left=12, top=8, bottom=8),
+            visible=False,  # Oculto por defecto
+        )
 
         # Campo de unidad (opcional - no está en el modelo actual)
         self._unit_field = DropdownField(
@@ -325,6 +346,12 @@ class ProductFormView(ft.Column):
         # Obtener prefijo de traducción
         prefix = self._get_translation_prefix()
         
+        # Determinar si es modo edición
+        is_edit = self.product_id is not None
+        
+        # Determinar qué campo de tipo mostrar
+        type_control = self._type_text if is_edit else self._type_field
+        
         # Sección información básica
         basic_section = BaseCard(
             title=t(f"{prefix}.form.basic_info"),
@@ -334,7 +361,7 @@ class ProductFormView(ft.Column):
                     ft.Row(
                         controls=[
                             ft.Container(content=self._code_field, expand=True),
-                            ft.Container(content=self._type_field, expand=True),
+                            ft.Container(content=type_control, expand=True),
                         ],
                         spacing=LayoutConstants.SPACING_MD,
                     ),
@@ -529,6 +556,12 @@ class ProductFormView(ft.Column):
         # Tipo de producto
         product_type = self._product_data.get("product_type", "ARTICLE")
         self._type_field.set_value(product_type)
+        
+        # Actualizar el texto estático del tipo (para modo edición)
+        type_label = t("articles.types.article") if product_type == "article" else t("articles.types.nomenclature")
+        if self._type_text.content and len(self._type_text.content.controls) > 1:
+            self._type_text.content.controls[1].value = type_label
+        
         self._update_visibility_for_type(product_type)
 
         # Clasificación
@@ -807,6 +840,9 @@ class ProductFormView(ft.Column):
     async def handle_save(self) -> None:
         """Maneja el guardado del producto."""
         logger.info("Handling product save")
+        
+        # Obtener prefijo de traducción
+        prefix = self._get_translation_prefix()
 
         # Validar formulario
         if not self._validate_form():
@@ -840,7 +876,7 @@ class ProductFormView(ft.Column):
                 
                 # TODO: Actualizar componentes (requiere lógica adicional para comparar y actualizar)
                 
-                message = t("articles.messages.updated").format(
+                message = t(f"{prefix}.messages.updated").format(
                     name=updated_product.get("designation_es", updated_product.get("reference", ""))
                 )
             else:
@@ -871,7 +907,7 @@ class ProductFormView(ft.Column):
                     
                     logger.success(f"Components added to product {product_id}")
                 
-                message = t("articles.messages.created").format(
+                message = t(f"{prefix}.messages.created").format(
                     name=new_product.get("designation_es", new_product.get("reference", ""))
                 )
 
