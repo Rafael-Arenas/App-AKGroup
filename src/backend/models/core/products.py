@@ -122,6 +122,10 @@ class Product(Base, TimestampMixin, AuditMixin, ActiveMixin):
         # Additional
         hs_code: Código arancelario
         country_of_origin: País de origen
+        image_url: URL de la imagen del producto
+        plan_url: URL del plano/diseño del producto
+        supplier_reference: Referencia del proveedor
+        customs_number: Número de aduana
         notes: Notas adicionales
 
     Relationships:
@@ -363,6 +367,18 @@ class Product(Base, TimestampMixin, AuditMixin, ActiveMixin):
         String(500),
         nullable=True,
         comment="URL of the product plan/blueprint",
+    )
+
+    supplier_reference = Column(
+        String(100),
+        nullable=True,
+        comment="Supplier reference code",
+    )
+
+    customs_number = Column(
+        String(50),
+        nullable=True,
+        comment="Customs clearance number",
     )
 
     notes = Column(

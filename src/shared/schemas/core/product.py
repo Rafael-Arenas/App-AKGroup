@@ -104,6 +104,16 @@ class ProductCreate(BaseSchema):
         max_length=500,
         description="URL del plano/diseño del producto"
     )
+    supplier_reference: Optional[str] = Field(
+        None,
+        max_length=100,
+        description="Referencia del proveedor"
+    )
+    customs_number: Optional[str] = Field(
+        None,
+        max_length=50,
+        description="Número de aduana"
+    )
 
     @field_validator('reference')
     @classmethod
@@ -156,6 +166,8 @@ class ProductUpdate(BaseSchema):
     matter_id: Optional[int] = Field(None, gt=0)
     image_url: Optional[str] = Field(None, max_length=500)
     plan_url: Optional[str] = Field(None, max_length=500)
+    supplier_reference: Optional[str] = Field(None, max_length=100)
+    customs_number: Optional[str] = Field(None, max_length=50)
     is_active: Optional[bool] = None
 
     @field_validator('reference')
@@ -216,6 +228,8 @@ class ProductResponse(BaseResponse):
     company_id: Optional[int] = None
     image_url: Optional[str] = None
     plan_url: Optional[str] = None
+    supplier_reference: Optional[str] = None
+    customs_number: Optional[str] = None
     is_active: bool
 
     # Relaciones opcionales
