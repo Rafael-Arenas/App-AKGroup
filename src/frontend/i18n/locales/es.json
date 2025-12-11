@@ -231,15 +231,40 @@
     },
     "form": {
       "basic_info": "Información Básica",
-      "bom_info": "Lista de Materiales",
+      "classification": "Clasificación",
+      "pricing": "Precios",
+      "stock_section": "Stock e Inventario",
+      "bom_section": "Lista de Materiales (BOM)",
+      "bom_placeholder": "Componentes de la nomenclatura...",
+      "add_component": "Agregar Componente",
+      "select_article": "Seleccionar Artículo",
+      "search_articles_hint": "Buscar por código o nombre...",
+      "no_articles_found": "No se encontraron artículos",
+      "quantity": "Cantidad",
+      "invalid_quantity": "La cantidad debe ser un número positivo",
       "code": "Código",
       "code_hint": "Código único de la nomenclatura",
       "name": "Nombre",
       "name_hint": "Nombre descriptivo",
       "description": "Descripción",
       "description_hint": "Descripción detallada",
+      "type": "Tipo de Producto",
       "unit": "Unidad de Medida",
-      "is_active": "Activo"
+      "family_type": "Familia",
+      "matter": "Material/Materia",
+      "cost_price": "Precio de Costo",
+      "sale_price": "Precio de Venta",
+      "stock_quantity": "Cantidad en Stock",
+      "min_stock": "Stock Mínimo",
+      "max_stock": "Stock Máximo",
+      "is_active": "Nomenclatura Activa"
+    },
+    "messages": {
+      "created": "Nomenclatura '{name}' creada exitosamente",
+      "updated": "Nomenclatura '{name}' actualizada exitosamente",
+      "deleted": "Nomenclatura eliminada exitosamente",
+      "confirm_delete": "¿Está seguro de eliminar esta nomenclatura?",
+      "confirm_delete_message": "Esta acción no se puede deshacer"
     }
   },
   "product_detail": {
