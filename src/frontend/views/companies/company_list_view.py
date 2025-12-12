@@ -601,7 +601,9 @@ class CompanyListView(ft.Container):
 
         Actualiza la interfaz.
         """
-        logger.debug("State changed, updating CompanyListView")
+        logger.debug("CompanyListView state changed, rebuilding content")
+        # Reconstruir el contenido con las nuevas traducciones
+        self.content = self.build()
         if self.page:
             self.update()
 
