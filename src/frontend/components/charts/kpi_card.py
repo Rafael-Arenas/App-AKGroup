@@ -65,6 +65,9 @@ class KPICard(ft.Container):
 
         # Suscribirse a cambios de tema
         app_state.theme.add_observer(self._on_theme_changed)
+        
+        # Construir contenido
+        self.content = self.build()
 
     def _on_theme_changed(self) -> None:
         """Callback cuando cambia el tema."""
