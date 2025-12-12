@@ -15,6 +15,7 @@ from src.frontend.components.common import (
     ErrorDisplay,
     ConfirmDialog,
 )
+from src.frontend.i18n.translation_manager import t
 # Los diálogos de direcciones y contactos se crean inline usando controles nativos de Flet
 
 
@@ -77,7 +78,7 @@ class CompanyDetailView(ft.Container):
         """
         if self._is_loading:
             return ft.Container(
-                content=LoadingSpinner(message="Cargando empresa..."),
+                content=LoadingSpinner(message=t("companies.messages.loading")),
                 expand=True,
                 alignment=ft.alignment.center,
             )
@@ -94,7 +95,7 @@ class CompanyDetailView(ft.Container):
         # Badges más pequeños
         status_badge = ft.Container(
             content=ft.Text(
-                "Activa" if self._company.get("is_active") else "Inactiva",
+                t("companies.status.active") if self._company.get("is_active") else t("companies.status.inactive"),
                 size=LayoutConstants.FONT_SIZE_XS,
                 weight=LayoutConstants.FONT_WEIGHT_SEMIBOLD,
                 color=ft.Colors.WHITE,
@@ -156,12 +157,12 @@ class CompanyDetailView(ft.Container):
                         controls=[
                             ft.IconButton(
                                 icon=ft.Icons.EDIT_OUTLINED,
-                                tooltip="Editar empresa",
+                                tooltip=t("companies.actions.edit_company"),
                                 on_click=self._on_edit_click,
                             ),
                             ft.IconButton(
                                 icon=ft.Icons.DELETE_OUTLINE,
-                                tooltip="Eliminar empresa",
+                                tooltip=t("companies.actions.delete_company"),
                                 on_click=self._on_delete_click,
                             ),
                         ],
@@ -179,18 +180,18 @@ class CompanyDetailView(ft.Container):
         # Tarjeta de Información General
         general_info = ft.Column(
             controls=[
-                self._create_info_row("Nombre Legal", self._company.get("name", "-")),
-                self._create_info_row("Trigrama", self._company.get("trigram", "-")),
-                self._create_info_row("Tipo", self._format_company_type(
+                self._create_info_row(t("companies.detail.legal_name"), self._company.get("name", "-")),
+                self._create_info_row(t("companies.detail.trigram"), self._company.get("trigram", "-")),
+                self._create_info_row(t("companies.columns.type"), self._format_company_type(
                     self._company.get("company_type", "")
                 )),
-                self._create_info_row("Estado", "Activa" if self._company.get("is_active") else "Inactiva"),
+                self._create_info_row(t("companies.detail.status"), t("companies.status.active") if self._company.get("is_active") else t("companies.status.inactive")),
             ],
             spacing=LayoutConstants.SPACING_SM,
         )
 
         general_card = BaseCard(
-            title="Información General",
+            title=t("companies.sections.general_info"),
             icon=ft.Icons.BUSINESS,
             content=general_info,
         )
@@ -198,14 +199,14 @@ class CompanyDetailView(ft.Container):
         # Tarjeta de Información de Contacto
         contact_info = ft.Column(
             controls=[
-                self._create_info_row("Teléfono", self._company.get("phone", "-")),
-                self._create_info_row("Sitio Web", self._company.get("website", "-")),
+                self._create_info_row(t("companies.detail.phone"), self._company.get("phone", "-")),
+                self._create_info_row(t("companies.detail.website"), self._company.get("website", "-")),
             ],
             spacing=LayoutConstants.SPACING_SM,
         )
 
         contact_card = BaseCard(
-            title="Información de Contacto",
+            title=t("companies.sections.contact_info"),
             icon=ft.Icons.CONTACT_PHONE,
             content=contact_info,
         )
@@ -213,15 +214,15 @@ class CompanyDetailView(ft.Container):
         # Tarjeta de Ubicación
         location_info = ft.Column(
             controls=[
-                self._create_info_row("País", self._company.get("country_name", "-")),
-                self._create_info_row("Ciudad", self._company.get("city_name", "-")),
-                self._create_info_row("Dirección Principal", self._company.get("main_address", "-")),
+                self._create_info_row(t("companies.detail.country"), self._company.get("country_name", "-")),
+                self._create_info_row(t("companies.detail.city"), self._company.get("city_name", "-")),
+                self._create_info_row(t("companies.detail.main_address"), self._company.get("main_address", "-")),
             ],
             spacing=LayoutConstants.SPACING_SM,
         )
 
         location_card = BaseCard(
-            title="Ubicación",
+            title=t("companies.sections.location"),
             icon=ft.Icons.LOCATION_ON,
             content=location_info,
         )
@@ -230,7 +231,7 @@ class CompanyDetailView(ft.Container):
         fiscal_controls = []
         if self._company.get("intracommunity_number"):
             fiscal_controls.append(
-                self._create_info_row("Número Intracomunitario", self._company.get("intracommunity_number"))
+                self._create_info_row(t("companies.detail.intracommunity_number"), self._company.get("intracommunity_number"))
             )
 
         fiscal_card = None
@@ -240,7 +241,7 @@ class CompanyDetailView(ft.Container):
                 spacing=LayoutConstants.SPACING_SM,
             )
             fiscal_card = BaseCard(
-                title="Información Fiscal",
+                title=t("companies.sections.fiscal_info"),
                 icon=ft.Icons.RECEIPT_LONG,
                 content=fiscal_info,
             )
@@ -259,7 +260,7 @@ class CompanyDetailView(ft.Container):
 
         # Tarjetas de Direcciones y Contactos
         addresses_card = BaseCard(
-            title="Direcciones",
+            title=t("companies.sections.addresses"),
             icon=ft.Icons.LOCATION_ON,
             content=self._create_addresses_section(),
             collapsible=True,
@@ -268,7 +269,7 @@ class CompanyDetailView(ft.Container):
         cards.append(addresses_card)
 
         contacts_card = BaseCard(
-            title="Contactos",
+            title=t("companies.sections.contacts"),
             icon=ft.Icons.CONTACTS,
             content=self._create_contacts_section(),
             collapsible=True,
@@ -302,12 +303,12 @@ class CompanyDetailView(ft.Container):
                             color=ft.Colors.GREY_400,
                         ),
                         ft.Text(
-                            "No hay direcciones registradas",
+                            t("companies.empty_states.no_addresses"),
                             size=LayoutConstants.FONT_SIZE_MD,
                             color=ft.Colors.GREY_600,
                         ),
                         ft.ElevatedButton(
-                            text="Agregar Primera Dirección",
+                            text=t("companies.actions.add_first_address"),
                             icon=ft.Icons.ADD,
                             on_click=self._on_add_address,
                         ),
@@ -323,10 +324,10 @@ class CompanyDetailView(ft.Container):
         address_cards = []
         for addr in self._addresses:
             address_type_labels = {
-                "delivery": "Entrega",
-                "billing": "Facturación",
-                "headquarters": "Sede Principal",
-                "branch": "Sucursal",
+                "delivery": t("companies.address_types.delivery"),
+                "billing": t("companies.address_types.billing"),
+                "headquarters": t("companies.address_types.headquarters"),
+                "branch": t("companies.address_types.branch"),
             }
             type_label = address_type_labels.get(addr.get("address_type", ""), addr.get("address_type", ""))
 
@@ -352,7 +353,7 @@ class CompanyDetailView(ft.Container):
                 badges.append(
                     ft.Container(
                         content=ft.Text(
-                            "Principal",
+                            t("companies.labels.primary"),
                             size=LayoutConstants.FONT_SIZE_XS,
                             weight=LayoutConstants.FONT_WEIGHT_SEMIBOLD,
                             color=ft.Colors.WHITE,
@@ -405,13 +406,13 @@ class CompanyDetailView(ft.Container):
                                         ft.IconButton(
                                             icon=ft.Icons.EDIT_OUTLINED,
                                             icon_size=LayoutConstants.ICON_SIZE_SM,
-                                            tooltip="Editar dirección",
+                                            tooltip=t("companies.actions.edit_address"),
                                             on_click=lambda e, a=addr: self._on_edit_address(e, a),
                                         ),
                                         ft.IconButton(
                                             icon=ft.Icons.DELETE_OUTLINE,
                                             icon_size=LayoutConstants.ICON_SIZE_SM,
-                                            tooltip="Eliminar dirección",
+                                            tooltip=t("companies.actions.delete_address"),
                                             on_click=lambda e, a=addr: self._on_delete_address(e, a),
                                         ),
                                     ],
@@ -431,7 +432,7 @@ class CompanyDetailView(ft.Container):
 
         # Botón para agregar nueva dirección
         add_button = ft.ElevatedButton(
-            text="Agregar Dirección",
+            text=t("companies.address.add"),
             icon=ft.Icons.ADD,
             on_click=self._on_add_address,
         )
@@ -464,12 +465,12 @@ class CompanyDetailView(ft.Container):
                             color=ft.Colors.GREY_400,
                         ),
                         ft.Text(
-                            "No hay contactos registrados",
+                            t("companies.empty_states.no_contacts"),
                             size=LayoutConstants.FONT_SIZE_MD,
                             color=ft.Colors.GREY_600,
                         ),
                         ft.ElevatedButton(
-                            text="Agregar Primer Contacto",
+                            text=t("companies.actions.add_first_contact"),
                             icon=ft.Icons.ADD,
                             on_click=self._on_add_contact,
                         ),
@@ -487,7 +488,7 @@ class CompanyDetailView(ft.Container):
             # Badge de activo/inactivo
             status_badge = ft.Container(
                 content=ft.Text(
-                    "Activo" if contact.get("is_active") else "Inactivo",
+                    t("companies.status.active") if contact.get("is_active") else t("companies.status.inactive"),
                     size=LayoutConstants.FONT_SIZE_XS,
                     color=ft.Colors.WHITE,
                 ),
@@ -557,13 +558,13 @@ class CompanyDetailView(ft.Container):
                                 ft.IconButton(
                                     icon=ft.Icons.EDIT_OUTLINED,
                                     icon_size=LayoutConstants.ICON_SIZE_SM,
-                                    tooltip="Editar contacto",
+                                    tooltip=t("companies.actions.edit_contact"),
                                     on_click=lambda e, c=contact: self._on_edit_contact(e, c),
                                 ),
                                 ft.IconButton(
                                     icon=ft.Icons.DELETE_OUTLINE,
                                     icon_size=LayoutConstants.ICON_SIZE_SM,
-                                    tooltip="Eliminar contacto",
+                                    tooltip=t("companies.actions.delete_contact"),
                                     on_click=lambda e, c=contact: self._on_delete_contact(e, c),
                                 ),
                             ],
@@ -580,7 +581,7 @@ class CompanyDetailView(ft.Container):
 
         # Botón para agregar nuevo contacto
         add_button = ft.ElevatedButton(
-            text="Agregar Contacto",
+            text=t("companies.contact.add"),
             icon=ft.Icons.ADD,
             on_click=self._on_add_contact,
         )
@@ -632,9 +633,9 @@ class CompanyDetailView(ft.Container):
     def _format_company_type(self, type_code: str) -> str:
         """Formatea el tipo de empresa."""
         type_map = {
-            "CLIENT": "Cliente",
-            "SUPPLIER": "Proveedor",
-            "BOTH": "Cliente/Proveedor",
+            "CLIENT": t("clients.title"),
+            "SUPPLIER": t("suppliers.title"),
+            "BOTH": t("companies.title"),
         }
         return type_map.get(type_code, type_code)
 
@@ -727,7 +728,7 @@ class CompanyDetailView(ft.Container):
 
         except Exception as e:
             logger.exception(f"Error loading company: {e}")
-            self._error_message = f"Error al cargar empresa: {str(e)}"
+            self._error_message = t("companies.messages.error_loading").format(error=str(e))
             self._is_loading = False
 
         # Reconstruir contenido con los datos cargados
@@ -746,8 +747,8 @@ class CompanyDetailView(ft.Container):
         logger.info(f"Delete clicked for company ID={self.company_id}")
 
         self._confirm_dialog = ConfirmDialog(
-            title="Eliminar Empresa",
-            message=f"¿Está seguro de que desea eliminar la empresa '{self._company.get('name')}'?",
+            title=t("companies.messages.delete_title"),
+            message=t("companies.messages.delete_confirm").format(name=self._company.get('name')),
             on_confirm=self._confirm_delete,
         )
 
@@ -790,24 +791,24 @@ class CompanyDetailView(ft.Container):
 
         # Crear campos del formulario
         address_field = ft.TextField(
-            label="Dirección *",
+            label=t("companies.labels.address") + " *",
             multiline=True,
             min_lines=2,
             max_lines=4,
         )
 
-        postal_code_field = ft.TextField(label="Código Postal", max_length=20)
+        postal_code_field = ft.TextField(label=t("companies.labels.postal_code"), max_length=20)
 
         # Dropdown de ciudades (inicialmente vacío)
         city_dropdown = ft.Dropdown(
-            label="Ciudad",
+            label=t("companies.columns.city"),
             options=[],
             disabled=True,
         )
 
         # Dropdown de países (se cargará con datos de la API)
         country_dropdown = ft.Dropdown(
-            label="País *",
+            label=t("companies.form.country") + " *",
             options=[],
             disabled=True,
         )
@@ -878,16 +879,16 @@ class CompanyDetailView(ft.Container):
         self.page.run_task(load_countries)
 
         type_dropdown = ft.Dropdown(
-            label="Tipo de Dirección *",
+            label=t("companies.columns.type") + " *",
             options=[
-                ft.dropdown.Option("delivery", "Entrega"),
-                ft.dropdown.Option("billing", "Facturación"),
-                ft.dropdown.Option("headquarters", "Sede Principal"),
-                ft.dropdown.Option("branch", "Sucursal"),
+                ft.dropdown.Option("delivery", t("companies.address_types.delivery")),
+                ft.dropdown.Option("billing", t("companies.address_types.billing")),
+                ft.dropdown.Option("headquarters", t("companies.address_types.headquarters")),
+                ft.dropdown.Option("branch", t("companies.address_types.branch")),
             ],
             value="delivery",
         )
-        is_default_checkbox = ft.Checkbox(label="Dirección principal", value=False)
+        is_default_checkbox = ft.Checkbox(label=t("companies.labels.main_address"), value=False)
 
         def close_bottom_sheet():
             self.page.close(bottom_sheet)
@@ -896,7 +897,7 @@ class CompanyDetailView(ft.Container):
             # Validación simple
             if not address_field.value or not type_dropdown.value or not country_dropdown.value:
                 snack = ft.SnackBar(
-                    content=ft.Text("Por favor complete los campos obligatorios"),
+                    content=ft.Text(t("companies.address.required_fields")),
                     bgcolor=ft.Colors.RED_400,
                 )
                 self.page.snack_bar = snack
@@ -927,7 +928,7 @@ class CompanyDetailView(ft.Container):
                         await self._on_address_saved()
                     else:
                         try:
-                            error_detail = response.json().get("detail", "Error desconocido")
+                            error_detail = response.json().get("detail", t("companies.messages.unknown_error"))
                         except Exception:
                             error_detail = f"Error {response.status_code}"
 
@@ -955,7 +956,7 @@ class CompanyDetailView(ft.Container):
                     controls=[
                         ft.Row(
                             controls=[
-                                ft.Text("Agregar Dirección", size=20, weight=ft.FontWeight.BOLD),
+                                ft.Text(t("companies.address.add"), size=20, weight=ft.FontWeight.BOLD),
                                 ft.IconButton(
                                     icon=ft.Icons.CLOSE,
                                     on_click=lambda _: close_bottom_sheet(),
@@ -1148,7 +1149,7 @@ class CompanyDetailView(ft.Container):
             # Validación simple
             if not address_field.value or not type_dropdown.value or not country_dropdown.value:
                 snack = ft.SnackBar(
-                    content=ft.Text("Por favor complete los campos obligatorios"),
+                    content=ft.Text(t("companies.address.required_fields")),
                     bgcolor=ft.Colors.RED_400,
                 )
                 self.page.snack_bar = snack
@@ -1180,7 +1181,7 @@ class CompanyDetailView(ft.Container):
                         await self._on_address_saved()
                     else:
                         try:
-                            error_detail = response.json().get("detail", "Error desconocido")
+                            error_detail = response.json().get("detail", t("companies.messages.unknown_error"))
                         except Exception:
                             error_detail = f"Error {response.status_code}"
 
@@ -1277,10 +1278,10 @@ class CompanyDetailView(ft.Container):
                 if response.status_code == 200:
                     logger.success(f"Address {address_id} deleted successfully")
                     await self._on_address_saved()
-                    self._show_snackbar("Dirección eliminada exitosamente", ft.Colors.GREEN)
+                    self._show_snackbar(t("companies.messages.address_deleted"), ft.Colors.GREEN)
                 else:
                     try:
-                        error_detail = response.json().get("detail", "Error desconocido")
+                        error_detail = response.json().get("detail", t("companies.messages.unknown_error"))
                     except Exception:
                         error_detail = f"Error {response.status_code}"
                     logger.error(f"Error deleting address: {response.status_code} - {error_detail}")
@@ -1342,7 +1343,7 @@ class CompanyDetailView(ft.Container):
             # Validación simple
             if not first_name_field.value or not last_name_field.value:
                 snack = ft.SnackBar(
-                    content=ft.Text("Por favor complete los campos obligatorios"),
+                    content=ft.Text(t("companies.address.required_fields")),
                     bgcolor=ft.Colors.RED_400,
                 )
                 self.page.snack_bar = snack
@@ -1369,7 +1370,7 @@ class CompanyDetailView(ft.Container):
                         await self._on_contact_saved()
                     else:
                         try:
-                            error_detail = response.json().get("detail", "Error desconocido")
+                            error_detail = response.json().get("detail", t("companies.messages.unknown_error"))
                         except Exception:
                             error_detail = f"Error {response.status_code}"
 
@@ -1480,7 +1481,7 @@ class CompanyDetailView(ft.Container):
             # Validación simple
             if not first_name_field.value or not last_name_field.value:
                 snack = ft.SnackBar(
-                    content=ft.Text("Por favor complete los campos obligatorios"),
+                    content=ft.Text(t("companies.address.required_fields")),
                     bgcolor=ft.Colors.RED_400,
                 )
                 self.page.snack_bar = snack
@@ -1508,7 +1509,7 @@ class CompanyDetailView(ft.Container):
                         await self._on_contact_saved()
                     else:
                         try:
-                            error_detail = response.json().get("detail", "Error desconocido")
+                            error_detail = response.json().get("detail", t("companies.messages.unknown_error"))
                         except Exception:
                             error_detail = f"Error {response.status_code}"
 
@@ -1611,10 +1612,10 @@ class CompanyDetailView(ft.Container):
                 if response.status_code == 200:
                     logger.success(f"Contact {contact_id} deleted successfully")
                     await self._on_contact_saved()
-                    self._show_snackbar("Contacto eliminado exitosamente", ft.Colors.GREEN)
+                    self._show_snackbar(t("companies.messages.contact_deleted"), ft.Colors.GREEN)
                 else:
                     try:
-                        error_detail = response.json().get("detail", "Error desconocido")
+                        error_detail = response.json().get("detail", t("companies.messages.unknown_error"))
                     except Exception:
                         error_detail = f"Error {response.status_code}"
                     logger.error(f"Error deleting contact: {response.status_code} - {error_detail}")
