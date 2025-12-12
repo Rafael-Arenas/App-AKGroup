@@ -11,6 +11,7 @@ from src.frontend.app_state import app_state
 from src.frontend.layout_constants import LayoutConstants
 from src.frontend.components.common import BaseCard, LoadingSpinner, ErrorDisplay
 from src.frontend.components.forms import ValidatedTextField, DropdownField
+from src.frontend.i18n.translation_manager import t
 
 
 class CompanyFormView(ft.Column):
@@ -96,15 +97,15 @@ class CompanyFormView(ft.Column):
         """Crea los componentes del formulario."""
         # Campos del formulario
         self._name_field = ValidatedTextField(
-            label="Nombre *",
-            hint_text="Nombre completo de la empresa",
+            label=t("companies.form.name") + " *",
+            hint_text=t("companies.form.name_hint"),
             required=True,
             prefix_icon=ft.Icons.BUSINESS,
         )
 
         self._trigram_field = ValidatedTextField(
-            label="Trigrama *",
-            hint_text="Código de 3 letras",
+            label=t("companies.form.trigram") + " *",
+            hint_text=t("companies.form.trigram_hint"),
             required=True,
             max_length=3,
             validators=["max_length"],
@@ -112,50 +113,50 @@ class CompanyFormView(ft.Column):
         )
 
         self._company_type_field = DropdownField(
-            label="Tipo de Empresa *",
+            label=t("companies.form.company_type") + " *",
             options=[],  # Se cargarán dinámicamente
             required=True,
         )
 
         self._phone_field = ValidatedTextField(
-            label="Teléfono",
-            hint_text="+123456789",
+            label=t("companies.form.phone"),
+            hint_text=t("companies.form.phone_hint"),
             validators=["phone"],
             prefix_icon=ft.Icons.PHONE,
         )
 
         self._website_field = ValidatedTextField(
-            label="Sitio Web",
-            hint_text="https://www.empresa.com",
+            label=t("companies.form.website"),
+            hint_text=t("companies.form.website_hint"),
             validators=["url"],
             prefix_icon=ft.Icons.LANGUAGE,
         )
 
         self._country_field = DropdownField(
-            label="País",
+            label=t("companies.form.country"),
             options=[],  # Se cargarán dinámicamente
             on_change=self._on_country_change,
         )
 
         self._city_field = DropdownField(
-            label="Ciudad",
+            label=t("companies.columns.city"),
             options=[],  # Se cargarán dinámicamente
         )
 
         self._is_active_switch = ft.Switch(
-            label="Empresa Activa",
+            label=t("companies.form.is_active"),
             value=True,
         )
 
         # Botones de acción
         self._save_button = ft.ElevatedButton(
-            text="Guardar",
+            text=t("common.save"),
             icon=ft.Icons.SAVE,
             on_click=self._on_save_click,
         )
 
-        self._cancel_button = ft.TextButton(
-            text="Cancelar",
+        self._cancel_button = ft.ElevatedButton(
+            text=t("common.cancel"),
             on_click=self._on_cancel_click,
         )
 
@@ -172,7 +173,7 @@ class CompanyFormView(ft.Column):
                         size=32,
                     ),
                     ft.Text(
-                        "Editar Empresa" if is_edit else "Crear Empresa",
+                        t("companies.form.edit_title") if is_edit else t("companies.form.create_title"),
                         size=LayoutConstants.FONT_SIZE_DISPLAY_MD,
                         weight=LayoutConstants.FONT_WEIGHT_BOLD,
                     ),
@@ -221,7 +222,7 @@ class CompanyFormView(ft.Column):
         """Muestra el indicador de carga."""
         self.form_container.controls = [
             ft.Container(
-                content=LoadingSpinner(message="Cargando formulario..."),
+                content=LoadingSpinner(message=t("companies.form.loading")),
                 expand=True,
                 alignment=ft.alignment.center,
             )
@@ -248,7 +249,7 @@ class CompanyFormView(ft.Column):
         """Construye el formulario completo."""
         # Sección: Información Básica
         basic_info_section = BaseCard(
-            title="Información Básica",
+            title=t("companies.form.basic_info"),
             icon=ft.Icons.INFO_OUTLINED,
             content=ft.Column(
                 controls=[
@@ -262,7 +263,7 @@ class CompanyFormView(ft.Column):
 
         # Sección: Información de Contacto
         contact_info_section = BaseCard(
-            title="Información de Contacto",
+            title=t("companies.form.contact_info"),
             icon=ft.Icons.CONTACT_MAIL_OUTLINED,
             content=ft.Column(
                 controls=[
@@ -275,7 +276,7 @@ class CompanyFormView(ft.Column):
 
         # Sección: Ubicación
         location_section = BaseCard(
-            title="Ubicación",
+            title=t("companies.form.location"),
             icon=ft.Icons.LOCATION_ON_OUTLINED,
             content=ft.Column(
                 controls=[
@@ -334,7 +335,7 @@ class CompanyFormView(ft.Column):
 
         except Exception as e:
             logger.exception(f"Error loading form data: {e}")
-            self._error_message = f"Error al cargar datos del formulario: {str(e)}"
+            self._error_message = t("companies.form.error_loading").format(error=str(e))
             self._is_loading = False
             self._show_error()
 
@@ -539,7 +540,7 @@ class CompanyFormView(ft.Column):
 
         # Deshabilitar botones
         self._save_button.disabled = True
-        self._save_button.text = "Guardando..."
+        self._save_button.text = t("companies.form.saving")
         self._cancel_button.disabled = True
 
         if self.page:
@@ -556,14 +557,14 @@ class CompanyFormView(ft.Column):
                 logger.debug(f"Updating company ID={self.company_id}")
                 updated_company = await company_api.update(self.company_id, form_data)
                 logger.success(f"Company updated: {updated_company.get('name')}")
-                message = f"Empresa '{updated_company.get('name')}' actualizada exitosamente"
+                message = t("companies.form.updated_success").format(name=updated_company.get('name'))
             else:
                 # Crear nueva empresa
                 logger.debug("Creating new company")
                 new_company = await company_api.create(form_data)
                 logger.success(f"Company created: {new_company.get('name')}")
                 updated_company = new_company
-                message = f"Empresa '{new_company.get('name')}' creada exitosamente"
+                message = t("companies.form.created_success").format(name=new_company.get('name'))
 
             # Mostrar mensaje de éxito
             if self.page:
@@ -599,7 +600,7 @@ class CompanyFormView(ft.Column):
 
             # Rehabilitar botones
             self._save_button.disabled = False
-            self._save_button.text = "Guardar"
+            self._save_button.text = t("common.save")
             self._cancel_button.disabled = False
 
             if self.page:
@@ -658,6 +659,12 @@ class CompanyFormView(ft.Column):
 
         Actualiza la interfaz.
         """
-        logger.debug("State changed, updating CompanyFormView")
+        logger.debug("CompanyFormView state changed, rebuilding content")
+        # Reconstruir los componentes del formulario con nuevas traducciones
+        self._build_components()
+        # Reconstruir el contenido del formulario
+        self._build_form()
+        # Reconstruir el layout principal
+        self.controls = self._build_layout()
         if self.page:
             self.update()
