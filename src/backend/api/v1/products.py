@@ -267,12 +267,12 @@ def create_product(
             "unit_id": 1
         }
     """
-    logger.info(f"POST /products - code={product_data.code}")
+    logger.info(f"POST /products - reference={product_data.reference}")
 
     # Service injected via dependency
     product = service.create(product_data.model_dump(), user_id)
 
-    logger.success(f"Producto creado: id={product.id}, code={product.code}")
+    logger.success(f"Producto creado: id={product.id}, reference={product.reference}")
     return product
 
 
