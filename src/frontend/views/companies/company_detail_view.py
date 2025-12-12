@@ -201,6 +201,7 @@ class CompanyDetailView(ft.Container):
             controls=[
                 self._create_info_row(t("companies.detail.phone"), self._company.get("phone", "-")),
                 self._create_info_row(t("companies.detail.website"), self._company.get("website", "-")),
+                self._create_info_row(t("companies.detail.intracommunity_number"), self._company.get("intracommunity_number", "-")),
             ],
             spacing=LayoutConstants.SPACING_SM,
         )
