@@ -80,16 +80,16 @@ class ArticleFormView(ft.Column):
         """Crea los componentes del formulario."""
         # Campos de información básica
         self._code_field = ValidatedTextField(
-            label=t("articles.form.code") + " *",
-            hint_text=t("articles.form.code_hint"),
+            label="Referencia *",
+            hint_text="Referencia del artículo",
             required=True,
             prefix_icon=ft.Icons.TAG,
             max_length=50,
         )
 
         self._name_field = ValidatedTextField(
-            label=t("articles.form.name") + " *",
-            hint_text=t("articles.form.name_hint"),
+            label="Designación (ES) *",
+            hint_text="Nombre del artículo en español",
             required=True,
             prefix_icon=ft.Icons.INVENTORY_2,
             max_length=200,
@@ -217,12 +217,6 @@ class ArticleFormView(ft.Column):
         )
 
         # Campos de logística y aduanas
-        self._hs_code_field = ValidatedTextField(
-            label="Código arancelario",
-            hint_text="Ej: 12345678",
-            prefix_icon=ft.Icons.QR_CODE,
-            max_length=20,
-        )
 
         self._country_of_origin_field = DropdownField(
             label="País de origen",
@@ -251,7 +245,7 @@ class ArticleFormView(ft.Column):
         )
 
         self._company_field = DropdownField(
-            label="Empresa fabricante",
+            label="Proveedor",
             options=[],
         )
 
@@ -387,6 +381,8 @@ class ArticleFormView(ft.Column):
             content=ft.Column(
                 controls=[
                     self._code_field,
+                    self._supplier_reference_field,
+                    self._revision_field,
                     self._name_field,
                     self._description_field,
                 ],
@@ -492,14 +488,7 @@ class ArticleFormView(ft.Column):
                 controls=[
                     ft.Row(
                         controls=[
-                            ft.Container(content=self._hs_code_field, expand=True),
                             ft.Container(content=self._country_of_origin_field, expand=True),
-                        ],
-                        spacing=LayoutConstants.SPACING_MD,
-                    ),
-                    ft.Row(
-                        controls=[
-                            ft.Container(content=self._supplier_reference_field, expand=True),
                             ft.Container(content=self._customs_number_field, expand=True),
                         ],
                         spacing=LayoutConstants.SPACING_MD,
@@ -526,12 +515,6 @@ class ArticleFormView(ft.Column):
                         controls=[
                             ft.Container(content=self._designation_fr_field, expand=True),
                             ft.Container(content=self._designation_en_field, expand=True),
-                        ],
-                        spacing=LayoutConstants.SPACING_MD,
-                    ),
-                    ft.Row(
-                        controls=[
-                            ft.Container(content=self._revision_field, expand=True),
                         ],
                         spacing=LayoutConstants.SPACING_MD,
                     ),
@@ -656,9 +639,27 @@ class ArticleFormView(ft.Column):
                 logger.warning(f"Could not load sales_types: {e}")
                 self._sales_types = []
 
-            # Cargar empresas (fabricantes)
+            # Cargar empresas (proveedores)
             try:
-                self._companies = await lookup_api.get_lookup("companies")
+                # Primero obtener los tipos de empresa para encontrar el ID de "Proveedor"
+                company_types = await lookup_api.get_lookup("company_types")
+                supplier_type_id = None
+                for ct in company_types:
+                    if "prove" in ct.get("name", "").lower() or "supplier" in ct.get("name", "").lower():
+                        supplier_type_id = ct["id"]
+                        break
+                
+                # Cargar solo empresas proveedoras y activas
+                if supplier_type_id:
+                    self._companies = await lookup_api.get_companies(
+                        company_type_id=supplier_type_id, 
+                        is_active=True
+                    )
+                else:
+                    # Si no se encuentra el tipo, cargar todas las activas
+                    self._companies = await lookup_api.get_companies(is_active=True)
+                    logger.warning("No se encontró el tipo de empresa 'Proveedor', cargando todas las empresas activas")
+                
                 company_options = [
                     {"label": c.get("name", ""), "value": str(c["id"])}
                     for c in self._companies
@@ -785,7 +786,6 @@ class ArticleFormView(ft.Column):
             self._volume_field.set_value(str(volume))
 
         # Campos de logística y aduanas
-        self._hs_code_field.set_value(self._article_data.get("hs_code", ""))
         self._country_of_origin_field.set_value(self._article_data.get("country_of_origin", ""))
         self._supplier_reference_field.set_value(self._article_data.get("supplier_reference", ""))
         self._customs_number_field.set_value(self._article_data.get("customs_number", ""))
@@ -933,10 +933,6 @@ class ArticleFormView(ft.Column):
             data["volume"] = float(volume_str)
 
         # Campos de logística y aduanas
-        hs_code = self._hs_code_field.get_value()
-        if hs_code:
-            data["hs_code"] = hs_code
-
         country_of_origin = self._country_of_origin_field.get_value()
         if country_of_origin:
             data["country_of_origin"] = country_of_origin
