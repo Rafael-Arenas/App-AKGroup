@@ -68,6 +68,11 @@ class CompanyCreate(BaseSchema):
         gt=0,
         description="ID de la ciudad"
     )
+    intracommunity_number: Optional[str] = Field(
+        None,
+        max_length=50,
+        description="Número intracomunitario (UE)"
+    )
 
     @field_validator('trigram')
     @classmethod
@@ -102,6 +107,7 @@ class CompanyUpdate(BaseSchema):
     country_id: Optional[int] = Field(None, gt=0)
     city_id: Optional[int] = Field(None, gt=0)
     is_active: Optional[bool] = None
+    intracommunity_number: Optional[str] = Field(None, max_length=50)
 
     @field_validator('trigram')
     @classmethod
