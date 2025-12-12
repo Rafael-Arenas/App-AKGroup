@@ -139,8 +139,12 @@ class ArticleDetailView(ft.Container):
         # Información general del artículo
         general_info = ft.Column(
             controls=[
-                self._create_info_row(t("articles.form.description"), self._article.get("short_designation", "-") or "-"),
                 self._create_info_row(t("product_detail.revision"), self._article.get("revision", "-") or "-"),
+                self._create_info_row(t("articles.form.reference"), self._article.get("reference", "-") or "-"),
+                self._create_info_row(t("articles.form.supplier_reference"), self._article.get("supplier_reference", "-") or "-"),
+                self._create_info_row(t("articles.form.family_type"), self._article.get("family_type", {}).get("name", "-") if self._article.get("family_type") else "-"),
+                self._create_info_row(t("articles.form.matter"), self._article.get("matter", "-") or "-"),
+                self._create_info_row(t("articles.form.unit"), self._article.get("unit", "-") or "-"),
             ],
             spacing=LayoutConstants.SPACING_SM,
         )
@@ -149,6 +153,42 @@ class ArticleDetailView(ft.Container):
             title=t("articles.form.basic_info"),
             icon=ft.Icons.INFO_OUTLINED,
             content=general_info,
+        )
+
+        # Designaciones en múltiples idiomas
+        designations_info = ft.Column(
+            controls=[
+                self._create_info_row(t("articles.form.designation_es"), self._article.get("designation_es", "-") or "-"),
+                self._create_info_row(t("articles.form.designation_en"), self._article.get("designation_en", "-") or "-"),
+                self._create_info_row(t("articles.form.designation_fr"), self._article.get("designation_fr", "-") or "-"),
+                self._create_info_row(t("articles.form.short_designation"), self._article.get("short_designation", "-") or "-"),
+            ],
+            spacing=LayoutConstants.SPACING_SM,
+        )
+
+        designations_card = BaseCard(
+            title=t("nomenclatures.form.designations"),
+            icon=ft.Icons.TRANSLATE,
+            content=designations_info,
+        )
+
+        # Dimensiones y peso
+        dimensions_info = ft.Column(
+            controls=[
+                self._create_info_row(t("articles.form.length"), f"{float(self._article.get('length', 0) or 0):.3f} mm"),
+                self._create_info_row(t("articles.form.width"), f"{float(self._article.get('width', 0) or 0):.3f} mm"),
+                self._create_info_row(t("articles.form.height"), f"{float(self._article.get('height', 0) or 0):.3f} mm"),
+                self._create_info_row(t("articles.form.volume"), f"{float(self._article.get('volume', 0) or 0):.6f} m³"),
+                self._create_info_row(t("articles.form.net_weight"), f"{float(self._article.get('net_weight', 0) or 0):.3f} kg"),
+                self._create_info_row(t("articles.form.gross_weight"), f"{float(self._article.get('gross_weight', 0) or 0):.3f} kg"),
+            ],
+            spacing=LayoutConstants.SPACING_SM,
+        )
+
+        dimensions_card = BaseCard(
+            title=t("articles.form.dimensions_section"),
+            icon=ft.Icons.STRAIGHTEN,
+            content=dimensions_info,
         )
 
         # Información de precios
@@ -189,6 +229,9 @@ class ArticleDetailView(ft.Container):
                     t("articles.form.min_stock"), f"{float(self._article.get('minimum_stock', 0) or 0):.3f}"
                 ),
                 self._create_info_row(
+                    t("articles.form.max_stock"), f"{float(self._article.get('max_stock', 0) or 0):.3f}"
+                ),
+                self._create_info_row(
                     t("product_detail.stock_location"), self._article.get("stock_location", "-") or "-"
                 ),
             ],
@@ -201,8 +244,77 @@ class ArticleDetailView(ft.Container):
             content=stock_info,
         )
 
+        # URLs
+        urls_info = ft.Column(
+            controls=[
+                ft.Row(
+                    controls=[
+                        ft.Text(
+                            f"{t('nomenclatures.form.image_url')}:",
+                            size=LayoutConstants.FONT_SIZE_MD,
+                            weight=LayoutConstants.FONT_WEIGHT_SEMIBOLD,
+                            width=150,
+                        ),
+                        ft.TextButton(
+                            text=self._article.get("image_url", "-") or "-",
+                            url=self._article.get("image_url", "#"),
+                            disabled=not self._article.get("image_url")
+                        ) if self._article.get("image_url") else ft.Text("-", size=LayoutConstants.FONT_SIZE_MD),
+                    ],
+                ),
+                ft.Row(
+                    controls=[
+                        ft.Text(
+                            f"{t('nomenclatures.form.plan_url')}:",
+                            size=LayoutConstants.FONT_SIZE_MD,
+                            weight=LayoutConstants.FONT_WEIGHT_SEMIBOLD,
+                            width=150,
+                        ),
+                        ft.TextButton(
+                            text=self._article.get("plan_url", "-") or "-",
+                            url=self._article.get("plan_url", "#"),
+                            disabled=not self._article.get("plan_url")
+                        ) if self._article.get("plan_url") else ft.Text("-", size=LayoutConstants.FONT_SIZE_MD),
+                    ],
+                ),
+            ],
+            spacing=LayoutConstants.SPACING_SM,
+        )
+
+        urls_card = BaseCard(
+            title=t("nomenclatures.form.urls"),
+            icon=ft.Icons.LINK,
+            content=urls_info,
+        )
+
+        # Información logística y aduanas
+        logistics_info = ft.Column(
+            controls=[
+                self._create_info_row(t("articles.form.country_of_origin"), self._article.get("country_of_origin", "-") or "-"),
+                self._create_info_row(t("articles.form.customs_number"), self._article.get("customs_number", "-") or "-"),
+                self._create_info_row(t("articles.form.supplier"), self._article.get("supplier", {}).get("name", "-") if self._article.get("supplier") else "-"),
+                self._create_info_row(t("articles.form.sales_type"), self._article.get("sales_type", {}).get("name", "-") if self._article.get("sales_type") else "-"),
+            ],
+            spacing=LayoutConstants.SPACING_SM,
+        )
+
+        logistics_card = BaseCard(
+            title=t("articles.form.logistics_section"),
+            icon=ft.Icons.LOCAL_SHIPPING,
+            content=logistics_info,
+        )
+
         # Contenido
-        controls = [header, general_card, pricing_card, stock_card]
+        controls = [
+            header, 
+            general_card, 
+            designations_card,
+            dimensions_card,
+            stock_card, 
+            pricing_card,
+            logistics_card,
+            urls_card
+        ]
 
         content = ft.Column(
             controls=controls,
