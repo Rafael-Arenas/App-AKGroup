@@ -114,6 +114,99 @@ class ProductCreate(BaseSchema):
         max_length=50,
         description="Número de aduana"
     )
+    purchase_price: Optional[Decimal] = Field(
+        None,
+        ge=0,
+        decimal_places=2,
+        description="Precio de compra"
+    )
+    sale_price_eur: Optional[Decimal] = Field(
+        None,
+        ge=0,
+        decimal_places=2,
+        description="Precio en euros"
+    )
+    stock_location: Optional[str] = Field(
+        None,
+        max_length=100,
+        description="Ubicación en almacén"
+    )
+    net_weight: Optional[Decimal] = Field(
+        None,
+        ge=0,
+        decimal_places=3,
+        description="Peso neto (kg)"
+    )
+    gross_weight: Optional[Decimal] = Field(
+        None,
+        ge=0,
+        decimal_places=3,
+        description="Peso bruto (kg)"
+    )
+    length: Optional[Decimal] = Field(
+        None,
+        ge=0,
+        decimal_places=3,
+        description="Longitud (mm)"
+    )
+    width: Optional[Decimal] = Field(
+        None,
+        ge=0,
+        decimal_places=3,
+        description="Ancho (mm)"
+    )
+    height: Optional[Decimal] = Field(
+        None,
+        ge=0,
+        decimal_places=3,
+        description="Altura (mm)"
+    )
+    volume: Optional[Decimal] = Field(
+        None,
+        ge=0,
+        decimal_places=6,
+        description="Volumen (m³)"
+    )
+    hs_code: Optional[str] = Field(
+        None,
+        max_length=20,
+        description="Código arancelario"
+    )
+    country_of_origin: Optional[str] = Field(
+        None,
+        max_length=2,
+        description="País de origen (ISO-2)"
+    )
+    notes: Optional[str] = Field(
+        None,
+        max_length=2000,
+        description="Notas adicionales"
+    )
+    sales_type_id: Optional[int] = Field(
+        None,
+        gt=0,
+        description="ID del tipo de venta"
+    )
+    company_id: Optional[int] = Field(
+        None,
+        gt=0,
+        description="ID de la empresa fabricante"
+    )
+    designation_fr: Optional[str] = Field(
+        None,
+        max_length=200,
+        description="Nombre del producto en francés"
+    )
+    designation_en: Optional[str] = Field(
+        None,
+        max_length=200,
+        description="Nombre del producto en inglés"
+    )
+    revision: Optional[str] = Field(
+        None,
+        max_length=20,
+        description="Revisión"
+    )
 
     @field_validator('reference')
     @classmethod
@@ -168,6 +261,23 @@ class ProductUpdate(BaseSchema):
     plan_url: Optional[str] = Field(None, max_length=500)
     supplier_reference: Optional[str] = Field(None, max_length=100)
     customs_number: Optional[str] = Field(None, max_length=50)
+    purchase_price: Optional[Decimal] = Field(None, ge=0, decimal_places=2)
+    sale_price_eur: Optional[Decimal] = Field(None, ge=0, decimal_places=2)
+    stock_location: Optional[str] = Field(None, max_length=100)
+    net_weight: Optional[Decimal] = Field(None, ge=0, decimal_places=3)
+    gross_weight: Optional[Decimal] = Field(None, ge=0, decimal_places=3)
+    length: Optional[Decimal] = Field(None, ge=0, decimal_places=3)
+    width: Optional[Decimal] = Field(None, ge=0, decimal_places=3)
+    height: Optional[Decimal] = Field(None, ge=0, decimal_places=3)
+    volume: Optional[Decimal] = Field(None, ge=0, decimal_places=6)
+    hs_code: Optional[str] = Field(None, max_length=20)
+    country_of_origin: Optional[str] = Field(None, max_length=2)
+    notes: Optional[str] = Field(None, max_length=2000)
+    sales_type_id: Optional[int] = Field(None, gt=0)
+    company_id: Optional[int] = Field(None, gt=0)
+    designation_fr: Optional[str] = Field(None, max_length=200)
+    designation_en: Optional[str] = Field(None, max_length=200)
+    revision: Optional[str] = Field(None, max_length=20)
     is_active: Optional[bool] = None
 
     @field_validator('reference')
