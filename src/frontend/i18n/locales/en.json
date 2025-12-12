@@ -88,7 +88,11 @@
       "saving": "Saving...",
       "error_loading": "Error loading form data: {error}",
       "edit_title": "Edit Company",
+      "edit_client": "Edit Client",
+      "edit_supplier": "Edit Supplier",
       "create_title": "Create Company",
+      "create_client": "Create Client",
+      "create_supplier": "Create Supplier",
       "location": "Location",
       "updated_success": "Company '{name}' updated successfully",
       "created_success": "Company '{name}' created successfully"

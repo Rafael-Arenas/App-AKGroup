@@ -88,7 +88,11 @@
       "saving": "Enregistrement...",
       "error_loading": "Erreur lors du chargement des données: {error}",
       "edit_title": "Modifier Entreprise",
+      "edit_client": "Modifier Client",
+      "edit_supplier": "Modifier Fournisseur",
       "create_title": "Créer Entreprise",
+      "create_client": "Créer Client",
+      "create_supplier": "Créer Fournisseur",
       "location": "Emplacement",
       "updated_success": "Entreprise '{name}' mise à jour avec succès",
       "created_success": "Entreprise '{name}' créée avec succès"

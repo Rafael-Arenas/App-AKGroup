@@ -88,7 +88,11 @@
       "saving": "Guardando...",
       "error_loading": "Error al cargar datos del formulario: {error}",
       "edit_title": "Editar Empresa",
+      "edit_client": "Editar Cliente",
+      "edit_supplier": "Editar Proveedor",
       "create_title": "Crear Empresa",
+      "create_client": "Crear Cliente",
+      "create_supplier": "Crear Proveedor",
       "location": "Ubicación",
       "updated_success": "Empresa '{name}' actualizada exitosamente",
       "created_success": "Empresa '{name}' creada exitosamente"
