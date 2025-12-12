@@ -83,7 +83,88 @@
       "website_hint": "https://empresa.com",
       "company_type": "Tipo de Empresa",
       "country": "País",
-      "is_active": "Activo"
+      "is_active": "Activo",
+      "loading": "Cargando formulario...",
+      "saving": "Guardando...",
+      "error_loading": "Error al cargar datos del formulario: {error}",
+      "edit_title": "Editar Empresa",
+      "create_title": "Crear Empresa",
+      "location": "Ubicación",
+      "updated_success": "Empresa '{name}' actualizada exitosamente",
+      "created_success": "Empresa '{name}' creada exitosamente"
+    },
+    "detail": {
+      "legal_name": "Nombre Legal",
+      "trigram": "Trigrama",
+      "status": "Estado",
+      "phone": "Teléfono",
+      "website": "Sitio Web",
+      "country": "País",
+      "city": "Ciudad",
+      "main_address": "Dirección Principal",
+      "intracommunity_number": "Número Intracomunitario"
+    },
+    "status": {
+      "active": "Activa",
+      "inactive": "Inactiva"
+    },
+    "address": {
+      "add": "Agregar Dirección",
+      "edit": "Editar Dirección",
+      "required_fields": "Por favor complete los campos obligatorios"
+    },
+    "contact": {
+      "add": "Agregar Contacto",
+      "edit": "Editar Contacto",
+      "first_name": "Nombre",
+      "last_name": "Apellido",
+      "phone": "Teléfono",
+      "mobile": "Móvil",
+      "position": "Cargo",
+      "required_fields": "Por favor complete los campos obligatorios"
+    },
+    "messages": {
+      "unknown_error": "Error desconocido",
+      "loading": "Cargando empresa...",
+      "error_loading": "Error al cargar empresa: {error}",
+      "delete_title": "Eliminar Empresa",
+      "delete_confirm": "¿Está seguro de que desea eliminar la empresa '{name}'?",
+      "address_deleted": "Dirección eliminada exitosamente",
+      "contact_deleted": "Contacto eliminado exitosamente"
+    },
+    "address_types": {
+      "delivery": "Entrega",
+      "billing": "Facturación",
+      "headquarters": "Sede Principal",
+      "branch": "Sucursal"
+    },
+    "sections": {
+      "general_info": "Información General",
+      "contact_info": "Información de Contacto",
+      "location": "Ubicación",
+      "fiscal_info": "Información Fiscal",
+      "addresses": "Direcciones",
+      "contacts": "Contactos"
+    },
+    "actions": {
+      "edit_company": "Editar empresa",
+      "delete_company": "Eliminar empresa",
+      "edit_address": "Editar dirección",
+      "delete_address": "Eliminar dirección",
+      "edit_contact": "Editar contacto",
+      "delete_contact": "Eliminar contacto",
+      "add_first_address": "Agregar Primera Dirección",
+      "add_first_contact": "Agregar Primer Contacto"
+    },
+    "empty_states": {
+      "no_addresses": "No hay direcciones registradas",
+      "no_contacts": "No hay contactos registrados"
+    },
+    "labels": {
+      "address": "Dirección",
+      "postal_code": "Código Postal",
+      "main_address": "Dirección principal",
+      "primary": "Principal"
     }
   },
   "clients": {
@@ -334,8 +415,11 @@
     "add": "Agregar",
     "remove": "Eliminar",
     "search": "Buscar",
+    "clear": "Limpiar",
+    "search_history": "Historial de búsqueda",
     "filter": "Filtrar",
     "filters": "Filtros",
+    "collapse": "Contraer",
     "clear_filters": "Limpiar Filtros",
     "apply_filters": "Aplicar Filtros",
     "export": "Exportar",
@@ -374,16 +458,11 @@
     "invalid_url": "URL inválida",
     "min_length": "Mínimo {min} caracteres",
     "max_length": "Máximo {max} caracteres",
-    "confirm_delete": "¿Está seguro de eliminar este registro?",
-    "confirm_delete_message": "Esta acción no se puede deshacer",
     "operation_successful": "Operación completada exitosamente",
     "operation_failed": "La operación falló",
     "page": "Página",
     "of": "de",
-    "clear": "Limpiar",
     "clear_history": "Limpiar Historial",
-    "search_history": "Historial de Búsqueda",
-    "collapse": "Colapsar",
     "expand": "Expandir",
     "from": "Desde",
     "to": "Hasta",
