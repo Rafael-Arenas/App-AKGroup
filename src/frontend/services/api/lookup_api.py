@@ -220,6 +220,67 @@ class LookupAPIService:
             logger.error("Error al obtener materiales | error={}", str(e))
             raise
 
+    async def get_sales_types(self) -> list[dict[str, Any]]:
+        """
+        Obtiene todos los tipos de venta.
+
+        Returns:
+            Lista de tipos de venta
+
+        Raises:
+            NetworkException: Error de red/conexión
+            APIException: Error de API
+        """
+        logger.info("Obteniendo tipos de venta")
+        try:
+            response = await self._client.get(
+                f"{self.base_url}/lookups/sales-types",
+                headers=self.headers
+            )
+            response.raise_for_status()
+            data = response.json()
+            logger.info(f"Se encontraron {len(data)} tipos de venta")
+            return data
+        except Exception as e:
+            logger.error("Error al obtener tipos de venta | error={}", str(e))
+            raise
+
+    async def get_companies(self, company_type_id: int | None = None, is_active: bool | None = None) -> list[dict[str, Any]]:
+        """
+        Obtiene todas las empresas.
+
+        Args:
+            company_type_id: ID del tipo de empresa (opcional)
+            is_active: Si la empresa está activa (opcional)
+
+        Returns:
+            Lista de empresas
+
+        Raises:
+            NetworkException: Error de red/conexión
+            APIException: Error de API
+        """
+        logger.info("Obteniendo empresas")
+        try:
+            params = {}
+            if company_type_id is not None:
+                params["company_type_id"] = company_type_id
+            if is_active is not None:
+                params["is_active"] = is_active
+            
+            response = await self._client.get(
+                f"{self.base_url}/api/v1/companies",
+                headers=self.headers,
+                params=params
+            )
+            response.raise_for_status()
+            data = response.json()
+            logger.info(f"Se encontraron {len(data)} empresas")
+            return data
+        except Exception as e:
+            logger.error("Error al obtener empresas | error={}", str(e))
+            raise
+
     async def get_lookup(self, lookup_type: str) -> list[dict[str, Any]]:
         """
         Obtiene datos de lookup por tipo.
@@ -227,7 +288,7 @@ class LookupAPIService:
         Args:
             lookup_type: Tipo de lookup a obtener.
                 Valores válidos: "countries", "cities", "company_types", "units",
-                "family_types", "matters"
+                "family_types", "matters", "sales_types", "companies"
 
         Returns:
             Lista de elementos del tipo de lookup solicitado
@@ -244,6 +305,8 @@ class LookupAPIService:
             >>> units = await service.get_lookup("units")
             >>> family_types = await service.get_lookup("family_types")
             >>> matters = await service.get_lookup("matters")
+            >>> sales_types = await service.get_lookup("sales_types")
+            >>> companies = await service.get_lookup("companies")
         """
         logger.info("Obteniendo lookup | lookup_type={}", lookup_type)
 
@@ -259,6 +322,10 @@ class LookupAPIService:
             return await self.get_family_types()
         elif lookup_type == "matters":
             return await self.get_matters()
+        elif lookup_type == "sales_types":
+            return await self.get_sales_types()
+        elif lookup_type == "companies":
+            return await self.get_companies()
         else:
             logger.error("Tipo de lookup desconocido | lookup_type={}", lookup_type)
             raise ValueError(f"Unknown lookup type: {lookup_type}")
