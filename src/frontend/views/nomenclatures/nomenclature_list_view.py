@@ -166,11 +166,13 @@ class NomenclatureListView(ft.Container):
 
         self._data_table = DataTable(
             columns=[
-                {"key": "code", "label": "nomenclatures.columns.code", "sortable": True},
+                {"key": "revision", "label": "nomenclatures.columns.revision", "sortable": True},
+                {"key": "reference", "label": "nomenclatures.columns.reference", "sortable": True},
                 {"key": "name", "label": "nomenclatures.columns.name", "sortable": True},
-                {"key": "components", "label": "nomenclatures.columns.components", "sortable": False},
-                {"key": "cost", "label": "nomenclatures.columns.cost", "sortable": True},
-                {"key": "status", "label": "nomenclatures.columns.status", "sortable": True},
+                {"key": "articles", "label": "nomenclatures.columns.articles", "sortable": True},
+                {"key": "quantity", "label": "nomenclatures.columns.stock", "sortable": True},
+                {"key": "minimum_stock", "label": "nomenclatures.columns.minimum_stock", "sortable": True},
+                {"key": "sales_type", "label": "nomenclatures.columns.sales_type", "sortable": True},
             ],
             on_row_click=self._on_row_click,
             on_edit=self._on_edit_nomenclature,
@@ -281,17 +283,41 @@ class NomenclatureListView(ft.Container):
     def _format_nomenclatures_for_table(self, nomenclatures: list[dict]) -> list[dict]:
         """Formatea los datos de nomenclaturas para la tabla."""
         formatted = []
+        current_lang = app_state.i18n.current_language
+        
         for nomenclature in nomenclatures:
-            # Contar componentes si están disponibles
-            components_count = len(nomenclature.get("components", []))
+            # Obtener designación según el idioma actual
+            if current_lang == "en":
+                designation = nomenclature.get("designation_en", nomenclature.get("designation_es", ""))
+            elif current_lang == "fr":
+                designation = nomenclature.get("designation_fr", nomenclature.get("designation_es", ""))
+            else:
+                designation = nomenclature.get("designation_es", "")
+            
+            # Obtener tipo de venta
+            sales_type = nomenclature.get("sales_type", {})
+            sales_type_name = sales_type.get("name", "") if sales_type else ""
+            
+            # Contar artículos si están disponibles
+            articles_count = len(nomenclature.get("components", []))
+            
+            # Obtener texto para artículos según idioma
+            if current_lang == "en":
+                articles_text = f"{articles_count} articles" if articles_count != 1 else "1 article"
+            elif current_lang == "fr":
+                articles_text = f"{articles_count} articles" if articles_count != 1 else "1 article"
+            else:
+                articles_text = f"{articles_count} artículos" if articles_count != 1 else "1 artículo"
             
             formatted.append({
                 "id": nomenclature.get("id"),
-                "code": nomenclature.get("reference", ""),
-                "name": nomenclature.get("designation_es", ""),
-                "components": f"{components_count} componentes",
-                "cost": f"${float(nomenclature.get('cost_price', 0) or 0):.2f}",
-                "status": t("common.active") if nomenclature.get("is_active") else t("common.inactive"),
+                "revision": nomenclature.get("revision", ""),
+                "reference": nomenclature.get("reference", ""),
+                "name": designation,
+                "articles": articles_text,
+                "quantity": f"{float(nomenclature.get('stock_quantity', 0) or 0):.3f}",
+                "minimum_stock": f"{float(nomenclature.get('minimum_stock', 0) or 0):.3f}",
+                "sales_type": sales_type_name,
                 "_original": nomenclature,
             })
         return formatted
