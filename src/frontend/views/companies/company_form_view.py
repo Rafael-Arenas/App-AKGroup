@@ -160,6 +160,28 @@ class CompanyFormView(ft.Column):
             on_click=self._on_cancel_click,
         )
 
+    def _get_form_title(self) -> str:
+        """Obtiene el título del formulario según el tipo y modo."""
+        is_edit = self.company_id is not None
+        
+        # Si es edición, obtener el tipo de los datos cargados
+        if is_edit and self._company_data:
+            company_type = self._company_data.get("company_type", "").upper()
+        elif is_edit:
+            # Si aún no se cargaron los datos, usar título genérico
+            return t("companies.form.edit_title")
+        else:
+            # Si es creación, usar el tipo por defecto
+            company_type = self.default_type.upper()
+        
+        # Determinar el título según el tipo
+        if company_type == "CLIENT":
+            return t("companies.form.edit_client" if is_edit else "companies.form.create_client")
+        elif company_type == "SUPPLIER":
+            return t("companies.form.edit_supplier" if is_edit else "companies.form.create_supplier")
+        else:
+            return t("companies.form.edit_title" if is_edit else "companies.form.create_title")
+
     def _build_layout(self) -> list[ft.Control]:
         """Construye el layout de la vista."""
         is_edit = self.company_id is not None
@@ -173,7 +195,7 @@ class CompanyFormView(ft.Column):
                         size=32,
                     ),
                     ft.Text(
-                        t("companies.form.edit_title") if is_edit else t("companies.form.create_title"),
+                        self._get_form_title(),
                         size=LayoutConstants.FONT_SIZE_DISPLAY_MD,
                         weight=LayoutConstants.FONT_WEIGHT_BOLD,
                     ),
@@ -332,6 +354,8 @@ class CompanyFormView(ft.Column):
             # Poblar los campos si es edición
             if self.company_id and self._company_data:
                 self._populate_form()
+                # Reconstruir el layout para actualizar el título con el tipo correcto
+                self.controls = self._build_layout()
 
         except Exception as e:
             logger.exception(f"Error loading form data: {e}")
