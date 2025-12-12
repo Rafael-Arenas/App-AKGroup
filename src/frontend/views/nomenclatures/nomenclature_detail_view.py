@@ -140,8 +140,10 @@ class NomenclatureDetailView(ft.Container):
         # Información general
         general_info = ft.Column(
             controls=[
-                self._create_info_row(t("nomenclatures.form.description"), self._nomenclature.get("short_designation", "-") or "-"),
                 self._create_info_row(t("product_detail.revision"), self._nomenclature.get("revision", "-") or "-"),
+                self._create_info_row(t("nomenclatures.form.reference"), self._nomenclature.get("reference", "-") or "-"),
+                self._create_info_row(t("nomenclatures.form.sales_type"), self._nomenclature.get("sales_type", {}).get("name", "-") if self._nomenclature.get("sales_type") else "-"),
+                self._create_info_row(t("nomenclatures.form.unit"), self._nomenclature.get("unit", "-") or "-"),
             ],
             spacing=LayoutConstants.SPACING_SM,
         )
@@ -150,6 +152,42 @@ class NomenclatureDetailView(ft.Container):
             title=t("nomenclatures.form.basic_info"),
             icon=ft.Icons.INFO_OUTLINED,
             content=general_info,
+        )
+
+        # Designaciones en múltiples idiomas
+        designations_info = ft.Column(
+            controls=[
+                self._create_info_row(t("nomenclatures.form.designation_es"), self._nomenclature.get("designation_es", "-") or "-"),
+                self._create_info_row(t("nomenclatures.form.designation_en"), self._nomenclature.get("designation_en", "-") or "-"),
+                self._create_info_row(t("nomenclatures.form.designation_fr"), self._nomenclature.get("designation_fr", "-") or "-"),
+                self._create_info_row(t("nomenclatures.form.short_designation"), self._nomenclature.get("short_designation", "-") or "-"),
+            ],
+            spacing=LayoutConstants.SPACING_SM,
+        )
+
+        designations_card = BaseCard(
+            title=t("nomenclatures.form.designations"),
+            icon=ft.Icons.TRANSLATE,
+            content=designations_info,
+        )
+
+        # Dimensiones y peso
+        dimensions_info = ft.Column(
+            controls=[
+                self._create_info_row(t("nomenclatures.form.length"), f"{float(self._nomenclature.get('length', 0) or 0):.3f} mm"),
+                self._create_info_row(t("nomenclatures.form.width"), f"{float(self._nomenclature.get('width', 0) or 0):.3f} mm"),
+                self._create_info_row(t("nomenclatures.form.height"), f"{float(self._nomenclature.get('height', 0) or 0):.3f} mm"),
+                self._create_info_row(t("nomenclatures.form.volume"), f"{float(self._nomenclature.get('volume', 0) or 0):.6f} m³"),
+                self._create_info_row(t("nomenclatures.form.net_weight"), f"{float(self._nomenclature.get('net_weight', 0) or 0):.3f} kg"),
+                self._create_info_row(t("nomenclatures.form.gross_weight"), f"{float(self._nomenclature.get('gross_weight', 0) or 0):.3f} kg"),
+            ],
+            spacing=LayoutConstants.SPACING_SM,
+        )
+
+        dimensions_card = BaseCard(
+            title=t("nomenclatures.form.dimensions_and_weight"),
+            icon=ft.Icons.STRAIGHTEN,
+            content=dimensions_info,
         )
 
         # Información de precios
@@ -180,6 +218,70 @@ class NomenclatureDetailView(ft.Container):
             content=pricing_info,
         )
 
+        # Información de stock
+        stock_info = ft.Column(
+            controls=[
+                self._create_info_row(
+                    t("nomenclatures.form.stock_quantity"), f"{float(self._nomenclature.get('stock_quantity', 0) or 0):.3f}"
+                ),
+                self._create_info_row(
+                    t("nomenclatures.form.minimum_stock"), f"{float(self._nomenclature.get('minimum_stock', 0) or 0):.3f}"
+                ),
+                self._create_info_row(
+                    t("product_detail.stock_location"), self._nomenclature.get("stock_location", "-") or "-"
+                ),
+            ],
+            spacing=LayoutConstants.SPACING_SM,
+        )
+
+        stock_card = BaseCard(
+            title=t("nomenclatures.form.stock_section"),
+            icon=ft.Icons.INVENTORY,
+            content=stock_info,
+        )
+
+        # URLs
+        urls_info = ft.Column(
+            controls=[
+                ft.Row(
+                    controls=[
+                        ft.Text(
+                            f"{t('nomenclatures.form.image_url')}:",
+                            size=LayoutConstants.FONT_SIZE_MD,
+                            weight=LayoutConstants.FONT_WEIGHT_SEMIBOLD,
+                            width=150,
+                        ),
+                        ft.TextButton(
+                            text=self._nomenclature.get("image_url", "-") or "-",
+                            url=self._nomenclature.get("image_url", "#"),
+                            disabled=not self._nomenclature.get("image_url")
+                        ) if self._nomenclature.get("image_url") else ft.Text("-", size=LayoutConstants.FONT_SIZE_MD),
+                    ],
+                ),
+                ft.Row(
+                    controls=[
+                        ft.Text(
+                            f"{t('nomenclatures.form.plan_url')}:",
+                            size=LayoutConstants.FONT_SIZE_MD,
+                            weight=LayoutConstants.FONT_WEIGHT_SEMIBOLD,
+                            width=150,
+                        ),
+                        ft.TextButton(
+                            text=self._nomenclature.get("plan_url", "-") or "-",
+                            url=self._nomenclature.get("plan_url", "#"),
+                            disabled=not self._nomenclature.get("plan_url")
+                        ) if self._nomenclature.get("plan_url") else ft.Text("-", size=LayoutConstants.FONT_SIZE_MD),
+                    ],
+                ),
+            ],
+            spacing=LayoutConstants.SPACING_SM,
+        )
+
+        urls_card = BaseCard(
+            title=t("nomenclatures.form.urls"),
+            icon=ft.Icons.LINK,
+            content=urls_info,
+        )
         # Sección BOM (Bill of Materials)
         bom_content = self._create_bom_tree()
         total_cost = self._calculate_total_cost()
@@ -212,7 +314,16 @@ class NomenclatureDetailView(ft.Container):
         )
 
         # Contenido
-        controls = [header, general_card, pricing_card, bom_section]
+        controls = [
+            header, 
+            general_card, 
+            designations_card,
+            dimensions_card,
+            stock_card,
+            pricing_card,
+            urls_card,
+            bom_section
+        ]
 
         content = ft.Column(
             controls=controls,
