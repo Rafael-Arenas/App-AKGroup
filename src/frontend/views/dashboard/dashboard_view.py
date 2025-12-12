@@ -17,7 +17,8 @@ class DashboardView(ft.Container):
     Vista del Dashboard con métricas y KPIs.
 
     Muestra información resumida del sistema:
-    - Total de empresas
+    - Total de clientes
+    - Total de proveedores
     - Total de productos
     - Cotizaciones activas
     - Pedidos totales
@@ -38,7 +39,8 @@ class DashboardView(ft.Container):
         self._dashboard_data: dict | None = None
 
         # KPI Cards
-        self._companies_kpi: KPICard | None = None
+        self._clients_kpi: KPICard | None = None
+        self._providers_kpi: KPICard | None = None
         self._products_kpi: KPICard | None = None
         self._quotes_kpi: KPICard | None = None
         self._orders_kpi: KPICard | None = None
@@ -86,15 +88,23 @@ class DashboardView(ft.Container):
         )
 
         # Crear KPI Cards con datos si están disponibles
-        companies_count = self._dashboard_data.get("companies_count", 0) if self._dashboard_data else 0
+        clients_count = self._dashboard_data.get("clients_count", 0) if self._dashboard_data else 0
+        providers_count = self._dashboard_data.get("providers_count", 0) if self._dashboard_data else 0
         products_count = self._dashboard_data.get("products_count", 0) if self._dashboard_data else 0
         quotes_count = self._dashboard_data.get("quotes_count", 0) if self._dashboard_data else 0
         orders_count = self._dashboard_data.get("orders_count", 0) if self._dashboard_data else 0
 
-        self._companies_kpi = KPICard(
-            icon=ft.Icons.BUSINESS,
-            label="Total Empresas",
-            value=companies_count,
+        self._clients_kpi = KPICard(
+            icon=ft.Icons.PEOPLE,
+            label="Total Clientes",
+            value=clients_count,
+            trend="neutral",
+        )
+
+        self._providers_kpi = KPICard(
+            icon=ft.Icons.LOCAL_SHIPPING,
+            label="Total Proveedores",
+            value=providers_count,
             trend="neutral",
         )
 
@@ -119,13 +129,24 @@ class DashboardView(ft.Container):
             trend="neutral",
         )
 
-        # Fila de KPIs
-        kpi_row = ft.Row(
+        # Fila de KPIs principales (Clientes y Proveedores)
+        main_kpi_row = ft.Row(
             controls=[
                 ft.Container(
-                    content=self._companies_kpi,
+                    content=self._clients_kpi,
                     expand=1,
                 ),
+                ft.Container(
+                    content=self._providers_kpi,
+                    expand=1,
+                ),
+            ],
+            spacing=LayoutConstants.SPACING_MD,
+        )
+
+        # Fila secundaria (Productos, Cotizaciones, Pedidos)
+        secondary_kpi_row = ft.Row(
+            controls=[
                 ft.Container(
                     content=self._products_kpi,
                     expand=1,
@@ -140,7 +161,6 @@ class DashboardView(ft.Container):
                 ),
             ],
             spacing=LayoutConstants.SPACING_MD,
-            wrap=True,
         )
 
         # Sección de actividad reciente (placeholder)
@@ -172,10 +192,13 @@ class DashboardView(ft.Container):
             content=ft.Column(
                 controls=[
                     header,
-                    kpi_row,
+                    ft.Container(height=10),  # Espacio pequeño
+                    main_kpi_row,
+                    ft.Container(height=10),  # Espacio pequeño
+                    secondary_kpi_row,
                     activity_section,
                 ],
-                spacing=LayoutConstants.SPACING_LG,
+                spacing=0,
                 scroll=ft.ScrollMode.AUTO,
             ),
             expand=True,
@@ -231,14 +254,35 @@ class DashboardView(ft.Container):
             company_api = CompanyAPI()
             product_api = ProductAPI()
 
-            # Cargar datos en paralelo
-            logger.debug("Fetching companies count")
-            companies_response = await company_api.get_all(page=1, page_size=1)
-            companies_count = companies_response.get("total", 0)
+            # Inicializar contadores
+            clients_count = 0
+            providers_count = 0
+            products_count = 0
 
-            logger.debug("Fetching products count")
-            products_response = await product_api.get_all(page=1, page_size=1)
-            products_count = products_response.get("total", 0)
+            # Cargar datos con manejo de errores
+            try:
+                logger.debug("Fetching clients count (company_type_id=1)")
+                clients_response = await company_api.get_all(skip=0, limit=1000, company_type_id=1)
+                clients_count = clients_response.get("total", 0)
+            except Exception as e:
+                logger.warning(f"Error fetching clients: {e}")
+                clients_count = 0
+
+            try:
+                logger.debug("Fetching providers count (company_type_id=2)")
+                providers_response = await company_api.get_all(skip=0, limit=1000, company_type_id=2)
+                providers_count = providers_response.get("total", 0)
+            except Exception as e:
+                logger.warning(f"Error fetching providers: {e}")
+                providers_count = 0
+
+            try:
+                logger.debug("Fetching products count")
+                products_response = await product_api.get_all(skip=0, limit=1000)
+                products_count = products_response.get("total", 0)
+            except Exception as e:
+                logger.warning(f"Error fetching products: {e}")
+                products_count = 0
 
             # TODO: Implementar APIs de cotizaciones y pedidos
             quotes_count = 0
@@ -246,15 +290,17 @@ class DashboardView(ft.Container):
 
             # Guardar datos en el estado
             self._dashboard_data = {
-                "companies_count": companies_count,
+                "clients_count": clients_count,
+                "providers_count": providers_count,
                 "products_count": products_count,
                 "quotes_count": quotes_count,
                 "orders_count": orders_count,
             }
 
             logger.success(
-                f"Dashboard data loaded: {companies_count} companies, "
-                f"{products_count} products, {quotes_count} quotes, {orders_count} orders"
+                f"Dashboard data loaded: {clients_count} clients, "
+                f"{providers_count} providers, {products_count} products, "
+                f"{quotes_count} quotes, {orders_count} orders"
             )
 
             self._is_loading = False
