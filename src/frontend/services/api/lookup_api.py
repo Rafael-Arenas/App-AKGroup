@@ -268,15 +268,9 @@ class LookupAPIService:
             if is_active is not None:
                 params["is_active"] = is_active
             
-            response = await self._client.get(
-                f"{self.base_url}/api/v1/companies",
-                headers=self.headers,
-                params=params
-            )
-            response.raise_for_status()
-            data = response.json()
-            logger.info(f"Se encontraron {len(data)} empresas")
-            return data
+            companies = await self._client.get("/companies/", params=params)
+            logger.info(f"Se encontraron {len(companies)} empresas")
+            return companies
         except Exception as e:
             logger.error("Error al obtener empresas | error={}", str(e))
             raise
