@@ -252,19 +252,25 @@ class ArticleListView(ft.Container):
             from src.frontend.services.api import ProductAPI
 
             product_api = ProductAPI()
-            params: dict[str, Any] = {
-                "page": self._current_page,
-                "page_size": self._page_size,
-            }
+            
+            # Calcular skip/limit para paginación
+            skip = (self._current_page - 1) * self._page_size
+            limit = self._page_size
 
             if self._search_query:
-                response = await product_api.search(query=self._search_query, **params)
+                response = await product_api.search(query=self._search_query)
+                self._articles = response[:self._page_size]  # Aplicar paginación local
+                self._total_articles = len(response)
             else:
-                filters = self._get_active_filters()
-                response = await product_api.get_all(**params, **filters)
-
-            self._articles = response.get("items", [])
-            self._total_articles = response.get("total", 0)
+                # Usar el endpoint específico para filtrar por tipo
+                self._articles = await product_api.get_by_type(
+                    product_type="article", 
+                    skip=skip, 
+                    limit=limit
+                )
+                # Para obtener el total, necesitamos hacer otra llamada sin límites
+                all_articles = await product_api.get_by_type(product_type="article")
+                self._total_articles = len(all_articles)
 
             logger.success(f"Loaded {len(self._articles)} articles")
             self._is_loading = False
@@ -311,8 +317,7 @@ class ArticleListView(ft.Container):
         if self._status_filter != "all":
             filters["is_active"] = self._status_filter == "active"
 
-        # Filtrar solo artículos (no nomenclaturas)
-        filters["product_type"] = "article"
+        # product_type se maneja en params, no aquí
 
         return filters
 
