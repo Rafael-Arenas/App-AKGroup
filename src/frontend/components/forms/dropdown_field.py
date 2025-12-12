@@ -55,6 +55,9 @@ class DropdownField(ft.Container):
         self.on_change_callback = on_change
         self.error_message = ""
 
+        # Asegurar que el control ocupe todo el ancho disponible
+        self.expand = True
+
         # Inicializar controles internos inmediatamente
         dropdown_options = [
             ft.dropdown.Option(
@@ -70,6 +73,7 @@ class DropdownField(ft.Container):
             options=dropdown_options,
             prefix_icon=self.prefix_icon,
             on_change=self._on_change,
+            expand=True,
         )
 
         self._error_text = ft.Text(
@@ -85,6 +89,7 @@ class DropdownField(ft.Container):
                 self._error_text,
             ],
             spacing=LayoutConstants.SPACING_XS,
+            expand=True,
         )
 
         logger.debug(f"DropdownField initialized: label={label}, options={len(options)}")
