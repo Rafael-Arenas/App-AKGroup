@@ -132,6 +132,13 @@ class CompanyFormView(ft.Column):
             prefix_icon=ft.Icons.LANGUAGE,
         )
 
+        self._intracommunity_number_field = ValidatedTextField(
+            label=t("companies.columns.intracommunity_number"),
+            hint_text=t("companies.form.intracommunity_number_hint"),
+            max_length=50,
+            prefix_icon=ft.Icons.NUMBERS,
+        )
+
         self._country_field = DropdownField(
             label=t("companies.form.country"),
             options=[],  # Se cargarán dinámicamente
@@ -269,16 +276,24 @@ class CompanyFormView(ft.Column):
 
     def _build_form(self) -> None:
         """Construye el formulario completo."""
+        # Determinar si mostrar el campo de tipo de empresa
+        show_company_type = self.company_id is not None or not self.default_type
+        
         # Sección: Información Básica
+        basic_info_controls = [
+            self._name_field,
+            self._trigram_field,
+        ]
+        
+        # Agregar campo de tipo solo si es edición o no hay tipo por defecto
+        if show_company_type:
+            basic_info_controls.append(self._company_type_field)
+        
         basic_info_section = BaseCard(
             title=t("companies.form.basic_info"),
             icon=ft.Icons.INFO_OUTLINED,
             content=ft.Column(
-                controls=[
-                    self._name_field,
-                    self._trigram_field,
-                    self._company_type_field,
-                ],
+                controls=basic_info_controls,
                 spacing=LayoutConstants.SPACING_MD,
             ),
         )
@@ -291,6 +306,7 @@ class CompanyFormView(ft.Column):
                 controls=[
                     self._phone_field,
                     self._website_field,
+                    self._intracommunity_number_field,
                 ],
                 spacing=LayoutConstants.SPACING_MD,
             ),
@@ -382,8 +398,15 @@ class CompanyFormView(ft.Column):
 
             # Establecer valor por defecto si es formulario de creación
             if not self.company_id and self.default_type:
+                # Mapear tipos en inglés a español
+                type_mapping = {
+                    "CLIENT": "Cliente",
+                    "SUPPLIER": "Proveedor",
+                }
+                spanish_type = type_mapping.get(self.default_type.upper(), self.default_type)
+                
                 matching_type = next(
-                    (ct for ct in self._company_types if ct["name"].upper() == self.default_type),
+                    (ct for ct in self._company_types if ct["name"].upper() == spanish_type.upper()),
                     None
                 )
                 if matching_type:
@@ -451,6 +474,7 @@ class CompanyFormView(ft.Column):
 
         self._phone_field.set_value(self._company_data.get("phone", ""))
         self._website_field.set_value(self._company_data.get("website", ""))
+        self._intracommunity_number_field.set_value(self._company_data.get("intracommunity_number", ""))
 
         # El API devuelve country_id como entero
         # Primero establecer el país (esto filtrará las ciudades automáticamente)
@@ -532,6 +556,7 @@ class CompanyFormView(ft.Column):
             "company_type_id": company_type_id,
             "phone": self._phone_field.get_value() or None,
             "website": self._website_field.get_value() or None,
+            "intracommunity_number": self._intracommunity_number_field.get_value() or None,
             "country_id": country_id,
             "city_id": city_id,
             "is_active": self._is_active_switch.value,
