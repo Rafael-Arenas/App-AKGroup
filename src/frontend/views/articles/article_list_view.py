@@ -166,11 +166,12 @@ class ArticleListView(ft.Container):
 
         self._data_table = DataTable(
             columns=[
-                {"key": "code", "label": "articles.columns.code", "sortable": True},
+                {"key": "revision", "label": "articles.columns.revision", "sortable": True},
+                {"key": "reference", "label": "articles.columns.reference", "sortable": True},
+                {"key": "supplier_reference", "label": "articles.columns.supplier_reference", "sortable": True},
                 {"key": "name", "label": "articles.columns.name", "sortable": True},
-                {"key": "unit", "label": "articles.columns.unit", "sortable": False},
-                {"key": "cost", "label": "articles.columns.cost", "sortable": True},
-                {"key": "status", "label": "articles.columns.status", "sortable": True},
+                {"key": "stock_quantity", "label": "articles.columns.stock_quantity", "sortable": True},
+                {"key": "minimum_stock", "label": "articles.columns.minimum_stock", "sortable": True},
             ],
             on_row_click=self._on_row_click,
             on_edit=self._on_edit_article,
@@ -281,14 +282,25 @@ class ArticleListView(ft.Container):
     def _format_articles_for_table(self, articles: list[dict]) -> list[dict]:
         """Formatea los datos de artículos para la tabla."""
         formatted = []
+        current_lang = app_state.i18n.current_language
+        
         for article in articles:
+            # Obtener designación según el idioma actual
+            if current_lang == "en":
+                designation = article.get("designation_en", article.get("designation_es", ""))
+            elif current_lang == "fr":
+                designation = article.get("designation_fr", article.get("designation_es", ""))
+            else:
+                designation = article.get("designation_es", "")
+            
             formatted.append({
                 "id": article.get("id"),
-                "code": article.get("reference", ""),
-                "name": article.get("designation_es", ""),
-                "unit": article.get("unit", "-"),
-                "cost": f"${float(article.get('cost_price', 0) or 0):.2f}",
-                "status": t("common.active") if article.get("is_active") else t("common.inactive"),
+                "revision": article.get("revision", ""),
+                "reference": article.get("reference", ""),
+                "supplier_reference": article.get("supplier_reference", ""),
+                "name": designation,
+                "stock_quantity": f"{float(article.get('stock_quantity', 0) or 0):.3f}",
+                "minimum_stock": f"{float(article.get('minimum_stock', 0) or 0):.3f}",
                 "_original": article,
             })
         return formatted
