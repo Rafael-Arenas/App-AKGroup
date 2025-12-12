@@ -677,6 +677,12 @@ class ArticleFormView(ft.Column):
 
     def _on_state_changed(self) -> None:
         """Observer: Se ejecuta cuando cambia el estado."""
-        logger.debug("State changed, updating ArticleFormView")
+        logger.debug("ArticleFormView state changed, rebuilding content")
+        # Reconstruir los componentes del formulario con nuevas traducciones
+        self._build_components()
+        # Reconstruir el contenido del formulario
+        self._build_form()
+        # Reconstruir el layout principal
+        self.controls = self._build_layout()
         if self.page:
             self.update()
