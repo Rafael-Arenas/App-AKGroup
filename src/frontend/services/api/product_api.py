@@ -142,12 +142,14 @@ class ProductAPIService:
             )
             raise
 
-    async def get_by_type(self, product_type: str) -> list[dict[str, Any]]:
+    async def get_by_type(self, product_type: str, skip: int = 0, limit: int = 100) -> list[dict[str, Any]]:
         """
         Obtiene productos filtrados por tipo.
 
         Args:
-            product_type: Tipo de producto ("ARTICLE" o "NOMENCLATURE")
+            product_type: Tipo de producto ("article" o "nomenclature")
+            skip: Número de registros a omitir (default: 0)
+            limit: Número máximo de registros (default: 100)
 
         Returns:
             Lista de productos del tipo especificado
@@ -158,11 +160,11 @@ class ProductAPIService:
             APIException: Error de API
 
         Example:
-            >>> articles = await service.get_by_type("ARTICLE")
-            >>> nomenclatures = await service.get_by_type("NOMENCLATURE")
+            >>> articles = await service.get_by_type("article", skip=0, limit=20)
+            >>> nomenclatures = await service.get_by_type("nomenclature", skip=0, limit=20)
             >>> print(f"Artículos: {len(articles)}, Nomenclaturas: {len(nomenclatures)}")
         """
-        logger.info("Obteniendo productos por tipo | product_type={}", product_type)
+        logger.info("Obteniendo productos por tipo | product_type={} skip={} limit={}", product_type, skip, limit)
 
         # Validar tipo de producto
         valid_types = ["article", "nomenclature"]
@@ -174,8 +176,8 @@ class ProductAPIService:
 
         try:
             products = await self._client.get(
-                "/products",
-                params={"product_type": product_type},
+                "/products/type/{}".format(product_type.upper()),
+                params={"skip": skip, "limit": limit},
             )
 
             logger.success(
