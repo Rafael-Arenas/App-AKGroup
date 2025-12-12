@@ -80,16 +80,16 @@ class ArticleFormView(ft.Column):
         """Crea los componentes del formulario."""
         # Campos de información básica
         self._code_field = ValidatedTextField(
-            label="Referencia *",
-            hint_text="Referencia del artículo",
+            label=t("articles.form.reference") + " *",
+            hint_text=t("articles.form.reference_hint"),
             required=True,
             prefix_icon=ft.Icons.TAG,
             max_length=50,
         )
 
         self._name_field = ValidatedTextField(
-            label="Designación (ES) *",
-            hint_text="Nombre del artículo en español",
+            label=t("articles.form.designation_es") + " *",
+            hint_text=t("articles.form.designation_es_hint"),
             required=True,
             prefix_icon=ft.Icons.INVENTORY_2,
             max_length=200,
@@ -123,14 +123,14 @@ class ArticleFormView(ft.Column):
         # Campos de precios
         self._cost_price_field = ValidatedTextField(
             label=t("articles.form.cost_price"),
-            hint_text="0.00",
+            hint_text=t("articles.form.cost_price_hint"),
             prefix_icon=ft.Icons.ATTACH_MONEY,
             validators=["numeric"],
         )
 
         self._sale_price_field = ValidatedTextField(
             label=t("articles.form.sale_price"),
-            hint_text="0.00",
+            hint_text=t("articles.form.sale_price_hint"),
             prefix_icon=ft.Icons.SELL,
             validators=["numeric"],
         )
@@ -138,80 +138,80 @@ class ArticleFormView(ft.Column):
         # Campos de stock
         self._stock_quantity_field = ValidatedTextField(
             label=t("articles.form.stock_quantity"),
-            hint_text="0.000",
+            hint_text=t("articles.form.stock_quantity_hint"),
             prefix_icon=ft.Icons.INVENTORY,
             validators=["numeric"],
         )
 
         self._min_stock_field = ValidatedTextField(
             label=t("articles.form.min_stock"),
-            hint_text="0.000",
+            hint_text=t("articles.form.min_stock_hint"),
             prefix_icon=ft.Icons.TRENDING_DOWN,
             validators=["numeric"],
         )
 
         # Campos adicionales de precios
         self._purchase_price_field = ValidatedTextField(
-            label="Precio de compra",
-            hint_text="0.00",
+            label=t("articles.form.purchase_price"),
+            hint_text=t("articles.form.purchase_price_hint"),
             prefix_icon=ft.Icons.SHOPPING_CART,
             validators=["numeric"],
         )
 
         self._sale_price_eur_field = ValidatedTextField(
-            label="Precio en euros",
-            hint_text="0.00",
+            label=t("articles.form.sale_price_eur"),
+            hint_text=t("articles.form.sale_price_eur_hint"),
             prefix_icon=ft.Icons.EURO,
             validators=["numeric"],
         )
 
         # Campos de stock adicionales
         self._stock_location_field = ValidatedTextField(
-            label="Ubicación en almacén",
-            hint_text="Ej: A-01-03",
+            label=t("articles.form.stock_location"),
+            hint_text=t("articles.form.stock_location_hint"),
             prefix_icon=ft.Icons.LOCATION_ON,
             max_length=100,
         )
 
         # Campos de dimensiones y peso
         self._net_weight_field = ValidatedTextField(
-            label="Peso neto (kg)",
-            hint_text="0.000",
+            label=t("articles.form.net_weight"),
+            hint_text=t("articles.form.net_weight_hint"),
             prefix_icon=ft.Icons.FITNESS_CENTER,
             validators=["numeric"],
         )
 
         self._gross_weight_field = ValidatedTextField(
-            label="Peso bruto (kg)",
-            hint_text="0.000",
+            label=t("articles.form.gross_weight"),
+            hint_text=t("articles.form.gross_weight_hint"),
             prefix_icon=ft.Icons.MONITOR_WEIGHT,
             validators=["numeric"],
         )
 
         self._length_field = ValidatedTextField(
-            label="Longitud (mm)",
-            hint_text="0.000",
+            label=t("articles.form.length"),
+            hint_text=t("articles.form.length_hint"),
             prefix_icon=ft.Icons.STRAIGHTEN,
             validators=["numeric"],
         )
 
         self._width_field = ValidatedTextField(
-            label="Ancho (mm)",
-            hint_text="0.000",
+            label=t("articles.form.width"),
+            hint_text=t("articles.form.width_hint"),
             prefix_icon=ft.Icons.SQUARE_FOOT,
             validators=["numeric"],
         )
 
         self._height_field = ValidatedTextField(
-            label="Altura (mm)",
-            hint_text="0.000",
+            label=t("articles.form.height"),
+            hint_text=t("articles.form.height_hint"),
             prefix_icon=ft.Icons.VERTICAL_ALIGN_TOP,
             validators=["numeric"],
         )
 
         self._volume_field = ValidatedTextField(
-            label="Volumen (m³)",
-            hint_text="0.000000",
+            label=t("articles.form.volume"),
+            hint_text=t("articles.form.volume_hint"),
             prefix_icon=ft.Icons.VIEW_IN_AR,
             validators=["numeric"],
         )
@@ -219,60 +219,60 @@ class ArticleFormView(ft.Column):
         # Campos de logística y aduanas
 
         self._country_of_origin_field = DropdownField(
-            label="País de origen",
+            label=t("articles.form.country_of_origin"),
             options=[],
         )
 
         # Campos de proveedor
         self._supplier_reference_field = ValidatedTextField(
-            label="Referencia del proveedor",
-            hint_text="Referencia interna del proveedor",
+            label=t("articles.form.supplier_reference"),
+            hint_text=t("articles.form.supplier_reference_hint"),
             prefix_icon=ft.Icons.NUMBERS,
             max_length=100,
         )
 
         self._customs_number_field = ValidatedTextField(
-            label="Número de aduana",
-            hint_text="Número de identificación de aduanas",
+            label=t("articles.form.customs_number"),
+            hint_text=t("articles.form.customs_number_hint"),
             prefix_icon=ft.Icons.LOCAL_SHIPPING,
             max_length=50,
         )
 
         # Campos adicionales
         self._sales_type_field = DropdownField(
-            label="Tipo de venta",
+            label=t("articles.form.sales_type"),
             options=[],
         )
 
         self._company_field = DropdownField(
-            label="Proveedor",
+            label=t("articles.form.supplier"),
             options=[],
         )
 
         self._designation_fr_field = ValidatedTextField(
-            label="Nombre en francés",
-            hint_text="Designation en français",
+            label=t("articles.form.designation_fr"),
+            hint_text=t("articles.form.designation_fr_hint"),
             prefix_icon=ft.Icons.TRANSLATE,
             max_length=200,
         )
 
         self._designation_en_field = ValidatedTextField(
-            label="Nombre en inglés",
-            hint_text="Designation in English",
+            label=t("articles.form.designation_en"),
+            hint_text=t("articles.form.designation_en_hint"),
             prefix_icon=ft.Icons.TRANSLATE,
             max_length=200,
         )
 
         self._revision_field = ValidatedTextField(
-            label="Revisión",
-            hint_text="Ej: A, B, 1.0",
+            label=t("articles.form.revision"),
+            hint_text=t("articles.form.revision_hint"),
             prefix_icon=ft.Icons.UPDATE,
             max_length=20,
         )
 
         self._notes_field = ValidatedTextField(
-            label="Notas adicionales",
-            hint_text="Notas o comentarios importantes",
+            label=t("articles.form.notes"),
+            hint_text=t("articles.form.notes_hint"),
             multiline=True,
             max_length=2000,
         )
@@ -455,7 +455,7 @@ class ArticleFormView(ft.Column):
 
         # Sección dimensiones y peso
         dimensions_section = BaseCard(
-            title="Dimensiones y Peso",
+            title=t("articles.form.dimensions_section"),
             icon=ft.Icons.SCALE,
             content=ft.Column(
                 controls=[
@@ -482,7 +482,7 @@ class ArticleFormView(ft.Column):
 
         # Sección logística y aduanas
         logistics_section = BaseCard(
-            title="Logística y Aduanas",
+            title=t("articles.form.logistics_section"),
             icon=ft.Icons.LOCAL_SHIPPING,
             content=ft.Column(
                 controls=[
@@ -500,7 +500,7 @@ class ArticleFormView(ft.Column):
 
         # Sección adicional
         additional_section = BaseCard(
-            title="Información Adicional",
+            title=t("articles.form.additional_section"),
             icon=ft.Icons.INFO,
             content=ft.Column(
                 controls=[
