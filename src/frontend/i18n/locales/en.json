@@ -52,6 +52,7 @@
       "city": "City",
       "website": "Website",
       "country": "Country",
+      "intracommunity_number": "Intracommunity Number",
       "status": "Status",
       "created_at": "Created At",
       "actions": "Actions"
@@ -81,6 +82,8 @@
       "email_hint": "contact@company.com",
       "website": "Website",
       "website_hint": "https://company.com",
+      "intracommunity_number": "Intracommunity Number",
+      "intracommunity_number_hint": "EU intracommunity VAT number",
       "company_type": "Company Type",
       "country": "Country",
       "is_active": "Active",

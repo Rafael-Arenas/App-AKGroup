@@ -52,6 +52,7 @@
       "city": "Ville",
       "website": "Site Web",
       "country": "Pays",
+      "intracommunity_number": "Numéro Intracommunautaire",
       "status": "Statut",
       "created_at": "Date de Création",
       "actions": "Actions"
@@ -81,6 +82,8 @@
       "email_hint": "contact@entreprise.com",
       "website": "Site Web",
       "website_hint": "https://entreprise.com",
+      "intracommunity_number": "Numéro Intracommunautaire",
+      "intracommunity_number_hint": "Numéro de TVA intracommunautaire (UE)",
       "company_type": "Type d'Entreprise",
       "country": "Pays",
       "is_active": "Actif",
