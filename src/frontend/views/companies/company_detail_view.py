@@ -1676,5 +1676,8 @@ class CompanyDetailView(ft.Container):
 
     def _on_state_changed(self) -> None:
         """Observer: Se ejecuta cuando cambia el estado."""
+        logger.debug("CompanyDetailView state changed, rebuilding content")
+        # Reconstruir el contenido con las nuevas traducciones
+        self.content = self.build()
         if self.page:
             self.update()
