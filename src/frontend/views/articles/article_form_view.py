@@ -50,6 +50,8 @@ class ArticleFormView(ft.Column):
         self._units: list[dict] = []
         self._family_types: list[dict] = []
         self._matters: list[dict] = []
+        self._sales_types: list[dict] = []
+        self._companies: list[dict] = []
 
         # Configuración del layout
         self.spacing = LayoutConstants.SPACING_MD
@@ -146,6 +148,139 @@ class ArticleFormView(ft.Column):
             hint_text="0.000",
             prefix_icon=ft.Icons.TRENDING_DOWN,
             validators=["numeric"],
+        )
+
+        # Campos adicionales de precios
+        self._purchase_price_field = ValidatedTextField(
+            label="Precio de compra",
+            hint_text="0.00",
+            prefix_icon=ft.Icons.SHOPPING_CART,
+            validators=["numeric"],
+        )
+
+        self._sale_price_eur_field = ValidatedTextField(
+            label="Precio en euros",
+            hint_text="0.00",
+            prefix_icon=ft.Icons.EURO,
+            validators=["numeric"],
+        )
+
+        # Campos de stock adicionales
+        self._stock_location_field = ValidatedTextField(
+            label="Ubicación en almacén",
+            hint_text="Ej: A-01-03",
+            prefix_icon=ft.Icons.LOCATION_ON,
+            max_length=100,
+        )
+
+        # Campos de dimensiones y peso
+        self._net_weight_field = ValidatedTextField(
+            label="Peso neto (kg)",
+            hint_text="0.000",
+            prefix_icon=ft.Icons.FITNESS_CENTER,
+            validators=["numeric"],
+        )
+
+        self._gross_weight_field = ValidatedTextField(
+            label="Peso bruto (kg)",
+            hint_text="0.000",
+            prefix_icon=ft.Icons.MONITOR_WEIGHT,
+            validators=["numeric"],
+        )
+
+        self._length_field = ValidatedTextField(
+            label="Longitud (mm)",
+            hint_text="0.000",
+            prefix_icon=ft.Icons.STRAIGHTEN,
+            validators=["numeric"],
+        )
+
+        self._width_field = ValidatedTextField(
+            label="Ancho (mm)",
+            hint_text="0.000",
+            prefix_icon=ft.Icons.SQUARE_FOOT,
+            validators=["numeric"],
+        )
+
+        self._height_field = ValidatedTextField(
+            label="Altura (mm)",
+            hint_text="0.000",
+            prefix_icon=ft.Icons.VERTICAL_ALIGN_TOP,
+            validators=["numeric"],
+        )
+
+        self._volume_field = ValidatedTextField(
+            label="Volumen (m³)",
+            hint_text="0.000000",
+            prefix_icon=ft.Icons.VIEW_IN_AR,
+            validators=["numeric"],
+        )
+
+        # Campos de logística y aduanas
+        self._hs_code_field = ValidatedTextField(
+            label="Código arancelario",
+            hint_text="Ej: 12345678",
+            prefix_icon=ft.Icons.QR_CODE,
+            max_length=20,
+        )
+
+        self._country_of_origin_field = DropdownField(
+            label="País de origen",
+            options=[],
+        )
+
+        # Campos de proveedor
+        self._supplier_reference_field = ValidatedTextField(
+            label="Referencia del proveedor",
+            hint_text="Referencia interna del proveedor",
+            prefix_icon=ft.Icons.NUMBERS,
+            max_length=100,
+        )
+
+        self._customs_number_field = ValidatedTextField(
+            label="Número de aduana",
+            hint_text="Número de identificación de aduanas",
+            prefix_icon=ft.Icons.LOCAL_SHIPPING,
+            max_length=50,
+        )
+
+        # Campos adicionales
+        self._sales_type_field = DropdownField(
+            label="Tipo de venta",
+            options=[],
+        )
+
+        self._company_field = DropdownField(
+            label="Empresa fabricante",
+            options=[],
+        )
+
+        self._designation_fr_field = ValidatedTextField(
+            label="Nombre en francés",
+            hint_text="Designation en français",
+            prefix_icon=ft.Icons.TRANSLATE,
+            max_length=200,
+        )
+
+        self._designation_en_field = ValidatedTextField(
+            label="Nombre en inglés",
+            hint_text="Designation in English",
+            prefix_icon=ft.Icons.TRANSLATE,
+            max_length=200,
+        )
+
+        self._revision_field = ValidatedTextField(
+            label="Revisión",
+            hint_text="Ej: A, B, 1.0",
+            prefix_icon=ft.Icons.UPDATE,
+            max_length=20,
+        )
+
+        self._notes_field = ValidatedTextField(
+            label="Notas adicionales",
+            hint_text="Notas o comentarios importantes",
+            multiline=True,
+            max_length=2000,
         )
 
         self._is_active_switch = ft.Switch(
@@ -291,6 +426,13 @@ class ArticleFormView(ft.Column):
                         ],
                         spacing=LayoutConstants.SPACING_MD,
                     ),
+                    ft.Row(
+                        controls=[
+                            ft.Container(content=self._purchase_price_field, expand=True),
+                            ft.Container(content=self._sale_price_eur_field, expand=True),
+                        ],
+                        spacing=LayoutConstants.SPACING_MD,
+                    ),
                 ],
                 spacing=LayoutConstants.SPACING_MD,
             ),
@@ -309,6 +451,91 @@ class ArticleFormView(ft.Column):
                         ],
                         spacing=LayoutConstants.SPACING_MD,
                     ),
+                    self._stock_location_field,
+                ],
+                spacing=LayoutConstants.SPACING_MD,
+            ),
+        )
+
+        # Sección dimensiones y peso
+        dimensions_section = BaseCard(
+            title="Dimensiones y Peso",
+            icon=ft.Icons.SCALE,
+            content=ft.Column(
+                controls=[
+                    ft.Row(
+                        controls=[
+                            ft.Container(content=self._net_weight_field, expand=True),
+                            ft.Container(content=self._gross_weight_field, expand=True),
+                        ],
+                        spacing=LayoutConstants.SPACING_MD,
+                    ),
+                    ft.Row(
+                        controls=[
+                            ft.Container(content=self._length_field, expand=True),
+                            ft.Container(content=self._width_field, expand=True),
+                            ft.Container(content=self._height_field, expand=True),
+                        ],
+                        spacing=LayoutConstants.SPACING_MD,
+                    ),
+                    self._volume_field,
+                ],
+                spacing=LayoutConstants.SPACING_MD,
+            ),
+        )
+
+        # Sección logística y aduanas
+        logistics_section = BaseCard(
+            title="Logística y Aduanas",
+            icon=ft.Icons.LOCAL_SHIPPING,
+            content=ft.Column(
+                controls=[
+                    ft.Row(
+                        controls=[
+                            ft.Container(content=self._hs_code_field, expand=True),
+                            ft.Container(content=self._country_of_origin_field, expand=True),
+                        ],
+                        spacing=LayoutConstants.SPACING_MD,
+                    ),
+                    ft.Row(
+                        controls=[
+                            ft.Container(content=self._supplier_reference_field, expand=True),
+                            ft.Container(content=self._customs_number_field, expand=True),
+                        ],
+                        spacing=LayoutConstants.SPACING_MD,
+                    ),
+                ],
+                spacing=LayoutConstants.SPACING_MD,
+            ),
+        )
+
+        # Sección adicional
+        additional_section = BaseCard(
+            title="Información Adicional",
+            icon=ft.Icons.INFO,
+            content=ft.Column(
+                controls=[
+                    ft.Row(
+                        controls=[
+                            ft.Container(content=self._sales_type_field, expand=True),
+                            ft.Container(content=self._company_field, expand=True),
+                        ],
+                        spacing=LayoutConstants.SPACING_MD,
+                    ),
+                    ft.Row(
+                        controls=[
+                            ft.Container(content=self._designation_fr_field, expand=True),
+                            ft.Container(content=self._designation_en_field, expand=True),
+                        ],
+                        spacing=LayoutConstants.SPACING_MD,
+                    ),
+                    ft.Row(
+                        controls=[
+                            ft.Container(content=self._revision_field, expand=True),
+                        ],
+                        spacing=LayoutConstants.SPACING_MD,
+                    ),
+                    self._notes_field,
                 ],
                 spacing=LayoutConstants.SPACING_MD,
             ),
@@ -333,6 +560,9 @@ class ArticleFormView(ft.Column):
             classification_section,
             pricing_section,
             stock_section,
+            dimensions_section,
+            logistics_section,
+            additional_section,
             status_section,
             action_buttons,
         ]
@@ -414,9 +644,45 @@ class ArticleFormView(ft.Column):
                 logger.warning(f"Could not load matters: {e}")
                 self._matters = []
 
+            # Cargar tipos de venta
+            try:
+                self._sales_types = await lookup_api.get_lookup("sales_types")
+                sales_type_options = [
+                    {"label": st.get("name", ""), "value": str(st["id"])}
+                    for st in self._sales_types
+                ]
+                self._sales_type_field.set_options(sales_type_options)
+            except Exception as e:
+                logger.warning(f"Could not load sales_types: {e}")
+                self._sales_types = []
+
+            # Cargar empresas (fabricantes)
+            try:
+                self._companies = await lookup_api.get_lookup("companies")
+                company_options = [
+                    {"label": c.get("name", ""), "value": str(c["id"])}
+                    for c in self._companies
+                ]
+                self._company_field.set_options(company_options)
+            except Exception as e:
+                logger.warning(f"Could not load companies: {e}")
+                self._companies = []
+
+            # Cargar países
+            try:
+                countries = await lookup_api.get_lookup("countries")
+                country_options = [
+                    {"label": c.get("name", ""), "value": c.get("code", "")}
+                    for c in countries
+                ]
+                self._country_of_origin_field.set_options(country_options)
+            except Exception as e:
+                logger.warning(f"Could not load countries: {e}")
+
             logger.success(
                 f"Lookups loaded: {len(self._units)} units, "
-                f"{len(self._family_types)} families, {len(self._matters)} matters"
+                f"{len(self._family_types)} families, {len(self._matters)} matters, "
+                f"{len(self._sales_types)} sales types, {len(self._companies)} companies"
             )
 
         except Exception as e:
@@ -480,6 +746,63 @@ class ArticleFormView(ft.Column):
 
         # Estado
         self._is_active_switch.value = self._article_data.get("is_active", True)
+
+        # Campos adicionales de precios
+        purchase_price = self._article_data.get("purchase_price")
+        if purchase_price is not None:
+            self._purchase_price_field.set_value(str(purchase_price))
+
+        sale_price_eur = self._article_data.get("sale_price_eur")
+        if sale_price_eur is not None:
+            self._sale_price_eur_field.set_value(str(sale_price_eur))
+
+        # Campos de stock adicionales
+        self._stock_location_field.set_value(self._article_data.get("stock_location", ""))
+
+        # Campos de dimensiones y peso
+        net_weight = self._article_data.get("net_weight")
+        if net_weight is not None:
+            self._net_weight_field.set_value(str(net_weight))
+
+        gross_weight = self._article_data.get("gross_weight")
+        if gross_weight is not None:
+            self._gross_weight_field.set_value(str(gross_weight))
+
+        length = self._article_data.get("length")
+        if length is not None:
+            self._length_field.set_value(str(length))
+
+        width = self._article_data.get("width")
+        if width is not None:
+            self._width_field.set_value(str(width))
+
+        height = self._article_data.get("height")
+        if height is not None:
+            self._height_field.set_value(str(height))
+
+        volume = self._article_data.get("volume")
+        if volume is not None:
+            self._volume_field.set_value(str(volume))
+
+        # Campos de logística y aduanas
+        self._hs_code_field.set_value(self._article_data.get("hs_code", ""))
+        self._country_of_origin_field.set_value(self._article_data.get("country_of_origin", ""))
+        self._supplier_reference_field.set_value(self._article_data.get("supplier_reference", ""))
+        self._customs_number_field.set_value(self._article_data.get("customs_number", ""))
+
+        # Campos adicionales
+        sales_type_id = self._article_data.get("sales_type_id")
+        if sales_type_id:
+            self._sales_type_field.set_value(str(sales_type_id))
+
+        company_id = self._article_data.get("company_id")
+        if company_id:
+            self._company_field.set_value(str(company_id))
+
+        self._designation_fr_field.set_value(self._article_data.get("designation_fr", ""))
+        self._designation_en_field.set_value(self._article_data.get("designation_en", ""))
+        self._revision_field.set_value(self._article_data.get("revision", ""))
+        self._notes_field.set_value(self._article_data.get("notes", ""))
 
         logger.success("Form fields populated successfully")
 
@@ -569,6 +892,87 @@ class ArticleFormView(ft.Column):
 
         if matter_id:
             data["matter_id"] = matter_id
+
+        # Campos adicionales de precios
+        purchase_price_str = self._purchase_price_field.get_value()
+        if purchase_price_str:
+            data["purchase_price"] = float(purchase_price_str)
+
+        sale_price_eur_str = self._sale_price_eur_field.get_value()
+        if sale_price_eur_str:
+            data["sale_price_eur"] = float(sale_price_eur_str)
+
+        # Campos de stock adicionales
+        stock_location = self._stock_location_field.get_value()
+        if stock_location:
+            data["stock_location"] = stock_location
+
+        # Campos de dimensiones y peso
+        net_weight_str = self._net_weight_field.get_value()
+        if net_weight_str:
+            data["net_weight"] = float(net_weight_str)
+
+        gross_weight_str = self._gross_weight_field.get_value()
+        if gross_weight_str:
+            data["gross_weight"] = float(gross_weight_str)
+
+        length_str = self._length_field.get_value()
+        if length_str:
+            data["length"] = float(length_str)
+
+        width_str = self._width_field.get_value()
+        if width_str:
+            data["width"] = float(width_str)
+
+        height_str = self._height_field.get_value()
+        if height_str:
+            data["height"] = float(height_str)
+
+        volume_str = self._volume_field.get_value()
+        if volume_str:
+            data["volume"] = float(volume_str)
+
+        # Campos de logística y aduanas
+        hs_code = self._hs_code_field.get_value()
+        if hs_code:
+            data["hs_code"] = hs_code
+
+        country_of_origin = self._country_of_origin_field.get_value()
+        if country_of_origin:
+            data["country_of_origin"] = country_of_origin
+
+        supplier_reference = self._supplier_reference_field.get_value()
+        if supplier_reference:
+            data["supplier_reference"] = supplier_reference
+
+        customs_number = self._customs_number_field.get_value()
+        if customs_number:
+            data["customs_number"] = customs_number
+
+        # Campos adicionales
+        sales_type_value = self._sales_type_field.get_value()
+        if sales_type_value:
+            data["sales_type_id"] = int(sales_type_value)
+
+        company_value = self._company_field.get_value()
+        if company_value:
+            data["company_id"] = int(company_value)
+
+        designation_fr = self._designation_fr_field.get_value()
+        if designation_fr:
+            data["designation_fr"] = designation_fr
+
+        designation_en = self._designation_en_field.get_value()
+        if designation_en:
+            data["designation_en"] = designation_en
+
+        revision = self._revision_field.get_value()
+        if revision:
+            data["revision"] = revision
+
+        notes = self._notes_field.get_value()
+        if notes:
+            data["notes"] = notes
 
         return data
 
