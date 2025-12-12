@@ -253,19 +253,25 @@ class NomenclatureListView(ft.Container):
             from src.frontend.services.api import ProductAPI
 
             product_api = ProductAPI()
-            params: dict[str, Any] = {
-                "page": self._current_page,
-                "page_size": self._page_size,
-            }
+            
+            # Calcular skip/limit para paginación
+            skip = (self._current_page - 1) * self._page_size
+            limit = self._page_size
 
             if self._search_query:
-                response = await product_api.search(query=self._search_query, **params)
+                response = await product_api.search(query=self._search_query)
+                self._nomenclatures = response[:self._page_size]  # Aplicar paginación local
+                self._total_nomenclatures = len(response)
             else:
-                filters = self._get_active_filters()
-                response = await product_api.get_all(**params, **filters)
-
-            self._nomenclatures = response.get("items", [])
-            self._total_nomenclatures = response.get("total", 0)
+                # Usar el endpoint específico para filtrar por tipo
+                self._nomenclatures = await product_api.get_by_type(
+                    product_type="nomenclature", 
+                    skip=skip, 
+                    limit=limit
+                )
+                # Para obtener el total, necesitamos hacer otra llamada sin límites
+                all_nomenclatures = await product_api.get_by_type(product_type="nomenclature")
+                self._total_nomenclatures = len(all_nomenclatures)
 
             logger.success(f"Loaded {len(self._nomenclatures)} nomenclatures")
             self._is_loading = False
@@ -328,8 +334,7 @@ class NomenclatureListView(ft.Container):
         if self._status_filter != "all":
             filters["is_active"] = self._status_filter == "active"
 
-        # Filtrar solo nomenclaturas
-        filters["product_type"] = "nomenclature"
+        # product_type se maneja en params, no aquí
 
         return filters
 
