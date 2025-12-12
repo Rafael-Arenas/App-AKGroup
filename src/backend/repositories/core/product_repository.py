@@ -179,7 +179,7 @@ class ProductRepository(BaseRepository[Product]):
 
         products = (
             self.session.query(Product)
-            .filter(Product.product_type == product_type)
+            .filter(Product.product_type == product_type.lower())  # Convert to lowercase for comparison
             .order_by(Product.reference)
             .offset(skip)
             .limit(limit)
