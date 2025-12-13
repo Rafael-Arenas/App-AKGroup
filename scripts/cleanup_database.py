@@ -29,7 +29,18 @@ from src.backend.models.lookups.lookups import CompanyType
 def get_session():
     """Crear sesión de base de datos."""
     settings = get_settings()
-    engine = create_engine(settings.database_url)
+    # Para SQLite, agregar configuración para evitar bloqueos
+    if settings.database_url.startswith("sqlite"):
+        engine = create_engine(
+            settings.database_url,
+            connect_args={
+                "timeout": 30,  # Timeout de 30 segundos
+                "check_same_thread": False
+            },
+            echo=False
+        )
+    else:
+        engine = create_engine(settings.database_url)
     Session = sessionmaker(bind=engine)
     return Session()
 
@@ -80,7 +91,8 @@ def cleanup_companies(session, company_type_name: str, type_name: str) -> int:
         return 0
     
     # Contar antes de eliminar
-    count = session.query(Company).filter_by(company_type_id=company_type.id).count()
+    companies = session.query(Company).filter_by(company_type_id=company_type.id).all()
+    count = len(companies)
     
     if count == 0:
         print(f"✅ No hay {type_name} que eliminar")
@@ -88,9 +100,19 @@ def cleanup_companies(session, company_type_name: str, type_name: str) -> int:
     
     print(f"🗑️  Eliminando {count} {type_name}...")
     
-    # Eliminar en cascada (las tablas relacionadas se eliminarán automáticamente)
-    deleted = session.query(Company).filter_by(company_type_id=company_type.id).delete(synchronize_session=False)
-    session.commit()
+    # Eliminar empresas una por una para evitar bloqueos en SQLite
+    deleted = 0
+    
+    for company in companies:
+        try:
+            session.delete(company)
+            session.commit()
+            deleted += 1
+        except Exception as e:
+            session.rollback()
+            print(f"⚠️  Error eliminando empresa {company.name}: {str(e)}")
+            # Intentar continuar con la siguiente
+            continue
     
     print(f"✅ {deleted} {type_name} eliminados")
     return deleted
@@ -129,11 +151,23 @@ def cleanup_products(session, product_type: ProductType, type_name: str) -> int:
             deleted_components = session.query(ProductComponent).filter(
                 ProductComponent.parent_id.in_(nomenclature_ids)
             ).delete(synchronize_session=False)
+            session.commit()
             print(f"   📦 Eliminados {deleted_components} componentes de BOM")
     
-    # Eliminar productos
-    deleted = session.query(Product).filter_by(product_type=product_type).delete(synchronize_session=False)
-    session.commit()
+    # Eliminar productos uno por uno para evitar bloqueos en SQLite
+    products = session.query(Product).filter_by(product_type=product_type).all()
+    deleted = 0
+    
+    for product in products:
+        try:
+            session.delete(product)
+            session.commit()
+            deleted += 1
+        except Exception as e:
+            session.rollback()
+            print(f"⚠️  Error eliminando producto {product.reference}: {str(e)}")
+            # Intentar continuar con el siguiente
+            continue
     
     print(f"✅ {deleted} {type_name} eliminados")
     return deleted
