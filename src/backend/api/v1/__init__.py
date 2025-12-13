@@ -8,6 +8,7 @@ from src.backend.api.v1.companies import router as companies_router
 from src.backend.api.v1.products import router as products_router
 from src.backend.api.v1.addresses import router as addresses_router
 from src.backend.api.v1.contacts import router as contacts_router
+from src.backend.api.v1.company_ruts import router as company_ruts_router
 from src.backend.api.v1.services import router as services_router
 from src.backend.api.v1.staff import router as staff_router
 from src.backend.api.v1.notes import router as notes_router
@@ -22,6 +23,7 @@ __all__ = [
     "products_router",
     "addresses_router",
     "contacts_router",
+    "company_ruts_router",
     "services_router",
     "staff_router",
     "notes_router",
