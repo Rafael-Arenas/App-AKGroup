@@ -12,6 +12,7 @@ from src.frontend.layout_constants import LayoutConstants
 from src.frontend.components.common import BaseCard, LoadingSpinner, ErrorDisplay
 from src.frontend.components.forms import ValidatedTextField, DropdownField
 from src.frontend.i18n.translation_manager import t
+from src.frontend.utils.fake_data_generator import FakeDataGenerator
 
 
 class CompanyFormView(ft.Column):
@@ -155,6 +156,14 @@ class CompanyFormView(ft.Column):
             value=True,
         )
 
+        # Botón de datos ficticios (solo en modo creación)
+        self._fake_data_button = ft.IconButton(
+            icon=ft.Icons.CASINO,
+            tooltip="Generar datos ficticios",
+            on_click=self._on_generate_fake_data,
+            visible=self.company_id is None,  # Solo visible en creación
+        )
+
         # Botones de acción
         self._save_button = ft.ElevatedButton(
             text=t("common.save"),
@@ -206,6 +215,8 @@ class CompanyFormView(ft.Column):
                         size=LayoutConstants.FONT_SIZE_DISPLAY_MD,
                         weight=LayoutConstants.FONT_WEIGHT_BOLD,
                     ),
+                    ft.Container(expand=True),  # Espaciador
+                    self._fake_data_button,  # Botón de datos ficticios
                 ],
                 spacing=LayoutConstants.SPACING_SM,
             ),
@@ -550,11 +561,15 @@ class CompanyFormView(ft.Column):
         city_value = self._city_field.get_value()
         city_id = int(city_value) if city_value else None
 
+        # Formatear número de teléfono - eliminar espacios
+        phone = self._phone_field.get_value()
+        phone = phone.replace(" ", "") if phone else None
+
         data = {
             "name": self._name_field.get_value(),
             "trigram": self._trigram_field.get_value(),
             "company_type_id": company_type_id,
-            "phone": self._phone_field.get_value() or None,
+            "phone": phone,
             "website": self._website_field.get_value() or None,
             "intracommunity_number": self._intracommunity_number_field.get_value() or None,
             "country_id": country_id,
@@ -701,6 +716,37 @@ class CompanyFormView(ft.Column):
 
         if self.on_cancel_callback:
             self.on_cancel_callback()
+
+    def _on_generate_fake_data(self, e: ft.ControlEvent) -> None:
+        """Callback cuando se hace click en generar datos ficticios."""
+        logger.info("Generate fake data clicked")
+        
+        try:
+            # Usar el generador de datos ficticios
+            FakeDataGenerator.populate_company_form(self, self.default_type)
+            
+            # Mostrar mensaje de éxito
+            if self.page:
+                snackbar = ft.SnackBar(
+                    content=ft.Text("Datos ficticios generados exitosamente"),
+                    bgcolor=ft.Colors.GREEN,
+                    duration=2000,
+                )
+                self.page.overlay.append(snackbar)
+                snackbar.open = True
+                self.page.update()
+                
+        except Exception as ex:
+            logger.exception(f"Error generating fake data: {ex}")
+            if self.page:
+                snackbar = ft.SnackBar(
+                    content=ft.Text(f"Error al generar datos: {str(ex)}"),
+                    bgcolor=ft.Colors.RED,
+                    duration=3000,
+                )
+                self.page.overlay.append(snackbar)
+                snackbar.open = True
+                self.page.update()
 
     def _on_state_changed(self) -> None:
         """
