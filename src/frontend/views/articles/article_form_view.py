@@ -12,6 +12,7 @@ from src.frontend.layout_constants import LayoutConstants
 from src.frontend.components.common import BaseCard, LoadingSpinner, ErrorDisplay
 from src.frontend.components.forms import ValidatedTextField, DropdownField
 from src.frontend.i18n.translation_manager import t
+from src.frontend.utils.fake_data_generator import FakeDataGenerator
 
 
 class ArticleFormView(ft.Column):
@@ -282,6 +283,14 @@ class ArticleFormView(ft.Column):
             value=True,
         )
 
+        # Botón de datos ficticios (solo en modo creación)
+        self._fake_data_button = ft.IconButton(
+            icon=ft.Icons.CASINO,
+            tooltip="Generar datos ficticios",
+            on_click=self._on_generate_fake_data,
+            visible=self.article_id is None,  # Solo visible en creación
+        )
+
         # Botones de acción
         self._save_button = ft.ElevatedButton(
             text=t("common.save"),
@@ -312,6 +321,8 @@ class ArticleFormView(ft.Column):
                         size=LayoutConstants.FONT_SIZE_DISPLAY_MD,
                         weight=LayoutConstants.FONT_WEIGHT_BOLD,
                     ),
+                    ft.Container(expand=True),  # Espaciador
+                    self._fake_data_button,  # Botón de datos ficticios
                 ],
                 spacing=LayoutConstants.SPACING_SM,
             ),
@@ -673,7 +684,7 @@ class ArticleFormView(ft.Column):
             try:
                 countries = await lookup_api.get_lookup("countries")
                 country_options = [
-                    {"label": c.get("name", ""), "value": c.get("code", "")}
+                    {"label": c.get("name", ""), "value": c.get("iso_code_alpha2", "")}
                     for c in countries
                 ]
                 self._country_of_origin_field.set_options(country_options)
@@ -786,7 +797,40 @@ class ArticleFormView(ft.Column):
             self._volume_field.set_value(str(volume))
 
         # Campos de logística y aduanas
-        self._country_of_origin_field.set_value(self._article_data.get("country_of_origin", ""))
+        country_of_origin = self._article_data.get("country_of_origin", "")
+        # Handle both country codes and full country names
+        if country_of_origin and len(country_of_origin) > 2:
+            # Map full country name to country code
+            country_name_to_code = {
+                "Chile": "CL",
+                "Argentina": "AR", 
+                "España": "ES",
+                "México": "MX",
+                "Perú": "PE",
+                "Colombia": "CO",
+                "Ecuador": "EC",
+                "Venezuela": "VE",
+                "Bolivia": "BO",
+                "Uruguay": "UY",
+                "Paraguay": "PY",
+                "Brasil": "BR",
+                "Estados Unidos": "US",
+                "United States": "US",
+                "China": "CN",
+                "Japón": "JP",
+                "Japon": "JP",
+                "Japan": "JP",
+                "Alemania": "DE",
+                "Germany": "DE",
+                "Francia": "FR",
+                "France": "FR",
+                "Italia": "IT",
+                "Italy": "IT",
+                "Reino Unido": "GB",
+                "United Kingdom": "GB"
+            }
+            country_of_origin = country_name_to_code.get(country_of_origin, country_of_origin)
+        self._country_of_origin_field.set_value(country_of_origin)
         self._supplier_reference_field.set_value(self._article_data.get("supplier_reference", ""))
         self._customs_number_field.set_value(self._article_data.get("customs_number", ""))
 
@@ -1074,6 +1118,37 @@ class ArticleFormView(ft.Column):
 
         if self.on_cancel_callback:
             self.on_cancel_callback()
+
+    def _on_generate_fake_data(self, e: ft.ControlEvent) -> None:
+        """Callback cuando se hace click en generar datos ficticios."""
+        logger.info("Generate fake data clicked")
+        
+        try:
+            # Usar el generador de datos ficticios
+            FakeDataGenerator.populate_article_form(self)
+            
+            # Mostrar mensaje de éxito
+            if self.page:
+                snackbar = ft.SnackBar(
+                    content=ft.Text("Datos ficticios generados exitosamente"),
+                    bgcolor=ft.Colors.GREEN,
+                    duration=2000,
+                )
+                self.page.overlay.append(snackbar)
+                snackbar.open = True
+                self.page.update()
+                
+        except Exception as ex:
+            logger.exception(f"Error generating fake data: {ex}")
+            if self.page:
+                snackbar = ft.SnackBar(
+                    content=ft.Text(f"Error al generar datos: {str(ex)}"),
+                    bgcolor=ft.Colors.RED,
+                    duration=3000,
+                )
+                self.page.overlay.append(snackbar)
+                snackbar.open = True
+                self.page.update()
 
     def _on_state_changed(self) -> None:
         """Observer: Se ejecuta cuando cambia el estado."""
