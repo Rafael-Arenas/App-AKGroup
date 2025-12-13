@@ -16,6 +16,8 @@ from src.frontend.components.common import (
     ConfirmDialog,
 )
 from src.frontend.i18n.translation_manager import t
+from src.frontend.utils.rut_utils import validate_rut, format_rut
+
 # Los diálogos de direcciones y contactos se crean inline usando controles nativos de Flet
 
 
@@ -58,6 +60,7 @@ class CompanyDetailView(ft.Container):
         self._company: dict | None = None
         self._addresses: list[dict] = []
         self._contacts: list[dict] = []
+        self._ruts: list[dict] = []
         self._confirm_dialog: ConfirmDialog | None = None
 
         # Configurar propiedades del contenedor
@@ -259,15 +262,15 @@ class CompanyDetailView(ft.Container):
         if fiscal_card:
             cards.append(fiscal_card)
 
-        # Tarjetas de Direcciones y Contactos
-        addresses_card = BaseCard(
-            title=t("companies.sections.addresses"),
-            icon=ft.Icons.LOCATION_ON,
-            content=self._create_addresses_section(),
+        # Tarjetas de RUTs, Contactos y Direcciones
+        ruts_card = BaseCard(
+            title="RUTs",
+            icon=ft.Icons.ASSIGNMENT_IND,
+            content=self._create_ruts_section(),
             collapsible=True,
             initially_collapsed=False,
         )
-        cards.append(addresses_card)
+        cards.append(ruts_card)
 
         contacts_card = BaseCard(
             title=t("companies.sections.contacts"),
@@ -277,6 +280,15 @@ class CompanyDetailView(ft.Container):
             initially_collapsed=False,
         )
         cards.append(contacts_card)
+
+        addresses_card = BaseCard(
+            title=t("companies.sections.addresses"),
+            icon=ft.Icons.LOCATION_ON,
+            content=self._create_addresses_section(),
+            collapsible=True,
+            initially_collapsed=False,
+        )
+        cards.append(addresses_card)
 
         # Contenido principal con scroll
         content = ft.Column(
@@ -598,6 +610,129 @@ class CompanyDetailView(ft.Container):
             spacing=0,
         )
 
+    def _create_ruts_section(self) -> ft.Control:
+        """
+        Crea la sección de RUTs con lista de cards.
+
+        Returns:
+            Control con la lista de RUTs
+        """
+        if not self._ruts:
+            return ft.Container(
+                content=ft.Column(
+                    controls=[
+                        ft.Icon(
+                            name=ft.Icons.ASSIGNMENT_IND_OUTLINED,
+                            size=LayoutConstants.ICON_SIZE_LG,
+                            color=ft.Colors.GREY_400,
+                        ),
+                        ft.Text(
+                            "No hay RUTs registrados",
+                            size=LayoutConstants.FONT_SIZE_MD,
+                            color=ft.Colors.GREY_600,
+                        ),
+                        ft.ElevatedButton(
+                            text="Agregar primer RUT",
+                            icon=ft.Icons.ADD,
+                            on_click=self._on_add_rut,
+                        ),
+                    ],
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                    spacing=LayoutConstants.SPACING_SM,
+                ),
+                padding=LayoutConstants.PADDING_MD,
+                alignment=ft.alignment.center,
+            )
+
+        # Lista de RUTs
+        rut_cards = []
+        for rut in self._ruts:
+            # Badge de principal
+            badges = []
+            if rut.get("is_main"):
+                badges.append(
+                    ft.Container(
+                        content=ft.Text(
+                            "Principal",
+                            size=LayoutConstants.FONT_SIZE_XS,
+                            weight=LayoutConstants.FONT_WEIGHT_SEMIBOLD,
+                            color=ft.Colors.WHITE,
+                        ),
+                        padding=ft.padding.symmetric(
+                            horizontal=LayoutConstants.PADDING_SM,
+                            vertical=2,
+                        ),
+                        border_radius=LayoutConstants.RADIUS_FULL,
+                        bgcolor=ft.Colors.GREEN,
+                    )
+                )
+
+            rut_card = ft.Container(
+                content=ft.Row(
+                    controls=[
+                        # RUT
+                        ft.Container(
+                            content=ft.Column(
+                                controls=[
+                                    ft.Row(
+                                        controls=badges,
+                                        spacing=LayoutConstants.SPACING_XS,
+                                    ),
+                                    ft.Text(
+                                        rut.get("rut", "-"),
+                                        size=LayoutConstants.FONT_SIZE_MD,
+                                        weight=LayoutConstants.FONT_WEIGHT_SEMIBOLD,
+                                    ),
+                                ],
+                                spacing=LayoutConstants.SPACING_XS,
+                            ),
+                            width=200,
+                        ),
+                        # Estado y acciones
+                        ft.Row(
+                            controls=[
+                                ft.IconButton(
+                                    icon=ft.Icons.EDIT_OUTLINED,
+                                    icon_size=LayoutConstants.ICON_SIZE_SM,
+                                    tooltip="Editar RUT",
+                                    on_click=lambda e, r=rut: self._on_edit_rut(e, r),
+                                ),
+                                ft.IconButton(
+                                    icon=ft.Icons.DELETE_OUTLINE,
+                                    icon_size=LayoutConstants.ICON_SIZE_SM,
+                                    tooltip="Eliminar RUT",
+                                    on_click=lambda e, r=rut: self._on_delete_rut(e, r),
+                                ),
+                            ],
+                            spacing=LayoutConstants.SPACING_XS,
+                        ),
+                    ],
+                    spacing=LayoutConstants.SPACING_MD,
+                    alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                ),
+                padding=LayoutConstants.PADDING_SM,
+                border=ft.border.only(bottom=ft.BorderSide(1, ft.Colors.GREY_200)),
+            )
+            rut_cards.append(rut_card)
+
+        # Botón para agregar nuevo RUT
+        add_button = ft.ElevatedButton(
+            text="Agregar RUT",
+            icon=ft.Icons.ADD,
+            on_click=self._on_add_rut,
+        )
+
+        return ft.Column(
+            controls=[
+                *rut_cards,
+                ft.Container(
+                    content=add_button,
+                    padding=ft.padding.only(top=LayoutConstants.PADDING_SM),
+                ),
+            ],
+            spacing=0,
+        )
+
     def _create_info_row(self, label: str, value: str) -> ft.Container:
         """
         Crea una fila de información con mejor estilo.
@@ -724,6 +859,19 @@ class CompanyDetailView(ft.Container):
                 except Exception as e:
                     logger.warning(f"Error loading contacts: {e}")
                     self._contacts = []
+
+                try:
+                    # Cargar RUTs
+                    rut_response = await client.get(f"/api/v1/company-ruts/company/{self.company_id}")
+                    if rut_response.status_code == 200:
+                        self._ruts = rut_response.json()
+                        logger.success(f"Loaded {len(self._ruts)} RUTs")
+                    else:
+                        logger.warning(f"Error loading RUTs: {rut_response.status_code}")
+                        self._ruts = []
+                except Exception as e:
+                    logger.warning(f"Error loading RUTs: {e}")
+                    self._ruts = []
 
             self._is_loading = False
 
@@ -1365,7 +1513,7 @@ class CompanyDetailView(ft.Container):
                 }
 
                 async with httpx.AsyncClient(base_url="http://localhost:8000", follow_redirects=True) as client:
-                    response = await client.post("/api/v1/contacts/", json=data)
+                    response = await client.post("/api/v1/contacts", json=data)
                     if response.status_code == 201:
                         close_bottom_sheet()
                         await self._on_contact_saved()
@@ -1503,7 +1651,7 @@ class CompanyDetailView(ft.Container):
 
                 async with httpx.AsyncClient(base_url="http://localhost:8000", follow_redirects=True) as client:
                     response = await client.put(
-                        f"/api/v1/contacts/{contact_id}/", json=data
+                        f"/api/v1/contacts/{contact_id}", json=data
                     )
                     if response.status_code == 200:
                         close_bottom_sheet()
@@ -1608,7 +1756,7 @@ class CompanyDetailView(ft.Container):
             import httpx
 
             async with httpx.AsyncClient(base_url="http://localhost:8000", follow_redirects=True) as client:
-                response = await client.delete(f"/api/v1/contacts/{contact_id}/")
+                response = await client.delete(f"/api/v1/contacts/{contact_id}")
 
                 if response.status_code == 200:
                     logger.success(f"Contact {contact_id} deleted successfully")
@@ -1638,7 +1786,7 @@ class CompanyDetailView(ft.Container):
             import httpx
 
             async with httpx.AsyncClient(base_url="http://localhost:8000", follow_redirects=True) as client:
-                response = await client.get(f"/api/v1/contacts/company/{self.company_id}/")
+                response = await client.get(f"/api/v1/contacts/company/{self.company_id}")
                 if response.status_code == 200:
                     self._contacts = response.json()
                     logger.success(f"Reloaded {len(self._contacts)} contacts")
@@ -1680,6 +1828,348 @@ class CompanyDetailView(ft.Container):
         """Observer: Se ejecuta cuando cambia el estado."""
         logger.debug("CompanyDetailView state changed, rebuilding content")
         # Reconstruir el contenido con las nuevas traducciones
+        self.content = self.build()
+        if self.page:
+            self.update()
+
+    # ========================================================================
+    # MÉTODOS PARA RUTS
+    # ========================================================================
+
+    def _on_add_rut(self, e: ft.ControlEvent) -> None:
+        """Abre el bottom sheet para agregar un nuevo RUT."""
+        logger.info(f"Add RUT clicked for company ID={self.company_id}")
+
+        def on_rut_change(e):
+            """Valida y formatea el RUT mientras se escribe."""
+            value = rut_field.value
+            
+            # Formatear si tiene largo suficiente
+            if len(value) >= 8:
+                formatted = format_rut(value)
+                if formatted != value:
+                    rut_field.value = formatted
+                    rut_field.update()
+            
+            # Validar
+            is_valid, error = validate_rut(rut_field.value)
+            if not is_valid:
+                rut_field.error_text = error
+            else:
+                rut_field.error_text = None
+            rut_field.update()
+
+        # Crear campos del formulario
+        rut_field = ft.TextField(
+            label="RUT *",
+            hint_text="Ej: 76.123.456-7 o 76123456-7",
+            on_change=on_rut_change,
+        )
+        is_main_checkbox = ft.Checkbox(
+            label="RUT principal",
+            value=False,
+        )
+
+        def close_bottom_sheet():
+            self.page.close(bottom_sheet)
+
+        async def save_rut():
+            # Validación
+            is_valid, error = validate_rut(rut_field.value)
+            if not is_valid:
+                rut_field.error_text = error
+                rut_field.update()
+                return
+
+            try:
+                import httpx
+                # Enviar el RUT formateado
+                formatted_rut = format_rut(rut_field.value)
+                data = {
+                    "rut": formatted_rut,
+                    "is_main": is_main_checkbox.value,
+                    "company_id": self.company_id,
+                }
+
+                async with httpx.AsyncClient(base_url="http://localhost:8000", follow_redirects=True) as client:
+                    response = await client.post("/api/v1/company-ruts/", json=data)
+                    if response.status_code == 201:
+                        close_bottom_sheet()
+                        await self._on_rut_saved()
+                    else:
+                        try:
+                            error_data = response.json()
+                            if "detail" in error_data:
+                                if isinstance(error_data["detail"], list):
+                                    # Pydantic error
+                                    error_msgs = [e["msg"] for e in error_data["detail"]]
+                                    error_detail = "\n".join(error_msgs)
+                                else:
+                                    error_detail = str(error_data["detail"])
+                            else:
+                                error_detail = "Error desconocido"
+                        except Exception:
+                            error_detail = f"Error {response.status_code}: {response.text}"
+
+                        snack = ft.SnackBar(
+                            content=ft.Text(f"Error: {error_detail}"),
+                            bgcolor=ft.Colors.RED_400,
+                        )
+                        self.page.snack_bar = snack
+                        snack.open = True
+                        self.page.update()
+            except Exception as ex:
+                logger.exception(f"Error saving RUT: {ex}")
+                snack = ft.SnackBar(
+                    content=ft.Text(f"Error de conexión: {str(ex)}"),
+                    bgcolor=ft.Colors.RED_400,
+                )
+                self.page.snack_bar = snack
+                snack.open = True
+                self.page.update()
+
+        # Crear BottomSheet
+        bottom_sheet = ft.BottomSheet(
+            content=ft.Container(
+                content=ft.Column(
+                    controls=[
+                        ft.Row(
+                            controls=[
+                                ft.Text("Agregar RUT", size=20, weight=ft.FontWeight.BOLD),
+                                ft.IconButton(
+                                    icon=ft.Icons.CLOSE,
+                                    on_click=lambda _: close_bottom_sheet(),
+                                ),
+                            ],
+                            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                        ),
+                        ft.Divider(),
+                        rut_field,
+                        is_main_checkbox,
+                        ft.Row(
+                            controls=[
+                                ft.TextButton("Cancelar", on_click=lambda _: close_bottom_sheet()),
+                                ft.ElevatedButton(
+                                    "Guardar",
+                                    icon=ft.Icons.SAVE,
+                                    on_click=lambda _: self.page.run_task(save_rut),
+                                ),
+                            ],
+                            alignment=ft.MainAxisAlignment.END,
+                            spacing=10,
+                        ),
+                    ],
+                    spacing=15,
+                    scroll=ft.ScrollMode.AUTO,
+                ),
+                padding=20,
+            ),
+        )
+
+        self.page.open(bottom_sheet)
+        logger.info("BottomSheet opened for adding RUT")
+
+    def _on_edit_rut(self, e: ft.ControlEvent, rut: dict) -> None:
+        """Abre el bottom sheet para editar un RUT."""
+        logger.info(f"Edit RUT clicked: ID={rut.get('id')}")
+
+        rut_id = rut.get("id")
+
+        def on_rut_change(e):
+            """Valida y formatea el RUT mientras se escribe."""
+            value = rut_field.value
+            
+            # Formatear si tiene largo suficiente
+            if len(value) >= 8:
+                formatted = format_rut(value)
+                if formatted != value:
+                    rut_field.value = formatted
+                    rut_field.update()
+            
+            # Validar
+            is_valid, error = validate_rut(rut_field.value)
+            if not is_valid:
+                rut_field.error_text = error
+            else:
+                rut_field.error_text = None
+            rut_field.update()
+
+        # Crear campos del formulario con datos iniciales
+        rut_field = ft.TextField(
+            label="RUT *",
+            value=rut.get("rut", ""),
+            hint_text="Ej: 76.123.456-7 o 76123456-7",
+            on_change=on_rut_change,
+        )
+        is_main_checkbox = ft.Checkbox(
+            label="RUT principal",
+            value=rut.get("is_main", False),
+        )
+
+        def close_bottom_sheet():
+            self.page.close(bottom_sheet)
+
+        async def save_rut():
+            # Validación
+            is_valid, error = validate_rut(rut_field.value)
+            if not is_valid:
+                rut_field.error_text = error
+                rut_field.update()
+                return
+
+            try:
+                import httpx
+                # Enviar el RUT formateado
+                formatted_rut = format_rut(rut_field.value)
+                data = {
+                    "rut": formatted_rut,
+                    "is_main": is_main_checkbox.value,
+                }
+
+                async with httpx.AsyncClient(base_url="http://localhost:8000", follow_redirects=True) as client:
+                    response = await client.put(
+                        f"/api/v1/company-ruts/{rut_id}", json=data
+                    )
+                    if response.status_code == 200:
+                        close_bottom_sheet()
+                        await self._on_rut_saved()
+                    else:
+                        try:
+                            error_data = response.json()
+                            if "detail" in error_data:
+                                if isinstance(error_data["detail"], list):
+                                    # Pydantic error
+                                    error_msgs = [e["msg"] for e in error_data["detail"]]
+                                    error_detail = "\n".join(error_msgs)
+                                else:
+                                    error_detail = str(error_data["detail"])
+                            else:
+                                error_detail = "Error desconocido"
+                        except Exception:
+                            error_detail = f"Error {response.status_code}: {response.text}"
+
+                        snack = ft.SnackBar(
+                            content=ft.Text(f"Error: {error_detail}"),
+                            bgcolor=ft.Colors.RED_400,
+                        )
+                        self.page.snack_bar = snack
+                        snack.open = True
+                        self.page.update()
+            except Exception as ex:
+                logger.exception(f"Error saving RUT: {ex}")
+                snack = ft.SnackBar(
+                    content=ft.Text(f"Error de conexión: {str(ex)}"),
+                    bgcolor=ft.Colors.RED_400,
+                )
+                self.page.snack_bar = snack
+                snack.open = True
+                self.page.update()
+
+        # Crear BottomSheet
+        bottom_sheet = ft.BottomSheet(
+            content=ft.Container(
+                content=ft.Column(
+                    controls=[
+                        ft.Row(
+                            controls=[
+                                ft.Text("Editar RUT", size=20, weight=ft.FontWeight.BOLD),
+                                ft.IconButton(
+                                    icon=ft.Icons.CLOSE,
+                                    on_click=lambda _: close_bottom_sheet(),
+                                ),
+                            ],
+                            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                        ),
+                        ft.Divider(),
+                        rut_field,
+                        is_main_checkbox,
+                        ft.Row(
+                            controls=[
+                                ft.TextButton("Cancelar", on_click=lambda _: close_bottom_sheet()),
+                                ft.ElevatedButton(
+                                    "Guardar",
+                                    icon=ft.Icons.SAVE,
+                                    on_click=lambda _: self.page.run_task(save_rut),
+                                ),
+                            ],
+                            alignment=ft.MainAxisAlignment.END,
+                            spacing=10,
+                        ),
+                    ],
+                    spacing=15,
+                    scroll=ft.ScrollMode.AUTO,
+                ),
+                padding=20,
+            ),
+        )
+
+        self.page.open(bottom_sheet)
+        logger.info("BottomSheet opened for editing RUT")
+
+    def _on_delete_rut(self, e: ft.ControlEvent, rut: dict) -> None:
+        """Muestra confirmación para eliminar un RUT."""
+        logger.info(f"Delete RUT clicked: ID={rut.get('id')}")
+
+        confirm_dialog = ConfirmDialog(
+            title="Eliminar RUT",
+            message=f"¿Está seguro de que desea eliminar el RUT '{rut.get('rut')}'?",
+            on_confirm=lambda: self.page.run_task(self._confirm_delete_rut, rut.get("id")),
+        )
+
+        if self.page:
+            confirm_dialog.show(self.page)
+
+    async def _confirm_delete_rut(self, rut_id: int) -> None:
+        """Ejecuta la eliminación de un RUT."""
+        logger.info(f"Confirming deletion of RUT ID={rut_id}")
+
+        try:
+            import httpx
+
+            async with httpx.AsyncClient(base_url="http://localhost:8000", follow_redirects=True) as client:
+                response = await client.delete(f"/api/v1/company-ruts/{rut_id}")
+
+                if response.status_code == 200:
+                    logger.success(f"RUT {rut_id} deleted successfully")
+                    await self._on_rut_saved()
+                    self._show_snackbar("RUT eliminado exitosamente", ft.Colors.GREEN)
+                else:
+                    try:
+                        error_detail = response.json().get("detail", "Error desconocido")
+                    except Exception:
+                        error_detail = f"Error {response.status_code}"
+                    logger.error(f"Error deleting RUT: {response.status_code} - {error_detail}")
+                    self._show_snackbar(f"Error al eliminar: {error_detail}", ft.Colors.RED_400)
+
+        except Exception as e:
+            logger.exception(f"Error deleting RUT: {e}")
+            self._show_snackbar(f"Error de conexión: {str(e)}", ft.Colors.RED_400)
+
+    async def _on_rut_saved(self) -> None:
+        """Callback después de guardar/eliminar un RUT."""
+        logger.info("RUT saved, reloading RUTs")
+        await self._reload_ruts()
+        self._show_snackbar("Cambios guardados exitosamente", ft.Colors.GREEN)
+
+    async def _reload_ruts(self) -> None:
+        """Recarga solo los RUTs desde la API."""
+        try:
+            import httpx
+
+            async with httpx.AsyncClient(base_url="http://localhost:8000", follow_redirects=True) as client:
+                response = await client.get(f"/api/v1/company-ruts/company/{self.company_id}")
+                if response.status_code == 200:
+                    self._ruts = response.json()
+                    logger.success(f"Reloaded {len(self._ruts)} RUTs")
+                else:
+                    logger.warning(f"Error reloading RUTs: {response.status_code}")
+                    self._ruts = []
+
+        except Exception as e:
+            logger.exception(f"Error reloading RUTs: {e}")
+            self._ruts = []
+
+        # Reconstruir solo el contenido
         self.content = self.build()
         if self.page:
             self.update()
