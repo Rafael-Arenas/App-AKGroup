@@ -340,6 +340,7 @@ class ProductResponse(BaseResponse):
     plan_url: Optional[str] = None
     supplier_reference: Optional[str] = None
     customs_number: Optional[str] = None
+    country_of_origin: Optional[str] = None
     is_active: bool
 
     # Relaciones opcionales
