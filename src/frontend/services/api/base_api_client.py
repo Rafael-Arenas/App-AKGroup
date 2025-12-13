@@ -200,11 +200,34 @@ class BaseAPIClient:
                 error_data = {}
                 try:
                     error_data = response.json()
+                    # Debug: Log raw response for 422 and 500 errors
+                    if response.status_code in [422, 500]:
+                        logger.debug(
+                            "Raw {} response data: {}",
+                            response.status_code,
+                            error_data
+                        )
                 except Exception:
                     error_data = {"error": "unknown", "message": response.text}
 
-                error_message = error_data.get("message", "Error desconocido")
-                error_details = error_data.get("details", {})
+                # FastAPI validation errors come in "detail" field
+                if "detail" in error_data:
+                    if isinstance(error_data["detail"], list):
+                        # Parse FastAPI validation errors list
+                        error_messages = []
+                        for item in error_data["detail"]:
+                            if isinstance(item, dict) and "msg" in item:
+                                loc = " -> ".join(str(x) for x in item.get("loc", []))
+                                error_messages.append(f"{loc}: {item['msg']}" if loc else item['msg'])
+                        error_message = "\n".join(error_messages) if error_messages else "Error de validación"
+                        error_details = {"validation_errors": error_data["detail"]}
+                    else:
+                        # Single detail message
+                        error_message = str(error_data["detail"])
+                        error_details = error_data
+                else:
+                    error_message = error_data.get("message", "Error desconocido")
+                    error_details = error_data.get("details", {})
 
                 # Mapear códigos de estado a excepciones
                 if response.status_code == 401:
