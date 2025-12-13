@@ -141,7 +141,12 @@ class BaseService(Generic[T, CreateSchema, UpdateSchema, ResponseSchema]):
             self.session.info["user_id"] = user_id
 
             # Crear entidad desde schema
-            entity_data = schema.model_dump()
+            # Handle both dict and Pydantic model inputs
+            if hasattr(schema, 'model_dump'):
+                entity_data = schema.model_dump()
+            else:
+                # Already a dict
+                entity_data = schema
             entity = self.model(**entity_data)
 
             # Validar reglas de negocio (override en subclases)
