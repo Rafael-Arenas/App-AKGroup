@@ -5,11 +5,15 @@ Define los schemas de validación para operaciones CRUD sobre productos
 y sus componentes (BOM - Bill of Materials).
 """
 
+from __future__ import annotations
+
 from typing import Optional, List
 from decimal import Decimal
 from pydantic import Field, field_validator
 
 from src.shared.schemas.base import BaseSchema, BaseResponse
+from src.shared.schemas.core.company import CompanyResponse
+from src.shared.schemas.lookups.lookup import SalesTypeResponse
 from src.shared.constants import PRODUCT_TYPE_ARTICLE, PRODUCT_TYPE_NOMENCLATURE
 
 
@@ -344,6 +348,8 @@ class ProductResponse(BaseResponse):
     is_active: bool
 
     # Relaciones opcionales
+    company: Optional['CompanyResponse'] = None
+    sales_type: Optional['SalesTypeResponse'] = None
     components: Optional[List['ProductComponentResponse']] = []
     parent_components: Optional[List['ProductComponentResponse']] = []
 
@@ -466,6 +472,7 @@ class ProductSearchResponse(BaseSchema):
     code: str
     name: str
     product_type: str
-    sale_price: Optional[Decimal] = None
-    stock_quantity: Optional[Decimal] = None
-    is_active: bool
+
+
+# Rebuild ProductResponse to resolve forward references
+ProductResponse.model_rebuild()
