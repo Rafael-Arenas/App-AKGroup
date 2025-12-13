@@ -978,6 +978,7 @@ class ArticleFormView(ft.Column):
 
         # Campos de logística y aduanas
         country_of_origin = self._country_of_origin_field.get_value()
+        logger.debug(f"Country of origin from field: '{country_of_origin}'")
         if country_of_origin:
             data["country_of_origin"] = country_of_origin
 
