@@ -12,11 +12,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from src.backend.api import error_handlers
-from src.backend.api.v1 import (
+from src.backend.api.v1 import (  # noqa: F401
     companies,
     products,
     addresses,
     contacts,
+    company_ruts,
     services,
     staff,
     notes,
@@ -165,6 +166,12 @@ app.include_router(
     contacts.router,
     prefix="/api/v1",
     tags=["contacts"]
+)
+
+app.include_router(
+    company_ruts.router,
+    prefix="/api/v1",
+    tags=["company-ruts"]
 )
 
 app.include_router(
