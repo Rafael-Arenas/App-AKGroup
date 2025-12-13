@@ -246,7 +246,7 @@ class ArticleDetailView(ft.Container):
             controls=[
                 self._create_info_row(t("articles.form.country_of_origin"), self._get_country_name(self._article.get("country_of_origin"))),
                 self._create_info_row(t("articles.form.customs_number"), self._article.get("customs_number", "-") or "-"),
-                self._create_info_row(t("articles.form.supplier"), self._article.get("supplier", {}).get("name", "-") if self._article.get("supplier") else "-"),
+                self._create_info_row(t("articles.form.supplier"), self._article.get("company", {}).get("name", "-") if self._article.get("company") and self._article.get("company") != {} else "-"),
                 self._create_info_row(t("articles.form.sales_type"), self._article.get("sales_type", {}).get("name", "-") if self._article.get("sales_type") else "-"),
             ],
             spacing=LayoutConstants.SPACING_SM,
