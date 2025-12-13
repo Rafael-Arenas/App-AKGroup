@@ -244,7 +244,7 @@ class ArticleDetailView(ft.Container):
         # Información logística y aduanas
         logistics_info = ft.Column(
             controls=[
-                self._create_info_row(t("articles.form.country_of_origin"), self._article.get("country_of_origin", "-") or "-"),
+                self._create_info_row(t("articles.form.country_of_origin"), self._get_country_name(self._article.get("country_of_origin"))),
                 self._create_info_row(t("articles.form.customs_number"), self._article.get("customs_number", "-") or "-"),
                 self._create_info_row(t("articles.form.supplier"), self._article.get("supplier", {}).get("name", "-") if self._article.get("supplier") else "-"),
                 self._create_info_row(t("articles.form.sales_type"), self._article.get("sales_type", {}).get("name", "-") if self._article.get("sales_type") else "-"),
@@ -314,6 +314,71 @@ class ArticleDetailView(ft.Container):
             ],
         )
 
+    def _get_country_name(self, country_code: str | None) -> str:
+        """Convierte el código de país de 2 letras al nombre completo del país."""
+        if not country_code or country_code == "None":
+            return "-"
+        
+        # Mapeo de códigos de país a nombres completos
+        code_to_name = {
+            "CL": "Chile",
+            "CN": "China",
+            "DE": "Alemania",
+            "ES": "España",
+            "FR": "Francia",
+            "GB": "Reino Unido",
+            "IT": "Italia",
+            "US": "Estados Unidos",
+            "AR": "Argentina",
+            "BR": "Brasil",
+            "CO": "Colombia",
+            "MX": "México",
+            "PE": "Perú",
+            "UY": "Uruguay",
+            "VE": "Venezuela",
+            "CA": "Canadá",
+            "IN": "India",
+            "JP": "Japón",
+            "KR": "Corea del Sur",
+            "TW": "Taiwán",
+            "AU": "Australia",
+            "NZ": "Nueva Zelanda",
+            "ZA": "Sudáfrica",
+            "EG": "Egipto",
+            "MA": "Marruecos",
+            "NG": "Nigeria",
+            "RU": "Rusia",
+            "TR": "Turquía",
+            "AT": "Austria",
+            "BE": "Bélgica",
+            "DK": "Dinamarca",
+            "FI": "Finlandia",
+            "GR": "Grecia",
+            "IE": "Irlanda",
+            "NL": "Países Bajos",
+            "NO": "Noruega",
+            "PL": "Polonia",
+            "PT": "Portugal",
+            "SE": "Suecia",
+            "CH": "Suiza",
+            "CZ": "República Checa",
+            "HU": "Hungría",
+            "RO": "Rumanía",
+            "SK": "Eslovaquia",
+            "SI": "Eslovenia",
+            "BG": "Bulgaria",
+            "HR": "Croacia",
+            "EE": "Estonia",
+            "LV": "Letonia",
+            "LT": "Lituania",
+            "IS": "Islandia",
+            "LU": "Luxemburgo",
+            "MT": "Malta",
+            "CY": "Chipre",
+        }
+        
+        return code_to_name.get(country_code.upper(), country_code)
+
     def did_mount(self) -> None:
         """Lifecycle: Se ejecuta cuando el componente se monta."""
         logger.info("ArticleDetailView mounted")
@@ -343,6 +408,10 @@ class ArticleDetailView(ft.Container):
 
             product_api = ProductAPI()
             self._article = await product_api.get_by_id(self.article_id)
+            
+            # Debug logging para verificar los datos del artículo
+            logger.debug(f"Article data received: {self._article}")
+            logger.debug(f"Country of origin value: '{self._article.get('country_of_origin')}'")
 
             logger.success(f"Article loaded: {self._article.get('designation_es')}")
             self._is_loading = False
