@@ -347,6 +347,18 @@ class ProductResponse(BaseResponse):
     country_of_origin: Optional[str] = None
     is_active: bool
 
+    # Dimensiones y peso
+    net_weight: Optional[Decimal] = None
+    gross_weight: Optional[Decimal] = None
+    length: Optional[Decimal] = None
+    width: Optional[Decimal] = None
+    height: Optional[Decimal] = None
+    volume: Optional[Decimal] = None
+    
+    # Otros
+    hs_code: Optional[str] = None
+    notes: Optional[str] = None
+
     # Relaciones opcionales
     company: Optional['CompanyResponse'] = None
     sales_type: Optional['SalesTypeResponse'] = None
