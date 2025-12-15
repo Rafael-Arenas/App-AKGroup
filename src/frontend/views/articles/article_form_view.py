@@ -231,6 +231,21 @@ class ArticleFormView(ft.Column):
             max_length=50,
         )
 
+        # Campos de recursos (URLs)
+        self._image_url_field = ValidatedTextField(
+            label=t("articles.form.image_url"),
+            hint_text=t("articles.form.image_url_hint"),
+            prefix_icon=ft.Icons.IMAGE,
+            max_length=500,
+        )
+
+        self._plan_url_field = ValidatedTextField(
+            label=t("articles.form.plan_url"),
+            hint_text=t("articles.form.plan_url_hint"),
+            prefix_icon=ft.Icons.MAP,
+            max_length=500,
+        )
+
         # Campos adicionales
         self._sales_type_field = DropdownField(
             label=t("articles.form.sales_type"),
@@ -495,6 +510,19 @@ class ArticleFormView(ft.Column):
                         ],
                         spacing=LayoutConstants.SPACING_MD,
                     ),
+                ],
+                spacing=LayoutConstants.SPACING_MD,
+            ),
+        )
+
+        # Sección recursos
+        resources_section = BaseCard(
+            title=t("articles.form.resources_section"),
+            icon=ft.Icons.LINK,
+            content=ft.Column(
+                controls=[
+                    self._image_url_field,
+                    self._plan_url_field,
                 ],
                 spacing=LayoutConstants.SPACING_MD,
             ),
@@ -972,6 +1000,15 @@ class ArticleFormView(ft.Column):
         customs_number = self._customs_number_field.get_value()
         if customs_number:
             data["customs_number"] = customs_number
+
+        # Recursos
+        image_url = self._image_url_field.get_value()
+        if image_url:
+            data["image_url"] = image_url
+
+        plan_url = self._plan_url_field.get_value()
+        if plan_url:
+            data["plan_url"] = plan_url
 
         # Campos adicionales
         sales_type_value = self._sales_type_field.get_value()
