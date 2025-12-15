@@ -36,8 +36,10 @@ class Quote(Base, TimestampMixin, AuditMixin, ActiveMixin):
         id: Primary key
         quote_number: Unique quote identifier (e.g., "Q-2025-001")
         subject: Quote subject/title
+        unit: Unit of measure (e.g., pcs, kg)
         revision: Quote revision number (e.g., "A", "B", "C")
         company_id: Foreign key to Company (customer)
+        company_rut_id: Foreign key to CompanyRut (specific customer RUT)
         contact_id: Foreign key to Contact (customer contact person)
         branch_id: Foreign key to Branch (customer branch)
         staff_id: Foreign key to Staff (sales person)
@@ -76,6 +78,12 @@ class Quote(Base, TimestampMixin, AuditMixin, ActiveMixin):
         String(10), nullable=False, default="A", comment="Quote revision (A, B, C...)"
     )
 
+    unit = Column(
+        String(20),
+        nullable=True,
+        comment="Unit (Unidad)",
+    )
+
     # Related entities (FK to core models)
     company_id = Column(
         Integer,
@@ -83,6 +91,13 @@ class Quote(Base, TimestampMixin, AuditMixin, ActiveMixin):
         nullable=False,
         index=True,
         comment="Customer company",
+    )
+    company_rut_id = Column(
+        Integer,
+        ForeignKey("company_ruts.id", ondelete="RESTRICT"),
+        nullable=True,
+        index=True,
+        comment="Specific customer RUT for this quote",
     )
     contact_id = Column(
         Integer,
@@ -171,6 +186,7 @@ class Quote(Base, TimestampMixin, AuditMixin, ActiveMixin):
     # Relationships
     # NOTE: These will work once core models are implemented
     company = relationship("Company", back_populates="quotes", foreign_keys=[company_id])
+    company_rut = relationship("CompanyRut", foreign_keys=[company_rut_id])
     contact = relationship("Contact", foreign_keys=[contact_id])
     branch = relationship("Branch", foreign_keys=[branch_id])
     staff = relationship("Staff", foreign_keys=[staff_id])
