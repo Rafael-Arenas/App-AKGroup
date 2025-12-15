@@ -295,6 +295,36 @@ class ArticleDetailView(ft.Container):
 
         return content
 
+    def _create_link_row(self, label: str, url: str | None) -> ft.Row:
+        """Crea una fila con un enlace."""
+        if not url:
+            return self._create_info_row(label, "-")
+            
+        return ft.Row(
+            controls=[
+                ft.Text(
+                    f"{label}:",
+                    size=LayoutConstants.FONT_SIZE_MD,
+                    weight=LayoutConstants.FONT_WEIGHT_SEMIBOLD,
+                    width=150,
+                ),
+                ft.Text(
+                    url,
+                    size=LayoutConstants.FONT_SIZE_MD,
+                    color=ft.Colors.BLUE,
+                    spans=[ft.TextSpan(url, url=url)],
+                    overflow=ft.TextOverflow.ELLIPSIS,
+                    expand=True,
+                ),
+                ft.IconButton(
+                    icon=ft.Icons.OPEN_IN_NEW,
+                    tooltip=t("common.open_link"),
+                    url=url,
+                    icon_size=20,
+                )
+            ],
+        )
+
     def _create_info_row(self, label: str, value: str) -> ft.Row:
         """Crea una fila de información."""
         return ft.Row(
