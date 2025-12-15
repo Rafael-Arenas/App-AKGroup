@@ -13,7 +13,7 @@ from pydantic import Field, field_validator
 
 from src.shared.schemas.base import BaseSchema, BaseResponse
 from src.shared.schemas.core.company import CompanyResponse
-from src.shared.schemas.lookups.lookup import SalesTypeResponse
+from src.shared.schemas.lookups.lookup import SalesTypeResponse, FamilyTypeResponse, MatterResponse
 from src.shared.constants import PRODUCT_TYPE_ARTICLE, PRODUCT_TYPE_NOMENCLATURE
 
 
@@ -362,6 +362,8 @@ class ProductResponse(BaseResponse):
     # Relaciones opcionales
     company: Optional['CompanyResponse'] = None
     sales_type: Optional['SalesTypeResponse'] = None
+    family_type: Optional['FamilyTypeResponse'] = None
+    matter: Optional['MatterResponse'] = None
     components: Optional[List['ProductComponentResponse']] = []
     parent_components: Optional[List['ProductComponentResponse']] = []
 
