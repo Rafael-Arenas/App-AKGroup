@@ -354,6 +354,12 @@ class FakeDataGenerator:
             form_view._supplier_reference_field.set_value(data["supplier_reference"])
             form_view._customs_number_field.set_value(data["customs_number"])
             
+            # Poblar recursos (URLs)
+            if hasattr(form_view, '_image_url_field'):
+                form_view._image_url_field.set_value(data["image_url"])
+            if hasattr(form_view, '_plan_url_field'):
+                form_view._plan_url_field.set_value(data["plan_url"])
+            
             # Poblar campos adicionales
             form_view._designation_fr_field.set_value(data["designation_fr"])
             form_view._designation_en_field.set_value(data["designation_en"])
