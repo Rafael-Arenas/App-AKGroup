@@ -143,10 +143,9 @@ class ArticleDetailView(ft.Container):
                 self._create_info_row(t("articles.form.supplier_reference"), self._article.get("supplier_reference", "-") or "-"),
                 self._create_info_row(t("articles.form.revision"), self._article.get("revision", "-") or "-"),
                 self._create_info_row(t("articles.form.designation_es"), self._article.get("designation_es", "-") or "-"),
-                self._create_info_row(t("articles.form.description"), self._article.get("description", "-") or "-"),
+                self._create_info_row(t("articles.form.description"), self._article.get("short_designation", "-") or "-"),
                 self._create_info_row(t("articles.form.family_type"), self._article.get("family_type", {}).get("name", "-") if self._article.get("family_type") else "-"),
-                self._create_info_row(t("articles.form.matter"), self._article.get("matter", "-") or "-"),
-                self._create_info_row(t("articles.form.unit"), self._article.get("unit", "-") or "-"),
+                self._create_info_row(t("articles.form.matter"), self._article.get("matter", {}).get("name", "-") if self._article.get("matter") else "-"),
             ],
             spacing=LayoutConstants.SPACING_SM,
         )
