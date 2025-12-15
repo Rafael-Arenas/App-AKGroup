@@ -48,7 +48,6 @@ class ArticleFormView(ft.Column):
         self._article_data: dict | None = None
 
         # Lookups
-        self._units: list[dict] = []
         self._family_types: list[dict] = []
         self._matters: list[dict] = []
         self._sales_types: list[dict] = []
@@ -101,13 +100,6 @@ class ArticleFormView(ft.Column):
             hint_text=t("articles.form.description_hint"),
             multiline=True,
             max_length=1000,
-        )
-
-        # Campo de unidad
-        self._unit_field = DropdownField(
-            label=t("articles.form.unit"),
-            options=[],
-            required=False,
         )
 
         # Campos de clasificación (opcionales)
@@ -409,12 +401,11 @@ class ArticleFormView(ft.Column):
                 controls=[
                     ft.Row(
                         controls=[
-                            ft.Container(content=self._unit_field, expand=True),
                             ft.Container(content=self._family_type_field, expand=True),
+                            ft.Container(content=self._matter_field, expand=True),
                         ],
                         spacing=LayoutConstants.SPACING_MD,
                     ),
-                    self._matter_field,
                 ],
                 spacing=LayoutConstants.SPACING_MD,
             ),
@@ -606,14 +597,6 @@ class ArticleFormView(ft.Column):
 
             lookup_api = LookupAPI()
 
-            # Cargar unidades
-            self._units = await lookup_api.get_lookup("units")
-            unit_options = [
-                {"label": u.get("name", u.get("code", "")), "value": str(u["id"])}
-                for u in self._units
-            ]
-            self._unit_field.set_options(unit_options)
-
             # Cargar familias de producto
             try:
                 self._family_types = await lookup_api.get_lookup("family_types")
@@ -692,7 +675,7 @@ class ArticleFormView(ft.Column):
                 logger.warning(f"Could not load countries: {e}")
 
             logger.success(
-                f"Lookups loaded: {len(self._units)} units, "
+                f"Lookups loaded: "
                 f"{len(self._family_types)} families, {len(self._matters)} matters, "
                 f"{len(self._sales_types)} sales types, {len(self._companies)} companies"
             )
