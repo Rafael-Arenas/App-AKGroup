@@ -42,7 +42,7 @@ from src.backend.models.lookups.lookups import (
     SalesType,
     Unit,
 )
-from src.backend.models.core.companies import Branch, Company, CompanyRut
+from src.backend.models.core.companies import Company, CompanyRut, Plant
 from src.backend.models.business.quotes import Quote, QuoteProduct
 
 

@@ -45,7 +45,7 @@ def show_simple_address_dialog(
             ft.dropdown.Option("delivery", "Entrega"),
             ft.dropdown.Option("billing", "Facturación"),
             ft.dropdown.Option("headquarters", "Sede Principal"),
-            ft.dropdown.Option("branch", "Sucursal"),
+            ft.dropdown.Option("plant", "Planta"),
         ],
     )
 

@@ -340,7 +340,7 @@ class CompanyDetailView(ft.Container):
                 "delivery": t("companies.address_types.delivery"),
                 "billing": t("companies.address_types.billing"),
                 "headquarters": t("companies.address_types.headquarters"),
-                "branch": t("companies.address_types.branch"),
+                "plant": t("companies.address_types.plant"),
             }
             type_label = address_type_labels.get(addr.get("address_type", ""), addr.get("address_type", ""))
 
@@ -1033,7 +1033,7 @@ class CompanyDetailView(ft.Container):
                 ft.dropdown.Option("delivery", t("companies.address_types.delivery")),
                 ft.dropdown.Option("billing", t("companies.address_types.billing")),
                 ft.dropdown.Option("headquarters", t("companies.address_types.headquarters")),
-                ft.dropdown.Option("branch", t("companies.address_types.branch")),
+                ft.dropdown.Option("plant", t("companies.address_types.plant")),
             ],
             value="delivery",
         )
@@ -1283,7 +1283,7 @@ class CompanyDetailView(ft.Container):
                 ft.dropdown.Option("delivery", "Entrega"),
                 ft.dropdown.Option("billing", "Facturación"),
                 ft.dropdown.Option("headquarters", "Sede Principal"),
-                ft.dropdown.Option("branch", "Sucursal"),
+                ft.dropdown.Option("plant", "Planta"),
             ],
         )
         is_default_checkbox = ft.Checkbox(

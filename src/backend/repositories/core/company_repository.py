@@ -1,7 +1,7 @@
 """
-Repositorio para Company, CompanyRut y Branch.
+Repositorio para Company, CompanyRut y Plant.
 
-Maneja el acceso a datos para empresas, sus RUTs y sucursales.
+Maneja el acceso a datos para empresas, sus RUTs y plantas.
 """
 
 from typing import Optional, List
@@ -9,7 +9,7 @@ from typing import Optional, List
 from sqlalchemy import or_
 from sqlalchemy.orm import Session, selectinload
 
-from src.backend.models.core.companies import Company, CompanyRut, Branch
+from src.backend.models.core.companies import Company, CompanyRut, Plant
 from src.backend.repositories.base import BaseRepository
 from src.backend.utils.logger import logger
 
@@ -130,33 +130,33 @@ class CompanyRepository(BaseRepository[Company]):
         logger.debug(f"Encontradas {len(companies)} empresa(s) del tipo {company_type_id}")
         return companies
 
-    def get_with_branches(self, company_id: int) -> Optional[Company]:
+    def get_with_plants(self, company_id: int) -> Optional[Company]:
         """
-        Obtiene una empresa con sus sucursales cargadas (eager loading).
+        Obtiene una empresa con sus plantas cargadas (eager loading).
 
         Args:
             company_id: ID de la empresa
 
         Returns:
-            Company con branches cargadas, None si no existe
+            Company con plants cargadas, None si no existe
 
         Example:
-            company = repo.get_with_branches(123)
+            company = repo.get_with_plants(123)
             if company:
-                for branch in company.branches:
-                    print(branch.name)
+                for plant in company.plants:
+                    print(plant.name)
         """
-        logger.debug(f"Obteniendo empresa id={company_id} con sucursales")
+        logger.debug(f"Obteniendo empresa id={company_id} con plantas")
 
         company = (
             self.session.query(Company)
-            .options(selectinload(Company.branches))
+            .options(selectinload(Company.plants))
             .filter(Company.id == company_id)
             .first()
         )
 
         if company:
-            logger.debug(f"Empresa encontrada con {len(company.branches)} sucursal(es)")
+            logger.debug(f"Empresa encontrada con {len(company.plants)} planta(s)")
 
         return company
 
@@ -203,7 +203,7 @@ class CompanyRepository(BaseRepository[Company]):
         Example:
             company = repo.get_with_relations(123)
             if company:
-                print(f"Sucursales: {len(company.branches)}")
+                print(f"Plantas: {len(company.plants)}")
                 print(f"RUTs: {len(company.ruts)}")
         """
         logger.debug(f"Obteniendo empresa id={company_id} con todas las relaciones")
@@ -211,7 +211,7 @@ class CompanyRepository(BaseRepository[Company]):
         company = (
             self.session.query(Company)
             .options(
-                selectinload(Company.branches),
+                selectinload(Company.plants),
                 selectinload(Company.ruts),
             )
             .filter(Company.id == company_id)
@@ -327,90 +327,90 @@ class CompanyRutRepository(BaseRepository[CompanyRut]):
         return primary_rut
 
 
-class BranchRepository(BaseRepository[Branch]):
+class PlantRepository(BaseRepository[Plant]):
     """
-    Repositorio para Branch (sucursales).
+    Repositorio para Plant (plantas/sucursales).
 
-    Maneja las sucursales de empresas.
+    Maneja las plantas de empresas.
 
     Example:
-        repo = BranchRepository(session)
-        branches = repo.get_by_company(company_id=1)
+        repo = PlantRepository(session)
+        plants = repo.get_by_company(company_id=1)
     """
 
     def __init__(self, session: Session):
-        super().__init__(session, Branch)
+        super().__init__(session, Plant)
 
-    def get_by_company(self, company_id: int) -> List[Branch]:
+    def get_by_company(self, company_id: int) -> List[Plant]:
         """
-        Obtiene todas las sucursales de una empresa.
+        Obtiene todas las plantas de una empresa.
 
         Args:
             company_id: ID de la empresa
 
         Returns:
-            Lista de sucursales
+            Lista de plantas
         """
-        logger.debug(f"Obteniendo sucursales de empresa id={company_id}")
+        logger.debug(f"Obteniendo plantas de empresa id={company_id}")
 
-        branches = (
-            self.session.query(Branch)
-            .filter(Branch.company_id == company_id)
-            .order_by(Branch.name)
+        plants = (
+            self.session.query(Plant)
+            .filter(Plant.company_id == company_id)
+            .order_by(Plant.name)
             .all()
         )
 
-        logger.debug(f"Encontradas {len(branches)} sucursal(es)")
-        return branches
+        logger.debug(f"Encontradas {len(plants)} planta(s)")
+        return plants
 
-    def get_active_branches(self, company_id: int) -> List[Branch]:
+    def get_active_plants(self, company_id: int) -> List[Plant]:
         """
-        Obtiene solo las sucursales activas de una empresa.
+        Obtiene solo las plantas activas de una empresa.
 
         Args:
             company_id: ID de la empresa
 
         Returns:
-            Lista de sucursales activas
+            Lista de plantas activas
         """
-        logger.debug(f"Obteniendo sucursales activas de empresa id={company_id}")
+        logger.debug(f"Obteniendo plantas activas de empresa id={company_id}")
 
-        branches = (
-            self.session.query(Branch)
+        plants = (
+            self.session.query(Plant)
             .filter(
-                Branch.company_id == company_id,
-                Branch.is_active == True
+                Plant.company_id == company_id,
+                Plant.is_active == True
             )
-            .order_by(Branch.name)
+            .order_by(Plant.name)
             .all()
         )
 
-        logger.debug(f"Encontradas {len(branches)} sucursal(es) activa(s)")
-        return branches
+        logger.debug(f"Encontradas {len(plants)} planta(s) activa(s)")
+        return plants
 
-    def search_by_name(self, company_id: int, name: str) -> List[Branch]:
+    def search_by_name(self, company_id: int, name: str) -> List[Plant]:
         """
-        Busca sucursales por nombre dentro de una empresa.
+        Busca plantas por nombre dentro de una empresa.
 
         Args:
             company_id: ID de la empresa
             name: Texto a buscar
 
         Returns:
-            Lista de sucursales que coinciden
+            Lista de plantas que coinciden
         """
-        logger.debug(f"Buscando sucursales de empresa id={company_id} por nombre: {name}")
+        logger.debug(f"Buscando plantas de empresa id={company_id} por nombre: {name}")
 
         search_pattern = f"%{name}%"
-        branches = (
-            self.session.query(Branch)
+        plants = (
+            self.session.query(Plant)
             .filter(
-                Branch.company_id == company_id,
-                Branch.name.ilike(search_pattern)
+                Plant.company_id == company_id,
+                Plant.name.ilike(search_pattern)
             )
-            .order_by(Branch.name)
+            .order_by(Plant.name)
             .all()
         )
 
-        logger.debug(f"Encontradas {len(branches)} sucursal(es)")
-        return branches
+        logger.debug(f"Encontradas {len(plants)} planta(s)")
+        return plants

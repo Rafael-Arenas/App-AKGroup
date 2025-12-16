@@ -106,7 +106,7 @@ class City(Base, TimestampMixin):
     Relationships:
         country: País al que pertenece
         companies: Empresas ubicadas en esta ciudad
-        branches: Sucursales ubicadas en esta ciudad
+        plants: Plantas ubicadas en esta ciudad
     """
 
     __tablename__ = "cities"
@@ -131,7 +131,7 @@ class City(Base, TimestampMixin):
     # Relationships
     country = relationship("Country", back_populates="cities", lazy="joined")
     companies = relationship("Company", back_populates="city", lazy="select")
-    branches = relationship("Branch", back_populates="city", lazy="select")
+    plants = relationship("Plant", back_populates="city", lazy="select")
 
     __table_args__ = (
         # Unique constraint compuesto: misma ciudad puede existir en diferentes países

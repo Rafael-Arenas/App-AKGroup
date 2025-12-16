@@ -1,8 +1,8 @@
 """
-Schemas de Pydantic para Company, CompanyRut y Branch.
+Schemas de Pydantic para Company, CompanyRut y Plant.
 
 Define los schemas de validación para operaciones CRUD sobre empresas,
-sus RUTs y sucursales.
+sus RUTs y plantas.
 """
 
 from typing import Optional, List, Any
@@ -154,7 +154,7 @@ class CompanyResponse(BaseResponse):
 
     # Relaciones opcionales (eager loading)
     ruts: Optional[List['CompanyRutResponse']] = []
-    branches: Optional[List['BranchResponse']] = []
+    plants: Optional[List['PlantResponse']] = []
 
     @model_validator(mode='before')
     @classmethod
@@ -272,24 +272,24 @@ class CompanyRutResponse(BaseResponse):
 
 
 # ============================================================================
-# BRANCH SCHEMAS
+# PLANT SCHEMAS
 # ============================================================================
 
-class BranchCreate(BaseSchema):
+class PlantCreate(BaseSchema):
     """
-    Schema para crear una sucursal.
+    Schema para crear una planta/sucursal.
 
     Example:
-        data = BranchCreate(
+        data = PlantCreate(
             company_id=1,
-            name="Sucursal Santiago",
+            name="Planta Santiago",
             address="Av. Principal 123"
         )
     """
 
     company_id: int = Field(..., gt=0, description="ID de la empresa")
-    name: str = Field(..., min_length=2, max_length=200, description="Nombre de la sucursal")
-    address: Optional[str] = Field(None, max_length=500, description="Dirección de la sucursal")
+    name: str = Field(..., min_length=2, max_length=200, description="Nombre de la planta")
+    address: Optional[str] = Field(None, max_length=500, description="Dirección de la planta")
     phone: Optional[str] = Field(None, pattern=r'^\+?[1-9]\d{1,14}$', description="Teléfono")
     email: Optional[str] = Field(None, max_length=100, description="Email")
     city_id: Optional[int] = Field(None, gt=0, description="ID de la ciudad")
@@ -297,26 +297,28 @@ class BranchCreate(BaseSchema):
     @field_validator('name')
     @classmethod
     def name_not_empty(cls, v: str) -> str:
+        """Asegura que el nombre no sea solo espacios."""
         if not v.strip():
-            raise ValueError("El nombre de la sucursal no puede estar vacío")
+            raise ValueError("El nombre de la planta no puede estar vacío")
         return v.strip()
 
     @field_validator('email')
     @classmethod
     def email_lowercase(cls, v: Optional[str]) -> Optional[str]:
+        """Normaliza email a minúsculas."""
         if v:
             return v.lower().strip()
         return v
 
 
-class BranchUpdate(BaseSchema):
+class PlantUpdate(BaseSchema):
     """
-    Schema para actualizar una sucursal.
+    Schema para actualizar una planta.
 
     Todos los campos son opcionales.
 
     Example:
-        data = BranchUpdate(name="Nuevo Nombre", phone="+56912345678")
+        data = PlantUpdate(name="Nuevo Nombre", phone="+56912345678")
     """
 
     name: Optional[str] = Field(None, min_length=2, max_length=200)
@@ -330,7 +332,7 @@ class BranchUpdate(BaseSchema):
     @classmethod
     def name_not_empty(cls, v: Optional[str]) -> Optional[str]:
         if v and not v.strip():
-            raise ValueError("El nombre de la sucursal no puede estar vacío")
+            raise ValueError("El nombre de la planta no puede estar vacío")
         return v.strip() if v else v
 
     @field_validator('email')
@@ -341,13 +343,13 @@ class BranchUpdate(BaseSchema):
         return v
 
 
-class BranchResponse(BaseResponse):
+class PlantResponse(BaseResponse):
     """
-    Schema para respuesta de sucursal.
+    Schema para respuesta de planta.
 
     Example:
-        branch = BranchResponse.model_validate(branch_orm)
-        print(branch.name)
+        plant = PlantResponse.model_validate(plant_orm)
+        print(plant.name)
     """
 
     company_id: int

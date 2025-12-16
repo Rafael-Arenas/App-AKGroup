@@ -1,5 +1,5 @@
 """
-Tests para CompanyRepository, CompanyRutRepository y BranchRepository.
+Tests para CompanyRepository, CompanyRutRepository y PlantRepository.
 
 Valida funcionalidad CRUD base más métodos específicos de Company.
 """
@@ -7,7 +7,7 @@ Valida funcionalidad CRUD base más métodos específicos de Company.
 import pytest
 from sqlalchemy.exc import IntegrityError
 
-from src.backend.models.core.companies import Company, CompanyRut, Branch
+from src.backend.models.core.companies import Company, CompanyRut, Plant
 from src.backend.exceptions.repository import NotFoundException
 
 
@@ -109,46 +109,46 @@ class TestCompanyRepositorySearchByName:
         assert len(results) >= 10
 
 
-class TestCompanyRepositoryGetWithBranches:
-    """Tests para get_with_branches()."""
+class TestCompanyRepositoryGetWithPlants:
+    """Tests para get_with_plants()."""
 
-    def test_get_with_branches_loads_relationships(
-        self, company_repository, sample_company, branch_repository, session
+    def test_get_with_plants_loads_relationships(
+        self, company_repository, sample_company, plant_repository, session
     ):
-        """Test que carga branches con eager loading."""
-        # Arrange - crear branches para la company
+        """Test que carga plants con eager loading."""
+        # Arrange - crear plants para la company
         for i in range(3):
-            branch = Branch(
+            plant = Plant(
                 company_id=sample_company.id,
-                name=f"Branch {i+1}",
+                name=f"Plant {i+1}",
                 address=f"Address {i+1}",
             )
-            branch_repository.create(branch)
+            plant_repository.create(plant)
         session.commit()
 
         # Act
-        result = company_repository.get_with_branches(sample_company.id)
+        result = company_repository.get_with_plants(sample_company.id)
 
         # Assert
         assert result is not None
-        assert len(result.branches) == 3
-        assert all(b.company_id == sample_company.id for b in result.branches)
+        assert len(result.plants) == 3
+        assert all(b.company_id == sample_company.id for b in result.plants)
 
-    def test_get_with_branches_empty_list(
+    def test_get_with_plants_empty_list(
         self, company_repository, sample_company, session
     ):
-        """Test que retorna company con lista vacía si no hay branches."""
+        """Test que retorna company con lista vacía si no hay plants."""
         # Act
-        result = company_repository.get_with_branches(sample_company.id)
+        result = company_repository.get_with_plants(sample_company.id)
 
         # Assert
         assert result is not None
-        assert result.branches == []
+        assert result.plants == []
 
-    def test_get_with_branches_not_found(self, company_repository):
+    def test_get_with_plants_not_found(self, company_repository):
         """Test que retorna None si company no existe."""
         # Act
-        result = company_repository.get_with_branches(99999)
+        result = company_repository.get_with_plants(99999)
 
         # Assert
         assert result is None
@@ -199,7 +199,7 @@ class TestCompanyRepositoryGetWithRelations:
         self,
         company_repository,
         sample_company,
-        branch_repository,
+        plant_repository,
         company_rut_repository,
         address_repository,
         contact_repository,
@@ -207,12 +207,12 @@ class TestCompanyRepositoryGetWithRelations:
     ):
         """Test que carga todas las relaciones con eager loading."""
         # Arrange - crear datos relacionados
-        branch = Branch(
+        plant = Plant(
             company_id=sample_company.id,
-            name="Main Branch",
+            name="Main Plant",
             address="Main Address",
         )
-        branch_repository.create(branch)
+        plant_repository.create(plant)
 
         rut = CompanyRut(
             company_id=sample_company.id,
@@ -228,7 +228,7 @@ class TestCompanyRepositoryGetWithRelations:
 
         # Assert
         assert result is not None
-        assert len(result.branches) == 1
+        assert len(result.plants) == 1
         assert len(result.ruts) == 1
 
     def test_get_with_relations_not_found(self, company_repository):
@@ -453,77 +453,77 @@ class TestCompanyRutRepositoryGetByRut:
         assert result is None
 
 
-# ===================== BRANCH REPOSITORY TESTS =====================
+# ===================== PLANT REPOSITORY TESTS =====================
 
 
-class TestBranchRepositoryGetByCompany:
+class TestPlantRepositoryGetByCompany:
     """Tests para get_by_company()."""
 
     def test_get_by_company_existing(
-        self, branch_repository, sample_company, session
+        self, plant_repository, sample_company, session
     ):
-        """Test que obtiene branches de una company."""
-        # Arrange - crear 3 branches
+        """Test que obtiene plants de una company."""
+        # Arrange - crear 3 plants
         for i in range(3):
-            branch = Branch(
+            plant = Plant(
                 company_id=sample_company.id,
-                name=f"Branch {i+1}",
+                name=f"Plant {i+1}",
                 address=f"Address {i+1}",
             )
-            branch_repository.create(branch)
+            plant_repository.create(plant)
         session.commit()
 
         # Act
-        results = branch_repository.get_by_company(sample_company.id)
+        results = plant_repository.get_by_company(sample_company.id)
 
         # Assert
         assert len(results) == 3
         assert all(b.company_id == sample_company.id for b in results)
 
-    def test_get_by_company_empty(self, branch_repository, sample_company):
-        """Test que retorna lista vacía si no hay branches."""
+    def test_get_by_company_empty(self, plant_repository, sample_company):
+        """Test que retorna lista vacía si no hay plants."""
         # Act
-        results = branch_repository.get_by_company(sample_company.id)
+        results = plant_repository.get_by_company(sample_company.id)
 
         # Assert
         assert results == []
 
-    def test_get_by_company_multiple_branches(
-        self, branch_repository, sample_company, session
+    def test_get_by_company_multiple_plants(
+        self, plant_repository, sample_company, session
     ):
-        """Test que obtiene múltiples branches."""
-        # Arrange - crear 10 branches
+        """Test que obtiene múltiples plants."""
+        # Arrange - crear 10 plants
         for i in range(10):
-            branch = Branch(
+            plant = Plant(
                 company_id=sample_company.id,
-                name=f"Branch {i+1}",
+                name=f"Plant {i+1}",
                 address=f"Address {i+1}",
             )
-            branch_repository.create(branch)
+            plant_repository.create(plant)
         session.commit()
 
         # Act
-        results = branch_repository.get_by_company(sample_company.id)
+        results = plant_repository.get_by_company(sample_company.id)
 
         # Assert
         assert len(results) == 10
 
 
-class TestBranchRepositoryGetActiveBranches:
-    """Tests para get_active_branches()."""
+class TestPlantRepositoryGetActivePlants:
+    """Tests para get_active_plants()."""
 
-    def test_get_active_branches_only(
-        self, branch_repository, sample_company, session
+    def test_get_active_plants_only(
+        self, plant_repository, sample_company, session
     ):
-        """Test que obtiene solo branches activas."""
-        # Arrange - crear 5 branches
+        """Test que obtiene solo plants activas."""
+        # Arrange - crear 5 plants
         for i in range(5):
-            branch = Branch(
+            plant = Plant(
                 company_id=sample_company.id,
-                name=f"Branch {i+1}",
+                name=f"Plant {i+1}",
                 address=f"Address {i+1}",
             )
-            created = branch_repository.create(branch)
+            created = plant_repository.create(plant)
 
             # Marcar 2 como inactivas
             if i in [1, 3]:
@@ -532,69 +532,69 @@ class TestBranchRepositoryGetActiveBranches:
         session.commit()
 
         # Act
-        results = branch_repository.get_active_branches(sample_company.id)
+        results = plant_repository.get_active_plants(sample_company.id)
 
         # Assert
         assert len(results) == 3
         assert all(b.is_active for b in results)
 
-    def test_get_active_branches_empty(self, branch_repository, sample_company):
-        """Test que retorna lista vacía si no hay branches activas."""
+    def test_get_active_plants_empty(self, plant_repository, sample_company):
+        """Test que retorna lista vacía si no hay plants activas."""
         # Act
-        results = branch_repository.get_active_branches(sample_company.id)
+        results = plant_repository.get_active_plants(sample_company.id)
 
         # Assert
         assert results == []
 
 
-class TestBranchRepositorySearchByName:
+class TestPlantRepositorySearchByName:
     """Tests para search_by_name()."""
 
     def test_search_by_name_partial_match(
-        self, branch_repository, sample_company, session
+        self, plant_repository, sample_company, session
     ):
-        """Test que busca branches por nombre parcial."""
-        # Arrange - crear branches con nombres similares
+        """Test que busca plants por nombre parcial."""
+        # Arrange - crear plants con nombres similares
         for i in range(5):
-            branch = Branch(
+            plant = Plant(
                 company_id=sample_company.id,
-                name=f"Santiago Branch {i+1}",
+                name=f"Santiago Plant {i+1}",
                 address=f"Address {i+1}",
             )
-            branch_repository.create(branch)
+            plant_repository.create(plant)
         session.commit()
 
         # Act
-        results = branch_repository.search_by_name(sample_company.id, "Santiago")
+        results = plant_repository.search_by_name(sample_company.id, "Santiago")
 
         # Assert
         assert len(results) == 5
         assert all("Santiago" in b.name for b in results)
 
     def test_search_by_name_case_insensitive(
-        self, branch_repository, sample_company, session
+        self, plant_repository, sample_company, session
     ):
         """Test que búsqueda es case insensitive."""
         # Arrange
-        branch = Branch(
+        plant = Plant(
             company_id=sample_company.id,
-            name="Valparaiso Branch",
+            name="Valparaiso Plant",
             address="Main Street",
         )
-        branch_repository.create(branch)
+        plant_repository.create(plant)
         session.commit()
 
         # Act - buscar en lowercase
-        results = branch_repository.search_by_name(sample_company.id, "valparaiso")
+        results = plant_repository.search_by_name(sample_company.id, "valparaiso")
 
         # Assert
         assert len(results) >= 1
         assert any("Valparaiso" in b.name for b in results)
 
-    def test_search_by_name_no_results(self, branch_repository, sample_company):
+    def test_search_by_name_no_results(self, plant_repository, sample_company):
         """Test que retorna lista vacía sin matches."""
         # Act
-        results = branch_repository.search_by_name(sample_company.id, "NonExistent")
+        results = plant_repository.search_by_name(sample_company.id, "NonExistent")
 
         # Assert
         assert results == []

@@ -7,7 +7,7 @@ including CRUD operations, validators, relationships, enums, and edge cases.
 Test Coverage:
     Address:
         - Basic CRUD operations with all fields
-        - AddressType enum (DELIVERY, BILLING, HEADQUARTERS, BRANCH)
+        - AddressType enum (DELIVERY, BILLING, HEADQUARTERS, PLANT)
         - Address validator (min 5 chars, strip whitespace)
         - CheckConstraint for address length
         - is_default default value (False)
@@ -42,7 +42,7 @@ class TestAddressTypeEnum:
         assert AddressType.DELIVERY.value == "delivery"
         assert AddressType.BILLING.value == "billing"
         assert AddressType.HEADQUARTERS.value == "headquarters"
-        assert AddressType.BRANCH.value == "branch"
+        assert AddressType.PLANT.value == "plant"
 
     def test_address_type_enum_members(self):
         """Test that AddressType enum has all expected members."""
@@ -51,7 +51,7 @@ class TestAddressTypeEnum:
         assert "delivery" in enum_members
         assert "billing" in enum_members
         assert "headquarters" in enum_members
-        assert "branch" in enum_members
+        assert "plant" in enum_members
         assert len(enum_members) == 4
 
 
@@ -163,19 +163,19 @@ class TestAddressCreation:
             address_type=AddressType.HEADQUARTERS,
             company_id=sample_company.id,
         )
-        branch_address = Address(
-            address="Branch Address 101",
-            address_type=AddressType.BRANCH,
+        plant_address = Address(
+            address="Plant Address 101",
+            address_type=AddressType.PLANT,
             company_id=sample_company.id,
         )
-        session.add_all([delivery_address, billing_address, headquarters_address, branch_address])
+        session.add_all([delivery_address, billing_address, headquarters_address, plant_address])
         session.commit()
 
         # Assert
         assert delivery_address.address_type == AddressType.DELIVERY
         assert billing_address.address_type == AddressType.BILLING
         assert headquarters_address.address_type == AddressType.HEADQUARTERS
-        assert branch_address.address_type == AddressType.BRANCH
+        assert plant_address.address_type == AddressType.PLANT
 
 
 class TestAddressValidator:
@@ -437,16 +437,16 @@ class TestAddressType:
         # Assert
         assert address.address_type == AddressType.HEADQUARTERS
 
-    def test_create_branch_address(
+    def test_create_plant_address(
         self,
         session: Session,
         sample_company: Company,
     ):
-        """Test creating Address with BRANCH type."""
+        """Test creating Address with PLANT type."""
         # Arrange & Act
         address = Address(
-            address="Branch Address 1234",
-            address_type=AddressType.BRANCH,
+            address="Plant Address 1234",
+            address_type=AddressType.PLANT,
             company_id=sample_company.id,
         )
         session.add(address)
@@ -454,7 +454,7 @@ class TestAddressType:
         session.refresh(address)
 
         # Assert
-        assert address.address_type == AddressType.BRANCH
+        assert address.address_type == AddressType.PLANT
 
     def test_query_addresses_by_type(
         self,
@@ -1155,47 +1155,47 @@ class TestAddressBusinessScenarios:
         assert default_delivery.id == delivery2.id
         assert "Default" in default_delivery.address
 
-    def test_company_with_multiple_branches(
+    def test_company_with_multiple_plants(
         self,
         session: Session,
         sample_company: Company,
     ):
-        """Test company with multiple branch addresses."""
+        """Test company with multiple plant addresses."""
         # Arrange & Act
-        branch1 = Address(
-            address="Branch 1 - North District",
+        plant1 = Address(
+            address="Plant 1 - North District",
             city="Santiago",
-            address_type=AddressType.BRANCH,
+            address_type=AddressType.PLANT,
             company_id=sample_company.id,
         )
-        branch2 = Address(
-            address="Branch 2 - South District",
+        plant2 = Address(
+            address="Plant 2 - South District",
             city="Concepción",
-            address_type=AddressType.BRANCH,
+            address_type=AddressType.PLANT,
             company_id=sample_company.id,
         )
-        branch3 = Address(
-            address="Branch 3 - Central District",
+        plant3 = Address(
+            address="Plant 3 - Central District",
             city="Valparaíso",
-            address_type=AddressType.BRANCH,
+            address_type=AddressType.PLANT,
             company_id=sample_company.id,
         )
-        session.add_all([branch1, branch2, branch3])
+        session.add_all([plant1, plant2, plant3])
         session.commit()
 
         # Act
-        branches = (
+        plants = (
             session.query(Address)
             .filter_by(
                 company_id=sample_company.id,
-                address_type=AddressType.BRANCH
+                address_type=AddressType.PLANT
             )
             .all()
         )
 
         # Assert
-        assert len(branches) == 3
-        cities = [branch.city for branch in branches]
+        assert len(plants) == 3
+        cities = [plant.city for plant in plants]
         assert "Santiago" in cities
         assert "Concepción" in cities
         assert "Valparaíso" in cities

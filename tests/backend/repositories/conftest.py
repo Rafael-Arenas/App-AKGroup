@@ -12,7 +12,7 @@ from src.backend.repositories.base import BaseRepository
 from src.backend.repositories.core.company_repository import (
     CompanyRepository,
     CompanyRutRepository,
-    BranchRepository,
+    PlantRepository,
 )
 from src.backend.repositories.core.product_repository import (
     ProductRepository,
@@ -54,7 +54,7 @@ from src.backend.repositories.lookups.lookup_repository import (
     PaymentStatusRepository,
 )
 
-from src.backend.models.core.companies import Company, CompanyRut, Branch
+from src.backend.models.core.companies import Company, CompanyRut, Plant
 from src.backend.models.core.products import Product, ProductComponent
 from src.backend.models.core.addresses import Address
 from src.backend.models.core.contacts import Contact, Service
@@ -107,9 +107,9 @@ def company_rut_repository(session: Session) -> CompanyRutRepository:
 
 
 @pytest.fixture
-def branch_repository(session: Session) -> BranchRepository:
-    """Fixture para BranchRepository."""
-    return BranchRepository(session)
+def plant_repository(session: Session) -> PlantRepository:
+    """Fixture para PlantRepository."""
+    return PlantRepository(session)
 
 
 @pytest.fixture

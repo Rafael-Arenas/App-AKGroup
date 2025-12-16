@@ -8,7 +8,7 @@ Test Coverage:
     Quote:
         - Basic CRUD operations
         - Field validation (quote_number, revision, tax_percentage)
-        - Relationships (company, contact, branch, staff, status, etc.)
+        - Relationships (company, contact, plant, staff, status, etc.)
         - Financial calculations (calculate_totals)
         - Business properties (is_expired, days_until_expiry)
         - CheckConstraints (positive amounts, tax percentage range)

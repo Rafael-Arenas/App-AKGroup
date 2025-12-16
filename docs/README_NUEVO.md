@@ -58,7 +58,7 @@ Sistema de gestión empresarial para AK Group que permite administrar empresas, 
 
 ### DevTools
 - **Poetry** 2.1.3+ - Gestión de dependencias
-- **Black** - Formateo
+- **Plant**: Plantas y sucursales.
 - **Ruff** - Linting
 - **MyPy** - Type checking
 - **Pytest** - Testing

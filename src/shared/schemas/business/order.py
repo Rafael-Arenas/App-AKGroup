@@ -33,7 +33,7 @@ class OrderBase(BaseModel):
     quote_id: Optional[int] = Field(None, gt=0, description="Source quote ID")
     company_id: int = Field(..., gt=0, description="Company ID (customer/supplier)")
     contact_id: Optional[int] = Field(None, gt=0, description="Contact person ID")
-    branch_id: Optional[int] = Field(None, gt=0, description="Branch ID")
+    plant_id: Optional[int] = Field(None, gt=0, description="Plant ID")
     staff_id: int = Field(..., gt=0, description="Staff member ID")
     status_id: int = Field(..., gt=0, description="Order status ID")
     payment_status_id: int = Field(..., gt=0, description="Payment status ID")
@@ -110,7 +110,7 @@ class OrderUpdate(BaseModel):
     revision: Optional[str] = Field(None, min_length=1, max_length=10)
     order_type: Optional[str] = None
     contact_id: Optional[int] = Field(None, gt=0)
-    branch_id: Optional[int] = Field(None, gt=0)
+    plant_id: Optional[int] = Field(None, gt=0)
     staff_id: Optional[int] = Field(None, gt=0)
     status_id: Optional[int] = Field(None, gt=0)
     payment_status_id: Optional[int] = Field(None, gt=0)

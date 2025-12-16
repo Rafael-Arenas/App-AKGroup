@@ -128,7 +128,7 @@ class QuoteBase(BaseModel):
     )
     company_id: int = Field(..., gt=0, description="Customer company ID")
     contact_id: Optional[int] = Field(None, gt=0, description="Contact person ID")
-    branch_id: Optional[int] = Field(None, gt=0, description="Branch ID")
+    plant_id: Optional[int] = Field(None, gt=0, description="Plant ID")
     staff_id: int = Field(..., gt=0, description="Sales person ID")
     status_id: int = Field(..., gt=0, description="Quote status ID")
     quote_date: date = Field(..., description="Quote creation date")
@@ -209,7 +209,7 @@ class QuoteUpdate(BaseModel):
     subject: Optional[str] = Field(None, min_length=1, max_length=200)
     revision: Optional[str] = Field(None, min_length=1, max_length=10)
     contact_id: Optional[int] = Field(None, gt=0)
-    branch_id: Optional[int] = Field(None, gt=0)
+    plant_id: Optional[int] = Field(None, gt=0)
     staff_id: Optional[int] = Field(None, gt=0)
     status_id: Optional[int] = Field(None, gt=0)
     valid_until: Optional[date] = None

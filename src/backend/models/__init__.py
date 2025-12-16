@@ -65,7 +65,7 @@ from .lookups import (
 from .core import (
     Address,
     AddressType,
-    Branch,
+    Plant,
     Company,
     CompanyRut,
     CompanyTypeEnum,
@@ -130,7 +130,7 @@ __all__ = [
     "Company",
     "CompanyRut",
     "CompanyTypeEnum",
-    "Branch",
+    "Plant",
     "Contact",
     "Service",
     "Address",

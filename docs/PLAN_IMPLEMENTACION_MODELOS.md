@@ -73,7 +73,7 @@ models/
 │   ├── __init__.py
 │   ├── staff.py                # Staff (usuarios del sistema)
 │   ├── notes.py                # Note (sistema polimórfico)
-│   ├── companies.py            # Company, CompanyRut, Branch
+│   ├── companies.py            # Company, CompanyRut, Plant
 │   ├── contacts.py             # Contact, Service
 │   ├── addresses.py            # Address
 │   └── products.py             # ⭐ Product, ProductComponent (Sistema Unificado)
@@ -92,19 +92,19 @@ models/
 ┌─────────────────────────────────────────┐
 │  base/ (Base, Mixins, Validators)       │
 │  - Sin dependencias externas            │
-└──────────────────┬──────────────────────┘
-                   │
-┌──────────────────▼──────────────────────┐
+└──────────┬──────────────────────┘
+           │
+┌──────────▼──────────────────────┐
 │  lookups/ (Country, Currency, etc.)     │
 │  - Depende solo de: base/               │
-└──────────────────┬──────────────────────┘
-                   │
-┌──────────────────▼──────────────────────┐
+└──────────┬──────────────────────┘
+           │
+┌──────────▼──────────────────────┐
 │  core/ (Staff, Company, Product, etc.)  │
 │  - Depende de: base/, lookups/          │
-└──────────────────┬──────────────────────┘
-                   │
-┌──────────────────▼──────────────────────┐
+└──────────┬──────────────────────┘
+           │
+┌──────────▼──────────────────────┐
 │  business/ (Quote, Order, Invoice)      │
 │  - Depende de: base/, lookups/, core/   │
 └─────────────────────────────────────────┘
@@ -177,7 +177,7 @@ models/
 
 - ✅ Staff (usuarios)
 - ✅ Note (sistema polimórfico)
-- ✅ Company, CompanyRut, Branch
+- ✅ Company, CompanyRut, Plant
 - ✅ Contact, Service
 - ✅ Address
 - ✅ ⭐ **Product, ProductComponent** (sistema unificado)
@@ -270,7 +270,7 @@ models/
 9. core/companies.py (Día 5-6)
    - Company
    - CompanyRut
-   - Branch
+   - Plant
 
 10. core/contacts.py (Día 6)
     - Contact
@@ -397,7 +397,7 @@ Base = declarative_base(cls=BaseModel, metadata=metadata)
 """
 Mixins reutilizables para modelos SQLAlchemy.
 """
-from datetime import datetime, timezone
+import datetime
 from sqlalchemy import Column, DateTime, Integer, Boolean, event
 from sqlalchemy.orm import declarative_mixin, declared_attr, Session
 
@@ -411,7 +411,7 @@ class TimestampMixin:
         return Column(
             DateTime(timezone=True),
             nullable=False,
-            default=lambda: datetime.now(timezone.utc),
+            default=lambda: datetime.datetime.now(datetime.timezone.utc),
             comment="UTC timestamp of creation",
         )
 
@@ -420,8 +420,8 @@ class TimestampMixin:
         return Column(
             DateTime(timezone=True),
             nullable=False,
-            default=lambda: datetime.now(timezone.utc),
-            onupdate=lambda: datetime.now(timezone.utc),
+            default=lambda: datetime.datetime.now(datetime.timezone.utc),
+            onupdate=lambda: datetime.datetime.now(datetime.timezone.utc),
             comment="UTC timestamp of last update",
         )
 
@@ -498,7 +498,7 @@ def receive_before_flush(session: Session, flush_context, instances):
     """Auto-set updated_at on flush."""
     for instance in session.dirty:
         if hasattr(instance, "updated_at"):
-            instance.updated_at = datetime.now(timezone.utc)
+            instance.updated_at = datetime.datetime.now(datetime.timezone.utc)
 ```
 
 **Checklist**:
@@ -682,7 +682,7 @@ class City(Base, TimestampMixin):
 
     country = relationship("Country", back_populates="cities")
     companies = relationship("Company", back_populates="city")
-    branches = relationship("Branch", back_populates="city")
+    plants = relationship("Plant", back_populates="city")
 
     __table_args__ = (
         Index("uq_city_name_country", "name", "country_id", unique=True),

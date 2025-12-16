@@ -935,7 +935,7 @@ pytest tests/backend/test_services.py -v
 Si algo sale mal durante la migración:
 
 1. **Git**: Hacer commit antes de cada fase
-2. **Branches**: Trabajar en branch `feature/monorepo-migration`
+2. **Plant**: Trabajar en `Plant`/monorepo-migration`
 3. **Backup**: Guardar copia de `src/` original
 4. **Rollback**: `git reset --hard` al commit anterior
 

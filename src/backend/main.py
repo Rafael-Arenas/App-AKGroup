@@ -39,7 +39,7 @@ from src.backend.utils.logger import logger
 from src.backend.models.core import (  # noqa: F401
     Company,
     CompanyRut,
-    Branch,
+    Plant,
     Product,
     ProductComponent,
 )

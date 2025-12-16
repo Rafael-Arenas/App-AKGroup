@@ -1,5 +1,5 @@
 """
-Tests for Company, CompanyRut, and Branch models from core.companies.
+Tests for Company, CompanyRut, and Plant models from core.companies.
 
 This module contains comprehensive tests for the core company models,
 including CRUD operations, validators, relationships, business logic, and edge cases.
@@ -8,7 +8,7 @@ Test Coverage:
     Company:
         - Basic CRUD operations
         - Field validation (name, trigram, phone, website)
-        - Relationships (company_type, country, city, ruts, branches)
+        - Relationships (company_type, country, city, ruts, plants)
         - CompanyTypeEnum property
         - Validators (trigram uppercase, phone format, URL format)
         - Mixins (Timestamp, Audit, Active)
@@ -21,7 +21,7 @@ Test Coverage:
         - Relationship with Company
         - Cascade delete behavior
 
-    Branch:
+    Plant:
         - CRUD operations
         - Field validation
         - Relationships with Company and City
@@ -34,7 +34,7 @@ from typing import Optional
 import pytest
 from sqlalchemy.exc import IntegrityError
 
-from src.backend.models.core.companies import Branch, Company, CompanyRut, CompanyTypeEnum
+from src.backend.models.core.companies import Plant, Company, CompanyRut, CompanyTypeEnum
 from src.backend.models.lookups.lookups import City, CompanyType, Country
 
 
@@ -415,32 +415,32 @@ class TestCompanyRelationships:
         assert len(sample_company.ruts) == 2
         assert any(r.is_main for r in sample_company.ruts)
 
-    def test_company_branches_relationship(
+    def test_company_plants_relationship(
         self,
         session,
         sample_company: Company,
         sample_city: City,
     ):
-        """Test one-to-many relationship with Branch."""
-        # Arrange - Add branches to company
-        branch1 = Branch(
-            name="Sucursal Santiago Centro",
+        """Test one-to-many relationship with Plant."""
+        # Arrange - Add plants to company
+        plant1 = Plant(
+            name="Planta Santiago Centro",
             company_id=sample_company.id,
             city_id=sample_city.id,
         )
-        branch2 = Branch(
-            name="Sucursal Las Condes",
+        plant2 = Plant(
+            name="Planta Las Condes",
             company_id=sample_company.id,
             city_id=sample_city.id,
         )
-        session.add_all([branch1, branch2])
+        session.add_all([plant1, plant2])
         session.commit()
         session.refresh(sample_company)
 
         # Assert
-        assert len(sample_company.branches) == 2
-        branch_names = [b.name for b in sample_company.branches]
-        assert "Sucursal Santiago Centro" in branch_names
+        assert len(sample_company.plants) == 2
+        plant_names = [p.name for p in sample_company.plants]
+        assert "Planta Santiago Centro" in plant_names
 
     def test_cascade_delete_orphan_ruts(self, session, sample_company: Company):
         """Test that deleting company deletes associated RUTs (cascade)."""
@@ -698,22 +698,22 @@ class TestCompanyRutRepr:
         assert "True" in repr_str or "main=True" in repr_str.lower()
 
 
-# ============= BRANCH MODEL TESTS =============
+# ============= PLANT MODEL TESTS =============
 
 
-class TestBranchCreation:
-    """Tests for Branch model creation."""
+class TestPlantCreation:
+    """Tests for Plant model creation."""
 
-    def test_create_branch_with_valid_data(
+    def test_create_plant_with_valid_data(
         self,
         session,
         sample_company: Company,
         sample_city: City,
     ):
-        """Test creating Branch with all valid fields."""
+        """Test creating Plant with all valid fields."""
         # Arrange & Act
-        branch = Branch(
-            name="Sucursal Santiago Centro",
+        plant = Plant(
+            name="Planta Santiago Centro",
             address="Av. Providencia 456",
             phone="+56922334455",
             email="santiago@company.cl",
@@ -721,81 +721,81 @@ class TestBranchCreation:
             city_id=sample_city.id,
             is_active=True,
         )
-        session.add(branch)
+        session.add(plant)
         session.commit()
-        session.refresh(branch)
+        session.refresh(plant)
 
         # Assert
-        assert branch.id is not None
-        assert branch.name == "Sucursal Santiago Centro"
-        assert branch.address == "Av. Providencia 456"
-        assert branch.phone == "+56922334455"
-        assert branch.email == "santiago@company.cl"
-        assert branch.company_id == sample_company.id
-        assert branch.city_id == sample_city.id
-        assert branch.is_active is True
+        assert plant.id is not None
+        assert plant.name == "Planta Santiago Centro"
+        assert plant.address == "Av. Providencia 456"
+        assert plant.phone == "+56922334455"
+        assert plant.email == "santiago@company.cl"
+        assert plant.company_id == sample_company.id
+        assert plant.city_id == sample_city.id
+        assert plant.is_active is True
 
-    def test_create_branch_minimal_fields(self, session, sample_company: Company):
-        """Test creating Branch with only required fields."""
+    def test_create_plant_minimal_fields(self, session, sample_company: Company):
+        """Test creating Plant with only required fields."""
         # Arrange & Act
-        branch = Branch(
-            name="Minimal Branch",
+        plant = Plant(
+            name="Minimal Plant",
             company_id=sample_company.id,
         )
-        session.add(branch)
+        session.add(plant)
         session.commit()
-        session.refresh(branch)
+        session.refresh(plant)
 
         # Assert
-        assert branch.id is not None
-        assert branch.name == "Minimal Branch"
-        assert branch.address is None
-        assert branch.phone is None
-        assert branch.email is None
-        assert branch.city_id is None
+        assert plant.id is not None
+        assert plant.name == "Minimal Plant"
+        assert plant.address is None
+        assert plant.phone is None
+        assert plant.email is None
+        assert plant.city_id is None
 
 
-class TestBranchValidation:
-    """Tests for Branch field validators."""
+class TestPlantValidation:
+    """Tests for Plant field validators."""
 
     def test_name_validator_strips_whitespace(self, session, sample_company: Company):
         """Test that name validator strips whitespace."""
         # Arrange & Act
-        branch = Branch(
-            name="  Test Branch  ",
+        plant = Plant(
+            name="  Test Plant  ",
             company_id=sample_company.id,
         )
-        session.add(branch)
+        session.add(plant)
         session.commit()
-        session.refresh(branch)
+        session.refresh(plant)
 
         # Assert
-        assert branch.name == "Test Branch"
+        assert plant.name == "Test Plant"
 
     def test_name_validator_minimum_length(self, session, sample_company: Company):
         """Test that name must be at least 2 characters."""
         with pytest.raises(ValueError, match="at least 2 characters"):
-            branch = Branch(
+            plant = Plant(
                 name="A",
                 company_id=sample_company.id,
             )
-            session.add(branch)
+            session.add(plant)
             session.flush()
 
     def test_phone_validator(self, session, sample_company: Company):
         """Test phone validator accepts valid formats."""
-        branch = Branch(
-            name="Test Branch",
+        plant = Plant(
+            name="Test Plant",
             phone="+56912345678",
             company_id=sample_company.id,
         )
-        session.add(branch)
+        session.add(plant)
         session.commit()
-        assert branch.phone == "+56912345678"
+        assert plant.phone == "+56912345678"
 
 
-class TestBranchRelationships:
-    """Tests for Branch relationships."""
+class TestPlantRelationships:
+    """Tests for Plant relationships."""
 
     def test_company_relationship(
         self,
@@ -804,17 +804,17 @@ class TestBranchRelationships:
     ):
         """Test relationship with parent Company."""
         # Arrange
-        branch = Branch(
-            name="Test Branch",
+        plant = Plant(
+            name="Test Plant",
             company_id=sample_company.id,
         )
-        session.add(branch)
+        session.add(plant)
         session.commit()
-        session.refresh(branch)
+        session.refresh(plant)
 
         # Assert
-        assert branch.company is not None
-        assert branch.company.id == sample_company.id
+        assert plant.company is not None
+        assert plant.company.id == sample_company.id
 
     def test_city_relationship(
         self,
@@ -824,69 +824,69 @@ class TestBranchRelationships:
     ):
         """Test relationship with City."""
         # Arrange
-        branch = Branch(
-            name="Test Branch",
+        plant = Plant(
+            name="Test Plant",
             company_id=sample_company.id,
             city_id=sample_city.id,
         )
-        session.add(branch)
+        session.add(plant)
         session.commit()
-        session.refresh(branch)
+        session.refresh(plant)
 
         # Assert
-        assert branch.city is not None
-        assert branch.city.id == sample_city.id
-        assert branch.city.name == "Santiago"
+        assert plant.city is not None
+        assert plant.city.id == sample_city.id
+        assert plant.city.name == "Santiago"
 
     def test_cascade_delete_with_company(
         self,
         session,
         sample_company: Company,
     ):
-        """Test that deleting company deletes branches (cascade)."""
-        # Arrange - Add branch
-        branch = Branch(
-            name="Test Branch",
+        """Test that deleting company deletes plants (cascade)."""
+        # Arrange - Add plant
+        plant = Plant(
+            name="Test Plant",
             company_id=sample_company.id,
         )
-        session.add(branch)
+        session.add(plant)
         session.commit()
-        branch_id = branch.id
+        plant_id = plant.id
 
         # Act - Delete company
         session.delete(sample_company)
         session.commit()
 
-        # Assert - Branch should also be deleted
-        deleted_branch = session.query(Branch).filter_by(id=branch_id).first()
-        assert deleted_branch is None
+        # Assert - Plant should also be deleted
+        deleted_plant = session.query(Plant).filter_by(id=plant_id).first()
+        assert deleted_plant is None
 
 
-class TestBranchActiveStatus:
-    """Tests for Branch ActiveMixin behavior."""
+class TestPlantActiveStatus:
+    """Tests for Plant ActiveMixin behavior."""
 
     def test_is_active_default_true(self, session, sample_company: Company):
         """Test that is_active defaults to True."""
-        branch = Branch(
-            name="Active Branch",
+        plant = Plant(
+            name="Active Plant",
             company_id=sample_company.id,
         )
-        session.add(branch)
+        session.add(plant)
         session.commit()
-        session.refresh(branch)
+        session.refresh(plant)
 
-        assert branch.is_active is True
+        assert plant.is_active is True
 
-    def test_filter_active_branches(self, session, sample_company: Company):
-        """Test filtering branches by is_active."""
+    def test_filter_active_plants(self, session, sample_company: Company):
+        """Test filtering plants by is_active."""
         # Arrange
-        active = Branch(
-            name="Active Branch",
+        active = Plant(
+            name="Active Plant",
             company_id=sample_company.id,
             is_active=True,
         )
-        inactive = Branch(
-            name="Inactive Branch",
+        inactive = Plant(
+            name="Inactive Plant",
             company_id=sample_company.id,
             is_active=False,
         )
@@ -894,26 +894,26 @@ class TestBranchActiveStatus:
         session.commit()
 
         # Act
-        active_branches = session.query(Branch).filter_by(is_active=True).all()
+        active_plants = session.query(Plant).filter_by(is_active=True).all()
 
         # Assert
-        assert len(active_branches) == 1
-        assert active_branches[0].name == "Active Branch"
+        assert len(active_plants) == 1
+        assert active_plants[0].name == "Active Plant"
 
 
-class TestBranchRepr:
-    """Tests for Branch __repr__ method."""
+class TestPlantRepr:
+    """Tests for Plant __repr__ method."""
 
     def test_repr_method(self, session, sample_company: Company):
         """Test __repr__ string representation."""
-        branch = Branch(
-            name="Test Branch",
+        plant = Plant(
+            name="Test Plant",
             company_id=sample_company.id,
         )
-        session.add(branch)
+        session.add(plant)
         session.commit()
-        session.refresh(branch)
+        session.refresh(plant)
 
-        repr_str = repr(branch)
-        assert "Branch" in repr_str
-        assert "Test Branch" in repr_str
+        repr_str = repr(plant)
+        assert "Plant" in repr_str
+        assert "Test Plant" in repr_str

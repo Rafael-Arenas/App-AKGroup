@@ -238,7 +238,7 @@ class AddressFormDialog:
                     {"value": "delivery", "text": "Entrega"},
                     {"value": "billing", "text": "Facturación"},
                     {"value": "headquarters", "text": "Sede Principal"},
-                    {"value": "branch", "text": "Sucursal"},
+                    {"value": "plant", "text": "Planta"},
                 ],
                 required=True,
                 prefix_icon=ft.Icons.CATEGORY,

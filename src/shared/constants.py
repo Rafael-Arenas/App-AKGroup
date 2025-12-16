@@ -20,7 +20,7 @@ PRODUCT_TYPE_SERVICE = "service"
 ADDRESS_TYPE_DELIVERY = "delivery"
 ADDRESS_TYPE_BILLING = "billing"
 ADDRESS_TYPE_HEADQUARTERS = "headquarters"
-ADDRESS_TYPE_BRANCH = "branch"
+ADDRESS_TYPE_PLANT = "plant"
 
 # ============================================================================
 # TIPOS DE EMPRESA

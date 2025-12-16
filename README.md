@@ -32,6 +32,7 @@ App-AKGroup es un sistema de gestión empresarial integral diseñado para AK Gro
 ## Características Principales
 
 - **Gestión de Empresas**: CRUD completo de empresas, sucursales y RUTs
+- **Gestión de Plantas**: Plantas de empresas, sucursales y RUTs
 - **Gestión de Productos**: Productos tipo ARTICLE y NOMENCLATURE con componentes
 - **BOM (Bill of Materials)**: Gestión de componentes y cálculo automático de costos
 - **Gestión de Cotizaciones**: Creación y seguimiento de cotizaciones con artículos y nomenclaturas

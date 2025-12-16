@@ -8,7 +8,7 @@ las entidades principales del sistema.
 from src.backend.repositories.core.company_repository import (
     CompanyRepository,
     CompanyRutRepository,
-    BranchRepository,
+    PlantRepository,
 )
 from src.backend.repositories.core.product_repository import (
     ProductRepository,
@@ -24,7 +24,7 @@ __all__ = [
     # Company
     "CompanyRepository",
     "CompanyRutRepository",
-    "BranchRepository",
+    "PlantRepository",
     # Product
     "ProductRepository",
     "ProductComponentRepository",

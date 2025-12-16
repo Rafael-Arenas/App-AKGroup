@@ -2,10 +2,10 @@
 Company models - Business entities.
 
 Modelos para gestión de empresas (clientes, proveedores, partners):
-- Company: Empresa principal
-- CompanyRut: RUTs asociados a una empresa (múltiples)
-- Branch: Sucursales de una empresa
-- CompanyTypeEnum: Enum para tipos de empresa
+    - Company: Empresa principal
+    - CompanyRut: RUTs asociados a una empresa (múltiples)
+    - Plant: Plantas de una empresa
+    - CompanyTypeEnum: Enum para tipos de empresa
 """
 
 import enum
@@ -107,7 +107,7 @@ class Company(Base, TimestampMixin, AuditMixin, ActiveMixin):
         country: País de registro
         city: Ciudad de sede principal
         ruts: RUTs asociados
-        branches: Sucursales
+        plants: Plantas/Sucursales
         addresses: Direcciones
         contacts: Contactos
         products: Productos asociados
@@ -229,8 +229,8 @@ class Company(Base, TimestampMixin, AuditMixin, ActiveMixin):
         lazy="select",
     )
 
-    branches = relationship(
-        "Branch",
+    plants = relationship(
+        "Plant",
         back_populates="company",
         cascade="all, delete-orphan",
         lazy="select",
@@ -403,17 +403,17 @@ class CompanyRut(Base, TimestampMixin, AuditMixin):
         return f"<CompanyRut(id={self.id}, rut={self.rut}, main={self.is_main})>"
 
 
-class Branch(Base, TimestampMixin, AuditMixin, ActiveMixin):
+class Plant(Base, TimestampMixin, AuditMixin, ActiveMixin):
     """
-    Sucursal de una empresa.
+    Planta de una empresa.
 
-    Representa una sede, oficina o sucursal de una empresa.
+    Representa una sede, oficina, planta o sucursal de una empresa.
 
     Attributes:
         id: Primary key
-        name: Nombre de la sucursal
-        address: Dirección de la sucursal
-        phone: Teléfono de la sucursal
+        name: Nombre de la planta
+        address: Dirección de la planta
+        phone: Teléfono de la planta
         email: Email de contacto
         company_id: FK a companies
         city_id: FK a cities
@@ -423,8 +423,8 @@ class Branch(Base, TimestampMixin, AuditMixin, ActiveMixin):
         city: Ciudad donde está ubicada
 
     Example:
-        >>> branch = Branch(
-        ...     name="Sucursal Santiago Centro",
+        >>> plant = Plant(
+        ...     name="Planta Santiago Centro",
         ...     address="Av. Providencia 123",
         ...     phone="+56912345678",
         ...     company_id=1,
@@ -432,34 +432,34 @@ class Branch(Base, TimestampMixin, AuditMixin, ActiveMixin):
         ... )
     """
 
-    __tablename__ = "branches"
+    __tablename__ = "plants"
 
     # Primary Key
     id = Column(Integer, primary_key=True, autoincrement=True)
 
-    # Branch Information
+    # Plant Information
     name = Column(
         String(100),
         nullable=False,
-        comment="Branch name",
+        comment="Plant name",
     )
 
     address = Column(
         Text,
         nullable=True,
-        comment="Branch address (full text)",
+        comment="Plant address (full text)",
     )
 
     phone = Column(
         String(20),
         nullable=True,
-        comment="Branch phone number",
+        comment="Plant phone number",
     )
 
     email = Column(
         String(100),
         nullable=True,
-        comment="Branch contact email",
+        comment="Plant contact email",
     )
 
     # Foreign Keys
@@ -468,7 +468,7 @@ class Branch(Base, TimestampMixin, AuditMixin, ActiveMixin):
         ForeignKey("companies.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
-        comment="Company this branch belongs to",
+        comment="Company this plant belongs to",
     )
 
     city_id = Column(
@@ -476,24 +476,24 @@ class Branch(Base, TimestampMixin, AuditMixin, ActiveMixin):
         ForeignKey("cities.id", ondelete="RESTRICT"),
         nullable=True,
         index=True,
-        comment="City where branch is located",
+        comment="City where plant is located",
     )
 
     # Relationships
-    company = relationship("Company", back_populates="branches")
-    city = relationship("City", back_populates="branches", lazy="joined")
+    company = relationship("Company", back_populates="plants")
+    city = relationship("City", back_populates="plants", lazy="joined")
 
     # Indexes
     __table_args__ = (
-        Index("ix_branch_company_active", "company_id", "is_active"),
+        Index("ix_plant_company_active", "company_id", "is_active"),
     )
 
     # Validators
     @validates("name")
     def validate_name(self, key: str, value: str) -> str:
-        """Valida nombre de sucursal."""
+        """Valida nombre de planta."""
         if not value or len(value.strip()) < 2:
-            raise ValueError("Branch name must be at least 2 characters")
+            raise ValueError("Plant name must be at least 2 characters")
         return value.strip()
 
     @validates("phone")
@@ -502,4 +502,4 @@ class Branch(Base, TimestampMixin, AuditMixin, ActiveMixin):
         return PhoneValidator.validate(value)
 
     def __repr__(self) -> str:
-        return f"<Branch(id={self.id}, name={self.name}, company_id={self.company_id})>"
+        return f"<Plant(id={self.id}, name={self.name}, company_id={self.company_id})>"

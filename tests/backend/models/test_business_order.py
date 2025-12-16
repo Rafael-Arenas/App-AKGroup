@@ -8,7 +8,7 @@ Test Coverage:
     Order:
         - Basic CRUD operations
         - Field validation (order_number, order_type, tax_percentage)
-        - Relationships (company, staff, quote, contact, branch, status, payment_status, etc.)
+        - Relationships (company, staff, quote, contact, plant, status, payment_status, etc.)
         - Financial calculations (calculate_totals)
         - Business properties (is_overdue, days_until_required, processing_days)
         - Business methods (create_from_quote)

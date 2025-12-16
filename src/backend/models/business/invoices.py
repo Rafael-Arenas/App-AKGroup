@@ -43,7 +43,7 @@ class InvoiceSII(Base, TimestampMixin, AuditMixin, ActiveMixin):
         invoice_type: Document type (33=Factura Electrónica, 34=Factura Exenta, etc.)
         order_id: Foreign key to Order
         company_id: Foreign key to Company (customer)
-        branch_id: Foreign key to Branch
+        plant_id: Foreign key to Plant
         staff_id: Foreign key to Staff
         payment_status_id: Foreign key to PaymentStatus
         invoice_date: Invoice issue date
@@ -104,11 +104,11 @@ class InvoiceSII(Base, TimestampMixin, AuditMixin, ActiveMixin):
         index=True,
         comment="Customer company",
     )
-    branch_id = Column(
+    plant_id = Column(
         Integer,
-        ForeignKey("branches.id", ondelete="SET NULL"),
+        ForeignKey("plants.id", ondelete="SET NULL"),
         nullable=True,
-        comment="Customer branch",
+        comment="Customer plant",
     )
     staff_id = Column(
         Integer,
@@ -199,7 +199,7 @@ class InvoiceSII(Base, TimestampMixin, AuditMixin, ActiveMixin):
     # Relationships
     order = relationship("Order", back_populates="invoices_sii", foreign_keys=[order_id])
     company = relationship("Company", back_populates="invoices_sii", foreign_keys=[company_id])
-    branch = relationship("Branch", foreign_keys=[branch_id])
+    plant = relationship("Plant", foreign_keys=[plant_id])
     staff = relationship("Staff", foreign_keys=[staff_id])
     payment_status = relationship("PaymentStatus")
     currency = relationship("Currency")
@@ -278,7 +278,7 @@ class InvoiceExport(Base, TimestampMixin, AuditMixin, ActiveMixin):
         invoice_type: Document type (110=Factura Exportación, 111=Nota Débito Export, 112=Nota Crédito Export)
         order_id: Foreign key to Order
         company_id: Foreign key to Company (foreign customer)
-        branch_id: Foreign key to Branch
+        plant_id: Foreign key to Plant
         staff_id: Foreign key to Staff
         payment_status_id: Foreign key to PaymentStatus
         invoice_date: Invoice issue date
@@ -344,11 +344,11 @@ class InvoiceExport(Base, TimestampMixin, AuditMixin, ActiveMixin):
         index=True,
         comment="Foreign customer company",
     )
-    branch_id = Column(
+    plant_id = Column(
         Integer,
-        ForeignKey("branches.id", ondelete="SET NULL"),
+        ForeignKey("plants.id", ondelete="SET NULL"),
         nullable=True,
-        comment="Customer branch",
+        comment="Customer plant",
     )
     staff_id = Column(
         Integer,
@@ -459,7 +459,7 @@ class InvoiceExport(Base, TimestampMixin, AuditMixin, ActiveMixin):
     # Relationships
     order = relationship("Order", back_populates="invoices_export", foreign_keys=[order_id])
     company = relationship("Company", back_populates="invoices_export", foreign_keys=[company_id])
-    branch = relationship("Branch", foreign_keys=[branch_id])
+    plant = relationship("Plant", foreign_keys=[plant_id])
     staff = relationship("Staff", foreign_keys=[staff_id])
     payment_status = relationship("PaymentStatus")
     currency = relationship("Currency")

@@ -72,7 +72,7 @@ Además del CRUD base, cada repository tiene métodos específicos:
 **CompanyRepository:**
 - get_by_trigram()
 - search_by_name()
-- get_with_branches()
+- get_with_plants()
 - get_with_ruts()
 - get_with_relations()
 - get_active_companies()
@@ -90,8 +90,8 @@ Además del CRUD base, cada repository tiene métodos específicos:
 - test_search_by_name_case_insensitive
 
 **Eager Loading:**
-- test_get_with_branches_loads_relationships
-- test_get_with_branches_empty_list
+- test_get_with_plants_loads_relationships
+- test_get_with_plants_empty_list
 - test_get_with_ruts_loads_relationships
 - test_get_with_relations_loads_all
 

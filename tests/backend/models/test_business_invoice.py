@@ -8,7 +8,7 @@ Test Coverage:
     InvoiceSII (Chilean domestic invoices):
         - Basic CRUD operations
         - Field validation (invoice_number, invoice_type)
-        - Relationships (order, company, branch, staff, payment_status, currency)
+        - Relationships (order, company, plant, staff, payment_status, currency)
         - Business properties (is_overdue, days_overdue, is_paid)
         - CheckConstraints (positive amounts, invoice_type validation)
         - SII integration fields

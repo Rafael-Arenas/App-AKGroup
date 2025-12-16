@@ -23,7 +23,7 @@ Sistema completo de modelos SQLAlchemy para AK Group, implementado con arquitect
 ### Fase 3: Core Models - **✅ COMPLETADA**
 - ✅ `core/staff.py` - Staff (usuarios)
 - ✅ `core/notes.py` - Note (notas polimórficas)
-- ✅ `core/companies.py` - Company, CompanyRut, Branch
+- ✅ `core/companies.py` - Company, CompanyRut, Plant
 - ✅ `core/contacts.py` - Contact, Service
 - ✅ `core/addresses.py` - Address
 - ✅ `core/products.py` - ⭐ Product, ProductComponent (sistema unificado)
@@ -56,7 +56,7 @@ src/models/
 │   ├── __init__.py
 │   ├── staff.py                # Staff
 │   ├── notes.py                # Note
-│   ├── companies.py            # Company, CompanyRut, Branch
+│   ├── companies.py            # Company, CompanyRut, Plant
 │   ├── contacts.py             # Contact, Service
 │   ├── addresses.py            # Address
 │   └── products.py             # Product, ProductComponent
@@ -168,7 +168,7 @@ from src.models import Country, City, Currency, Incoterm, Unit
 # Core models
 from src.models import (
     Staff,
-    Company, CompanyRut, Branch,
+    Company, CompanyRut, Plant,
     Contact, Service,
     Address,
     Product, ProductComponent,
@@ -295,10 +295,10 @@ pytest tests/models/ --cov=src.models --cov-report=html
 2. **Note** - Sistema polimórfico de notas (entity_type + entity_id)
 3. **Company** - Empresas (clientes/proveedores)
 4. **CompanyRut** - RUTs múltiples por empresa
-5. **Branch** - Sucursales de empresas
+5. **Plant** - Sucursales/Plantas de empresas
 6. **Contact** - Contactos de empresas
 7. **Service** - Servicios/departamentos
-8. **Address** - Direcciones de empresas (con tipos: delivery, billing, headquarters, branch)
+8. **Address** - Direcciones de empresas (con tipos: delivery, billing, headquarters, plant)
 9. **Product / ProductComponent** - Sistema unificado con BOM
 
 ### Business Models (12 modelos)

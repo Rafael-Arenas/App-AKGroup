@@ -41,7 +41,7 @@ class Quote(Base, TimestampMixin, AuditMixin, ActiveMixin):
         company_id: Foreign key to Company (customer)
         company_rut_id: Foreign key to CompanyRut (specific customer RUT)
         contact_id: Foreign key to Contact (customer contact person)
-        branch_id: Foreign key to Branch (customer branch)
+        plant_id: Foreign key to Plant (customer plant)
         staff_id: Foreign key to Staff (sales person)
         status_id: Foreign key to QuoteStatus
         quote_date: Date quote was created
@@ -106,11 +106,11 @@ class Quote(Base, TimestampMixin, AuditMixin, ActiveMixin):
         index=True,
         comment="Customer contact person",
     )
-    branch_id = Column(
+    plant_id = Column(
         Integer,
-        ForeignKey("branches.id", ondelete="SET NULL"),
+        ForeignKey("plants.id", ondelete="SET NULL"),
         nullable=True,
-        comment="Customer branch",
+        comment="Customer plant",
     )
     staff_id = Column(
         Integer,
@@ -188,7 +188,7 @@ class Quote(Base, TimestampMixin, AuditMixin, ActiveMixin):
     company = relationship("Company", back_populates="quotes", foreign_keys=[company_id])
     company_rut = relationship("CompanyRut", foreign_keys=[company_rut_id])
     contact = relationship("Contact", foreign_keys=[contact_id])
-    branch = relationship("Branch", foreign_keys=[branch_id])
+    plant = relationship("Plant", foreign_keys=[plant_id])
     staff = relationship("Staff", foreign_keys=[staff_id])
     status = relationship("QuoteStatus")
     incoterm = relationship("Incoterm")

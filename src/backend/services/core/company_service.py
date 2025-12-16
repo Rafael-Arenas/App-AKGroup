@@ -92,7 +92,7 @@ class CompanyService(BaseService[Company, CompanyCreate, CompanyUpdate, CompanyR
 
         # Agregar relaciones
         data['ruts'] = company.ruts if hasattr(company, 'ruts') else []
-        data['branches'] = company.branches if hasattr(company, 'branches') else []
+        data['plants'] = company.plants if hasattr(company, 'plants') else []
 
         return data
 
@@ -306,27 +306,27 @@ class CompanyService(BaseService[Company, CompanyCreate, CompanyUpdate, CompanyR
             for c in companies
         ]
 
-    def get_with_branches(self, company_id: int) -> CompanyResponse:
+    def get_with_plants(self, company_id: int) -> CompanyResponse:
         """
-        Obtiene una empresa con sus sucursales.
+        Obtiene una empresa con sus plantas.
 
         Args:
             company_id: ID de la empresa
 
         Returns:
-            Empresa con sucursales cargadas
+            Empresa con plantas cargadas
 
         Raises:
             NotFoundException: Si no se encuentra la empresa
 
         Example:
-            company = service.get_with_branches(123)
-            for branch in company.branches:
-                print(branch.name)
+            company = service.get_with_plants(123)
+            for plant in company.plants:
+                print(plant.name)
         """
-        logger.info(f"Servicio: obteniendo empresa id={company_id} con sucursales")
+        logger.info(f"Servicio: obteniendo empresa id={company_id} con plantas")
 
-        company = self.company_repo.get_with_branches(company_id)
+        company = self.company_repo.get_with_plants(company_id)
         if not company:
             from src.backend.exceptions.repository import NotFoundException
             raise NotFoundException(

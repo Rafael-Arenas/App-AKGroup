@@ -60,7 +60,7 @@ class AddressCreate(BaseSchema):
     )
     address_type: AddressType = Field(
         default=AddressType.DELIVERY,
-        description="Tipo de dirección (delivery, billing, headquarters, branch)"
+        description="Tipo de dirección (delivery, billing, headquarters, plant)"
     )
     company_id: int = Field(
         ...,

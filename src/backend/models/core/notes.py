@@ -150,7 +150,7 @@ class Note(Base, TimestampMixin, AuditMixin):
             "invoice",
             "contact",
             "address",
-            "branch",
+            "plant",
         }
 
         if normalized not in valid_types:

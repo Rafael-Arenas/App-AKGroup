@@ -301,7 +301,7 @@ class OrderService(BaseService[Order, OrderCreate, OrderUpdate, OrderResponse]):
         Create order from an accepted quote.
 
         Copies quote data to new order including:
-        - Company, contact, branch, staff
+        - Company, contact, plant, staff
         - Currency and exchange rate
         - Tax percentage and financial amounts
         - Shipping information
@@ -368,7 +368,7 @@ class OrderService(BaseService[Order, OrderCreate, OrderUpdate, OrderResponse]):
             quote_id=quote_id,
             company_id=quote.company_id,
             contact_id=quote.contact_id,
-            branch_id=quote.branch_id,
+            plant_id=quote.plant_id,
             staff_id=quote.staff_id,
             status_id=status_id,
             payment_status_id=payment_status_id,

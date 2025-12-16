@@ -51,7 +51,7 @@ from src.backend.models import (
     # Core
     Address,
     AddressType,
-    Branch,
+    Plant,
     Company,
     CompanyRut,
     CompanyTypeEnum,
@@ -470,13 +470,13 @@ def seed_core_models(session: Session, lookups: dict, count: int = 50) -> dict:
     session.flush()
     logger.success(f"  ✓ Created {len(ruts)} company RUTs")
 
-    # ========== BRANCHES ==========
-    branches = []
-    for company in companies[:30]:  # Primeras 30 empresas con sucursales
-        num_branches = random.randint(1, 3)
-        for j in range(num_branches):
-            branch = Branch(
-                name=f"{company.name} - Sucursal {j+1}",
+    # ========== PLANTS ==========
+    plants = []
+    for company in companies[:30]:  # Primeras 30 empresas con plantas
+        num_plants = random.randint(1, 3)
+        for j in range(num_plants):
+            plant = Plant(
+                name=f"{company.name} - Planta {j+1}",
                 address=fake.address(),
                 phone=generate_phone(),
                 email=fake.email(),
@@ -484,10 +484,10 @@ def seed_core_models(session: Session, lookups: dict, count: int = 50) -> dict:
                 city_id=random.choice(lookups["cities"]).id,
                 is_active=True,
             )
-            session.add(branch)
-            branches.append(branch)
+            session.add(plant)
+            plants.append(plant)
     session.flush()
-    logger.success(f"  ✓ Created {len(branches)} branches")
+    logger.success(f"  ✓ Created {len(plants)} plants")
 
     # ========== CONTACTS ==========
     contacts = []
@@ -643,7 +643,7 @@ def seed_core_models(session: Session, lookups: dict, count: int = 50) -> dict:
         "staff": staff_list,
         "companies": companies,
         "ruts": ruts,
-        "branches": branches,
+        "plants": plants,
         "contacts": contacts,
         "addresses": addresses,
         "products": products,
@@ -694,7 +694,7 @@ def seed_business_models(session: Session, lookups: dict, core: dict, count: int
             revision=random.choice(["A", "B", "C"]),
             company_id=company.id,
             contact_id=contact.id if contact else None,
-            branch_id=None,
+            plant_id=None,
             staff_id=random.choice(core["staff"]).id,
             status_id=random.choice(lookups["quote_statuses"]).id,
             quote_date=fake.date_between(start_date="-6M", end_date="today"),
@@ -775,7 +775,7 @@ def seed_business_models(session: Session, lookups: dict, core: dict, count: int
             project_number=f"PRJ-{random.randint(100, 999)}" if random.random() > 0.5 else None,
             company_id=quote.company_id,
             contact_id=quote.contact_id,
-            branch_id=quote.branch_id,
+            plant_id=quote.plant_id,
             staff_id=quote.staff_id,
             status_id=random.choice(lookups["order_statuses"]).id,
             payment_status_id=random.choice(lookups["payment_statuses"]).id,
@@ -861,7 +861,7 @@ def seed_business_models(session: Session, lookups: dict, core: dict, count: int
             invoice_type="33",  # Factura Electrónica
             order_id=order.id,
             company_id=order.company_id,
-            branch_id=order.branch_id,
+            plant_id=order.plant_id,
             staff_id=order.staff_id,
             payment_status_id=random.choice(lookups["payment_statuses"]).id,
             invoice_date=order.order_date,
@@ -1060,7 +1060,7 @@ def clear_database(session: Session) -> None:
         session.query(Address).delete()
         session.query(Contact).delete()
         session.query(CompanyRut).delete()
-        session.query(Branch).delete()
+        session.query(Plant).delete()
         session.query(Company).delete()
         session.query(Staff).delete()
 
@@ -1177,15 +1177,20 @@ def main() -> None:
     count = 20  # Default: 20 registros para evitar demoras
 
     if len(sys.argv) > 1:
-        arg = sys.argv[1]
-        # Si el argumento es un número, es el count
-        if arg.isdigit():
-            count = int(arg)
-        else:
-            database_url = arg
-
-    if len(sys.argv) > 2:
-        count = int(sys.argv[2])
+        args = sys.argv[1:]
+        
+        # Parse arguments manually since it's simple
+        i = 0
+        while i < len(args):
+            arg = args[i]
+            if arg == "--count" and i + 1 < len(args):
+                count = int(args[i+1])
+                i += 2
+            elif not arg.startswith("--"):
+                database_url = arg
+                i += 1
+            else:
+                i += 1
 
     logger.info(f"Using database: {database_url}")
     logger.info(f"Creating {count} records per model")

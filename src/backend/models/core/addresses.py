@@ -98,7 +98,7 @@ class Address(Base, TimestampMixin, AuditMixin):
         nullable=False,
         default=AddressType.DELIVERY,
         index=True,
-        comment="Type: delivery, billing, headquarters, branch",
+        comment="Type: delivery, billing, headquarters, plant",
     )
 
     # Foreign Keys

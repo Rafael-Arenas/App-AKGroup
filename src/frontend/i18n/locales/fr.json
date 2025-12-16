@@ -143,7 +143,7 @@
       "delivery": "Livraison",
       "billing": "Facturation",
       "headquarters": "Siège Social",
-      "branch": "Branche"
+      "plant": "Usine"
     },
     "sections": {
       "general_info": "Informations Générales",

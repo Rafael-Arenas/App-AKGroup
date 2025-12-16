@@ -46,7 +46,7 @@ class Order(Base, TimestampMixin, AuditMixin, ActiveMixin):
         project_number: Project number/identifier
         company_id: Foreign key to Company (customer/supplier)
         contact_id: Foreign key to Contact
-        branch_id: Foreign key to Branch
+        plant_id: Foreign key to Plant
         shipping_address_id: Foreign key to Address (shipping address)
         billing_address_id: Foreign key to Address (billing address)
         staff_id: Foreign key to Staff (order manager)
@@ -137,11 +137,11 @@ class Order(Base, TimestampMixin, AuditMixin, ActiveMixin):
         index=True,
         comment="Contact person",
     )
-    branch_id = Column(
+    plant_id = Column(
         Integer,
-        ForeignKey("branches.id", ondelete="SET NULL"),
+        ForeignKey("plants.id", ondelete="SET NULL"),
         nullable=True,
-        comment="Company branch",
+        comment="Company plant",
     )
 
     # Address information
@@ -270,7 +270,7 @@ class Order(Base, TimestampMixin, AuditMixin, ActiveMixin):
     quote = relationship("Quote", back_populates="order", foreign_keys=[quote_id])
     company = relationship("Company", back_populates="orders", foreign_keys=[company_id])
     contact = relationship("Contact", foreign_keys=[contact_id])
-    branch = relationship("Branch", foreign_keys=[branch_id])
+    plant = relationship("Plant", foreign_keys=[plant_id])
     shipping_address = relationship("Address", foreign_keys=[shipping_address_id])
     billing_address = relationship("Address", foreign_keys=[billing_address_id])
     staff = relationship("Staff", foreign_keys=[staff_id])
@@ -381,7 +381,7 @@ class Order(Base, TimestampMixin, AuditMixin, ActiveMixin):
         self.quote_id = quote.id
         self.company_id = quote.company_id
         self.contact_id = quote.contact_id
-        self.branch_id = quote.branch_id
+        self.plant_id = quote.plant_id
         self.staff_id = quote.staff_id
         self.incoterm_id = quote.incoterm_id
         self.currency_id = quote.currency_id

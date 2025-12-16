@@ -15,7 +15,7 @@ class AddressType(str, enum.Enum):
         DELIVERY: Dirección de entrega
         BILLING: Dirección de facturación
         HEADQUARTERS: Sede central/matriz
-        BRANCH: Sucursal
+        PLANT: Planta
 
     Example:
         >>> address_type = AddressType.DELIVERY
@@ -26,4 +26,4 @@ class AddressType(str, enum.Enum):
     DELIVERY = "delivery"
     BILLING = "billing"
     HEADQUARTERS = "headquarters"
-    BRANCH = "branch"
+    PLANT = "plant"

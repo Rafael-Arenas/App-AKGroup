@@ -11,9 +11,9 @@ from src.shared.schemas.core.company import (
     CompanyResponse,
     CompanyRutCreate,
     CompanyRutResponse,
-    BranchCreate,
-    BranchUpdate,
-    BranchResponse,
+    PlantCreate,
+    PlantUpdate,
+    PlantResponse,
 )
 from src.shared.schemas.core.product import (
     ProductCreate,
@@ -56,9 +56,9 @@ __all__ = [
     "CompanyResponse",
     "CompanyRutCreate",
     "CompanyRutResponse",
-    "BranchCreate",
-    "BranchUpdate",
-    "BranchResponse",
+    "PlantCreate",
+    "PlantUpdate",
+    "PlantResponse",
     # Product
     "ProductCreate",
     "ProductUpdate",

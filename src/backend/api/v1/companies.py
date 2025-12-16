@@ -201,32 +201,32 @@ def get_company(
     return company
 
 
-@router.get("/{company_id}/with-branches", response_model=CompanyResponse)
-def get_company_with_branches(
+@router.get("/{company_id}/with-plants", response_model=CompanyResponse)
+def get_company_with_plants(
     company_id: int,
     service: CompanyService = Depends(get_company_service),
 ):
     """
-    Obtiene una empresa con sus sucursales cargadas.
+    Obtiene una empresa con sus plantas cargadas.
 
     Args:
         company_id: ID de la empresa
         service: Servicio de empresas
 
     Returns:
-        Empresa con sucursales
+        Empresa con plantas
 
     Raises:
         404: Si no se encuentra la empresa
 
     Example:
-        GET /api/v1/companies/123/with-branches
+        GET /api/v1/companies/123/with-plants
     """
-    logger.info(f"GET /companies/{company_id}/with-branches")
+    logger.info(f"GET /companies/{company_id}/with-plants")
 
-    company = service.get_with_branches(company_id)
+    company = service.get_with_plants(company_id)
 
-    logger.info(f"Empresa encontrada con {len(company.branches)} sucursal(es)")
+    logger.info(f"Empresa encontrada con {len(company.plants)} planta(s)")
     return company
 
 
