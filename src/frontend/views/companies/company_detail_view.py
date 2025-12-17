@@ -2066,8 +2066,10 @@ class CompanyDetailView(ft.Container):
             self.page.close(bottom_sheet)
 
         async def save_plant():
+            logger.info("Iniciando guardado de planta...")
             # Validación simple
             if not name_field.value:
+                logger.warning("Validación fallida: Nombre vacío")
                 snack = ft.SnackBar(
                     content=ft.Text("El nombre es obligatorio"),
                     bgcolor=ft.Colors.RED_400,
@@ -2082,6 +2084,7 @@ class CompanyDetailView(ft.Container):
                 
                 # Obtener ID de ciudad si se seleccionó
                 city_id = int(city_dropdown.value) if city_dropdown.value else None
+                logger.debug(f"Datos a enviar: name={name_field.value}, city_id={city_id}, company_id={self.company_id}")
 
                 data = {
                     "name": name_field.value,
@@ -2093,7 +2096,10 @@ class CompanyDetailView(ft.Container):
                 }
 
                 async with httpx.AsyncClient(base_url="http://localhost:8000", follow_redirects=True) as client:
+                    logger.info("Enviando petición POST /api/v1/plants/")
                     response = await client.post("/api/v1/plants/", json=data)
+                    logger.info(f"Respuesta recibida: {response.status_code}")
+                    
                     if response.status_code == 201:
                         close_bottom_sheet()
                         await self._on_plant_saved()
@@ -2102,7 +2108,8 @@ class CompanyDetailView(ft.Container):
                             error_detail = response.json().get("detail", t("companies.messages.unknown_error"))
                         except Exception:
                             error_detail = f"Error {response.status_code}"
-
+                        
+                        logger.error(f"Error al guardar planta: {error_detail}")
                         snack = ft.SnackBar(
                             content=ft.Text(f"Error: {error_detail}"),
                             bgcolor=ft.Colors.RED_400,
@@ -2111,7 +2118,7 @@ class CompanyDetailView(ft.Container):
                         snack.open = True
                         self.page.update()
             except Exception as ex:
-                logger.exception(f"Error saving plant: {ex}")
+                logger.exception(f"Excepción en save_plant: {ex}")
                 snack = ft.SnackBar(
                     content=ft.Text(f"Error de conexión: {str(ex)}"),
                     bgcolor=ft.Colors.RED_400,
