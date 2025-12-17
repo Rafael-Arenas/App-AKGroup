@@ -17,6 +17,7 @@ from src.backend.api.v1.orders import router as orders_router
 from src.backend.api.v1.deliveries import deliveries_router
 from src.backend.api.v1.invoices import invoices_router
 from src.backend.api.v1.lookups import lookups_router
+from src.backend.api.v1.plants import router as plants_router
 
 __all__ = [
     "companies_router",
@@ -24,6 +25,7 @@ __all__ = [
     "addresses_router",
     "contacts_router",
     "company_ruts_router",
+    "plants_router",
     "services_router",
     "staff_router",
     "notes_router",
