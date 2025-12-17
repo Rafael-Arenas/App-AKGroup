@@ -100,14 +100,6 @@ class CompanyDashboardView(ft.Container):
         )
 
         # Cards
-        # Detalles
-        actions_grid.controls.append(self._create_action_card(
-            "Ver Detalles",
-            ft.Icons.INFO_OUTLINE,
-            ft.Colors.BLUE,
-            lambda: self.on_view_details(self.company_id, self.company_type) if self.on_view_details else None
-        ))
-
         # Cotizaciones
         actions_grid.controls.append(self._create_action_card(
             t("quotes.title"),
@@ -138,6 +130,14 @@ class CompanyDashboardView(ft.Container):
             ft.Icons.RECEIPT_LONG_OUTLINED,
             ft.Colors.INDIGO,
             lambda: self.on_view_invoices(self.company_id) if self.on_view_invoices else None
+        ))
+
+        # Detalles
+        actions_grid.controls.append(self._create_action_card(
+            "Ver Detalles",
+            ft.Icons.INFO_OUTLINE,
+            ft.Colors.BLUE,
+            lambda: self.on_view_details(self.company_id, self.company_type) if self.on_view_details else None
         ))
 
         return ft.Column(
