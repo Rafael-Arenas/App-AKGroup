@@ -60,6 +60,7 @@ class CompanyDetailView(ft.Container):
         self._company: dict | None = None
         self._addresses: list[dict] = []
         self._contacts: list[dict] = []
+        self._plants: list[dict] = []
         self._ruts: list[dict] = []
         self._confirm_dialog: ConfirmDialog | None = None
 
@@ -262,7 +263,7 @@ class CompanyDetailView(ft.Container):
         if fiscal_card:
             cards.append(fiscal_card)
 
-        # Tarjetas de RUTs, Contactos y Direcciones
+        # Tarjetas de RUTs, Contactos, Plantas y Direcciones
         ruts_card = BaseCard(
             title="RUTs",
             icon=ft.Icons.ASSIGNMENT_IND,
@@ -271,6 +272,15 @@ class CompanyDetailView(ft.Container):
             initially_collapsed=False,
         )
         cards.append(ruts_card)
+
+        plants_card = BaseCard(
+            title="Plantas",
+            icon=ft.Icons.FACTORY,
+            content=self._create_plants_section(),
+            collapsible=True,
+            initially_collapsed=False,
+        )
+        cards.append(plants_card)
 
         contacts_card = BaseCard(
             title=t("companies.sections.contacts"),
@@ -733,6 +743,142 @@ class CompanyDetailView(ft.Container):
             spacing=0,
         )
 
+    def _create_plants_section(self) -> ft.Control:
+        """
+        Crea la sección de plantas con lista de cards.
+
+        Returns:
+            Control con la lista de plantas
+        """
+        if not self._plants:
+            return ft.Container(
+                content=ft.Column(
+                    controls=[
+                        ft.Icon(
+                            name=ft.Icons.FACTORY_OUTLINED,
+                            size=LayoutConstants.ICON_SIZE_LG,
+                            color=ft.Colors.GREY_400,
+                        ),
+                        ft.Text(
+                            "No hay plantas registradas",
+                            size=LayoutConstants.FONT_SIZE_MD,
+                            color=ft.Colors.GREY_600,
+                        ),
+                        ft.ElevatedButton(
+                            text="Agregar primera planta",
+                            icon=ft.Icons.ADD,
+                            on_click=self._on_add_plant,
+                        ),
+                    ],
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                    spacing=LayoutConstants.SPACING_SM,
+                ),
+                padding=LayoutConstants.PADDING_MD,
+                alignment=ft.alignment.center,
+            )
+
+        # Lista de plantas
+        plant_cards = []
+        for plant in self._plants:
+            # Badge de activo/inactivo (si aplica, el modelo tiene ActiveMixin)
+            status_badge = ft.Container(
+                content=ft.Text(
+                    t("companies.status.active") if plant.get("is_active", True) else t("companies.status.inactive"),
+                    size=LayoutConstants.FONT_SIZE_XS,
+                    weight=LayoutConstants.FONT_WEIGHT_SEMIBOLD,
+                    color=ft.Colors.WHITE,
+                ),
+                padding=ft.padding.symmetric(
+                    horizontal=LayoutConstants.PADDING_SM,
+                    vertical=2,
+                ),
+                border_radius=LayoutConstants.RADIUS_FULL,
+                bgcolor=ft.Colors.GREEN if plant.get("is_active", True) else ft.Colors.RED_400,
+            )
+
+            plant_card = ft.Container(
+                content=ft.Column(
+                    controls=[
+                        ft.Row(
+                            controls=[
+                                ft.Icon(
+                                    name=ft.Icons.FACTORY,
+                                    size=LayoutConstants.ICON_SIZE_MD,
+                                ),
+                                ft.Column(
+                                    controls=[
+                                        ft.Row(
+                                            controls=[
+                                                ft.Text(
+                                                    plant.get("name", "-"),
+                                                    size=LayoutConstants.FONT_SIZE_MD,
+                                                    weight=LayoutConstants.FONT_WEIGHT_SEMIBOLD,
+                                                ),
+                                                status_badge,
+                                            ],
+                                            spacing=LayoutConstants.SPACING_SM,
+                                        ),
+                                        ft.Text(
+                                            plant.get("address", "-"),
+                                            size=LayoutConstants.FONT_SIZE_SM,
+                                            color=ft.Colors.GREY_700,
+                                        ),
+                                        ft.Text(
+                                            f"{plant.get('city', {}).get('name', '') if isinstance(plant.get('city'), dict) else plant.get('city_name', '')}".strip() or "-",
+                                            size=LayoutConstants.FONT_SIZE_SM,
+                                            color=ft.Colors.GREY_700,
+                                        ),
+                                    ],
+                                    spacing=LayoutConstants.SPACING_XS,
+                                    expand=True,
+                                ),
+                                ft.Row(
+                                    controls=[
+                                        ft.IconButton(
+                                            icon=ft.Icons.EDIT_OUTLINED,
+                                            icon_size=LayoutConstants.ICON_SIZE_SM,
+                                            tooltip="Editar planta",
+                                            on_click=lambda e, p=plant: self._on_edit_plant(e, p),
+                                        ),
+                                        ft.IconButton(
+                                            icon=ft.Icons.DELETE_OUTLINE,
+                                            icon_size=LayoutConstants.ICON_SIZE_SM,
+                                            tooltip="Eliminar planta",
+                                            on_click=lambda e, p=plant: self._on_delete_plant(e, p),
+                                        ),
+                                    ],
+                                    spacing=0,
+                                ),
+                            ],
+                            spacing=LayoutConstants.SPACING_SM,
+                        ),
+                    ],
+                    spacing=LayoutConstants.SPACING_XS,
+                ),
+                padding=LayoutConstants.PADDING_MD,
+                border=ft.border.all(1, ft.Colors.GREY_300),
+                border_radius=LayoutConstants.RADIUS_SM,
+            )
+            plant_cards.append(plant_card)
+
+        # Botón para agregar nueva planta
+        add_button = ft.ElevatedButton(
+            text="Agregar Planta",
+            icon=ft.Icons.ADD,
+            on_click=self._on_add_plant,
+        )
+
+        return ft.Column(
+            controls=[
+                *plant_cards,
+                ft.Container(
+                    content=add_button,
+                    padding=ft.padding.only(top=LayoutConstants.PADDING_SM),
+                ),
+            ],
+            spacing=LayoutConstants.SPACING_SM,
+        )
+
     def _create_info_row(self, label: str, value: str) -> ft.Container:
         """
         Crea una fila de información con mejor estilo.
@@ -872,6 +1018,19 @@ class CompanyDetailView(ft.Container):
                 except Exception as e:
                     logger.warning(f"Error loading RUTs: {e}")
                     self._ruts = []
+
+                try:
+                    # Cargar Plantas
+                    plant_response = await client.get(f"/api/v1/plants/company/{self.company_id}")
+                    if plant_response.status_code == 200:
+                        self._plants = plant_response.json()
+                        logger.success(f"Loaded {len(self._plants)} plants")
+                    else:
+                        logger.warning(f"Error loading plants: {plant_response.status_code}")
+                        self._plants = []
+                except Exception as e:
+                    logger.warning(f"Error loading plants: {e}")
+                    self._plants = []
 
             self._is_loading = False
 
@@ -1797,6 +1956,487 @@ class CompanyDetailView(ft.Container):
         except Exception as e:
             logger.exception(f"Error reloading contacts: {e}")
             self._contacts = []
+
+        # Reconstruir solo el contenido
+        self.content = self.build()
+        if self.page:
+            self.update()
+
+    # ========================================================================
+    # MÉTODOS PARA PLANTS
+    # ========================================================================
+
+    def _on_add_plant(self, e: ft.ControlEvent) -> None:
+        """Abre el bottom sheet para agregar una nueva planta."""
+        logger.info(f"Add plant clicked for company ID={self.company_id}")
+
+        # Diccionario para almacenar países y sus ciudades (se carga dinámicamente)
+        countries_data = {}  # {country_id: country_name}
+        cities_by_country = {}  # {country_id: [city_objects]}
+
+        # Crear campos del formulario
+        name_field = ft.TextField(label="Nombre de la planta *")
+        address_field = ft.TextField(
+            label="Dirección",
+            multiline=True,
+            min_lines=2,
+            max_lines=3,
+        )
+        phone_field = ft.TextField(label="Teléfono", max_length=20)
+        email_field = ft.TextField(label="Email", keyboard_type=ft.KeyboardType.EMAIL)
+
+        # Dropdown de ciudades (inicialmente vacío)
+        city_dropdown = ft.Dropdown(
+            label="Ciudad",
+            options=[],
+            disabled=True,
+        )
+
+        # Dropdown de países (para filtrar ciudades)
+        country_dropdown = ft.Dropdown(
+            label="País (para filtrar ciudades)",
+            options=[],
+            disabled=True,
+        )
+
+        async def load_countries():
+            """Carga los países desde la API."""
+            try:
+                import httpx
+                async with httpx.AsyncClient(base_url="http://localhost:8000") as client:
+                    response = await client.get("/api/v1/lookups/countries/")
+                    if response.status_code == 200:
+                        countries = response.json()
+                        for country in countries:
+                            countries_data[country["id"]] = country["name"]
+
+                        # Actualizar dropdown de países
+                        country_dropdown.options = [
+                            ft.dropdown.Option(str(cid), cname)
+                            for cid, cname in sorted(countries_data.items(), key=lambda x: x[1])
+                        ]
+                        country_dropdown.disabled = False
+                        country_dropdown.update()
+                    else:
+                        logger.error(f"Error loading countries: {response.status_code}")
+            except Exception as ex:
+                logger.exception(f"Error loading countries: {ex}")
+
+        async def load_cities(country_id: int):
+            """Carga las ciudades de un país desde la API."""
+            try:
+                import httpx
+                async with httpx.AsyncClient(base_url="http://localhost:8000") as client:
+                    response = await client.get(f"/api/v1/lookups/cities/?country_id={country_id}")
+                    if response.status_code == 200:
+                        cities = response.json()
+                        cities_by_country[country_id] = cities
+
+                        # Actualizar dropdown de ciudades
+                        city_dropdown.options = [
+                            ft.dropdown.Option(str(city["id"]), city["name"]) # Value es el ID
+                            for city in sorted(cities, key=lambda x: x["name"])
+                        ]
+                        city_dropdown.disabled = False
+                        city_dropdown.value = None
+                        city_dropdown.update()
+                    else:
+                        logger.error(f"Error loading cities: {response.status_code}")
+            except Exception as ex:
+                logger.exception(f"Error loading cities: {ex}")
+
+        def on_country_change(e):
+            """Maneja el cambio de país."""
+            selected_country_id = e.control.value
+            if selected_country_id:
+                # Cargar ciudades del país seleccionado
+                self.page.run_task(load_cities, int(selected_country_id))
+            else:
+                city_dropdown.options = []
+                city_dropdown.disabled = True
+                city_dropdown.value = None
+                city_dropdown.update()
+
+        country_dropdown.on_change = on_country_change
+
+        # Cargar países al abrir el bottom sheet
+        self.page.run_task(load_countries)
+
+        def close_bottom_sheet():
+            self.page.close(bottom_sheet)
+
+        async def save_plant():
+            # Validación simple
+            if not name_field.value:
+                snack = ft.SnackBar(
+                    content=ft.Text("El nombre es obligatorio"),
+                    bgcolor=ft.Colors.RED_400,
+                )
+                self.page.snack_bar = snack
+                snack.open = True
+                self.page.update()
+                return
+
+            try:
+                import httpx
+                
+                # Obtener ID de ciudad si se seleccionó
+                city_id = int(city_dropdown.value) if city_dropdown.value else None
+
+                data = {
+                    "name": name_field.value,
+                    "address": address_field.value or None,
+                    "phone": phone_field.value or None,
+                    "email": email_field.value or None,
+                    "city_id": city_id,
+                    "company_id": self.company_id,
+                }
+
+                async with httpx.AsyncClient(base_url="http://localhost:8000", follow_redirects=True) as client:
+                    response = await client.post("/api/v1/plants/", json=data)
+                    if response.status_code == 201:
+                        close_bottom_sheet()
+                        await self._on_plant_saved()
+                    else:
+                        try:
+                            error_detail = response.json().get("detail", t("companies.messages.unknown_error"))
+                        except Exception:
+                            error_detail = f"Error {response.status_code}"
+
+                        snack = ft.SnackBar(
+                            content=ft.Text(f"Error: {error_detail}"),
+                            bgcolor=ft.Colors.RED_400,
+                        )
+                        self.page.snack_bar = snack
+                        snack.open = True
+                        self.page.update()
+            except Exception as ex:
+                logger.exception(f"Error saving plant: {ex}")
+                snack = ft.SnackBar(
+                    content=ft.Text(f"Error de conexión: {str(ex)}"),
+                    bgcolor=ft.Colors.RED_400,
+                )
+                self.page.snack_bar = snack
+                snack.open = True
+                self.page.update()
+
+        # Crear BottomSheet
+        bottom_sheet = ft.BottomSheet(
+            content=ft.Container(
+                content=ft.Column(
+                    controls=[
+                        ft.Row(
+                            controls=[
+                                ft.Text("Agregar Planta", size=20, weight=ft.FontWeight.BOLD),
+                                ft.IconButton(
+                                    icon=ft.Icons.CLOSE,
+                                    on_click=lambda _: close_bottom_sheet(),
+                                ),
+                            ],
+                            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                        ),
+                        ft.Divider(),
+                        name_field,
+                        address_field,
+                        country_dropdown,
+                        city_dropdown,
+                        ft.Row(
+                            controls=[
+                                ft.Container(content=phone_field, expand=1),
+                                ft.Container(content=email_field, expand=1),
+                            ],
+                            spacing=10,
+                        ),
+                        ft.Row(
+                            controls=[
+                                ft.TextButton("Cancelar", on_click=lambda _: close_bottom_sheet()),
+                                ft.ElevatedButton(
+                                    "Guardar",
+                                    icon=ft.Icons.SAVE,
+                                    on_click=lambda _: self.page.run_task(save_plant),
+                                ),
+                            ],
+                            alignment=ft.MainAxisAlignment.END,
+                            spacing=10,
+                        ),
+                    ],
+                    spacing=15,
+                    scroll=ft.ScrollMode.AUTO,
+                ),
+                padding=20,
+            ),
+        )
+
+        self.page.open(bottom_sheet)
+        logger.info("BottomSheet opened for adding plant")
+
+    def _on_edit_plant(self, e: ft.ControlEvent, plant: dict) -> None:
+        """Abre el bottom sheet para editar una planta."""
+        logger.info(f"Edit plant clicked: ID={plant.get('id')}")
+
+        plant_id = plant.get("id")
+
+        # Diccionario para almacenar países y sus ciudades
+        countries_data = {}
+        cities_by_country = {}
+
+        # Crear campos con valores iniciales
+        name_field = ft.TextField(label="Nombre de la planta *", value=plant.get("name", ""))
+        address_field = ft.TextField(
+            label="Dirección",
+            value=plant.get("address", ""),
+            multiline=True,
+            min_lines=2,
+            max_lines=3,
+        )
+        phone_field = ft.TextField(label="Teléfono", value=plant.get("phone", ""), max_length=20)
+        email_field = ft.TextField(
+            label="Email",
+            value=plant.get("email", ""),
+            keyboard_type=ft.KeyboardType.EMAIL
+        )
+
+        # Determinar país y ciudad actuales
+        current_city_id = plant.get("city_id")
+        current_country_id = None
+        
+        # Si tenemos el objeto city completo en la planta (joined loading)
+        if isinstance(plant.get("city"), dict):
+            current_city_id = plant["city"].get("id")
+            current_country_id = plant["city"].get("country_id")
+
+        # Dropdown de ciudades
+        city_dropdown = ft.Dropdown(
+            label="Ciudad",
+            options=[],
+            disabled=True,
+        )
+
+        # Dropdown de países
+        country_dropdown = ft.Dropdown(
+            label="País (para filtrar ciudades)",
+            options=[],
+            disabled=True,
+        )
+
+        async def load_countries():
+            """Carga los países."""
+            try:
+                import httpx
+                async with httpx.AsyncClient(base_url="http://localhost:8000") as client:
+                    response = await client.get("/api/v1/lookups/countries/")
+                    if response.status_code == 200:
+                        countries = response.json()
+                        for country in countries:
+                            countries_data[country["id"]] = country["name"]
+                        
+                        country_dropdown.options = [
+                            ft.dropdown.Option(str(cid), cname)
+                            for cid, cname in sorted(countries_data.items(), key=lambda x: x[1])
+                        ]
+                        country_dropdown.disabled = False
+                        
+                        # Si tenemos current_country_id, seleccionarlo
+                        if current_country_id:
+                            country_dropdown.value = str(current_country_id)
+                            # Y cargar ciudades
+                            await load_cities(current_country_id, set_current=True)
+                            
+                        country_dropdown.update()
+                    else:
+                        logger.error(f"Error loading countries: {response.status_code}")
+            except Exception as ex:
+                logger.exception(f"Error loading countries: {ex}")
+
+        async def load_cities(country_id: int, set_current: bool = False):
+            """Carga las ciudades."""
+            try:
+                import httpx
+                async with httpx.AsyncClient(base_url="http://localhost:8000") as client:
+                    response = await client.get(f"/api/v1/lookups/cities/?country_id={country_id}")
+                    if response.status_code == 200:
+                        cities = response.json()
+                        cities_by_country[country_id] = cities
+
+                        city_dropdown.options = [
+                            ft.dropdown.Option(str(city["id"]), city["name"])
+                            for city in sorted(cities, key=lambda x: x["name"])
+                        ]
+                        city_dropdown.disabled = False
+                        
+                        if set_current and current_city_id:
+                            # Verificar si la ciudad actual está en la lista
+                            city_ids = [c["id"] for c in cities]
+                            if current_city_id in city_ids:
+                                city_dropdown.value = str(current_city_id)
+                        
+                        city_dropdown.update()
+                    else:
+                        logger.error(f"Error loading cities: {response.status_code}")
+            except Exception as ex:
+                logger.exception(f"Error loading cities: {ex}")
+
+        def on_country_change(e):
+            selected_country_id = e.control.value
+            if selected_country_id:
+                self.page.run_task(load_cities, int(selected_country_id), False)
+            else:
+                city_dropdown.options = []
+                city_dropdown.disabled = True
+                city_dropdown.value = None
+                city_dropdown.update()
+
+        country_dropdown.on_change = on_country_change
+        self.page.run_task(load_countries)
+
+        def close_bottom_sheet():
+            self.page.close(bottom_sheet)
+
+        async def save_plant():
+            if not name_field.value:
+                snack = ft.SnackBar(content=ft.Text("El nombre es obligatorio"), bgcolor=ft.Colors.RED_400)
+                self.page.snack_bar = snack
+                snack.open = True
+                self.page.update()
+                return
+
+            try:
+                import httpx
+                city_id = int(city_dropdown.value) if city_dropdown.value else None
+
+                data = {
+                    "name": name_field.value,
+                    "address": address_field.value or None,
+                    "phone": phone_field.value or None,
+                    "email": email_field.value or None,
+                    "city_id": city_id,
+                }
+
+                async with httpx.AsyncClient(base_url="http://localhost:8000", follow_redirects=True) as client:
+                    response = await client.put(f"/api/v1/plants/{plant_id}", json=data)
+                    if response.status_code == 200:
+                        close_bottom_sheet()
+                        await self._on_plant_saved()
+                    else:
+                        try:
+                            error_detail = response.json().get("detail", "Error desconocido")
+                        except Exception:
+                            error_detail = f"Error {response.status_code}"
+                        snack = ft.SnackBar(content=ft.Text(f"Error: {error_detail}"), bgcolor=ft.Colors.RED_400)
+                        self.page.snack_bar = snack
+                        snack.open = True
+                        self.page.update()
+            except Exception as ex:
+                logger.exception(f"Error saving plant: {ex}")
+                snack = ft.SnackBar(content=ft.Text(f"Error de conexión: {str(ex)}"), bgcolor=ft.Colors.RED_400)
+                self.page.snack_bar = snack
+                snack.open = True
+                self.page.update()
+
+        bottom_sheet = ft.BottomSheet(
+            content=ft.Container(
+                content=ft.Column(
+                    controls=[
+                        ft.Row(
+                            controls=[
+                                ft.Text("Editar Planta", size=20, weight=ft.FontWeight.BOLD),
+                                ft.IconButton(icon=ft.Icons.CLOSE, on_click=lambda _: close_bottom_sheet()),
+                            ],
+                            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                        ),
+                        ft.Divider(),
+                        name_field,
+                        address_field,
+                        country_dropdown,
+                        city_dropdown,
+                        ft.Row(
+                            controls=[
+                                ft.Container(content=phone_field, expand=1),
+                                ft.Container(content=email_field, expand=1),
+                            ],
+                            spacing=10,
+                        ),
+                        ft.Row(
+                            controls=[
+                                ft.TextButton("Cancelar", on_click=lambda _: close_bottom_sheet()),
+                                ft.ElevatedButton("Guardar", icon=ft.Icons.SAVE, on_click=lambda _: self.page.run_task(save_plant)),
+                            ],
+                            alignment=ft.MainAxisAlignment.END,
+                            spacing=10,
+                        ),
+                    ],
+                    spacing=15,
+                    scroll=ft.ScrollMode.AUTO,
+                ),
+                padding=20,
+            ),
+        )
+
+        self.page.open(bottom_sheet)
+        logger.info("BottomSheet opened for editing plant")
+
+    def _on_delete_plant(self, e: ft.ControlEvent, plant: dict) -> None:
+        """Muestra confirmación para eliminar una planta."""
+        logger.info(f"Delete plant clicked: ID={plant.get('id')}")
+
+        confirm_dialog = ConfirmDialog(
+            title="Eliminar Planta",
+            message=f"¿Está seguro de que desea eliminar la planta '{plant.get('name')}'?",
+            on_confirm=lambda: self.page.run_task(self._confirm_delete_plant, plant.get("id")),
+        )
+
+        if self.page:
+            confirm_dialog.show(self.page)
+
+    async def _confirm_delete_plant(self, plant_id: int) -> None:
+        """Ejecuta la eliminación de una planta."""
+        logger.info(f"Confirming deletion of plant ID={plant_id}")
+
+        try:
+            import httpx
+
+            async with httpx.AsyncClient(base_url="http://localhost:8000", follow_redirects=True) as client:
+                response = await client.delete(f"/api/v1/plants/{plant_id}")
+
+                if response.status_code == 200:
+                    logger.success(f"Plant {plant_id} deleted successfully")
+                    await self._on_plant_saved()
+                    self._show_snackbar("Planta eliminada correctamente", ft.Colors.GREEN)
+                else:
+                    try:
+                        error_detail = response.json().get("detail", "Error desconocido")
+                    except Exception:
+                        error_detail = f"Error {response.status_code}"
+                    logger.error(f"Error deleting plant: {response.status_code} - {error_detail}")
+                    self._show_snackbar(f"Error al eliminar: {error_detail}", ft.Colors.RED_400)
+
+        except Exception as e:
+            logger.exception(f"Error deleting plant: {e}")
+            self._show_snackbar(f"Error de conexión: {str(e)}", ft.Colors.RED_400)
+
+    async def _on_plant_saved(self) -> None:
+        """Callback después de guardar/eliminar una planta."""
+        logger.info("Plant saved, reloading plants")
+        await self._reload_plants()
+        self._show_snackbar("Cambios guardados exitosamente", ft.Colors.GREEN)
+
+    async def _reload_plants(self) -> None:
+        """Recarga solo las plantas desde la API."""
+        try:
+            import httpx
+
+            async with httpx.AsyncClient(base_url="http://localhost:8000", follow_redirects=True) as client:
+                response = await client.get(f"/api/v1/plants/company/{self.company_id}")
+                if response.status_code == 200:
+                    self._plants = response.json()
+                    logger.success(f"Reloaded {len(self._plants)} plants")
+                else:
+                    logger.warning(f"Error reloading plants: {response.status_code}")
+                    self._plants = []
+
+        except Exception as e:
+            logger.exception(f"Error reloading plants: {e}")
+            self._plants = []
 
         # Reconstruir solo el contenido
         self.content = self.build()
