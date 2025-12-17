@@ -676,21 +676,109 @@ class MainView(ft.Container):
             {"label": "dashboard.title", "route": None},
         ])
 
-    def navigate_to_company_quotes(self, company_id: int) -> None:
+    def navigate_to_company_quotes(self, company_id: int, company_type: str) -> None:
+        """Navega a la vista de cotizaciones de una empresa."""
+        from src.frontend.views.companies.company_related_views import CompanyQuotesView
+        
         logger.info(f"Navigating to quotes for company {company_id}")
-        self.navigate_to(5)  # Quotes section
+        
+        view = CompanyQuotesView(
+            company_id=company_id,
+            company_type=company_type,
+            on_back=lambda: self.navigate_to_company_dashboard(company_id, company_type)
+        )
+        
+        if self._content_area:
+            self._content_area.content = view
+            if self.page:
+                self.update()
 
-    def navigate_to_company_orders(self, company_id: int) -> None:
+        section_key = "clients" if company_type == "CLIENT" else "suppliers"
+        dashboard_route = f"/companies/dashboard/{company_id}/{company_type}"
+        
+        app_state.navigation.set_breadcrumb([
+            {"label": f"{section_key}.title", "route": f"/companies/{company_type.lower()}s"},
+            {"label": "dashboard.title", "route": dashboard_route},
+            {"label": "quotes.title", "route": None},
+        ])
+
+    def navigate_to_company_orders(self, company_id: int, company_type: str) -> None:
+        """Navega a la vista de órdenes de una empresa."""
+        from src.frontend.views.companies.company_related_views import CompanyOrdersView
+        
         logger.info(f"Navigating to orders for company {company_id}")
-        self.navigate_to(6)  # Orders section
+        
+        view = CompanyOrdersView(
+            company_id=company_id,
+            company_type=company_type,
+            on_back=lambda: self.navigate_to_company_dashboard(company_id, company_type)
+        )
+        
+        if self._content_area:
+            self._content_area.content = view
+            if self.page:
+                self.update()
 
-    def navigate_to_company_deliveries(self, company_id: int) -> None:
+        section_key = "clients" if company_type == "CLIENT" else "suppliers"
+        dashboard_route = f"/companies/dashboard/{company_id}/{company_type}"
+        
+        app_state.navigation.set_breadcrumb([
+            {"label": f"{section_key}.title", "route": f"/companies/{company_type.lower()}s"},
+            {"label": "dashboard.title", "route": dashboard_route},
+            {"label": "orders.title", "route": None},
+        ])
+
+    def navigate_to_company_deliveries(self, company_id: int, company_type: str) -> None:
+        """Navega a la vista de entregas de una empresa."""
+        from src.frontend.views.companies.company_related_views import CompanyDeliveriesView
+        
         logger.info(f"Navigating to deliveries for company {company_id}")
-        self.navigate_to(7)  # Deliveries section
+        
+        view = CompanyDeliveriesView(
+            company_id=company_id,
+            company_type=company_type,
+            on_back=lambda: self.navigate_to_company_dashboard(company_id, company_type)
+        )
+        
+        if self._content_area:
+            self._content_area.content = view
+            if self.page:
+                self.update()
 
-    def navigate_to_company_invoices(self, company_id: int) -> None:
+        section_key = "clients" if company_type == "CLIENT" else "suppliers"
+        dashboard_route = f"/companies/dashboard/{company_id}/{company_type}"
+        
+        app_state.navigation.set_breadcrumb([
+            {"label": f"{section_key}.title", "route": f"/companies/{company_type.lower()}s"},
+            {"label": "dashboard.title", "route": dashboard_route},
+            {"label": "deliveries.title", "route": None},
+        ])
+
+    def navigate_to_company_invoices(self, company_id: int, company_type: str) -> None:
+        """Navega a la vista de facturas de una empresa."""
+        from src.frontend.views.companies.company_related_views import CompanyInvoicesView
+        
         logger.info(f"Navigating to invoices for company {company_id}")
-        self.navigate_to(8)  # Invoices section
+        
+        view = CompanyInvoicesView(
+            company_id=company_id,
+            company_type=company_type,
+            on_back=lambda: self.navigate_to_company_dashboard(company_id, company_type)
+        )
+        
+        if self._content_area:
+            self._content_area.content = view
+            if self.page:
+                self.update()
+
+        section_key = "clients" if company_type == "CLIENT" else "suppliers"
+        dashboard_route = f"/companies/dashboard/{company_id}/{company_type}"
+        
+        app_state.navigation.set_breadcrumb([
+            {"label": f"{section_key}.title", "route": f"/companies/{company_type.lower()}s"},
+            {"label": "dashboard.title", "route": dashboard_route},
+            {"label": "invoices.title", "route": None},
+        ])
 
     # =========================================================================
     # NAVEGACIÓN DE ARTÍCULOS
