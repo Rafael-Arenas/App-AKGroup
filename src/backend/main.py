@@ -18,6 +18,7 @@ from src.backend.api.v1 import (  # noqa: F401
     addresses,
     contacts,
     company_ruts,
+    plants,
     services,
     staff,
     notes,
@@ -172,6 +173,12 @@ app.include_router(
     company_ruts.router,
     prefix="/api/v1",
     tags=["company-ruts"]
+)
+
+app.include_router(
+    plants.router,
+    prefix="/api/v1",
+    tags=["plants"]
 )
 
 app.include_router(
