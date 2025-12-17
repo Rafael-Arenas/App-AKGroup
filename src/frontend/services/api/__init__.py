@@ -17,6 +17,7 @@ from .company_api import CompanyAPIService
 from .product_api import ProductAPIService
 from .lookup_api import LookupAPIService
 from .plant_api import PlantAPIService
+from .quote_api import QuoteAPIService
 from .config import APISettings, api_settings
 
 
@@ -25,6 +26,7 @@ CompanyAPI = CompanyAPIService
 ProductAPI = ProductAPIService
 LookupAPI = LookupAPIService
 PlantAPI = PlantAPIService
+QuoteAPI = QuoteAPIService
 
 # Instancias singleton de servicios
 # Estas instancias pueden ser importadas y reutilizadas en toda la aplicación
@@ -32,6 +34,7 @@ company_api = CompanyAPIService()
 product_api = ProductAPIService()
 lookup_api = LookupAPIService()
 plant_api = PlantAPIService()
+quote_api = QuoteAPIService()
 
 
 __all__ = [
@@ -48,16 +51,19 @@ __all__ = [
     "ProductAPIService",
     "LookupAPIService",
     "PlantAPIService",
+    "QuoteAPIService",
     # Aliases
     "CompanyAPI",
     "ProductAPI",
     "LookupAPI",
     "PlantAPI",
+    "QuoteAPI",
     # Instancias singleton
     "company_api",
     "product_api",
     "lookup_api",
     "plant_api",
+    "quote_api",
     # Configuración
     "APISettings",
     "api_settings",
