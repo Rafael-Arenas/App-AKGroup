@@ -25,10 +25,10 @@ class CompanyDashboardView(ft.Container):
         company_type: str = "CLIENT",
         on_view_details: Callable[[int, str], None] | None = None,
         on_back: Callable[[], None] | None = None,
-        on_view_quotes: Callable[[int], None] | None = None,
-        on_view_orders: Callable[[int], None] | None = None,
-        on_view_deliveries: Callable[[int], None] | None = None,
-        on_view_invoices: Callable[[int], None] | None = None,
+        on_view_quotes: Callable[[int, str], None] | None = None,
+        on_view_orders: Callable[[int, str], None] | None = None,
+        on_view_deliveries: Callable[[int, str], None] | None = None,
+        on_view_invoices: Callable[[int, str], None] | None = None,
     ):
         super().__init__()
         self.company_id = company_id
@@ -105,7 +105,7 @@ class CompanyDashboardView(ft.Container):
             t("quotes.title"),
             ft.Icons.DESCRIPTION_OUTLINED,
             ft.Colors.ORANGE,
-            lambda: self.on_view_quotes(self.company_id) if self.on_view_quotes else None
+            lambda: self.on_view_quotes(self.company_id, self.company_type) if self.on_view_quotes else None
         ))
         
         # Ordenes
@@ -113,7 +113,7 @@ class CompanyDashboardView(ft.Container):
             t("orders.title"),
             ft.Icons.SHOPPING_CART_OUTLINED,
             ft.Colors.GREEN,
-            lambda: self.on_view_orders(self.company_id) if self.on_view_orders else None
+            lambda: self.on_view_orders(self.company_id, self.company_type) if self.on_view_orders else None
         ))
 
         # Entregas
@@ -121,7 +121,7 @@ class CompanyDashboardView(ft.Container):
             t("deliveries.title"),
             ft.Icons.LOCAL_SHIPPING_OUTLINED,
             ft.Colors.TEAL,
-            lambda: self.on_view_deliveries(self.company_id) if self.on_view_deliveries else None
+            lambda: self.on_view_deliveries(self.company_id, self.company_type) if self.on_view_deliveries else None
         ))
 
         # Facturas
@@ -129,7 +129,7 @@ class CompanyDashboardView(ft.Container):
             t("invoices.title"),
             ft.Icons.RECEIPT_LONG_OUTLINED,
             ft.Colors.INDIGO,
-            lambda: self.on_view_invoices(self.company_id) if self.on_view_invoices else None
+            lambda: self.on_view_invoices(self.company_id, self.company_type) if self.on_view_invoices else None
         ))
 
         # Detalles
