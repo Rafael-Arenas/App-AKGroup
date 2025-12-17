@@ -277,7 +277,7 @@ class MainView(ft.Container):
                 logger.debug("Creating CompanyListView (Clientes)")
                 return CompanyListView(
                     default_type_filter="CLIENT",
-                    on_view_detail=self.navigate_to_company_detail,
+                    on_view_detail=self.navigate_to_company_dashboard,
                     on_create=lambda ctype: self.navigate_to_company_form(None, ctype),
                     on_edit=self.navigate_to_company_form,
                 )
@@ -285,7 +285,7 @@ class MainView(ft.Container):
                 logger.debug("Creating CompanyListView (Proveedores)")
                 return CompanyListView(
                     default_type_filter="SUPPLIER",
-                    on_view_detail=self.navigate_to_company_detail,
+                    on_view_detail=self.navigate_to_company_dashboard,
                     on_create=lambda ctype: self.navigate_to_company_form(None, ctype),
                     on_edit=self.navigate_to_company_form,
                 )
@@ -370,6 +370,20 @@ class MainView(ft.Container):
             >>> _on_breadcrumb_navigate("/companies/clients")
         """
         logger.info(f"Breadcrumb navigation to: {route}")
+
+        # Manejar rutas dinámicas
+        if route.startswith("/companies/dashboard/"):
+            try:
+                # Formato esperado: /companies/dashboard/{id}/{type}
+                parts = route.split("/")
+                if len(parts) >= 5:
+                    company_id = int(parts[3])
+                    company_type = parts[4]
+                    self.navigate_to_company_dashboard(company_id, company_type)
+                    return
+            except Exception as e:
+                logger.error(f"Error parsing dashboard route {route}: {e}")
+            return
 
         # Mapear rutas a índices de navegación
         route_mapping = {
@@ -496,6 +510,7 @@ class MainView(ft.Container):
         self,
         company_id: int,
         company_type: str = "CLIENT",
+        from_dashboard: bool = False,
     ) -> None:
         """
         Navega a la vista de detalle de una empresa.
@@ -503,6 +518,7 @@ class MainView(ft.Container):
         Args:
             company_id: ID de la empresa
             company_type: Tipo de empresa ("CLIENT" o "SUPPLIER")
+            from_dashboard: Si viene del dashboard
 
         Example:
             >>> main_view.navigate_to_company_detail(123, "CLIENT")
@@ -511,12 +527,18 @@ class MainView(ft.Container):
 
         logger.info(f"Navigating to company detail: ID={company_id}, type={company_type}")
 
+        # Determine back action
+        if from_dashboard:
+            on_back = lambda: self.navigate_to_company_dashboard(company_id, company_type)
+        else:
+            on_back = lambda: self._on_back_to_company_list(company_type)
+
         # Crear vista de detalle
         detail_view = CompanyDetailView(
             company_id=company_id,
             on_edit=lambda cid: self.navigate_to_company_form(cid, company_type),
             on_delete=lambda cid: self._on_company_deleted(cid, company_type),
-            on_back=lambda: self._on_back_to_company_list(company_type),
+            on_back=on_back,
         )
 
         # Actualizar contenido y breadcrumb
@@ -527,10 +549,17 @@ class MainView(ft.Container):
 
         # Actualizar breadcrumb
         section_key = "clients" if company_type == "CLIENT" else "suppliers"
-        app_state.navigation.set_breadcrumb([
+        breadcrumb = [
             {"label": f"{section_key}.title", "route": f"/companies/{company_type.lower()}s"},
-            {"label": f"{section_key}.detail", "route": None},
-        ])
+        ]
+        
+        if from_dashboard:
+             dashboard_route = f"/companies/dashboard/{company_id}/{company_type}"
+             breadcrumb.append({"label": "dashboard.title", "route": dashboard_route})
+             
+        breadcrumb.append({"label": f"{section_key}.detail", "route": None})
+        
+        app_state.navigation.set_breadcrumb(breadcrumb)
 
     def navigate_to_company_form(
         self,
@@ -612,6 +641,56 @@ class MainView(ft.Container):
         # Navegar al índice correspondiente
         index = 1 if company_type == "CLIENT" else 2
         self.navigate_to(index)
+
+    def navigate_to_company_dashboard(
+        self,
+        company_id: int,
+        company_type: str = "CLIENT",
+    ) -> None:
+        """
+        Navega al dashboard de una empresa.
+        """
+        from src.frontend.views.companies.company_dashboard_view import CompanyDashboardView
+
+        logger.info(f"Navigating to company dashboard: ID={company_id}")
+
+        dashboard_view = CompanyDashboardView(
+            company_id=company_id,
+            company_type=company_type,
+            on_view_details=lambda cid, ctype: self.navigate_to_company_detail(cid, ctype, from_dashboard=True),
+            on_back=lambda: self._on_back_to_company_list(company_type),
+            on_view_quotes=self.navigate_to_company_quotes,
+            on_view_orders=self.navigate_to_company_orders,
+            on_view_deliveries=self.navigate_to_company_deliveries,
+            on_view_invoices=self.navigate_to_company_invoices,
+        )
+
+        if self._content_area:
+            self._content_area.content = dashboard_view
+            if self.page:
+                self.update()
+
+        section_key = "clients" if company_type == "CLIENT" else "suppliers"
+        app_state.navigation.set_breadcrumb([
+            {"label": f"{section_key}.title", "route": f"/companies/{company_type.lower()}s"},
+            {"label": "dashboard.title", "route": None},
+        ])
+
+    def navigate_to_company_quotes(self, company_id: int) -> None:
+        logger.info(f"Navigating to quotes for company {company_id}")
+        self.navigate_to(5)  # Quotes section
+
+    def navigate_to_company_orders(self, company_id: int) -> None:
+        logger.info(f"Navigating to orders for company {company_id}")
+        self.navigate_to(6)  # Orders section
+
+    def navigate_to_company_deliveries(self, company_id: int) -> None:
+        logger.info(f"Navigating to deliveries for company {company_id}")
+        self.navigate_to(7)  # Deliveries section
+
+    def navigate_to_company_invoices(self, company_id: int) -> None:
+        logger.info(f"Navigating to invoices for company {company_id}")
+        self.navigate_to(8)  # Invoices section
 
     # =========================================================================
     # NAVEGACIÓN DE ARTÍCULOS
