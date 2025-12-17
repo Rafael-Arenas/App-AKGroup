@@ -3,11 +3,17 @@ Vistas relacionadas a una empresa (Cotizaciones, Órdenes, Entregas, Facturas).
 """
 import flet as ft
 from loguru import logger
-from typing import Callable
+from typing import Callable, Any
 
 from src.frontend.app_state import app_state
 from src.frontend.layout_constants import LayoutConstants
-from src.frontend.components.common import LoadingSpinner, ErrorDisplay
+from src.frontend.components.common import (
+    LoadingSpinner, 
+    ErrorDisplay,
+    DataTable,
+    SearchBar,
+    EmptyState,
+)
 from src.frontend.i18n.translation_manager import t
 
 class CompanyRelatedBaseView(ft.Container):
@@ -125,8 +131,8 @@ class CompanyRelatedBaseView(ft.Container):
             company_api = CompanyAPI()
             self._company = await company_api.get_by_id(self.company_id)
             
-            # Aquí se podrían cargar los datos específicos (cotizaciones, ordenes, etc.)
-            # self._items = await service.get_by_company(self.company_id)
+            # Cargar datos específicos de la vista hija
+            await self._load_child_data()
             
             self._is_loading = False
         except Exception as e:
@@ -137,6 +143,12 @@ class CompanyRelatedBaseView(ft.Container):
         self.content = self.build()
         if self.page:
             self.update()
+
+    async def _load_child_data(self):
+        """
+        Método a sobreescribir por las subclases para cargar sus propios datos.
+        """
+        pass
 
 
 class CompanyQuotesView(CompanyRelatedBaseView):
@@ -149,6 +161,143 @@ class CompanyQuotesView(CompanyRelatedBaseView):
             color=ft.Colors.ORANGE,
             on_back=on_back
         )
+        # Estado de la lista
+        self._quotes: list[dict] = []
+        self._total_quotes: int = 0
+        self._current_page: int = 1
+        self._page_size: int = 10
+        self._search_query: str = ""
+        
+        # Componentes
+        self._data_table: DataTable | None = None
+        self._search_bar: SearchBar | None = None
+
+    async def _load_child_data(self):
+        from src.frontend.services.api import quote_api
+        
+        params = {
+            "page": self._current_page,
+            "page_size": self._page_size,
+            "company_id": self.company_id
+        }
+        if self._search_query:
+            params["query"] = self._search_query
+            
+        response = await quote_api.get_by_company(**params)
+        self._quotes = response.get("items", [])
+        self._total_quotes = response.get("total", 0)
+
+    def build_content(self) -> ft.Control:
+        if not self._quotes and not self._search_query:
+            return ft.Container(
+                content=EmptyState(
+                    icon=ft.Icons.DESCRIPTION_OUTLINED,
+                    title=t("quotes.title"),
+                    message=f"No hay cotizaciones registradas para {self._company.get('name')}",
+                    action_text="Crear Cotización",
+                    on_action=self._on_create_quote
+                ),
+                expand=True,
+                alignment=ft.alignment.center
+            )
+
+        # SearchBar
+        self._search_bar = SearchBar(
+            placeholder="Buscar cotizaciones...",
+            on_search=self._on_search,
+        )
+
+        # DataTable
+        self._data_table = DataTable(
+            columns=[
+                {"key": "quote_number", "label": "Número", "sortable": True},
+                {"key": "subject", "label": "Asunto", "sortable": True},
+                {"key": "date", "label": "Fecha", "sortable": True},
+                {"key": "total", "label": "Total", "sortable": True},
+                {"key": "status", "label": "Estado", "sortable": True},
+            ],
+            on_row_click=self._on_row_click,
+            on_edit=self._on_edit_quote,
+            on_delete=self._on_delete_quote,
+            page_size=self._page_size,
+            on_page_change=self._on_page_change,
+        )
+
+        formatted_data = self._format_quotes_for_table(self._quotes)
+        self._data_table.set_data(
+            formatted_data,
+            total=self._total_quotes,
+            current_page=self._current_page,
+        )
+
+        return ft.Column(
+            controls=[
+                ft.Container(
+                    content=ft.Row([
+                        ft.Container(content=self._search_bar, expand=True),
+                        ft.FloatingActionButton(
+                            icon=ft.Icons.ADD,
+                            text="Nueva Cotización",
+                            on_click=self._on_create_quote,
+                        )
+                    ]),
+                    padding=ft.padding.symmetric(horizontal=LayoutConstants.PADDING_LG),
+                ),
+                ft.Container(
+                    content=self._data_table,
+                    padding=ft.padding.only(
+                        left=LayoutConstants.PADDING_LG,
+                        right=LayoutConstants.PADDING_LG,
+                        bottom=LayoutConstants.PADDING_LG,
+                    ),
+                    expand=True,
+                ),
+            ],
+            spacing=LayoutConstants.SPACING_MD,
+            expand=True
+        )
+
+    def _format_quotes_for_table(self, quotes: list[dict]) -> list[dict]:
+        formatted = []
+        for quote in quotes:
+            formatted.append({
+                "id": quote.get("id"),
+                "quote_number": quote.get("quote_number", "-"),
+                "subject": quote.get("subject", "-"),
+                "date": quote.get("quote_date", "")[:10] if quote.get("quote_date") else "-",
+                "total": f"${quote.get('total', 0):,.2f}", # Simple format for now
+                "status": str(quote.get("status_id", "Pendiente")), # TODO: Map ID to name
+                "_original": quote,
+            })
+        return formatted
+
+    def _on_search(self, query: str):
+        self._search_query = query
+        self._current_page = 1
+        if self.page:
+            self.page.run_task(self.load_data)
+
+    def _on_page_change(self, page: int):
+        self._current_page = page
+        if self.page:
+            self.page.run_task(self.load_data)
+
+    def _on_row_click(self, row_data: dict):
+        # TODO: Implementar vista de detalle de cotización
+        pass
+
+    def _on_create_quote(self, e=None):
+        # TODO: Implementar creación de cotización
+        pass
+
+    def _on_edit_quote(self, row_data: dict):
+        # TODO: Implementar edición de cotización
+        pass
+
+    def _on_delete_quote(self, row_data: dict):
+        # TODO: Implementar eliminación de cotización
+        pass
+
 
 class CompanyOrdersView(CompanyRelatedBaseView):
     def __init__(self, company_id: int, company_type: str, on_back: Callable[[], None]):
