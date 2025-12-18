@@ -49,22 +49,22 @@ def main(page: ft.Page) -> None:
             bgcolor=ft.colors.SURFACE_VARIANT,
             actions=[
                 ft.IconButton(
-                    icon=ft.icons.HOME,
+                    icon=ft.Icons.HOME,
                     tooltip="Inicio",
                     on_click=lambda _: page.go("/"),
                 ),
                 ft.IconButton(
-                    icon=ft.icons.BUSINESS,
+                    icon=ft.Icons.BUSINESS,
                     tooltip="Empresas",
                     on_click=lambda _: page.go("/companies"),
                 ),
                 ft.IconButton(
-                    icon=ft.icons.INVENTORY,
+                    icon=ft.Icons.INVENTORY,
                     tooltip="Productos",
                     on_click=lambda _: page.go("/products"),
                 ),
                 ft.IconButton(
-                    icon=ft.icons.SETTINGS,
+                    icon=ft.Icons.SETTINGS,
                     tooltip="Configuración",
                     on_click=lambda _: page.go("/settings"),
                 ),
@@ -96,7 +96,7 @@ def main(page: ft.Page) -> None:
                                         [
                                             ft.ElevatedButton(
                                                 "Empresas",
-                                                icon=ft.icons.BUSINESS,
+                                                icon=ft.Icons.BUSINESS,
                                                 on_click=lambda _: page.go("/companies"),
                                                 style=ft.ButtonStyle(
                                                     padding=20,
@@ -104,7 +104,7 @@ def main(page: ft.Page) -> None:
                                             ),
                                             ft.ElevatedButton(
                                                 "Productos",
-                                                icon=ft.icons.INVENTORY,
+                                                icon=ft.Icons.INVENTORY,
                                                 on_click=lambda _: page.go("/products"),
                                                 style=ft.ButtonStyle(
                                                     padding=20,
@@ -181,17 +181,17 @@ def main(page: ft.Page) -> None:
                                     ),
                                     ft.Divider(),
                                     ft.ListTile(
-                                        leading=ft.Icon(ft.icons.API),
+                                        leading=ft.Icon(ft.Icons.API),
                                         title=ft.Text("API URL"),
                                         subtitle=ft.Text(settings.api_url),
                                     ),
                                     ft.ListTile(
-                                        leading=ft.Icon(ft.icons.PALETTE),
+                                        leading=ft.Icon(ft.Icons.PALETTE),
                                         title=ft.Text("Tema"),
                                         subtitle=ft.Text(settings.ui_theme),
                                     ),
                                     ft.ListTile(
-                                        leading=ft.Icon(ft.icons.INFO),
+                                        leading=ft.Icon(ft.Icons.INFO),
                                         title=ft.Text("Versión"),
                                         subtitle=ft.Text("1.0.0"),
                                     ),
