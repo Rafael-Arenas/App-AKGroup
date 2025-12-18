@@ -275,6 +275,39 @@ class LookupAPIService:
             logger.error("Error al obtener empresas | error={}", str(e))
             raise
 
+    async def get_quote_statuses(self) -> list[dict[str, Any]]:
+        """Obtiene estados de cotización."""
+        logger.info("Obteniendo estados de cotización")
+        try:
+            statuses = await self._client.get("/lookups/quote-statuses/")
+            logger.success("Estados de cotización obtenidos | total={}", len(statuses))
+            return statuses
+        except Exception as e:
+            logger.error("Error al obtener estados de cotización | error={}", str(e))
+            raise
+
+    async def get_incoterms(self) -> list[dict[str, Any]]:
+        """Obtiene Incoterms."""
+        logger.info("Obteniendo Incoterms")
+        try:
+            incoterms = await self._client.get("/lookups/incoterms/")
+            logger.success("Incoterms obtenidos | total={}", len(incoterms))
+            return incoterms
+        except Exception as e:
+            logger.error("Error al obtener Incoterms | error={}", str(e))
+            raise
+
+    async def get_currencies(self) -> list[dict[str, Any]]:
+        """Obtiene monedas."""
+        logger.info("Obteniendo monedas")
+        try:
+            currencies = await self._client.get("/lookups/currencies/")
+            logger.success("Monedas obtenidas | total={}", len(currencies))
+            return currencies
+        except Exception as e:
+            logger.error("Error al obtener monedas | error={}", str(e))
+            raise
+
     async def get_lookup(self, lookup_type: str) -> list[dict[str, Any]]:
         """
         Obtiene datos de lookup por tipo.
@@ -282,7 +315,8 @@ class LookupAPIService:
         Args:
             lookup_type: Tipo de lookup a obtener.
                 Valores válidos: "countries", "cities", "company_types", "units",
-                "family_types", "matters", "sales_types", "companies"
+                "family_types", "matters", "sales_types", "companies",
+                "quote_statuses", "incoterms", "currencies"
 
         Returns:
             Lista de elementos del tipo de lookup solicitado
@@ -291,16 +325,6 @@ class LookupAPIService:
             ValueError: Si el tipo de lookup es desconocido
             NetworkException: Error de red/conexión
             APIException: Error de API
-
-        Example:
-            >>> countries = await service.get_lookup("countries")
-            >>> cities = await service.get_lookup("cities")
-            >>> company_types = await service.get_lookup("company_types")
-            >>> units = await service.get_lookup("units")
-            >>> family_types = await service.get_lookup("family_types")
-            >>> matters = await service.get_lookup("matters")
-            >>> sales_types = await service.get_lookup("sales_types")
-            >>> companies = await service.get_lookup("companies")
         """
         logger.info("Obteniendo lookup | lookup_type={}", lookup_type)
 
@@ -320,6 +344,12 @@ class LookupAPIService:
             return await self.get_sales_types()
         elif lookup_type == "companies":
             return await self.get_companies()
+        elif lookup_type == "quote_statuses":
+            return await self.get_quote_statuses()
+        elif lookup_type == "incoterms":
+            return await self.get_incoterms()
+        elif lookup_type == "currencies":
+            return await self.get_currencies()
         else:
             logger.error("Tipo de lookup desconocido | lookup_type={}", lookup_type)
             raise ValueError(f"Unknown lookup type: {lookup_type}")
