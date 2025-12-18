@@ -16,7 +16,7 @@ class EmptyState(ft.Container):
     Estado vacío con ícono, título, mensaje y botón de acción opcional.
 
     Args:
-        icon: Ícono a mostrar (de ft.icons)
+        icon: Ícono a mostrar (de ft.Icons)
         title: Título del estado vacío
         message: Mensaje descriptivo
         action_text: Texto del botón de acción (opcional)
