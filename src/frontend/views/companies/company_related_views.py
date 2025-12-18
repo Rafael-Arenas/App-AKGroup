@@ -7,12 +7,14 @@ from typing import Callable, Any
 
 from src.frontend.app_state import app_state
 from src.frontend.layout_constants import LayoutConstants
+from src.frontend.views.quotes.quote_form_view import QuoteFormDialog
 from src.frontend.components.common import (
     LoadingSpinner, 
     ErrorDisplay,
     DataTable,
     SearchBar,
     EmptyState,
+    ConfirmDialog,
 )
 from src.frontend.i18n.translation_manager import t
 
@@ -287,16 +289,66 @@ class CompanyQuotesView(CompanyRelatedBaseView):
         pass
 
     def _on_create_quote(self, e=None):
-        # TODO: Implementar creación de cotización
-        pass
+        if not self.page:
+            return
+
+        dialog = QuoteFormDialog(
+            page=self.page,
+            company_id=self.company_id,
+            on_save=self.load_data
+        )
+        self.page.dialog = dialog
+        dialog.open = True
+        self.page.update()
 
     def _on_edit_quote(self, row_data: dict):
-        # TODO: Implementar edición de cotización
-        pass
+        if not self.page:
+            return
+            
+        quote = row_data.get("_original")
+        if not quote:
+            return
+
+        dialog = QuoteFormDialog(
+            page=self.page,
+            company_id=self.company_id,
+            quote=quote,
+            on_save=self.load_data
+        )
+        self.page.dialog = dialog
+        dialog.open = True
+        self.page.update()
 
     def _on_delete_quote(self, row_data: dict):
-        # TODO: Implementar eliminación de cotización
-        pass
+        if not self.page:
+            return
+            
+        quote = row_data.get("_original")
+        if not quote:
+            return
+
+        def confirm_delete():
+            self.page.run_task(self._delete_quote_task, quote["id"])
+
+        dialog = ConfirmDialog(
+            title="Eliminar Cotización",
+            message=f"¿Estás seguro de eliminar la cotización {quote.get('quote_number')}?",
+            on_confirm=confirm_delete,
+            variant="danger",
+            confirm_text="Eliminar"
+        )
+        dialog.show(self.page)
+
+    async def _delete_quote_task(self, quote_id: int):
+        from src.frontend.services.api import quote_api
+        try:
+            await quote_api.delete(quote_id)
+            self.page.show_snack_bar(ft.SnackBar(content=ft.Text("Cotización eliminada")))
+            await self.load_data()
+        except Exception as e:
+            logger.error(f"Error deleting quote: {e}")
+            if self.page:
+                self.page.show_snack_bar(ft.SnackBar(content=ft.Text(f"Error al eliminar: {str(e)}"), bgcolor="error"))
 
 
 class CompanyOrdersView(CompanyRelatedBaseView):
