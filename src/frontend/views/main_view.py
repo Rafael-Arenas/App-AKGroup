@@ -374,11 +374,29 @@ class MainView(ft.Container):
         # Manejar rutas dinámicas
         if route.startswith("/companies/dashboard/"):
             try:
-                # Formato esperado: /companies/dashboard/{id}/{type}
+                # Formato esperado: /companies/dashboard/{id}/{type}[/action]
                 parts = route.split("/")
                 if len(parts) >= 5:
                     company_id = int(parts[3])
                     company_type = parts[4]
+                    
+                    # Check for specific actions
+                    if len(parts) >= 6:
+                        action = parts[5]
+                        if action == "quotes":
+                            self.navigate_to_company_quotes(company_id, company_type)
+                            return
+                        elif action == "orders":
+                            self.navigate_to_company_orders(company_id, company_type)
+                            return
+                        elif action == "deliveries":
+                            self.navigate_to_company_deliveries(company_id, company_type)
+                            return
+                        elif action == "invoices":
+                            self.navigate_to_company_invoices(company_id, company_type)
+                            return
+
+                    # Default to dashboard
                     self.navigate_to_company_dashboard(company_id, company_type)
                     return
             except Exception as e:
@@ -687,7 +705,8 @@ class MainView(ft.Container):
             company_type=company_type,
             on_back=lambda: self.navigate_to_company_dashboard(company_id, company_type),
             on_create_quote=lambda: self.navigate_to_quote_form(company_id, company_type),
-            on_edit_quote=lambda quote_id: self.navigate_to_quote_form(company_id, company_type, quote_id)
+            on_edit_quote=lambda quote_id: self.navigate_to_quote_form(company_id, company_type, quote_id),
+            on_view_quote=lambda quote_id: self.navigate_to_quote_detail(company_id, company_type, quote_id),
         )
         
         if self._content_area:
@@ -704,6 +723,44 @@ class MainView(ft.Container):
             {"label": "dashboard.title", "route": dashboard_route},
             {"label": "quotes.title", "route": quotes_route},
         ])
+
+    def navigate_to_quote_detail(self, company_id: int, company_type: str, quote_id: int) -> None:
+        """
+        Navega a la vista de detalle de cotización.
+        """
+        from src.frontend.views.quotes.quote_detail_view import QuoteDetailView
+
+        logger.info(f"Navigating to quote detail: company_id={company_id}, quote_id={quote_id}")
+
+        detail_view = QuoteDetailView(
+            quote_id=quote_id,
+            company_id=company_id,
+            company_type=company_type,
+            on_edit=lambda qid: self.navigate_to_quote_form(company_id, company_type, qid),
+            on_delete=lambda qid: self._on_quote_deleted(qid, company_id, company_type),
+            on_back=lambda: self.navigate_to_company_quotes(company_id, company_type),
+        )
+
+        if self._content_area:
+            self._content_area.content = detail_view
+            if self.page:
+                self.update()
+
+        section_key = "clients" if company_type == "CLIENT" else "suppliers"
+        dashboard_route = f"/companies/dashboard/{company_id}/{company_type}"
+        quotes_route = f"{dashboard_route}/quotes"
+        
+        app_state.navigation.set_breadcrumb([
+            {"label": f"{section_key}.title", "route": f"/companies/{company_type.lower()}s"},
+            {"label": "dashboard.title", "route": dashboard_route},
+            {"label": "quotes.title", "route": quotes_route},
+            {"label": "quotes.detail", "route": None},
+        ])
+
+    def _on_quote_deleted(self, quote_id: int, company_id: int, company_type: str) -> None:
+        """Callback cuando se elimina una cotización desde el detalle."""
+        logger.success(f"Quote deleted: {quote_id}")
+        self.navigate_to_company_quotes(company_id, company_type)
 
     def navigate_to_quote_form(self, company_id: int, company_type: str, quote_id: int | None = None) -> None:
         """
