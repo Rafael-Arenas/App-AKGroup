@@ -559,16 +559,16 @@
       "no_rut": "No Specific RUT",
       "no_plant": "No Plant",
       "edit_title": "Edit Quote",
-      "create_title": "Create Quote"
+      "create_title": "Create Quote",
+      "generate_fake_data": "Generate fake data",
+      "fake_data_success": "Fake data generated successfully",
+      "fake_data_error": "Failed to generate fake data: {error}"
     },
     "sections": {
       "general_info": "General Information",
-      "commercial_details": "Commercial Details and Dates",
-      "financial_details": "Financial Details",
+      "commercial_details": "Commercial Details",
       "relations": "Relations",
       "additional_notes": "Additional Notes",
-      "customer_notes": "Customer Notes",
-      "notes": "Notes",
       "products": "Products"
     },
     "messages": {

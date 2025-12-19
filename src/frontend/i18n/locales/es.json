@@ -505,7 +505,10 @@
       "edit_title": "Editar Cotización",
       "create_title": "Crear Cotización",
       "customer_notes": "Notas del Cliente",
-      "notes": "Notas"
+      "notes": "Notas",
+      "generate_fake_data": "Generar datos ficticios",
+      "fake_data_success": "Datos ficticios generados exitosamente",
+      "fake_data_error": "No se pudieron generar los datos ficticios: {error}"
     },
     "sections": {
       "general_info": "Información General",
