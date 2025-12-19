@@ -42,11 +42,6 @@ def upgrade() -> None:
     op.create_index(op.f('ix_plants_city_id'), 'plants', ['city_id'], unique=False)
     op.create_index(op.f('ix_plants_company_id'), 'plants', ['company_id'], unique=False)
     op.create_index(op.f('ix_plants_is_active'), 'plants', ['is_active'], unique=False)
-    op.drop_index(op.f('ix_branch_company_active'), table_name='branches')
-    op.drop_index(op.f('ix_branches_city_id'), table_name='branches')
-    op.drop_index(op.f('ix_branches_company_id'), table_name='branches')
-    op.drop_index(op.f('ix_branches_is_active'), table_name='branches')
-    op.drop_table('branches')
     
     with op.batch_alter_table('invoices_export', schema=None) as batch_op:
         batch_op.add_column(sa.Column('plant_id', sa.Integer(), nullable=True, comment='Customer plant'))
@@ -75,6 +70,12 @@ def upgrade() -> None:
         batch_op.create_foreign_key(batch_op.f('fk_quotes_plant_id_plants'), 'plants', ['plant_id'], ['id'], ondelete='SET NULL')
         batch_op.create_foreign_key(batch_op.f('fk_quotes_company_rut_id_company_ruts'), 'company_ruts', ['company_rut_id'], ['id'], ondelete='RESTRICT')
         batch_op.drop_column('branch_id')
+
+    op.drop_index(op.f('ix_branch_company_active'), table_name='branches')
+    op.drop_index(op.f('ix_branches_city_id'), table_name='branches')
+    op.drop_index(op.f('ix_branches_company_id'), table_name='branches')
+    op.drop_index(op.f('ix_branches_is_active'), table_name='branches')
+    op.drop_table('branches')
     # ### end Alembic commands ###
 
 
