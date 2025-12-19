@@ -74,7 +74,7 @@ class KPICard(ft.Container):
         if self.page:
             self.update()
 
-    def _format_value(self, val: float | int) -> str:
+    def _format_value(self, val: float | int | str) -> str:
         """
         Formatea el valor según la configuración.
 
@@ -84,11 +84,22 @@ class KPICard(ft.Container):
         Returns:
             Valor formateado como string
         """
+        # Intentar convertir string a número si es necesario
+        if isinstance(val, str):
+            try:
+                val = float(val)
+                # Si es entero (ej: 100.0), convertir a int para formateo limpio
+                if val.is_integer():
+                    val = int(val)
+            except ValueError:
+                return val # Retornar tal cual si no es número
+
         if self.format_as_currency:
             # Formatear como moneda con separadores de miles
-            formatted = f"{val:,.2f}" if isinstance(val, float) else f"{val:,}"
+            formatted = f"{val:,.2f}"
             return f"{self.currency_symbol}{formatted}"
         else:
+            # Si es float, 2 decimales. Si es int, solo separadores de miles
             return f"{val:,.2f}" if isinstance(val, float) else f"{val:,}"
 
     def _get_trend_color(self) -> str | None:
