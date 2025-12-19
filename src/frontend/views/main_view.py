@@ -685,7 +685,9 @@ class MainView(ft.Container):
         view = CompanyQuotesView(
             company_id=company_id,
             company_type=company_type,
-            on_back=lambda: self.navigate_to_company_dashboard(company_id, company_type)
+            on_back=lambda: self.navigate_to_company_dashboard(company_id, company_type),
+            on_create_quote=lambda: self.navigate_to_quote_form(company_id, company_type),
+            on_edit_quote=lambda quote_id: self.navigate_to_quote_form(company_id, company_type, quote_id)
         )
         
         if self._content_area:
@@ -695,11 +697,52 @@ class MainView(ft.Container):
 
         section_key = "clients" if company_type == "CLIENT" else "suppliers"
         dashboard_route = f"/companies/dashboard/{company_id}/{company_type}"
+        quotes_route = f"{dashboard_route}/quotes"
         
         app_state.navigation.set_breadcrumb([
             {"label": f"{section_key}.title", "route": f"/companies/{company_type.lower()}s"},
             {"label": "dashboard.title", "route": dashboard_route},
-            {"label": "quotes.title", "route": None},
+            {"label": "quotes.title", "route": quotes_route},
+        ])
+
+    def navigate_to_quote_form(self, company_id: int, company_type: str, quote_id: int | None = None) -> None:
+        """
+        Navega a la vista de formulario de cotización.
+
+        Args:
+            company_id: ID de la empresa
+            company_type: Tipo de empresa
+            quote_id: ID de la cotización (None para crear nueva)
+        """
+        from src.frontend.views.quotes.quote_form_view import QuoteFormView
+
+        logger.info(
+            f"Navigating to quote form: company_id={company_id}, quote_id={quote_id}, "
+            f"mode={'edit' if quote_id else 'create'}"
+        )
+
+        form_view = QuoteFormView(
+            company_id=company_id,
+            quote_id=quote_id,
+            on_save=lambda: self.navigate_to_company_quotes(company_id, company_type),
+            on_cancel=lambda: self.navigate_to_company_quotes(company_id, company_type),
+        )
+
+        if self._content_area:
+            self._content_area.content = form_view
+            if self.page:
+                self.update()
+
+        section_key = "clients" if company_type == "CLIENT" else "suppliers"
+        dashboard_route = f"/companies/dashboard/{company_id}/{company_type}"
+        quotes_route = f"{dashboard_route}/quotes"
+        action_key = "quotes.edit" if quote_id else "quotes.create"
+        
+        app_state.navigation.set_breadcrumb([
+            {"label": f"{section_key}.title", "route": f"/companies/{company_type.lower()}s"},
+            {"label": "dashboard.title", "route": dashboard_route},
+            {"label": "quotes.title", "route": quotes_route},
+            {"label": action_key, "route": None},
         ])
 
     def navigate_to_company_orders(self, company_id: int, company_type: str) -> None:
