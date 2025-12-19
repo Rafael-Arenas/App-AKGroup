@@ -21,6 +21,7 @@ from src.frontend.components.forms import (
     DropdownField
 )
 from src.frontend.i18n.translation_manager import t
+from src.frontend.utils.fake_data_generator import FakeDataGenerator
 
 class QuoteFormView(ft.Column):
     def __init__(
@@ -50,6 +51,15 @@ class QuoteFormView(ft.Column):
 
         # Form Fields
         self._init_form_fields()
+
+        # Fake data button (only for creation mode)
+        self._fake_data_button = ft.IconButton(
+            icon=ft.Icons.CASINO,
+            tooltip=t("quotes.form.generate_fake_data") if self.is_editing else "Generar datos ficticios",
+            on_click=self._on_generate_fake_data,
+            visible=not self.is_editing,
+            disabled=True,
+        )
 
         # Build initial layout (loading state)
         self.controls = [self._build_loading()]
@@ -260,16 +270,21 @@ class QuoteFormView(ft.Column):
         title_text = t("quotes.form.edit_title") if self.is_editing else t("quotes.form.create_title")
         
         # Header
+        header_controls = [
+            ft.Icon(ft.Icons.EDIT if self.is_editing else ft.Icons.ADD_CIRCLE_OUTLINE, size=32),
+            ft.Text(
+            title_text,
+            size=LayoutConstants.FONT_SIZE_DISPLAY_MD,
+            weight=ft.FontWeight.BOLD,
+            ),
+            ft.Container(expand=True),
+        ]
+        if self._fake_data_button.visible:
+            header_controls.append(self._fake_data_button)
+
         header = ft.Container(
             content=ft.Row(
-                controls=[
-                    ft.Icon(ft.Icons.EDIT if self.is_editing else ft.Icons.ADD_CIRCLE_OUTLINE, size=32),
-                    ft.Text(
-                        title_text,
-                        size=LayoutConstants.FONT_SIZE_DISPLAY_MD,
-                        weight=ft.FontWeight.BOLD,
-                    ),
-                ],
+                controls=header_controls,
                 spacing=LayoutConstants.SPACING_SM,
             ),
             padding=LayoutConstants.PADDING_MD,
@@ -477,12 +492,16 @@ class QuoteFormView(ft.Column):
 
             self._is_loading = False
             self.controls = self._build_content()
+            if self._fake_data_button and not self.is_editing:
+                self._fake_data_button.disabled = False
             if self.page: self.update()
 
         except Exception as e:
             logger.error(f"Error loading quote form data: {e}")
             self._error_message = str(e)
             self.controls = [self._build_error()]
+            if self._fake_data_button:
+                self._fake_data_button.disabled = True
             if self.page: self.update()
 
     def _validate(self) -> bool:
@@ -562,3 +581,32 @@ class QuoteFormView(ft.Column):
     async def _cancel(self, e):
         if self.on_cancel_callback:
             self.on_cancel_callback()
+
+    def _on_generate_fake_data(self, e):
+        """Llena el formulario con datos ficticios para agilizar pruebas."""
+        if self._is_loading or self.is_editing:
+            return
+
+        try:
+            FakeDataGenerator.populate_quote_form(self)
+            self._fake_data_button.disabled = True
+            if self.page:
+                snackbar = ft.SnackBar(
+                    content=ft.Text(t("quotes.form.fake_data_success")),
+                    bgcolor=ft.Colors.GREEN,
+                    duration=2000,
+                )
+                self.page.overlay.append(snackbar)
+                snackbar.open = True
+                self.page.update()
+        except Exception as ex:
+            logger.exception(f"Error generating fake quote data: {ex}")
+            if self.page:
+                snackbar = ft.SnackBar(
+                    content=ft.Text(t("quotes.form.fake_data_error", {"error": str(ex)})),
+                    bgcolor=ft.Colors.RED,
+                    duration=3000,
+                )
+                self.page.overlay.append(snackbar)
+                snackbar.open = True
+                self.page.update()
