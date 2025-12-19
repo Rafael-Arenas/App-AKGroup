@@ -7,7 +7,6 @@ from typing import Callable, Any
 
 from src.frontend.app_state import app_state
 from src.frontend.layout_constants import LayoutConstants
-from src.frontend.views.quotes.quote_form_view import QuoteFormDialog
 from src.frontend.components.common import (
     LoadingSpinner, 
     ErrorDisplay,
@@ -154,7 +153,14 @@ class CompanyRelatedBaseView(ft.Container):
 
 
 class CompanyQuotesView(CompanyRelatedBaseView):
-    def __init__(self, company_id: int, company_type: str, on_back: Callable[[], None]):
+    def __init__(
+        self, 
+        company_id: int, 
+        company_type: str, 
+        on_back: Callable[[], None],
+        on_create_quote: Callable[[], None] | None = None,
+        on_edit_quote: Callable[[int], None] | None = None,
+    ):
         super().__init__(
             company_id=company_id,
             company_type=company_type,
@@ -163,6 +169,9 @@ class CompanyQuotesView(CompanyRelatedBaseView):
             color=ft.Colors.ORANGE,
             on_back=on_back
         )
+        self.on_create_quote = on_create_quote
+        self.on_edit_quote = on_edit_quote
+        
         # Estado de la lista
         self._quotes: list[dict] = []
         self._total_quotes: int = 0
@@ -267,7 +276,7 @@ class CompanyQuotesView(CompanyRelatedBaseView):
                 "quote_number": quote.get("quote_number", "-"),
                 "subject": quote.get("subject", "-"),
                 "date": quote.get("quote_date", "")[:10] if quote.get("quote_date") else "-",
-                "total": f"${quote.get('total', 0):,.2f}", # Simple format for now
+                "total": f"${float(quote.get('total', 0)):,.2f}", # Simple format for now
                 "status": str(quote.get("status_id", "Pendiente")), # TODO: Map ID to name
                 "_original": quote,
             })
@@ -289,35 +298,16 @@ class CompanyQuotesView(CompanyRelatedBaseView):
         pass
 
     def _on_create_quote(self, e=None):
-        if not self.page:
-            return
-
-        dialog = QuoteFormDialog(
-            page=self.page,
-            company_id=self.company_id,
-            on_save=self.load_data
-        )
-        self.page.dialog = dialog
-        dialog.open = True
-        self.page.update()
+        if self.on_create_quote:
+            self.on_create_quote()
 
     def _on_edit_quote(self, row_data: dict):
-        if not self.page:
-            return
-            
         quote = row_data.get("_original")
         if not quote:
             return
-
-        dialog = QuoteFormDialog(
-            page=self.page,
-            company_id=self.company_id,
-            quote=quote,
-            on_save=self.load_data
-        )
-        self.page.dialog = dialog
-        dialog.open = True
-        self.page.update()
+        
+        if self.on_edit_quote:
+            self.on_edit_quote(quote["id"])
 
     def _on_delete_quote(self, row_data: dict):
         if not self.page:
