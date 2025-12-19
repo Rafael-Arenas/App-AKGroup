@@ -61,6 +61,38 @@ class QuoteService(BaseService[Quote, QuoteCreate, QuoteUpdate, QuoteResponse]):
         self.quote_repo: QuoteRepository = repository
         self.product_repo = QuoteProductRepository(session)
 
+    def create(self, schema: QuoteCreate, user_id: int) -> QuoteResponse:
+        """
+        Create a new quote.
+        
+        Overridden to exclude 'products' from the entity creation, as they are
+        handled separately and cannot be passed as dicts to the SQLAlchemy relationship.
+        """
+        logger.info(f"Servicio: creando {self.model.__name__}")
+
+        try:
+            self.session.info["user_id"] = user_id
+
+            # Create entity from schema, excluding products
+            # products must be handled separately (e.g. via add_product)
+            entity_data = schema.model_dump(exclude={"products"})
+            entity = self.model(**entity_data)
+
+            # Validate
+            self.validate_create(entity)
+
+            # Save
+            created = self.repository.create(entity)
+
+            logger.success(f"{self.model.__name__} creado exitosamente: id={created.id}")
+            return self.response_schema.model_validate(created)
+
+        except ValidationException:
+            raise
+        except Exception as e:
+            logger.error(f"Error al crear {self.model.__name__}: {str(e)}")
+            raise
+
     def validate_create(self, entity: Quote) -> None:
         """
         Validate quote before creation.
