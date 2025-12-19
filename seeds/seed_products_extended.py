@@ -358,7 +358,7 @@ try:
                 designation_en='3D Printing Service',
                 short_designation='Impresión 3D',
                 revision='B',
-                family_type_id=family_plastic.id if family_plastic else None,
+                family_type_id=family_material.id if family_material else None,
                 sales_type_id=sales_direct.id if sales_direct else None,
                 cost_price=Decimal('800.00'),
                 sale_price=Decimal('1500.00'),
