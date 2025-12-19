@@ -160,7 +160,9 @@ class CompanyQuotesView(CompanyRelatedBaseView):
         on_back: Callable[[], None],
         on_create_quote: Callable[[], None] | None = None,
         on_edit_quote: Callable[[int], None] | None = None,
+        on_view_quote: Callable[[int], None] | None = None,
     ):
+        logger.debug(f"CompanyQuotesView init: view_quote_callback={'provided' if on_view_quote else 'none'}")
         super().__init__(
             company_id=company_id,
             company_type=company_type,
@@ -171,6 +173,7 @@ class CompanyQuotesView(CompanyRelatedBaseView):
         )
         self.on_create_quote = on_create_quote
         self.on_edit_quote = on_edit_quote
+        self.on_view_quote = on_view_quote
         
         # Estado de la lista
         self._quotes: list[dict] = []
@@ -203,9 +206,9 @@ class CompanyQuotesView(CompanyRelatedBaseView):
             return ft.Container(
                 content=EmptyState(
                     icon=ft.Icons.DESCRIPTION_OUTLINED,
-                    title=t("quotes.title"),
-                    message=f"No hay cotizaciones registradas para {self._company.get('name')}",
-                    action_text="Crear Cotización",
+                    title=t("quotes.no_quotes"),
+                    message=t("quotes.no_quotes_message", {"company_name": self._company.get('name')}),
+                    action_text=t("quotes.create"),
                     on_action=self._on_create_quote
                 ),
                 expand=True,
@@ -214,18 +217,18 @@ class CompanyQuotesView(CompanyRelatedBaseView):
 
         # SearchBar
         self._search_bar = SearchBar(
-            placeholder="Buscar cotizaciones...",
+            placeholder=t("quotes.search_placeholder"),
             on_search=self._on_search,
         )
 
         # DataTable
         self._data_table = DataTable(
             columns=[
-                {"key": "quote_number", "label": "Número", "sortable": True},
-                {"key": "subject", "label": "Asunto", "sortable": True},
-                {"key": "date", "label": "Fecha", "sortable": True},
-                {"key": "total", "label": "Total", "sortable": True},
-                {"key": "status", "label": "Estado", "sortable": True},
+                {"key": "quote_number", "label": "quotes.columns.quote_number", "sortable": True},
+                {"key": "subject", "label": "quotes.columns.subject", "sortable": True},
+                {"key": "date", "label": "quotes.columns.quote_date", "sortable": True},
+                {"key": "total", "label": "quotes.columns.total_amount", "sortable": True},
+                {"key": "status", "label": "quotes.columns.status", "sortable": True},
             ],
             on_row_click=self._on_row_click,
             on_edit=self._on_edit_quote,
@@ -248,7 +251,7 @@ class CompanyQuotesView(CompanyRelatedBaseView):
                         ft.Container(content=self._search_bar, expand=True),
                         ft.FloatingActionButton(
                             icon=ft.Icons.ADD,
-                            text="Nueva Cotización",
+                            text=t("quotes.create"),
                             on_click=self._on_create_quote,
                         )
                     ]),
@@ -294,8 +297,12 @@ class CompanyQuotesView(CompanyRelatedBaseView):
             self.page.run_task(self.load_data)
 
     def _on_row_click(self, row_data: dict):
-        # TODO: Implementar vista de detalle de cotización
-        pass
+        quote = row_data.get("_original")
+        if not quote:
+            return
+            
+        if self.on_view_quote:
+            self.on_view_quote(quote["id"])
 
     def _on_create_quote(self, e=None):
         if self.on_create_quote:
@@ -321,11 +328,11 @@ class CompanyQuotesView(CompanyRelatedBaseView):
             self.page.run_task(self._delete_quote_task, quote["id"])
 
         dialog = ConfirmDialog(
-            title="Eliminar Cotización",
-            message=f"¿Estás seguro de eliminar la cotización {quote.get('quote_number')}?",
+            title=t("common.confirm_delete"),
+            message=t("quotes.messages.delete_confirm", number=quote.get('quote_number')),
             on_confirm=confirm_delete,
             variant="danger",
-            confirm_text="Eliminar"
+            confirm_text=t("common.delete")
         )
         dialog.show(self.page)
 
@@ -333,12 +340,12 @@ class CompanyQuotesView(CompanyRelatedBaseView):
         from src.frontend.services.api import quote_api
         try:
             await quote_api.delete(quote_id)
-            self.page.show_snack_bar(ft.SnackBar(content=ft.Text("Cotización eliminada")))
+            self.page.show_snack_bar(ft.SnackBar(content=ft.Text(t("quotes.messages.deleted"))))
             await self.load_data()
         except Exception as e:
             logger.error(f"Error deleting quote: {e}")
             if self.page:
-                self.page.show_snack_bar(ft.SnackBar(content=ft.Text(f"Error al eliminar: {str(e)}"), bgcolor="error"))
+                self.page.show_snack_bar(ft.SnackBar(content=ft.Text(t("quotes.messages.error_deleting", error=str(e))), bgcolor="error"))
 
 
 class CompanyOrdersView(CompanyRelatedBaseView):
