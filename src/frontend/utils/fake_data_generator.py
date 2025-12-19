@@ -6,6 +6,7 @@ y desarrollo en las vistas de creación del frontend.
 """
 import random
 import string
+from datetime import date, timedelta
 from typing import Dict, Any, List
 from loguru import logger
 
@@ -55,6 +56,15 @@ class FakeDataGenerator:
         "Temuco", "Rancagua", "Talca", "Arica", "Chillán", "Iquique", "Puerto Montt"
     ]
 
+    QUOTE_UNIT_OPTIONS = ["Unidad", "Juego", "Set", "Kit", "Servicio"]
+    QUOTE_TOPICS = [
+        "Implementación de sistema industrial",
+        "Suministro de componentes mecánicos",
+        "Proyecto de automatización",
+        "Servicios de mantenimiento especializado",
+        "Equipamiento para nueva planta",
+    ]
+
     @classmethod
     def generate_company_data(cls, company_type: str = "CLIENT") -> Dict[str, Any]:
         """
@@ -98,6 +108,43 @@ class FakeDataGenerator:
             "country": random.choice(cls.COUNTRIES),
             "city": random.choice(cls.CHILEAN_CITIES),
             "is_active": True
+        }
+
+    @classmethod
+    def generate_quote_data(cls) -> Dict[str, Any]:
+        """
+        Genera datos ficticios para una cotización.
+
+        Returns:
+            Diccionario con los datos generados.
+        """
+        logger.debug("Generating fake quote data")
+
+        today = date.today()
+        valid_until = today + timedelta(days=random.randint(15, 45))
+        shipping_date = today + timedelta(days=random.randint(20, 60))
+
+        quote_prefix = random.choice(["Q", "COT", "OF"])
+        quote_number = f"{quote_prefix}-{today.year}-{random.randint(100, 999)}"
+
+        revision = random.choice(["A", "B", "C", "D"])
+        subject = random.choice(cls.QUOTE_TOPICS)
+        unit = random.choice(cls.QUOTE_UNIT_OPTIONS)
+
+        notes = (
+            "Esta cotización incluye servicio postventa y capacitación básica. "
+            "Los plazos podrían variar según disponibilidad de stock."
+        )
+
+        return {
+            "quote_number": quote_number,
+            "revision": revision,
+            "subject": subject,
+            "unit": unit,
+            "quote_date": today,
+            "valid_until": valid_until,
+            "shipping_date": shipping_date,
+            "notes": notes,
         }
     
     @classmethod
@@ -373,6 +420,51 @@ class FakeDataGenerator:
             
         except Exception as e:
             logger.exception(f"Error populating article form: {e}")
+
+    @staticmethod
+    def _select_first_option(field) -> None:
+        """Selecciona la primera opción no vacía en un DropdownField."""
+        options = getattr(field, "options", [])
+        for option in options:
+            value = option.get("value") or option.get("key") or ""
+            if value:
+                field.set_value(value)
+                break
+
+    @classmethod
+    def populate_quote_form(cls, form_view) -> None:
+        """
+        Pobla un formulario de cotización con datos ficticios.
+
+        Args:
+            form_view: Instancia de QuoteFormView.
+        """
+        try:
+            data = cls.generate_quote_data()
+
+            form_view.quote_number.set_value(data["quote_number"])
+            form_view.revision.set_value(data["revision"])
+            form_view.subject.set_value(data["subject"])
+            form_view.unit.set_value(data["unit"])
+            form_view.notes.set_value(data["notes"])
+
+            # Establecer fechas usando helpers del formulario
+            form_view._set_date_value(form_view.quote_date, form_view.quote_date_picker, data["quote_date"])
+            form_view._set_date_value(form_view.valid_until, form_view.valid_until_picker, data["valid_until"])
+            form_view._set_date_value(form_view.shipping_date, form_view.shipping_date_picker, data["shipping_date"])
+
+            # Seleccionar primeras opciones disponibles en los dropdowns
+            cls._select_first_option(form_view.status)
+            cls._select_first_option(form_view.incoterm)
+            cls._select_first_option(form_view.contact)
+            cls._select_first_option(form_view.rut)
+            cls._select_first_option(form_view.plant)
+            cls._select_first_option(form_view.staff)
+
+            logger.success(f"Quote form populated with fake data: {data['quote_number']}")
+
+        except Exception as e:
+            logger.exception(f"Error populating quote form: {e}")
     
     @classmethod
     def populate_nomenclature_form(cls, form_view) -> None:
