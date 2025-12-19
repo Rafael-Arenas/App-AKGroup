@@ -56,14 +56,14 @@ class QuoteFormView(ft.Column):
 
     def _init_form_fields(self):
         self.quote_number = ValidatedTextField(
-            label="Número Cotización",
+            label=t("quotes.fields.quote_number"),
             required=True,
             validators=["required"],
             prefix_icon=ft.Icons.NUMBERS,
         )
         
         self.revision = ValidatedTextField(
-            label="Revisión",
+            label=t("quotes.fields.revision"),
             required=True,
             validators=["required"],
             prefix_icon=ft.Icons.HISTORY,
@@ -71,14 +71,14 @@ class QuoteFormView(ft.Column):
         )
 
         self.subject = ValidatedTextField(
-            label="Asunto",
+            label=t("quotes.fields.subject"),
             required=True,
             validators=["required"],
             prefix_icon=ft.Icons.SUBJECT,
         )
 
         self.status = DropdownField(
-            label="Estado",
+            label=t("quotes.columns.status"),
             required=True,
             prefix_icon=ft.Icons.FLAG,
         )
@@ -89,7 +89,7 @@ class QuoteFormView(ft.Column):
             on_dismiss=lambda _: None,
         )
         self.quote_date = ft.TextField(
-            label="Fecha Emisión",
+            label=t("quotes.fields.quote_date"),
             read_only=True,
             suffix_icon=ft.Icons.CALENDAR_TODAY,
             on_click=self._open_quote_date_picker,
@@ -100,7 +100,7 @@ class QuoteFormView(ft.Column):
             on_dismiss=lambda _: None,
         )
         self.valid_until = ft.TextField(
-            label="Válido Hasta",
+            label=t("quotes.fields.valid_until"),
             read_only=True,
             suffix_icon=ft.Icons.CALENDAR_TODAY,
             on_click=self._open_valid_until_picker,
@@ -111,45 +111,45 @@ class QuoteFormView(ft.Column):
             on_dismiss=lambda _: None,
         )
         self.shipping_date = ft.TextField(
-            label="Fecha Envío (Est.)",
+            label=t("quotes.fields.shipping_date"),
             read_only=True,
             suffix_icon=ft.Icons.CALENDAR_TODAY,
             on_click=self._open_shipping_date_picker,
         )
 
         self.unit = ValidatedTextField(
-            label="Unidad",
+            label=t("quotes.fields.unit"),
             prefix_icon=ft.Icons.SQUARE_FOOT,
         )
 
         self.incoterm = DropdownField(
-            label="Incoterm",
+            label=t("quotes.fields.incoterm"),
             prefix_icon=ft.Icons.LOCAL_SHIPPING,
         )
 
         self.contact = DropdownField(
-            label="Contacto",
+            label=t("quotes.fields.contact"),
             prefix_icon=ft.Icons.PERSON,
         )
 
         self.rut = DropdownField(
-            label="RUT Facturación",
+            label=t("quotes.fields.rut"),
             prefix_icon=ft.Icons.RECEIPT,
         )
 
         self.plant = DropdownField(
-            label="Planta",
+            label=t("quotes.fields.plant"),
             prefix_icon=ft.Icons.FACTORY,
         )
 
         self.staff = DropdownField(
-            label="Vendedor (Staff)",
+            label=t("quotes.fields.staff"),
             required=True,
             prefix_icon=ft.Icons.BADGE,
         )
 
         self.notes = ValidatedTextField(
-            label="Notas",
+            label=t("quotes.fields.notes"),
             multiline=True,
             prefix_icon=ft.Icons.NOTE,
         )
@@ -241,7 +241,7 @@ class QuoteFormView(ft.Column):
 
     def _build_loading(self) -> ft.Control:
         return ft.Container(
-            content=LoadingSpinner(message="Cargando datos..."),
+            content=LoadingSpinner(message=t("common.loading")),
             alignment=ft.alignment.center,
             expand=True
         )
@@ -257,7 +257,7 @@ class QuoteFormView(ft.Column):
         )
 
     def _build_content(self) -> list[ft.Control]:
-        title_text = "Editar Cotización" if self.is_editing else "Nueva Cotización"
+        title_text = t("quotes.form.edit_title") if self.is_editing else t("quotes.form.create_title")
         
         # Header
         header = ft.Container(
@@ -277,21 +277,21 @@ class QuoteFormView(ft.Column):
 
         # Action Buttons
         save_btn = ft.ElevatedButton(
-            text="Guardar",
+            text=t("common.save"),
             icon=ft.Icons.SAVE,
             on_click=self._save,
             disabled=self._is_saving
         )
         
         cancel_btn = ft.ElevatedButton(
-            text="Cancelar",
+            text=t("common.cancel"),
             on_click=self._cancel,
             disabled=self._is_saving
         )
 
         # General Info Card
         general_card = BaseCard(
-            title="Información General",
+            title=t("quotes.sections.general_info"),
             icon=ft.Icons.INFO_OUTLINE,
             content=ft.Column([
                 ft.ResponsiveRow([
@@ -310,7 +310,7 @@ class QuoteFormView(ft.Column):
 
         # Commercial & Dates Card
         commercial_card = BaseCard(
-            title="Detalles Comerciales y Fechas",
+            title=t("quotes.sections.commercial_details"),
             icon=ft.Icons.ATTACH_MONEY,
             content=ft.Column([
                 ft.ResponsiveRow([
@@ -327,7 +327,7 @@ class QuoteFormView(ft.Column):
 
         # Relations Card
         relations_card = BaseCard(
-            title="Relaciones",
+            title=t("quotes.sections.relations"),
             icon=ft.Icons.PEOPLE_OUTLINE,
             content=ft.Column([
                 ft.ResponsiveRow([
@@ -343,7 +343,7 @@ class QuoteFormView(ft.Column):
         
         # Notes Card
         notes_card = BaseCard(
-            title="Notas Adicionales",
+            title=t("quotes.sections.additional_notes"),
             icon=ft.Icons.NOTE,
             content=ft.Column([
                 self.notes
@@ -407,15 +407,15 @@ class QuoteFormView(ft.Column):
                 self._selected_currency_id = currencies[0]["id"]
 
             contact_opts = [{"value": str(c["id"]), "label": f"{c['first_name']} {c['last_name']}"} for c in contacts]
-            contact_opts.insert(0, {"value": "", "label": "Sin Contacto"})
+            contact_opts.insert(0, {"value": "", "label": t("quotes.form.no_contact")})
             self.contact.set_options(contact_opts)
             
             rut_opts = [{"value": str(r["id"]), "label": r["rut"]} for r in ruts]
-            rut_opts.insert(0, {"value": "", "label": "Sin RUT Específico"})
+            rut_opts.insert(0, {"value": "", "label": t("quotes.form.no_rut")})
             self.rut.set_options(rut_opts)
 
             plant_opts = [{"value": str(p["id"]), "label": p["name"]} for p in plants]
-            plant_opts.insert(0, {"value": "", "label": "Sin Planta"})
+            plant_opts.insert(0, {"value": "", "label": t("quotes.form.no_plant")})
             self.plant.set_options(plant_opts)
 
             self.staff.set_options([
@@ -493,7 +493,7 @@ class QuoteFormView(ft.Column):
         if not self.status.validate(): is_valid = False
         
         if not self.quote_date.value:
-            self.quote_date.error_text = "Requerido"
+            self.quote_date.error_text = t("common.required_field")
             self.quote_date.update()
             is_valid = False
         else:
@@ -526,7 +526,7 @@ class QuoteFormView(ft.Column):
                 "incoterm_id": int(self.incoterm.get_value()) if self.incoterm.get_value() else None,
                 "currency_id": int(self._selected_currency_id) if self._selected_currency_id else 1,
                 "exchange_rate": 1.0,
-                "contact_id": int(self.contact.get_value()) if self.contact.get_value() else None,
+                "contact_id": int(self.contact.get_value()) if self.contact.get_value() and self.contact.get_value() != "" else None,
                 "company_rut_id": int(self.rut.get_value()) if self.rut.get_value() else None,
                 "plant_id": int(self.plant.get_value()) if self.plant.get_value() else None,
                 "staff_id": int(self.staff.get_value()),
@@ -536,13 +536,13 @@ class QuoteFormView(ft.Column):
             if self.is_editing and self.quote_id:
                 await quote_api.update(self.quote_id, data)
                 if self.page:
-                    self.page.overlay.append(ft.SnackBar(content=ft.Text("Cotización actualizada"), bgcolor=ft.Colors.GREEN))
+                    self.page.overlay.append(ft.SnackBar(content=ft.Text(t("quotes.messages.updated")), bgcolor=ft.Colors.GREEN))
                     self.page.overlay[-1].open = True
                     self.page.update()
             else:
                 await quote_api.create(data)
                 if self.page:
-                    self.page.overlay.append(ft.SnackBar(content=ft.Text("Cotización creada"), bgcolor=ft.Colors.GREEN))
+                    self.page.overlay.append(ft.SnackBar(content=ft.Text(t("quotes.messages.created")), bgcolor=ft.Colors.GREEN))
                     self.page.overlay[-1].open = True
                     self.page.update()
 
@@ -552,7 +552,7 @@ class QuoteFormView(ft.Column):
         except Exception as ex:
             logger.error(f"Error saving quote: {ex}")
             if self.page:
-                self.page.overlay.append(ft.SnackBar(content=ft.Text(f"Error al guardar: {str(ex)}"), bgcolor=ft.Colors.ERROR))
+                self.page.overlay.append(ft.SnackBar(content=ft.Text(t("quotes.messages.error_saving", {"error": str(ex)})), bgcolor=ft.Colors.ERROR))
                 self.page.overlay[-1].open = True
                 self.page.update()
         finally:
