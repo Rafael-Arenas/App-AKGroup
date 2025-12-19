@@ -509,7 +509,87 @@
     "description": "Quote management",
     "list_title": "Quote List",
     "create": "Create Quote",
-    "view": "View Quote"
+    "create_new": "New Quote",
+    "create_title": "Create Quote",
+    "edit": "Edit Quote",
+    "edit_title": "Edit Quote",
+    "delete": "Delete Quote",
+    "view": "View Quote",
+    "detail": "Quote Details",
+    "no_quotes": "No quotes registered",
+    "no_quotes_message": "No quotes registered for {company_name}. Start by creating the first one.",
+    "create_first": "Create First Quote",
+    "search_placeholder": "Search quotes by number, subject...",
+    "fields": {
+      "quote_number": "Quote Number",
+      "revision": "Revision",
+      "subject": "Subject",
+      "quote_date": "Issue Date",
+      "valid_until": "Valid Until",
+      "shipping_date": "Est. Shipping Date",
+      "date": "Date",
+      "unit": "Unit",
+      "incoterm": "Incoterm",
+      "contact": "Contact",
+      "rut": "Billing RUT",
+      "plant": "Plant",
+      "staff": "Sales Staff",
+      "currency": "Currency",
+      "exchange_rate": "Exchange Rate",
+      "notes": "Notes",
+      "subtotal": "Subtotal",
+      "taxes": "Taxes",
+      "total_amount": "Total Amount"
+    },
+    "columns": {
+      "id": "ID",
+      "quote_number": "Number",
+      "revision": "Revision",
+      "subject": "Subject",
+      "company": "Company",
+      "status": "Status",
+      "quote_date": "Issue Date",
+      "valid_until": "Valid Until",
+      "total_amount": "Total Amount",
+      "created_at": "Created Date",
+      "actions": "Actions"
+    },
+    "form": {
+      "no_contact": "No Contact",
+      "no_rut": "No Specific RUT",
+      "no_plant": "No Plant",
+      "edit_title": "Edit Quote",
+      "create_title": "Create Quote"
+    },
+    "sections": {
+      "general_info": "General Information",
+      "commercial_details": "Commercial Details and Dates",
+      "financial_details": "Financial Details",
+      "relations": "Relations",
+      "additional_notes": "Additional Notes",
+      "customer_notes": "Customer Notes",
+      "notes": "Notes",
+      "products": "Products"
+    },
+    "messages": {
+      "created": "Quote created successfully",
+      "updated": "Quote updated successfully",
+      "error_saving": "Error saving: {error}"
+    },
+    "status": {
+      "draft": "Draft",
+      "sent": "Sent",
+      "accepted": "Accepted",
+      "rejected": "Rejected",
+      "expired": "Expired"
+    },
+    "products_table": {
+      "product": "Product",
+      "quantity": "Quantity",
+      "unit_price": "Unit Price",
+      "discount": "Discount",
+      "total": "Total"
+    }
   },
   "orders": {
     "title": "Orders",

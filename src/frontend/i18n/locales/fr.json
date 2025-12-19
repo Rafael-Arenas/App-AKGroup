@@ -509,7 +509,40 @@
     "description": "Gestion des devis",
     "list_title": "Liste des Devis",
     "create": "Créer Devis",
-    "view": "Voir Devis"
+    "create_new": "Nouveau Devis",
+    "create_title": "Créer Devis",
+    "edit": "Modifier Devis",
+    "edit_title": "Modifier Devis",
+    "delete": "Supprimer Devis",
+    "view": "Voir Devis",
+    "detail": "Détails du Devis",
+    "no_quotes": "Aucun devis enregistré",
+    "no_quotes_message": "Aucun devis enregistré pour {company_name}. Commencez par créer le premier.",
+    "create_first": "Créer Premier Devis",
+    "search_placeholder": "Rechercher des devis par numéro, sujet...",
+    "columns": {
+      "id": "ID",
+      "quote_number": "Numéro",
+      "revision": "Révision",
+      "subject": "Sujet",
+      "company": "Entreprise",
+      "status": "Statut",
+      "quote_date": "Date d'Émission",
+      "valid_until": "Valable Jusqu'au",
+      "total_amount": "Montant Total",
+      "created_at": "Date de Création",
+      "actions": "Actions"
+    },
+    "messages": {
+      "created": "Devis créé avec succès",
+      "updated": "Devis mis à jour avec succès",
+      "error_saving": "Erreur lors de l'enregistrement: {error}"
+    },
+    "form": {
+      "no_contact": "Aucun contact",
+      "no_rut": "Aucun RUT",
+      "no_plant": "Aucune usine"
+    }
   },
   "orders": {
     "title": "Commandes",

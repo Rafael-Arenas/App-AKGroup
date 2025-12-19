@@ -18,6 +18,14 @@
       "light": "Claro",
       "dark": "Oscuro",
       "system": "Sistema"
+    },
+    "sections": {
+      "general": "General",
+      "commercial": "Comercial",
+      "relations": "Relaciones",
+      "additional_notes": "Notas Adicionales",
+      "customer_notes": "Notas del Cliente",
+      "notes": "Notas"
     }
   },
   "dashboard": {
@@ -131,6 +139,7 @@
       "required_fields": "Por favor complete los campos obligatorios"
     },
     "messages": {
+      "not_found": "No se encontró la empresa",
       "unknown_error": "Error desconocido",
       "loading": "Cargando empresa...",
       "error_loading": "Error al cargar empresa: {error}",
@@ -439,24 +448,98 @@
       "confirm_delete_message": "Esta acción no se puede deshacer"
     }
   },
-  "product_detail": {
-    "revision": "Revisión",
-    "purchase_price": "Precio Compra",
-    "sale_price_eur": "Precio Venta EUR",
-    "margin_percentage": "Margen %",
-    "stock_location": "Ubicación",
-    "total_cost": "Costo Total"
-  },
   "quotes": {
     "title": "Cotizaciones",
     "description": "Gestión de cotizaciones",
     "list_title": "Lista de Cotizaciones",
     "create": "Crear Cotización",
-    "view": "Ver Cotización"
+    "create_new": "Nueva Cotización",
+    "create_title": "Crear Cotización",
+    "edit": "Editar Cotización",
+    "edit_title": "Editar Cotización",
+    "delete": "Eliminar Cotización",
+    "view": "Ver Cotización",
+    "detail": "Detalles de la Cotización",
+    "no_quotes": "No hay cotizaciones registradas",
+    "no_quotes_message": "No hay cotizaciones registradas para {company_name}. Comienza creando la primera.",
+    "create_first": "Crear Primera Cotización",
+    "search_placeholder": "Buscar cotizaciones por número, asunto...",
+    "fields": {
+      "quote_number": "Número Cotización",
+      "revision": "Revisión",
+      "subject": "Asunto",
+      "quote_date": "Fecha Emisión",
+      "valid_until": "Válido Hasta",
+      "shipping_date": "Fecha Envío (Est.)",
+      "date": "Fecha",
+      "unit": "Unidad",
+      "incoterm": "Incoterm",
+      "contact": "Contacto",
+      "rut": "RUT Facturación",
+      "plant": "Planta",
+      "staff": "Vendedor (Staff)",
+      "currency": "Moneda",
+      "exchange_rate": "Tipo de Cambio",
+      "notes": "Notas",
+      "subtotal": "Subtotal",
+      "taxes": "Impuestos",
+      "total_amount": "Monto Total"
+    },
+    "columns": {
+      "id": "ID",
+      "quote_number": "Número",
+      "revision": "Revisión",
+      "subject": "Asunto",
+      "company": "Empresa",
+      "status": "Estado",
+      "quote_date": "Fecha Emisión",
+      "valid_until": "Válido Hasta",
+      "total_amount": "Monto Total",
+      "created_at": "Fecha Creación",
+      "actions": "Acciones"
+    },
+    "form": {
+      "no_contact": "Sin Contacto",
+      "no_rut": "Sin RUT Específico",
+      "no_plant": "Sin Planta",
+      "edit_title": "Editar Cotización",
+      "create_title": "Crear Cotización",
+      "customer_notes": "Notas del Cliente",
+      "notes": "Notas"
+    },
+    "sections": {
+      "general_info": "Información General",
+      "commercial_details": "Detalles Comerciales y Fechas",
+      "financial_details": "Detalles Financieros",
+      "relations": "Relaciones",
+      "additional_notes": "Notas Adicionales",
+      "customer_notes": "Notas del Cliente",
+      "notes": "Notas",
+      "products": "Productos"
+    },
+    "messages": {
+      "created": "Cotización creada exitosamente",
+      "updated": "Cotización actualizada exitosamente",
+      "error_saving": "Error al guardar: {error}"
+    },
+    "status": {
+      "draft": "Borrador",
+      "sent": "Enviada",
+      "accepted": "Aceptada",
+      "rejected": "Rechazada",
+      "expired": "Expirada"
+    },
+    "products_table": {
+      "product": "Producto",
+      "quantity": "Cantidad",
+      "unit_price": "Precio Unitario",
+      "discount": "Descuento",
+      "total": "Total"
+    }
   },
   "orders": {
     "title": "Órdenes",
-    "description": "Gestión de órdenes de trabajo",
+    "description": "Gestión de órdenes",
     "list_title": "Lista de Órdenes",
     "create": "Crear Orden",
     "view": "Ver Orden"
