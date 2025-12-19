@@ -92,7 +92,7 @@ class DropdownField(ft.Container):
             expand=True,
         )
 
-        logger.debug(f"DropdownField initialized: label={label}, options={len(options)}")
+        logger.debug(f"DropdownField initialized: label={label}, options={len(self.options)}")
 
     def _on_change(self, e: ft.ControlEvent) -> None:
         """
