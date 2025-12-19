@@ -1,8 +1,13 @@
 import flet as ft
-from datetime import date
+import asyncio
+from datetime import date, datetime
 from typing import Optional, Callable, Any, Dict
 from loguru import logger
+from decimal import Decimal
 
+from src.frontend.app_state import app_state
+from src.frontend.layout_constants import LayoutConstants
+from src.frontend.components.common import BaseCard, LoadingSpinner, ErrorDisplay
 from src.frontend.services.api import (
     lookup_api,
     quote_api,
@@ -11,347 +16,549 @@ from src.frontend.services.api import (
     plant_api,
     staff_api
 )
-from src.shared.schemas.business.quote import QuoteCreate, QuoteUpdate
+from src.frontend.components.forms import (
+    ValidatedTextField,
+    DropdownField
+)
+from src.frontend.i18n.translation_manager import t
 
-class QuoteFormDialog(ft.AlertDialog):
+class QuoteFormView(ft.Column):
     def __init__(
         self,
-        page: ft.Page,
         company_id: int,
-        quote: Optional[Dict[str, Any]] = None,
+        quote_id: Optional[int] = None,
         on_save: Optional[Callable] = None,
         on_cancel: Optional[Callable] = None,
     ):
-        self.page_ref = page
+        super().__init__()
         self.company_id = company_id
-        self.quote = quote
-        self.is_editing = quote is not None
+        self.quote_id = quote_id
         self.on_save_callback = on_save
         self.on_cancel_callback = on_cancel
 
-        # State for dropdowns
-        self.statuses = []
-        self.incoterms = []
-        self.currencies = []
-        self.contacts = []
-        self.ruts = []
-        self.plants = []
-        self.staff_members = []
+        self.is_editing = quote_id is not None
+        self._quote: Optional[Dict[str, Any]] = None
+        self._selected_currency_id: Optional[int] = None
+        self._is_loading = True
+        self._is_saving = False
+        self._error_message = ""
 
-        # Form fields
-        self.quote_number = ft.TextField(
-            label="Número de Cotización",
-            value=quote.get("quote_number", "") if quote else "",
-            capitalization=ft.TextCapitalization.CHARACTERS,
-            col={"sm": 6},
+        # Layout setup
+        self.expand = True
+        self.scroll = ft.ScrollMode.AUTO
+        self.spacing = LayoutConstants.SPACING_MD
+
+        # Form Fields
+        self._init_form_fields()
+
+        # Build initial layout (loading state)
+        self.controls = [self._build_loading()]
+
+    def _init_form_fields(self):
+        self.quote_number = ValidatedTextField(
+            label="Número Cotización",
+            required=True,
+            validators=["required"],
+            prefix_icon=ft.Icons.NUMBERS,
         )
-        self.revision = ft.TextField(
-            label="Revisión",
-            value=quote.get("revision", "A") if quote else "A",
-            capitalization=ft.TextCapitalization.CHARACTERS,
-            col={"sm": 6},
-        )
-        self.subject = ft.TextField(
-            label="Asunto",
-            value=quote.get("subject", "") if quote else "",
-            col={"sm": 12},
-        )
-        self.status = ft.Dropdown(
-            label="Estado",
-            options=[],
-            col={"sm": 6},
-        )
-        self.date_picker = ft.DatePicker(
-            on_change=self._on_date_change,
-        )
-        self.quote_date_btn = ft.ElevatedButton(
-            "Fecha: " + (quote.get("quote_date", date.today().isoformat()) if quote else date.today().isoformat()),
-            icon=ft.Icons.CALENDAR_MONTH,
-            on_click=lambda _: self.page_ref.open(self.date_picker),
-            col={"sm": 6},
-        )
-        # Store date value separately
-        self.selected_date = date.fromisoformat(quote.get("quote_date")) if quote and quote.get("quote_date") else date.today()
         
+        self.revision = ValidatedTextField(
+            label="Revisión",
+            required=True,
+            validators=["required"],
+            prefix_icon=ft.Icons.HISTORY,
+            max_length=10,
+        )
+
+        self.subject = ValidatedTextField(
+            label="Asunto",
+            required=True,
+            validators=["required"],
+            prefix_icon=ft.Icons.SUBJECT,
+        )
+
+        self.status = DropdownField(
+            label="Estado",
+            required=True,
+            prefix_icon=ft.Icons.FLAG,
+        )
+
+        # Date Fields (Native Flet implementation)
+        self.quote_date_picker = ft.DatePicker(
+            on_change=self._on_quote_date_change,
+            on_dismiss=lambda _: None,
+        )
+        self.quote_date = ft.TextField(
+            label="Fecha Emisión",
+            read_only=True,
+            suffix_icon=ft.Icons.CALENDAR_TODAY,
+            on_click=self._open_quote_date_picker,
+        )
+
         self.valid_until_picker = ft.DatePicker(
             on_change=self._on_valid_until_change,
+            on_dismiss=lambda _: None,
         )
-        self.valid_until_btn = ft.ElevatedButton(
-            "Válido hasta: " + (quote.get("valid_until", "") if quote else "Seleccionar"),
-            icon=ft.Icons.CALENDAR_MONTH,
-            on_click=lambda _: self.page_ref.open(self.valid_until_picker),
-            col={"sm": 6},
+        self.valid_until = ft.TextField(
+            label="Válido Hasta",
+            read_only=True,
+            suffix_icon=ft.Icons.CALENDAR_TODAY,
+            on_click=self._open_valid_until_picker,
         )
-        self.selected_valid_until = date.fromisoformat(quote.get("valid_until")) if quote and quote.get("valid_until") else None
 
         self.shipping_date_picker = ft.DatePicker(
             on_change=self._on_shipping_date_change,
+            on_dismiss=lambda _: None,
         )
-        self.shipping_date_btn = ft.ElevatedButton(
-            "Envío estimado: " + (quote.get("shipping_date", "") if quote else "Seleccionar"),
-            icon=ft.Icons.LOCAL_SHIPPING,
-            on_click=lambda _: self.page_ref.open(self.shipping_date_picker),
-            col={"sm": 6},
-        )
-        self.selected_shipping_date = date.fromisoformat(quote.get("shipping_date")) if quote and quote.get("shipping_date") else None
-
-        self.incoterm = ft.Dropdown(
-            label="Incoterm",
-            options=[],
-            col={"sm": 6},
-        )
-        
-        self.currency = ft.Dropdown(
-            label="Moneda",
-            options=[],
-            col={"sm": 6},
-        )
-        
-        self.exchange_rate = ft.TextField(
-            label="Tipo de Cambio",
-            value=str(quote.get("exchange_rate", "1.0")) if quote else "1.0",
-            keyboard_type=ft.KeyboardType.NUMBER,
-            col={"sm": 6},
+        self.shipping_date = ft.TextField(
+            label="Fecha Envío (Est.)",
+            read_only=True,
+            suffix_icon=ft.Icons.CALENDAR_TODAY,
+            on_click=self._open_shipping_date_picker,
         )
 
-        self.unit = ft.TextField(
+        self.unit = ValidatedTextField(
             label="Unidad",
-            value=quote.get("unit", "") if quote else "",
-            col={"sm": 6},
+            prefix_icon=ft.Icons.SQUARE_FOOT,
         )
 
-        self.contact = ft.Dropdown(
+        self.incoterm = DropdownField(
+            label="Incoterm",
+            prefix_icon=ft.Icons.LOCAL_SHIPPING,
+        )
+
+        self.contact = DropdownField(
             label="Contacto",
-            options=[],
-            col={"sm": 6},
-        )
-        
-        self.rut = ft.Dropdown(
-            label="RUT Facturación",
-            options=[],
-            col={"sm": 6},
-        )
-        
-        self.plant = ft.Dropdown(
-            label="Planta / Sucursal",
-            options=[],
-            col={"sm": 6},
-        )
-        
-        self.staff = ft.Dropdown(
-            label="Vendedor (Staff)",
-            options=[],
-            col={"sm": 6},
-        )
-        
-        self.notes = ft.TextField(
-            label="Notas",
-            value=quote.get("notes", "") if quote else "",
-            multiline=True,
-            min_lines=2,
-            max_lines=4,
-            col={"sm": 12},
+            prefix_icon=ft.Icons.PERSON,
         )
 
-        super().__init__(
-            title=ft.Text("Editar Cotización" if self.is_editing else "Nueva Cotización"),
-            content=ft.Column(
-                controls=[
-                    ft.ProgressBar(visible=True) # Loading initially
-                ],
-                width=700,
-                scroll=ft.ScrollMode.AUTO,
-                tight=True,
-            ),
-            actions=[
-                ft.TextButton("Cancelar", on_click=self._cancel),
-                ft.ElevatedButton("Guardar", on_click=self._save),
-            ],
-            actions_alignment=ft.MainAxisAlignment.END,
-            modal=True,
+        self.rut = DropdownField(
+            label="RUT Facturación",
+            prefix_icon=ft.Icons.RECEIPT,
+        )
+
+        self.plant = DropdownField(
+            label="Planta",
+            prefix_icon=ft.Icons.FACTORY,
+        )
+
+        self.staff = DropdownField(
+            label="Vendedor (Staff)",
+            required=True,
+            prefix_icon=ft.Icons.BADGE,
+        )
+
+        self.notes = ValidatedTextField(
+            label="Notas",
+            multiline=True,
+            prefix_icon=ft.Icons.NOTE,
         )
 
     def did_mount(self):
-        # Trigger data loading when added to page
-        self.page_ref.run_task(self._load_data)
+        if self.page:
+            self.page.overlay.extend([
+                self.quote_date_picker,
+                self.valid_until_picker,
+                self.shipping_date_picker
+            ])
+            self.page.run_task(self._load_data)
 
-    def _on_date_change(self, e):
-        if self.date_picker.value:
-            self.selected_date = self.date_picker.value.date()
-            self.quote_date_btn.text = f"Fecha: {self.selected_date.isoformat()}"
-            self.quote_date_btn.update()
+    # Date Picker Handlers
+    def _open_quote_date_picker(self, e):
+        self.quote_date_picker.open = True
+        self.page.update()
+        
+    def _open_valid_until_picker(self, e):
+        self.valid_until_picker.open = True
+        self.page.update()
+        
+    def _open_shipping_date_picker(self, e):
+        self.shipping_date_picker.open = True
+        self.page.update()
+
+    def _format_date_for_display(self, dt_value) -> str:
+        if not dt_value:
+            return ""
+        # Handle string input if any
+        if isinstance(dt_value, str):
+            try:
+                # Try parsing YYYY-MM-DD
+                dt_value = datetime.strptime(dt_value, "%Y-%m-%d").date()
+            except ValueError:
+                return dt_value # Return as is if format unknown
+
+        return f"{dt_value.day:02d}/{dt_value.month:02d}/{dt_value.year}"
+
+    def _on_quote_date_change(self, e):
+        if self.quote_date_picker.value:
+            self.quote_date.value = self._format_date_for_display(self.quote_date_picker.value)
+            self.quote_date.error_text = None
+            self.update()
 
     def _on_valid_until_change(self, e):
         if self.valid_until_picker.value:
-            self.selected_valid_until = self.valid_until_picker.value.date()
-            self.valid_until_btn.text = f"Válido hasta: {self.selected_valid_until.isoformat()}"
-            self.valid_until_btn.update()
+            self.valid_until.value = self._format_date_for_display(self.valid_until_picker.value)
+            self.update()
 
     def _on_shipping_date_change(self, e):
         if self.shipping_date_picker.value:
-            self.selected_shipping_date = self.shipping_date_picker.value.date()
-            self.shipping_date_btn.text = f"Envío estimado: {self.selected_shipping_date.isoformat()}"
-            self.shipping_date_btn.update()
+            self.shipping_date.value = self._format_date_for_display(self.shipping_date_picker.value)
+            self.update()
+
+    def _set_date_value(self, text_field: ft.TextField, date_picker: ft.DatePicker, value: Any):
+        if not value:
+            text_field.value = ""
+            date_picker.value = None
+            return
+
+        dt_val = None
+        if isinstance(value, str):
+            try:
+                # Handle YYYY-MM-DD from API
+                dt_val = datetime.strptime(value, "%Y-%m-%d").date()
+            except ValueError:
+                pass
+        elif isinstance(value, (date, datetime)):
+            dt_val = value
+
+        if dt_val:
+            # ft.DatePicker expects datetime
+            if isinstance(dt_val, date) and not isinstance(dt_val, datetime):
+                dt_val = datetime.combine(dt_val, datetime.min.time())
+            
+            date_picker.value = dt_val
+            text_field.value = self._format_date_for_display(dt_val)
+
+    def _get_api_date_string(self, text_value: str) -> Optional[str]:
+        if not text_value:
+            return None
+        try:
+            # Expecting DD/MM/YYYY from display
+            dt = datetime.strptime(text_value, "%d/%m/%Y")
+            return dt.strftime("%Y-%m-%d")
+        except ValueError:
+            return None
+
+    def _build_loading(self) -> ft.Control:
+        return ft.Container(
+            content=LoadingSpinner(message="Cargando datos..."),
+            alignment=ft.alignment.center,
+            expand=True
+        )
+
+    def _build_error(self) -> ft.Control:
+        return ft.Container(
+            content=ErrorDisplay(
+                message=self._error_message,
+                on_retry=self._load_data
+            ),
+            alignment=ft.alignment.center,
+            expand=True
+        )
+
+    def _build_content(self) -> list[ft.Control]:
+        title_text = "Editar Cotización" if self.is_editing else "Nueva Cotización"
+        
+        # Header
+        header = ft.Container(
+            content=ft.Row(
+                controls=[
+                    ft.Icon(ft.Icons.EDIT if self.is_editing else ft.Icons.ADD_CIRCLE_OUTLINE, size=32),
+                    ft.Text(
+                        title_text,
+                        size=LayoutConstants.FONT_SIZE_DISPLAY_MD,
+                        weight=ft.FontWeight.BOLD,
+                    ),
+                ],
+                spacing=LayoutConstants.SPACING_SM,
+            ),
+            padding=LayoutConstants.PADDING_MD,
+        )
+
+        # Action Buttons
+        save_btn = ft.ElevatedButton(
+            text="Guardar",
+            icon=ft.Icons.SAVE,
+            on_click=self._save,
+            disabled=self._is_saving
+        )
+        
+        cancel_btn = ft.ElevatedButton(
+            text="Cancelar",
+            on_click=self._cancel,
+            disabled=self._is_saving
+        )
+
+        # General Info Card
+        general_card = BaseCard(
+            title="Información General",
+            icon=ft.Icons.INFO_OUTLINE,
+            content=ft.Column([
+                ft.ResponsiveRow([
+                    ft.Column([self.quote_number], col={"sm": 6}),
+                    ft.Column([self.revision], col={"sm": 6}),
+                ]),
+                ft.ResponsiveRow([
+                    ft.Column([self.subject], col={"sm": 12}),
+                ]),
+                ft.ResponsiveRow([
+                    ft.Column([self.status], col={"sm": 6}),
+                    ft.Column([self.quote_date], col={"sm": 6}),
+                ]),
+            ])
+        )
+
+        # Commercial & Dates Card
+        commercial_card = BaseCard(
+            title="Detalles Comerciales y Fechas",
+            icon=ft.Icons.ATTACH_MONEY,
+            content=ft.Column([
+                ft.ResponsiveRow([
+                    ft.Column([self.incoterm], col={"sm": 6}),
+                    ft.Column([self.unit], col={"sm": 6}),
+                ]),
+                ft.Divider(),
+                ft.ResponsiveRow([
+                    ft.Column([self.valid_until], col={"sm": 6}),
+                    ft.Column([self.shipping_date], col={"sm": 6}),
+                ]),
+            ])
+        )
+
+        # Relations Card
+        relations_card = BaseCard(
+            title="Relaciones",
+            icon=ft.Icons.PEOPLE_OUTLINE,
+            content=ft.Column([
+                ft.ResponsiveRow([
+                    ft.Column([self.contact], col={"sm": 6}),
+                    ft.Column([self.staff], col={"sm": 6}),
+                ]),
+                ft.ResponsiveRow([
+                    ft.Column([self.rut], col={"sm": 6}),
+                    ft.Column([self.plant], col={"sm": 6}),
+                ]),
+            ])
+        )
+        
+        # Notes Card
+        notes_card = BaseCard(
+            title="Notas Adicionales",
+            icon=ft.Icons.NOTE,
+            content=ft.Column([
+                self.notes
+            ])
+        )
+
+        return [
+            header,
+            ft.Divider(height=1, opacity=0.2),
+            ft.Container(
+                content=ft.Column([
+                    general_card,
+                    commercial_card,
+                    relations_card,
+                    notes_card,
+                    ft.Row([save_btn, cancel_btn], alignment=ft.MainAxisAlignment.END)
+                ], spacing=LayoutConstants.SPACING_LG),
+                padding=LayoutConstants.PADDING_LG,
+                expand=True
+            )
+        ]
 
     async def _load_data(self):
+        self._is_loading = True
+        self.controls = [self._build_loading()]
+        if self.page: self.update()
+
         try:
+            # Load Quote if editing
+            if self.is_editing and self.quote_id:
+                self._quote = await quote_api.get_by_id(self.quote_id)
+
             # Parallel loading of lookups
-            results = await getattr(self.page_ref, 'run_task_group', lambda tasks: tasks)(
-                [
-                    lookup_api.get_quote_statuses(),
-                    lookup_api.get_incoterms(),
-                    lookup_api.get_currencies(),
-                    contact_api.get_by_company(self.company_id),
-                    company_rut_api.get_by_company(self.company_id),
-                    plant_api.get_by_company(self.company_id),
-                    staff_api.get_active()
-                ]
-            ) if hasattr(self.page_ref, 'run_task_group') else [
-                await lookup_api.get_quote_statuses(),
-                await lookup_api.get_incoterms(),
-                await lookup_api.get_currencies(),
-                await contact_api.get_by_company(self.company_id),
-                await company_rut_api.get_by_company(self.company_id),
-                await plant_api.get_by_company(self.company_id),
-                await staff_api.get_active()
-            ]
-            
-            self.statuses = results[0]
-            self.incoterms = results[1]
-            self.currencies = results[2]
-            self.contacts = results[3]
-            self.ruts = results[4]
-            self.plants = results[5]
-            self.staff_members = results[6]
+            results = await asyncio.gather(
+                lookup_api.get_quote_statuses(),
+                lookup_api.get_incoterms(),
+                lookup_api.get_currencies(),
+                contact_api.get_by_company(self.company_id),
+                company_rut_api.get_by_company(self.company_id),
+                plant_api.get_by_company(self.company_id),
+                staff_api.get_active()
+            )
+
+            statuses, incoterms, currencies, contacts, ruts, plants, staff_members = results
 
             # Populate Dropdowns
-            self.status.options = [ft.dropdown.Option(str(s["id"]), s["name"]) for s in self.statuses]
-            self.incoterm.options = [ft.dropdown.Option(str(i["id"]), f"{i['code']} - {i['name']}") for i in self.incoterms]
-            self.currency.options = [ft.dropdown.Option(str(c["id"]), f"{c['code']} - {c['name']}") for c in self.currencies]
+            self.status.set_options([
+                {"value": str(s["id"]), "label": s["name"]} 
+                for s in statuses
+            ])
             
-            self.contact.options = [ft.dropdown.Option(str(c["id"]), f"{c['first_name']} {c['last_name']}") for c in self.contacts]
-            # Add "No Contact" option
-            self.contact.options.insert(0, ft.dropdown.Option("", "Sin Contacto"))
+            self.incoterm.set_options([
+                {"value": str(i["id"]), "label": f"{i['code']} - {i['name']}"} 
+                for i in incoterms
+            ])
+
+            # Set default currency (first available or from quote)
+            if self._quote and self._quote.get("currency_id"):
+                self._selected_currency_id = self._quote.get("currency_id")
+            elif currencies:
+                self._selected_currency_id = currencies[0]["id"]
+
+            contact_opts = [{"value": str(c["id"]), "label": f"{c['first_name']} {c['last_name']}"} for c in contacts]
+            contact_opts.insert(0, {"value": "", "label": "Sin Contacto"})
+            self.contact.set_options(contact_opts)
             
-            self.rut.options = [ft.dropdown.Option(str(r["id"]), r["rut"]) for r in self.ruts]
-             # Add "No RUT" option? Maybe usually required but for now allow empty
-            self.rut.options.insert(0, ft.dropdown.Option("", "Sin RUT Específico"))
+            rut_opts = [{"value": str(r["id"]), "label": r["rut"]} for r in ruts]
+            rut_opts.insert(0, {"value": "", "label": "Sin RUT Específico"})
+            self.rut.set_options(rut_opts)
 
-            self.plant.options = [ft.dropdown.Option(str(p["id"]), p["name"]) for p in self.plants]
-            self.plant.options.insert(0, ft.dropdown.Option("", "Sin Planta"))
+            plant_opts = [{"value": str(p["id"]), "label": p["name"]} for p in plants]
+            plant_opts.insert(0, {"value": "", "label": "Sin Planta"})
+            self.plant.set_options(plant_opts)
 
-            self.staff.options = [ft.dropdown.Option(str(s["id"]), f"{s['first_name']} {s['last_name']}") for s in self.staff_members]
+            self.staff.set_options([
+                {"value": str(s["id"]), "label": f"{s['first_name']} {s['last_name']}"} 
+                for s in staff_members
+            ])
 
-            # Set initial values
-            if self.quote:
-                self.status.value = str(self.quote.get("status_id", ""))
-                self.incoterm.value = str(self.quote.get("incoterm_id", "")) if self.quote.get("incoterm_id") else None
-                self.currency.value = str(self.quote.get("currency_id", ""))
-                self.contact.value = str(self.quote.get("contact_id", "")) if self.quote.get("contact_id") else None
-                self.rut.value = str(self.quote.get("company_rut_id", "")) if self.quote.get("company_rut_id") else None
-                self.plant.value = str(self.quote.get("plant_id", "")) if self.quote.get("plant_id") else None
-                self.staff.value = str(self.quote.get("staff_id", ""))
-            else:
-                # Defaults for new quote
-                # Default status: Draft (usually id 1, need to check or assume)
-                if self.statuses:
-                    self.status.value = str(self.statuses[0]["id"])
-                # Default currency: USD or CLP (check logic later, take first for now)
-                if self.currencies:
-                    self.currency.value = str(self.currencies[0]["id"])
+            # Set Values
+            if self._quote:
+                self.quote_number.set_value(self._quote.get("quote_number", ""))
+                self.revision.set_value(self._quote.get("revision", "A"))
+                self.subject.set_value(self._quote.get("subject", ""))
+                self.unit.set_value(self._quote.get("unit", ""))
+                self.notes.set_value(self._quote.get("notes", ""))
+
+                # Date fields
+                self._set_date_value(self.quote_date, self.quote_date_picker, self._quote.get("quote_date"))
+                if not self.quote_date.value:
+                    self._set_date_value(self.quote_date, self.quote_date_picker, date.today())
+
+                self._set_date_value(self.valid_until, self.valid_until_picker, self._quote.get("valid_until"))
+                self._set_date_value(self.shipping_date, self.shipping_date_picker, self._quote.get("shipping_date"))
+
+                # Dropdowns
+                if self._quote.get("status_id"):
+                    self.status.set_value(str(self._quote.get("status_id")))
                 
-                # Auto-select main RUT
-                main_rut = next((r for r in self.ruts if r.get("is_main")), None)
+                if self._quote.get("incoterm_id"):
+                    self.incoterm.set_value(str(self._quote.get("incoterm_id")))
+                
+                if self._quote.get("contact_id"):
+                    self.contact.set_value(str(self._quote.get("contact_id")))
+                
+                if self._quote.get("company_rut_id"):
+                    self.rut.set_value(str(self._quote.get("company_rut_id")))
+                
+                if self._quote.get("plant_id"):
+                    self.plant.set_value(str(self._quote.get("plant_id")))
+                
+                if self._quote.get("staff_id"):
+                    self.staff.set_value(str(self._quote.get("staff_id")))
+
+            else:
+                # Defaults for New Quote
+                self.quote_number.set_value("") 
+                self.revision.set_value("A")
+                self._set_date_value(self.quote_date, self.quote_date_picker, date.today())
+                
+                if statuses:
+                    self.status.set_value(str(statuses[0]["id"]))
+                
+                if currencies:
+                    # Currency already handled above in self._selected_currency_id
+                    pass
+
+                main_rut = next((r for r in ruts if r.get("is_main")), None)
                 if main_rut:
-                    self.rut.value = str(main_rut["id"])
-            
-            # Rebuild content
-            self.content = ft.ResponsiveRow(
-                controls=[
-                    self.quote_number,
-                    self.revision,
-                    self.subject,
-                    self.status,
-                    self.quote_date_btn,
-                    self.valid_until_btn,
-                    self.shipping_date_btn,
-                    self.unit,
-                    self.incoterm,
-                    self.currency,
-                    self.exchange_rate,
-                    ft.Divider(),
-                    self.contact,
-                    self.rut,
-                    self.plant,
-                    self.staff,
-                    self.notes,
-                ],
-            )
-            self.update()
+                    self.rut.set_value(str(main_rut["id"]))
+
+            self._is_loading = False
+            self.controls = self._build_content()
+            if self.page: self.update()
 
         except Exception as e:
-            logger.error(f"Error loading form data: {e}")
-            self.content = ft.Text(f"Error cargando datos: {str(e)}", color="red")
-            self.update()
+            logger.error(f"Error loading quote form data: {e}")
+            self._error_message = str(e)
+            self.controls = [self._build_error()]
+            if self.page: self.update()
+
+    def _validate(self) -> bool:
+        is_valid = True
+        if not self.quote_number.validate(): is_valid = False
+        if not self.revision.validate(): is_valid = False
+        if not self.subject.validate(): is_valid = False
+        if not self.status.validate(): is_valid = False
+        
+        if not self.quote_date.value:
+            self.quote_date.error_text = "Requerido"
+            self.quote_date.update()
+            is_valid = False
+        else:
+            self.quote_date.error_text = None
+            self.quote_date.update()
+            
+        if not self.staff.validate(): is_valid = False
+        return is_valid
 
     async def _save(self, e):
-        if not self.quote_number.value:
-            self.quote_number.error_text = "Requerido"
-            self.quote_number.update()
+        if not self._validate():
             return
-        if not self.subject.value:
-            self.subject.error_text = "Requerido"
-            self.subject.update()
-            return
-        if not self.status.value:
-            self.status.error_text = "Requerido"
-            self.status.update()
-            return
-        if not self.staff.value:
-            self.staff.error_text = "Requerido"
-            self.staff.update()
-            return
+
+        self._is_saving = True
+        # Could show saving indicator here, but button disabled is decent start
+        if self.page: self.update()
 
         try:
+            # Prepare data
             data = {
-                "quote_number": self.quote_number.value,
-                "revision": self.revision.value,
-                "subject": self.subject.value,
+                "quote_number": self.quote_number.get_value(),
+                "revision": self.revision.get_value(),
+                "subject": self.subject.get_value(),
                 "company_id": self.company_id,
-                "status_id": int(self.status.value),
-                "quote_date": self.selected_date.isoformat(),
-                "valid_until": self.selected_valid_until.isoformat() if self.selected_valid_until else None,
-                "shipping_date": self.selected_shipping_date.isoformat() if self.selected_shipping_date else None,
-                "unit": self.unit.value,
-                "incoterm_id": int(self.incoterm.value) if self.incoterm.value else None,
-                "currency_id": int(self.currency.value) if self.currency.value else None,
-                "exchange_rate": float(self.exchange_rate.value) if self.exchange_rate.value else None,
-                "contact_id": int(self.contact.value) if self.contact.value else None,
-                "company_rut_id": int(self.rut.value) if self.rut.value else None,
-                "plant_id": int(self.plant.value) if self.plant.value else None,
-                "staff_id": int(self.staff.value) if self.staff.value else None,
-                "notes": self.notes.value,
+                "status_id": int(self.status.get_value()),
+                "quote_date": self._get_api_date_string(self.quote_date.value),
+                "valid_until": self._get_api_date_string(self.valid_until.value),
+                "shipping_date": self._get_api_date_string(self.shipping_date.value),
+                "unit": self.unit.get_value() or None,
+                "incoterm_id": int(self.incoterm.get_value()) if self.incoterm.get_value() else None,
+                "currency_id": int(self._selected_currency_id) if self._selected_currency_id else 1,
+                "exchange_rate": 1.0,
+                "contact_id": int(self.contact.get_value()) if self.contact.get_value() else None,
+                "company_rut_id": int(self.rut.get_value()) if self.rut.get_value() else None,
+                "plant_id": int(self.plant.get_value()) if self.plant.get_value() else None,
+                "staff_id": int(self.staff.get_value()),
+                "notes": self.notes.get_value(),
             }
 
-            if self.is_editing:
-                await quote_api.update(self.quote["id"], data)
-                self.page_ref.show_snack_bar(ft.SnackBar(content=ft.Text("Cotización actualizada")))
+            if self.is_editing and self.quote_id:
+                await quote_api.update(self.quote_id, data)
+                if self.page:
+                    self.page.overlay.append(ft.SnackBar(content=ft.Text("Cotización actualizada"), bgcolor=ft.Colors.GREEN))
+                    self.page.overlay[-1].open = True
+                    self.page.update()
             else:
                 await quote_api.create(data)
-                self.page_ref.show_snack_bar(ft.SnackBar(content=ft.Text("Cotización creada")))
+                if self.page:
+                    self.page.overlay.append(ft.SnackBar(content=ft.Text("Cotización creada"), bgcolor=ft.Colors.GREEN))
+                    self.page.overlay[-1].open = True
+                    self.page.update()
 
             if self.on_save_callback:
                 self.on_save_callback()
-            
-            self.open = False
-            self.page_ref.update()
 
         except Exception as ex:
             logger.error(f"Error saving quote: {ex}")
-            self.page_ref.show_snack_bar(ft.SnackBar(content=ft.Text(f"Error: {str(ex)}"), bgcolor="error"))
+            if self.page:
+                self.page.overlay.append(ft.SnackBar(content=ft.Text(f"Error al guardar: {str(ex)}"), bgcolor=ft.Colors.ERROR))
+                self.page.overlay[-1].open = True
+                self.page.update()
+        finally:
+            self._is_saving = False
+            if self.page: self.update()
 
     async def _cancel(self, e):
-        self.open = False
-        self.page_ref.update()
         if self.on_cancel_callback:
             self.on_cancel_callback()
