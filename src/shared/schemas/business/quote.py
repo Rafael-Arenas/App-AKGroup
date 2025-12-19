@@ -126,7 +126,9 @@ class QuoteBase(BaseModel):
         max_length=10,
         description="Quote revision (A, B, C...)"
     )
+    unit: Optional[str] = Field(None, max_length=20, description="Unit (Unidad)")
     company_id: int = Field(..., gt=0, description="Customer company ID")
+    company_rut_id: Optional[int] = Field(None, gt=0, description="Company RUT ID")
     contact_id: Optional[int] = Field(None, gt=0, description="Contact person ID")
     plant_id: Optional[int] = Field(None, gt=0, description="Plant ID")
     staff_id: int = Field(..., gt=0, description="Sales person ID")
