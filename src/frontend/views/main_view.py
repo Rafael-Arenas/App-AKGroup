@@ -349,13 +349,11 @@ class MainView(ft.Container):
         """Actualiza el breadcrumb con el estado actual de navegación."""
         if self._breadcrumb:
             breadcrumb_path = app_state.navigation.breadcrumb_path
-            translated_path = [
-                {
-                    "label": t(item["label"]),
-                    "route": item.get("route")
-                }
-                for item in breadcrumb_path
-            ]
+            translated_path: list[dict[str, str | None]] = []
+            for item in breadcrumb_path:
+                raw_label = item["label"]
+                label = t(raw_label) if "." in raw_label else raw_label
+                translated_path.append({"label": label, "route": item.get("route")})
             self._breadcrumb.update_path(translated_path)
             logger.debug(f"Breadcrumb updated with {len(translated_path)} items: {[p['label'] for p in translated_path]}")
 
@@ -689,9 +687,10 @@ class MainView(ft.Container):
                 self.update()
 
         section_key = "clients" if company_type == "CLIENT" else "suppliers"
+        dashboard_route = f"/companies/dashboard/{company_id}/{company_type}"
         app_state.navigation.set_breadcrumb([
             {"label": f"{section_key}.title", "route": f"/companies/{company_type.lower()}s"},
-            {"label": "dashboard.title", "route": None},
+            {"label": "dashboard.title", "route": dashboard_route},
         ])
 
     def navigate_to_company_quotes(self, company_id: int, company_type: str) -> None:
