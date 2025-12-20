@@ -131,6 +131,17 @@ class CompanyRelatedBaseView(ft.Container):
             from src.frontend.services.api import CompanyAPI
             company_api = CompanyAPI()
             self._company = await company_api.get_by_id(self.company_id)
+
+            company_name = (self._company or {}).get("name")
+            if company_name:
+                dashboard_route = f"/companies/dashboard/{self.company_id}/{self.company_type}"
+                updated_path: list[dict[str, str | None]] = []
+                for item in app_state.navigation.breadcrumb_path:
+                    if item.get("route") == dashboard_route:
+                        updated_path.append({"label": str(company_name), "route": dashboard_route})
+                    else:
+                        updated_path.append(item)
+                app_state.navigation.set_breadcrumb(updated_path)
             
             # Cargar datos específicos de la vista hija
             await self._load_child_data()
