@@ -978,6 +978,18 @@ class CompanyDetailView(ft.Container):
             self._company = await company_api.get_by_id(self.company_id)
             logger.success(f"Company loaded: {self._company.get('name')}")
 
+            company_name = (self._company or {}).get("name")
+            if company_name:
+                dashboard_route_prefix = f"/companies/dashboard/{self.company_id}/"
+                updated_path: list[dict[str, str | None]] = []
+                for item in app_state.navigation.breadcrumb_path:
+                    route = item.get("route")
+                    if isinstance(route, str) and route.startswith(dashboard_route_prefix):
+                        updated_path.append({"label": str(company_name), "route": route})
+                    else:
+                        updated_path.append(item)
+                app_state.navigation.set_breadcrumb(updated_path)
+
             # Cargar direcciones y contactos en paralelo usando httpx directamente
             async with httpx.AsyncClient(base_url="http://localhost:8000") as client:
                 try:
