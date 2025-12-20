@@ -12,6 +12,7 @@ from src.frontend.services.api import (
     lookup_api,
     quote_api,
     contact_api,
+    CompanyAPI,
     company_rut_api,
     plant_api,
     staff_api
@@ -387,6 +388,27 @@ class QuoteFormView(ft.Column):
         if self.page: self.update()
 
         try:
+            try:
+                company_api = CompanyAPI()
+                company = await company_api.get_by_id(self.company_id)
+                company_name = (company or {}).get("name")
+                if company_name:
+                    dashboard_route_prefix = f"/companies/dashboard/{self.company_id}/"
+                    updated_path: list[dict[str, str | None]] = []
+                    for item in app_state.navigation.breadcrumb_path:
+                        route = item.get("route")
+                        if (
+                            isinstance(route, str)
+                            and route.startswith(dashboard_route_prefix)
+                            and route.count("/") == 4
+                        ):
+                            updated_path.append({"label": str(company_name), "route": route})
+                        else:
+                            updated_path.append(item)
+                    app_state.navigation.set_breadcrumb(updated_path)
+            except Exception as e:
+                logger.warning(f"Could not update breadcrumb company name: {e}")
+
             # Load Quote if editing
             if self.is_editing and self.quote_id:
                 self._quote = await quote_api.get_by_id(self.quote_id)
