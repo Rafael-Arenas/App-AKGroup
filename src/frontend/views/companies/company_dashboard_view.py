@@ -218,6 +218,17 @@ class CompanyDashboardView(ft.Container):
             company_api = CompanyAPI()
             self._company = await company_api.get_by_id(self.company_id)
             self._is_loading = False
+
+            company_name = (self._company or {}).get("name")
+            if company_name:
+                dashboard_route = f"/companies/dashboard/{self.company_id}/{self.company_type}"
+                updated_path: list[dict[str, str | None]] = []
+                for item in app_state.navigation.breadcrumb_path:
+                    if item.get("route") == dashboard_route:
+                        updated_path.append({"label": str(company_name), "route": dashboard_route})
+                    else:
+                        updated_path.append(item)
+                app_state.navigation.set_breadcrumb(updated_path)
         except Exception as e:
             logger.error(f"Error loading company: {e}")
             self._error_message = str(e)
