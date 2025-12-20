@@ -396,6 +396,7 @@ class QuoteDetailView(ft.Container):
 
         try:
             from src.frontend.services.api import quote_api
+            from src.frontend.services.api import CompanyAPI
             
             # TODO: ensure quote_api is initialized or use the instance from api module
             # Based on previous file reads, it seems 'quote_api' is an instance in 'src.frontend.services.api'
@@ -404,6 +405,23 @@ class QuoteDetailView(ft.Container):
             self._quote = await quote_api.get_by_id(self.quote_id)
             
             logger.success(f"Quote loaded: {self._quote.get('quote_number')}")
+
+            try:
+                company_api = CompanyAPI()
+                company = await company_api.get_by_id(self.company_id)
+                company_name = (company or {}).get("name")
+                if company_name:
+                    dashboard_route = f"/companies/dashboard/{self.company_id}/{self.company_type}"
+                    updated_path: list[dict[str, str | None]] = []
+                    for item in app_state.navigation.breadcrumb_path:
+                        if item.get("route") == dashboard_route:
+                            updated_path.append({"label": str(company_name), "route": dashboard_route})
+                        else:
+                            updated_path.append(item)
+                    app_state.navigation.set_breadcrumb(updated_path)
+            except Exception as e:
+                logger.warning(f"Could not update breadcrumb company name: {e}")
+
             self._is_loading = False
 
         except Exception as e:
