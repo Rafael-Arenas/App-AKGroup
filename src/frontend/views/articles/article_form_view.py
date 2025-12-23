@@ -575,6 +575,7 @@ class ArticleFormView(ft.Column):
             stock_section,
             dimensions_section,
             logistics_section,
+            resources_section,
             additional_section,
             status_section,
             action_buttons,
@@ -844,6 +845,10 @@ class ArticleFormView(ft.Column):
         self._country_of_origin_field.set_value(country_of_origin)
         self._supplier_reference_field.set_value(self._article_data.get("supplier_reference", ""))
         self._customs_number_field.set_value(self._article_data.get("customs_number", ""))
+
+        # Recursos
+        self._image_url_field.set_value(self._article_data.get("image_url", ""))
+        self._plan_url_field.set_value(self._article_data.get("plan_url", ""))
 
         # Campos adicionales
         sales_type_id = self._article_data.get("sales_type_id")
