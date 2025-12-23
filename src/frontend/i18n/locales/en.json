@@ -310,6 +310,10 @@
       "customs_number_hint": "Customs identification number",
       "sales_type": "Sales Type",
       "supplier": "Supplier",
+      "image_url": "Image URL",
+      "image_url_hint": "e.g. https://...",
+      "plan_url": "Plan URL",
+      "plan_url_hint": "e.g. https://...",
       "designation_fr": "French Name",
       "designation_fr_hint": "Designation en français",
       "designation_en": "English Name",
@@ -320,6 +324,7 @@
       "notes_hint": "Important notes or comments",
       "dimensions_section": "Dimensions and Weight",
       "logistics_section": "Logistics and Customs",
+      "resources_section": "Resources",
       "additional_section": "Additional Information"
     },
     "messages": {
@@ -421,6 +426,7 @@
       "image_url": "Image URL",
       "plan_url": "Plan URL",
       "designations": "Designations",
+      "additional_designations": "Additional designations",
       "dimensions_section": "Dimensions & Weight",
       "logistics_section": "Logistics & Customs",
       "is_active": "Active",

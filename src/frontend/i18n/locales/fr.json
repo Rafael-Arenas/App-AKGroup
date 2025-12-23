@@ -310,6 +310,10 @@
       "customs_number_hint": "Numéro d'identification douanier",
       "sales_type": "Type de Vente",
       "supplier": "Fournisseur",
+      "image_url": "URL de l'Image",
+      "image_url_hint": "Ex: https://...",
+      "plan_url": "URL du Plan",
+      "plan_url_hint": "Ex: https://...",
       "designation_fr": "Nom en Français",
       "designation_fr_hint": "Désignation en français",
       "designation_en": "Nom en Anglais",
@@ -320,6 +324,7 @@
       "notes_hint": "Notes ou commentaires importants",
       "dimensions_section": "Dimensions et Poids",
       "logistics_section": "Logistique et Douanes",
+      "resources_section": "Ressources",
       "additional_section": "Information Additionnelle"
     },
     "messages": {
@@ -421,6 +426,7 @@
       "image_url": "URL de l'Image",
       "plan_url": "URL du Plan",
       "designations": "Désignations",
+      "additional_designations": "Désignations supplémentaires",
       "dimensions_section": "Dimensions et Poids",
       "logistics_section": "Logistique et Douanes",
       "is_active": "Actif",

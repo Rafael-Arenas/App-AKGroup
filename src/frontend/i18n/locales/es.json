@@ -319,16 +319,21 @@
       "customs_number_hint": "Número de identificación de aduanas",
       "sales_type": "Tipo de venta",
       "supplier": "Proveedor",
+      "image_url": "URL de Imagen",
+      "image_url_hint": "Ej: https://...",
+      "plan_url": "URL de Plano",
+      "plan_url_hint": "Ej: https://...",
       "designation_fr": "Nombre en francés",
       "designation_fr_hint": "Designation en français",
       "designation_en": "Nombre en inglés",
       "designation_en_hint": "Designation in English",
-      "revision": "Revisión",
-      "revision_hint": "Ej: A, B, 1.0",
       "notes": "Notas adicionales",
       "notes_hint": "Notas o comentarios importantes",
+      "revision": "Revisión",
+      "revision_hint": "Identificador de versión",
       "dimensions_section": "Dimensiones y Peso",
       "logistics_section": "Logística y Aduanas",
+      "resources_section": "Recursos",
       "additional_section": "Información Adicional"
     },
     "messages": {
@@ -431,6 +436,7 @@
       "image_url": "URL de Imagen",
       "plan_url": "URL de Plano",
       "designations": "Designaciones",
+      "additional_designations": "Designaciones adicionales",
       "is_active": "Activo",
       "loading": "Cargando formulario...",
       "saving": "Guardando...",
@@ -447,6 +453,14 @@
       "confirm_delete": "¿Está seguro de eliminar esta nomenclatura?",
       "confirm_delete_message": "Esta acción no se puede deshacer"
     }
+  },
+  "product_detail": {
+    "revision": "Revisión",
+    "purchase_price": "Precio de Compra",
+    "sale_price_eur": "Precio de Venta (EUR)",
+    "margin_percentage": "Margen %",
+    "stock_location": "Ubicación",
+    "total_cost": "Costo Total"
   },
   "quotes": {
     "title": "Cotizaciones",
