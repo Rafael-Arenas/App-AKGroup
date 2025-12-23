@@ -243,10 +243,14 @@ class ArticleDetailView(ft.Container):
         # Información logística y aduanas
         logistics_info = ft.Column(
             controls=[
-                self._create_info_row(t("articles.form.country_of_origin"), self._get_country_name(self._article.get("country_of_origin"))),
-                self._create_info_row(t("articles.form.customs_number"), self._article.get("customs_number", "-") or "-"),
-                self._create_info_row(t("articles.form.supplier"), self._article.get("company", {}).get("name", "-") if self._article.get("company") and self._article.get("company") != {} else "-"),
-                self._create_info_row(t("articles.form.sales_type"), self._article.get("sales_type", {}).get("name", "-") if self._article.get("sales_type") else "-"),
+                self._create_info_row(
+                    t("articles.form.country_of_origin"),
+                    self._get_country_name(self._article.get("country_of_origin")),
+                ),
+                self._create_info_row(
+                    t("articles.form.customs_number"),
+                    self._article.get("customs_number", "-") or "-",
+                ),
             ],
             spacing=LayoutConstants.SPACING_SM,
         )
@@ -257,8 +261,27 @@ class ArticleDetailView(ft.Container):
             content=logistics_info,
         )
 
-        # Notas adicionales
-        notes_info = ft.Column(
+        # Recursos (URLs)
+        resources_info = ft.Column(
+            controls=[
+                self._create_link_row(
+                    t("articles.form.image_url"), self._article.get("image_url")
+                ),
+                self._create_link_row(
+                    t("articles.form.plan_url"), self._article.get("plan_url")
+                ),
+            ],
+            spacing=LayoutConstants.SPACING_SM,
+        )
+
+        resources_card = BaseCard(
+            title=t("articles.form.resources_section"),
+            icon=ft.Icons.LINK,
+            content=resources_info,
+        )
+
+        # Información adicional
+        additional_info = ft.Column(
             controls=[
                 ft.Text(
                     self._article.get("notes", "-") or "-",
@@ -268,22 +291,22 @@ class ArticleDetailView(ft.Container):
             spacing=LayoutConstants.SPACING_SM,
         )
 
-        notes_card = BaseCard(
-            title=t("articles.form.notes"),
+        additional_card = BaseCard(
+            title=t("articles.form.additional_section"),
             icon=ft.Icons.NOTE,
-            content=notes_info,
+            content=additional_info,
         )
 
-        # Contenido
         controls = [
-            header, 
-            general_card, 
+            header,
+            general_card,
             designations_card,
             dimensions_card,
-            stock_card, 
+            stock_card,
             pricing_card,
             logistics_card,
-            notes_card
+            resources_card,
+            additional_card,
         ]
 
         content = ft.Column(
