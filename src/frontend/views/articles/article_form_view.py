@@ -52,6 +52,7 @@ class ArticleFormView(ft.Column):
         self._matters: list[dict] = []
         self._sales_types: list[dict] = []
         self._companies: list[dict] = []
+        self._countries: list[dict] = []
 
         # Configuración del layout
         self.spacing = LayoutConstants.SPACING_MD
@@ -695,6 +696,7 @@ class ArticleFormView(ft.Column):
             # Cargar países
             try:
                 countries = await lookup_api.get_lookup("countries")
+                self._countries = countries
                 country_options = [
                     {"label": c.get("name", ""), "value": c.get("iso_code_alpha2", "")}
                     for c in countries
@@ -702,6 +704,7 @@ class ArticleFormView(ft.Column):
                 self._country_of_origin_field.set_options(country_options)
             except Exception as e:
                 logger.warning(f"Could not load countries: {e}")
+                self._countries = []
 
             logger.success(
                 f"Lookups loaded: "
@@ -809,39 +812,8 @@ class ArticleFormView(ft.Column):
             self._volume_field.set_value(str(volume))
 
         # Campos de logística y aduanas
-        country_of_origin = self._article_data.get("country_of_origin", "")
-        # Handle both country codes and full country names
-        if country_of_origin and len(country_of_origin) > 2:
-            # Map full country name to country code
-            country_name_to_code = {
-                "Chile": "CL",
-                "Argentina": "AR", 
-                "España": "ES",
-                "México": "MX",
-                "Perú": "PE",
-                "Colombia": "CO",
-                "Ecuador": "EC",
-                "Venezuela": "VE",
-                "Bolivia": "BO",
-                "Uruguay": "UY",
-                "Paraguay": "PY",
-                "Brasil": "BR",
-                "Estados Unidos": "US",
-                "United States": "US",
-                "China": "CN",
-                "Japón": "JP",
-                "Japon": "JP",
-                "Japan": "JP",
-                "Alemania": "DE",
-                "Germany": "DE",
-                "Francia": "FR",
-                "France": "FR",
-                "Italia": "IT",
-                "Italy": "IT",
-                "Reino Unido": "GB",
-                "United Kingdom": "GB"
-            }
-            country_of_origin = country_name_to_code.get(country_of_origin, country_of_origin)
+        raw_country_of_origin = self._article_data.get("country_of_origin", "")
+        country_of_origin = self._normalize_country_of_origin(raw_country_of_origin)
         self._country_of_origin_field.set_value(country_of_origin)
         self._supplier_reference_field.set_value(self._article_data.get("supplier_reference", ""))
         self._customs_number_field.set_value(self._article_data.get("customs_number", ""))
@@ -892,8 +864,66 @@ class ArticleFormView(ft.Column):
             if not self._sale_price_field.validate():
                 is_valid = False
 
+        country_of_origin = self._country_of_origin_field.get_value()
+        if country_of_origin and len(country_of_origin.strip()) != 2:
+            self._country_of_origin_field.set_error(
+                "Debe ser un código ISO-2 de 2 letras (ej: CL, US, TW)."
+            )
+            is_valid = False
+
         logger.debug(f"Form validation result: {is_valid}")
         return is_valid
+
+    def _normalize_country_of_origin(self, value: str) -> str:
+        """Normaliza el país de origen a código ISO-2 (2 letras)."""
+        raw = (value or "").strip()
+        if not raw:
+            return ""
+
+        if len(raw) == 2:
+            return raw.upper()
+
+        normalized_key = raw.casefold()
+        for country in self._countries:
+            name = (country.get("name") or "").strip()
+            iso2 = (country.get("iso_code_alpha2") or "").strip()
+            if name and iso2 and name.casefold() == normalized_key:
+                return iso2.upper()
+
+        manual_map = {
+            "chile": "CL",
+            "argentina": "AR",
+            "españa": "ES",
+            "espana": "ES",
+            "méxico": "MX",
+            "mexico": "MX",
+            "perú": "PE",
+            "peru": "PE",
+            "colombia": "CO",
+            "ecuador": "EC",
+            "venezuela": "VE",
+            "bolivia": "BO",
+            "uruguay": "UY",
+            "paraguay": "PY",
+            "brasil": "BR",
+            "estados unidos": "US",
+            "united states": "US",
+            "china": "CN",
+            "japón": "JP",
+            "japon": "JP",
+            "japan": "JP",
+            "alemania": "DE",
+            "germany": "DE",
+            "francia": "FR",
+            "france": "FR",
+            "italia": "IT",
+            "italy": "IT",
+            "reino unido": "GB",
+            "united kingdom": "GB",
+            "taiwan": "TW",
+        }
+        mapped = manual_map.get(normalized_key)
+        return mapped or raw
 
     def _get_form_data(self) -> dict:
         """Obtiene los datos del formulario mapeados para el API."""
@@ -993,8 +1023,11 @@ class ArticleFormView(ft.Column):
             data["volume"] = float(volume_str)
 
         # Campos de logística y aduanas
-        country_of_origin = self._country_of_origin_field.get_value()
-        logger.debug(f"Country of origin from field: '{country_of_origin}'")
+        country_of_origin_raw = self._country_of_origin_field.get_value()
+        country_of_origin = self._normalize_country_of_origin(country_of_origin_raw)
+        logger.debug(
+            f"Country of origin from field: '{country_of_origin_raw}' normalized: '{country_of_origin}'"
+        )
         if country_of_origin:
             data["country_of_origin"] = country_of_origin
 
