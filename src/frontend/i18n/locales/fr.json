@@ -18,6 +18,14 @@
       "light": "Clair",
       "dark": "Sombre",
       "system": "Système"
+    },
+    "sections": {
+      "general": "Général",
+      "commercial": "Commercial",
+      "relations": "Relations",
+      "additional_notes": "Notes supplémentaires",
+      "customer_notes": "Notes du client",
+      "notes": "Notes"
     }
   },
   "dashboard": {
@@ -131,6 +139,7 @@
       "required_fields": "Veuillez compléter les champs obligatoires"
     },
     "messages": {
+      "not_found": "Entreprise non trouvée",
       "unknown_error": "Erreur inconnue",
       "loading": "Chargement de l'entreprise...",
       "error_loading": "Erreur lors du chargement de l'entreprise: {error}",
@@ -388,6 +397,7 @@
       "pricing": "Tarification",
       "dimensions_and_weight": "Dimensions et Poids",
       "weight_and_stock": "Poids et Stock",
+      "urls": "URLs",
       "stock_section": "Stock et Inventaire",
       "bom_section": "Liste d'Articles",
       "bom_placeholder": "Articles de la nomenclature...",
@@ -427,8 +437,6 @@
       "plan_url": "URL du Plan",
       "designations": "Désignations",
       "additional_designations": "Désignations supplémentaires",
-      "dimensions_section": "Dimensions et Poids",
-      "logistics_section": "Logistique et Douanes",
       "is_active": "Actif",
       "loading": "Chargement du formulaire...",
       "saving": "Enregistrement...",
@@ -454,62 +462,6 @@
     "stock_location": "Emplacement",
     "total_cost": "Coût Total"
   },
-  "products": {
-    "title": "Produits",
-    "description": "Gestion des produits et nomenclatures",
-    "list_title": "Liste des Produits",
-    "create": "Créer Produit",
-    "create_new": "Nouveau Produit",
-    "edit": "Modifier Produit",
-    "delete": "Supprimer Produit",
-    "view": "Voir Produit",
-    "no_products": "Aucun produit enregistré",
-    "no_products_message": "Commencez par créer votre premier produit",
-    "create_first": "Créer Premier Produit",
-    "search_placeholder": "Rechercher produits par code, nom...",
-    "bom": "Nomenclature (BOM)",
-    "add_component": "Ajouter Composant",
-    "columns": {
-      "id": "ID",
-      "code": "Code",
-      "name": "Nom",
-      "type": "Type",
-      "unit": "Unité",
-      "cost": "Coût",
-      "description": "Description",
-      "status": "Statut",
-      "created_at": "Date de Création",
-      "actions": "Actions"
-    },
-    "types": {
-      "article": "Article",
-      "nomenclature": "Nomenclature"
-    },
-    "filters": {
-      "all": "Tous",
-      "active": "Actifs",
-      "inactive": "Inactifs",
-      "article": "Articles",
-      "nomenclature": "Nomenclatures",
-      "status": "Statut",
-      "type": "Type"
-    },
-    "form": {
-      "basic_info": "Informations de Base",
-      "bom_info": "Nomenclature",
-      "code": "Code",
-      "code_hint": "Code unique du produit",
-      "name": "Nom",
-      "name_hint": "Nom descriptif",
-      "description": "Description",
-      "description_hint": "Description détaillée",
-      "type": "Type de Produit",
-      "unit": "Unité de Mesure",
-      "cost": "Coût",
-      "cost_hint": "0.00",
-      "is_active": "Actif"
-    }
-  },
   "quotes": {
     "title": "Devis",
     "description": "Gestion des devis",
@@ -526,6 +478,27 @@
     "no_quotes_message": "Aucun devis enregistré pour {company_name}. Commencez par créer le premier.",
     "create_first": "Créer Premier Devis",
     "search_placeholder": "Rechercher des devis par numéro, sujet...",
+    "fields": {
+      "quote_number": "Numéro Devis",
+      "revision": "Révision",
+      "subject": "Sujet",
+      "quote_date": "Date d'Émission",
+      "valid_until": "Valable Jusqu'au",
+      "shipping_date": "Date d'Expédition (Est.)",
+      "date": "Date",
+      "unit": "Unité",
+      "incoterm": "Incoterm",
+      "contact": "Contact",
+      "rut": "RUT Facturation",
+      "plant": "Usine",
+      "staff": "Vendeur (Staff)",
+      "currency": "Devise",
+      "exchange_rate": "Taux de Change",
+      "notes": "Notes",
+      "subtotal": "Sous-total",
+      "taxes": "Taxes",
+      "total_amount": "Montant Total"
+    },
     "columns": {
       "id": "ID",
       "quote_number": "Numéro",
@@ -539,15 +512,46 @@
       "created_at": "Date de Création",
       "actions": "Actions"
     },
+    "form": {
+      "no_contact": "Aucun contact",
+      "no_rut": "Aucun RUT spécifique",
+      "no_plant": "Aucune usine",
+      "edit_title": "Modifier Devis",
+      "create_title": "Créer Devis",
+      "customer_notes": "Notes du client",
+      "notes": "Notes",
+      "generate_fake_data": "Générer des données fictives",
+      "fake_data_success": "Données fictives générées avec succès",
+      "fake_data_error": "Impossible de générer les données fictives: {error}"
+    },
+    "sections": {
+      "general_info": "Informations Générales",
+      "commercial_details": "Détails Commerciaux et Dates",
+      "financial_details": "Détails Financiers",
+      "relations": "Relations",
+      "additional_notes": "Notes supplémentaires",
+      "customer_notes": "Notes du client",
+      "notes": "Notes",
+      "products": "Produits"
+    },
     "messages": {
       "created": "Devis créé avec succès",
       "updated": "Devis mis à jour avec succès",
       "error_saving": "Erreur lors de l'enregistrement: {error}"
     },
-    "form": {
-      "no_contact": "Aucun contact",
-      "no_rut": "Aucun RUT",
-      "no_plant": "Aucune usine"
+    "status": {
+      "draft": "Brouillon",
+      "sent": "Envoyé",
+      "accepted": "Accepté",
+      "rejected": "Rejeté",
+      "expired": "Expiré"
+    },
+    "products_table": {
+      "product": "Produit",
+      "quantity": "Quantité",
+      "unit_price": "Prix Unitaire",
+      "discount": "Remise",
+      "total": "Total"
     }
   },
   "orders": {
@@ -594,18 +598,22 @@
     "edit": "Modifier",
     "view": "Voir",
     "create": "Créer",
+    "add": "Ajouter",
+    "remove": "Supprimer",
     "search": "Rechercher",
     "clear": "Effacer",
     "search_history": "Historique de recherche",
     "filter": "Filtrer",
     "filters": "Filtres",
     "collapse": "Réduire",
+    "clear_history": "Effacer l'historique",
     "clear_filters": "Effacer Filtres",
     "apply_filters": "Appliquer Filtres",
     "export": "Exporter",
     "import": "Importer",
     "print": "Imprimer",
     "refresh": "Actualiser",
+    "retry": "Réessayer",
     "back": "Retour",
     "next": "Suivant",
     "previous": "Précédent",
@@ -637,10 +645,18 @@
     "invalid_url": "URL invalide",
     "min_length": "Minimum {min} caractères",
     "max_length": "Maximum {max} caractères",
-    "confirm_delete": "Êtes-vous sûr de vouloir supprimer cet enregistrement?",
-    "confirm_delete_message": "Cette action ne peut pas être annulée",
     "operation_successful": "Opération terminée avec succès",
-    "operation_failed": "L'opération a échoué"
+    "operation_failed": "L'opération a échoué",
+    "page": "Page",
+    "of": "de",
+    "expand": "Développer",
+    "from": "De",
+    "to": "À",
+    "id": "ID",
+    "name": "Nom",
+    "category": "Catégorie",
+    "active_only": "Actifs seulement",
+    "date_range": "Plage de dates"
   },
   "theme": {
     "light": "Clair",
@@ -659,7 +675,6 @@
     "suppliers": "Fournisseurs",
     "articles": "Articles",
     "nomenclatures": "Nomenclatures",
-    "products": "Produits",
     "quotes": "Devis",
     "orders": "Commandes",
     "deliveries": "Livraisons",
@@ -671,15 +686,20 @@
     "view": "Voir"
   },
   "validation": {
-    "required": "Ce champ est requis",
+    "required": "Le champ {field} est obligatoire",
     "email": "Entrez un email valide",
+    "email_invalid": "Email invalide",
     "phone": "Entrez un téléphone valide",
+    "phone_invalid": "Téléphone invalide",
     "url": "Entrez une URL valide",
+    "url_invalid": "URL invalide",
     "min_length": "Minimum {min} caractères",
     "max_length": "Maximum {max} caractères",
     "number": "Doit être un nombre",
     "positive": "Doit être un nombre positif",
-    "integer": "Doit être un nombre entier"
+    "integer": "Doit être un nombre entier",
+    "date_too_early": "La date est trop tôt",
+    "date_too_late": "La date est trop tard"
   },
   "errors": {
     "network_error": "Erreur de connexion au serveur",
