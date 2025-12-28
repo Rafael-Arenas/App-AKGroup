@@ -430,6 +430,7 @@ class PaymentCondition(Base, TimestampMixin, ActiveMixin):
         percentage_on_delivery: Percentage due on delivery
         percentage_after_delivery: Percentage due after delivery (with days)
         days_after_delivery: Days after delivery for final payment
+        payment_type_id: Foreign key to PaymentType
         is_default: Whether this is the default payment condition
         notes: Additional notes
     """
@@ -457,6 +458,15 @@ class PaymentCondition(Base, TimestampMixin, ActiveMixin):
         comment="Payment condition revision (A, B, C...)",
     )
     description = Column(Text, nullable=True, comment="Detailed description")
+
+    # Related entities
+    payment_type_id = Column(
+        Integer,
+        ForeignKey("payment_types.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+        comment="Payment type (30, 60, 90 days, etc.)",
+    )
 
     # Payment terms
     days_to_pay = Column(
@@ -495,6 +505,9 @@ class PaymentCondition(Base, TimestampMixin, ActiveMixin):
         default=False,
         comment="Whether this is the default payment condition",
     )
+
+    # Relationships
+    payment_type = relationship("PaymentType", back_populates="payment_conditions")
 
     # Notes
     notes = Column(Text, nullable=True, comment="Additional notes")
