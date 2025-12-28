@@ -227,6 +227,54 @@ class TransportResponse(TransportBase):
 
 
 # ============================================================================
+# PAYMENT TYPE SCHEMAS
+# ============================================================================
+
+class PaymentTypeBase(BaseModel):
+    """Base schema for PaymentType."""
+
+    code: str = Field(..., min_length=1, max_length=20, description="Payment type code (e.g., 30D, 60D, CASH)")
+    name: str = Field(..., min_length=1, max_length=50, description="Display name")
+    days: int = Field(default=0, ge=0, description="Number of days for this payment type")
+    description: Optional[str] = Field(None, description="Detailed description")
+
+    @field_validator("code")
+    @classmethod
+    def uppercase_code(cls, v: str) -> str:
+        """Convert code to uppercase."""
+        return v.strip().upper()
+
+
+class PaymentTypeCreate(PaymentTypeBase):
+    """Schema for creating a payment type."""
+
+    pass
+
+
+class PaymentTypeUpdate(BaseModel):
+    """Schema for updating a payment type."""
+
+    code: Optional[str] = Field(None, min_length=1, max_length=20)
+    name: Optional[str] = Field(None, min_length=1, max_length=50)
+    days: Optional[int] = Field(None, ge=0)
+    description: Optional[str] = None
+
+    @field_validator("code")
+    @classmethod
+    def uppercase_code(cls, v: Optional[str]) -> Optional[str]:
+        """Convert code to uppercase if provided."""
+        return v.strip().upper() if v else None
+
+
+class PaymentTypeResponse(PaymentTypeBase):
+    """Schema for payment type response."""
+
+    id: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+# ============================================================================
 # PAYMENT CONDITION SCHEMAS
 # ============================================================================
 
@@ -237,6 +285,7 @@ class PaymentConditionBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=100, description="Payment condition name")
     revision: str = Field(default="A", min_length=1, max_length=10, description="Revision")
     description: Optional[str] = Field(None, description="Detailed description")
+    payment_type_id: int = Field(..., gt=0, description="Payment type ID")
     days_to_pay: Optional[int] = Field(None, ge=0, description="Days for payment")
     percentage_advance: Decimal = Field(
         default=Decimal("0.00"),
@@ -287,6 +336,7 @@ class PaymentConditionUpdate(BaseModel):
     name: Optional[str] = Field(None, min_length=1, max_length=100)
     revision: Optional[str] = Field(None, min_length=1, max_length=10)
     description: Optional[str] = None
+    payment_type_id: Optional[int] = Field(None, gt=0)
     days_to_pay: Optional[int] = Field(None, ge=0)
     percentage_advance: Optional[Decimal] = Field(None, ge=0, le=100)
     percentage_on_delivery: Optional[Decimal] = Field(None, ge=0, le=100)
@@ -314,5 +364,6 @@ class PaymentConditionResponse(PaymentConditionBase):
     """Schema for payment condition response."""
 
     id: int
+    payment_type: Optional[PaymentTypeResponse] = None
 
     model_config = ConfigDict(from_attributes=True)
