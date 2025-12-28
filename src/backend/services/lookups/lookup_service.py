@@ -19,7 +19,7 @@ Provides business logic for all 12 lookup tables:
 from sqlalchemy.orm import Session
 from typing import List, Optional
 
-from src.backend.models.lookups.lookups import (
+from src.backend.models.lookups import (
     Country,
     City,
     CompanyType,
