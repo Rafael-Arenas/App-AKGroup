@@ -5,7 +5,11 @@ Script para insertar más empresas (clientes y proveedores) en la base de datos.
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from src.backend.models.core.companies import Company
-from src.backend.models.lookups.lookups import CompanyType, City, Country
+try:
+    from src.backend.models.lookups import CompanyType, City, Country
+except ImportError:
+    # Fallback por si acaso
+    from src.backend.models.lookups.lookups import CompanyType, City, Country
 
 # Crear engine y sesión
 engine = create_engine('sqlite:///app_akgroup.db', echo=False)
