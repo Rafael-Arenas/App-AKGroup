@@ -464,19 +464,19 @@ def get_default_payment_condition(
         )
 
 
-@payment_conditions_router.get("/code/{code}", response_model=PaymentConditionResponse)
-def get_payment_condition_by_code(
-    code: str,
+@payment_conditions_router.get("/number/{number}", response_model=PaymentConditionResponse)
+def get_payment_condition_by_number(
+    number: str,
     service: PaymentConditionService = Depends(get_payment_condition_service),
 ) -> PaymentConditionResponse:
-    """Get payment condition by code."""
-    logger.info(f"GET /payment-conditions/code/{code}")
+    """Get payment condition by number."""
+    logger.info(f"GET /payment-conditions/number/{number}")
     try:
-        condition = service.get_by_code(code)
-        logger.success(f"Payment condition found: {code}")
+        condition = service.get_by_number(number)
+        logger.success(f"Payment condition found: {number}")
         return condition
     except NotFoundException as e:
-        logger.warning(f"Payment condition not found: {code}")
+        logger.warning(f"Payment condition not found: {number}")
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
     except Exception as e:
         logger.error(f"Error retrieving payment condition: {e}")
@@ -515,7 +515,7 @@ def create_payment_condition(
     service: PaymentConditionService = Depends(get_payment_condition_service),
 ) -> PaymentConditionResponse:
     """Create a new payment condition."""
-    logger.info(f"POST /payment-conditions - Creating: {condition.code}")
+    logger.info(f"POST /payment-conditions - Creating: {condition.payment_condition_number}")
     try:
         created = service.create(condition, user_id=user_id)
         logger.success(f"Payment condition created: id={created.id}")

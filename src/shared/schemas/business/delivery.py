@@ -233,7 +233,7 @@ class TransportResponse(TransportBase):
 class PaymentConditionBase(BaseModel):
     """Base schema for PaymentCondition."""
 
-    code: str = Field(..., min_length=1, max_length=20, description="Code (e.g., NET30, COD)")
+    payment_condition_number: str = Field(..., min_length=1, max_length=20, description="Short number/code (e.g., 001, NET30, COD)")
     name: str = Field(..., min_length=1, max_length=100, description="Payment condition name")
     revision: str = Field(default="A", min_length=1, max_length=10, description="Revision")
     description: Optional[str] = Field(None, description="Detailed description")
@@ -260,7 +260,7 @@ class PaymentConditionBase(BaseModel):
     is_default: bool = Field(default=False, description="Is default condition")
     notes: Optional[str] = Field(None, description="Additional notes")
 
-    @field_validator("code", "revision")
+    @field_validator("payment_condition_number", "revision")
     @classmethod
     def uppercase_fields(cls, v: str) -> str:
         """Convert to uppercase."""

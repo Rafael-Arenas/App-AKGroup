@@ -291,14 +291,14 @@ class PaymentConditionService(BaseService[PaymentCondition, PaymentConditionCrea
 
     def validate_create(self, entity: PaymentCondition) -> None:
         """Validate payment condition before creation."""
-        logger.debug(f"Validating payment condition creation: code={entity.code}")
+        logger.debug(f"Validating payment condition creation: number={entity.payment_condition_number}")
 
-        # Validate unique code
-        existing = self.payment_repo.get_by_code(entity.code)
+        # Validate unique number
+        existing = self.payment_repo.get_by_number(entity.payment_condition_number)
         if existing:
             raise ValidationException(
-                f"Payment condition code already exists: {entity.code}",
-                details={"code": entity.code}
+                f"Payment condition number already exists: {entity.payment_condition_number}",
+                details={"payment_condition_number": entity.payment_condition_number}
             )
 
         # Validate percentages sum to 100
@@ -310,12 +310,12 @@ class PaymentConditionService(BaseService[PaymentCondition, PaymentConditionCrea
         """Validate payment condition before update."""
         logger.debug(f"Validating payment condition update: id={entity.id}")
 
-        # Validate unique code (excluding self)
-        existing = self.payment_repo.get_by_code(entity.code)
+        # Validate unique number (excluding self)
+        existing = self.payment_repo.get_by_number(entity.payment_condition_number)
         if existing and existing.id != entity.id:
             raise ValidationException(
-                f"Payment condition code already exists: {entity.code}",
-                details={"code": entity.code}
+                f"Payment condition number already exists: {entity.payment_condition_number}",
+                details={"payment_condition_number": entity.payment_condition_number}
             )
 
         # Validate percentages sum to 100
@@ -323,14 +323,14 @@ class PaymentConditionService(BaseService[PaymentCondition, PaymentConditionCrea
 
         logger.debug("Payment condition validation passed")
 
-    def get_by_code(self, code: str) -> PaymentConditionResponse:
-        """Get payment condition by code."""
-        logger.info(f"Getting payment condition by code: {code}")
-        condition = self.payment_repo.get_by_code(code)
+    def get_by_number(self, number: str) -> PaymentConditionResponse:
+        """Get payment condition by number."""
+        logger.info(f"Getting payment condition by number: {number}")
+        condition = self.payment_repo.get_by_number(number)
         if not condition:
             raise NotFoundException(
-                f"Payment condition not found: {code}",
-                details={"code": code}
+                f"Payment condition not found: {number}",
+                details={"payment_condition_number": number}
             )
         return self.response_schema.model_validate(condition)
 

@@ -30,7 +30,7 @@ Test Coverage:
 
     PaymentCondition:
         - CRUD operations
-        - Field validation (code, name)
+        - Field validation (payment_condition_number, name)
         - Percentage validations
         - Business methods (validate_percentages)
         - Business properties (summary)
@@ -1470,7 +1470,7 @@ class TestPaymentConditionCreation:
         """Test creating a PaymentCondition with all fields populated."""
         # Arrange & Act
         payment_cond = PaymentCondition(
-            code="50-50",
+            payment_condition_number="50-50",
             name="50% Advance, 50% On Delivery",
             revision="A",
             description="Half payment upfront, half on delivery",
@@ -1489,7 +1489,7 @@ class TestPaymentConditionCreation:
 
         # Assert
         assert payment_cond.id is not None
-        assert payment_cond.code == "50-50"
+        assert payment_cond.payment_condition_number == "50-50"
         assert payment_cond.name == "50% Advance, 50% On Delivery"
         assert payment_cond.revision == "A"
         assert payment_cond.percentage_advance == Decimal("50.00")
@@ -1502,7 +1502,7 @@ class TestPaymentConditionCreation:
         """Test creating PaymentCondition with only required fields."""
         # Arrange & Act
         payment_cond = PaymentCondition(
-            code="NET30",
+            payment_condition_number="NET30",
             name="Net 30 Days",
             percentage_advance=Decimal("0.00"),
             percentage_on_delivery=Decimal("0.00"),
@@ -1515,7 +1515,7 @@ class TestPaymentConditionCreation:
 
         # Assert
         assert payment_cond.id is not None
-        assert payment_cond.code == "NET30"
+        assert payment_cond.payment_condition_number == "NET30"
         assert payment_cond.revision == "A"  # Default
         assert payment_cond.is_default is False  # Default
         assert payment_cond.is_active is True  # Default from ActiveMixin
@@ -1524,11 +1524,11 @@ class TestPaymentConditionCreation:
 class TestPaymentConditionValidation:
     """Tests for PaymentCondition field validators and constraints."""
 
-    def test_code_validator_strips_and_uppercases(self, session):
-        """Test that code is stripped and converted to uppercase."""
+    def test_payment_condition_number_validator_strips_and_uppercases(self, session):
+        """Test that payment_condition_number is stripped and converted to uppercase."""
         # Arrange & Act
         payment_cond = PaymentCondition(
-            code="  net60  ",
+            payment_condition_number="  net60  ",
             name="Net 60 Days",
             percentage_advance=Decimal("0.00"),
             percentage_on_delivery=Decimal("0.00"),
@@ -1539,14 +1539,14 @@ class TestPaymentConditionValidation:
         session.refresh(payment_cond)
 
         # Assert
-        assert payment_cond.code == "NET60"
+        assert payment_cond.payment_condition_number == "NET60"
 
-    def test_code_cannot_be_empty(self, session):
-        """Test that code cannot be empty."""
+    def test_payment_condition_number_cannot_be_empty(self, session):
+        """Test that payment_condition_number cannot be empty."""
         # Arrange & Act & Assert
-        with pytest.raises(ValueError, match="Payment condition code cannot be empty"):
+        with pytest.raises(ValueError, match="Payment condition number cannot be empty"):
             payment_cond = PaymentCondition(
-                code="   ",
+                payment_condition_number="   ",
                 name="Empty Code",
                 percentage_advance=Decimal("0.00"),
                 percentage_on_delivery=Decimal("0.00"),
@@ -1557,7 +1557,7 @@ class TestPaymentConditionValidation:
         """Test that name is stripped."""
         # Arrange & Act
         payment_cond = PaymentCondition(
-            code="TEST",
+            payment_condition_number="TEST",
             name="  Test Name  ",
             percentage_advance=Decimal("0.00"),
             percentage_on_delivery=Decimal("0.00"),
@@ -1575,7 +1575,7 @@ class TestPaymentConditionValidation:
         # Arrange & Act & Assert
         with pytest.raises(ValueError, match="Payment condition name cannot be empty"):
             payment_cond = PaymentCondition(
-                code="TEST",
+                payment_condition_number="TEST",
                 name="   ",
                 percentage_advance=Decimal("0.00"),
                 percentage_on_delivery=Decimal("0.00"),
@@ -1586,11 +1586,11 @@ class TestPaymentConditionValidation:
 class TestPaymentConditionConstraints:
     """Tests for PaymentCondition database constraints."""
 
-    def test_code_unique_constraint(self, session):
-        """Test that payment condition code must be unique."""
+    def test_payment_condition_number_unique_constraint(self, session):
+        """Test that payment condition number must be unique."""
         # Create first payment condition
         payment_cond1 = PaymentCondition(
-            code="UNIQUE",
+            payment_condition_number="UNIQUE",
             name="First",
             percentage_advance=Decimal("0.00"),
             percentage_on_delivery=Decimal("0.00"),
@@ -1601,7 +1601,7 @@ class TestPaymentConditionConstraints:
 
         # Try to create duplicate
         payment_cond2 = PaymentCondition(
-            code="UNIQUE",
+            payment_condition_number="UNIQUE",
             name="Second",
             percentage_advance=Decimal("0.00"),
             percentage_on_delivery=Decimal("0.00"),
@@ -1617,7 +1617,7 @@ class TestPaymentConditionConstraints:
         """Test that percentages must sum to exactly 100."""
         # Test valid sum (100)
         payment_cond = PaymentCondition(
-            code="VALID",
+            payment_condition_number="VALID",
             name="Valid",
             percentage_advance=Decimal("30.00"),
             percentage_on_delivery=Decimal("40.00"),
@@ -1631,7 +1631,7 @@ class TestPaymentConditionConstraints:
 
         # Test invalid sum (not 100)
         payment_cond2 = PaymentCondition(
-            code="INVALID",
+            payment_condition_number="INVALID",
             name="Invalid",
             percentage_advance=Decimal("30.00"),
             percentage_on_delivery=Decimal("40.00"),
@@ -1650,7 +1650,7 @@ class TestPaymentConditionBusinessMethods:
         """Test validate_percentages method."""
         # Valid case
         payment_cond = PaymentCondition(
-            code="VALID",
+            payment_condition_number="VALID",
             name="Valid",
             percentage_advance=Decimal("25.00"),
             percentage_on_delivery=Decimal("25.00"),
@@ -1661,7 +1661,7 @@ class TestPaymentConditionBusinessMethods:
 
         # Invalid case
         payment_cond_invalid = PaymentCondition(
-            code="INVALID",
+            payment_condition_number="INVALID",
             name="Invalid",
             percentage_advance=Decimal("25.00"),
             percentage_on_delivery=Decimal("25.00"),
@@ -1674,7 +1674,7 @@ class TestPaymentConditionBusinessMethods:
         """Test summary property generates human-readable summary."""
         # Test 50-50 split
         payment_cond = PaymentCondition(
-            code="50-50",
+            payment_condition_number="50-50",
             name="50-50",
             percentage_advance=Decimal("50.00"),
             percentage_on_delivery=Decimal("50.00"),
@@ -1690,7 +1690,7 @@ class TestPaymentConditionBusinessMethods:
 
         # Test Net 30
         payment_cond2 = PaymentCondition(
-            code="NET30",
+            payment_condition_number="NET30",
             name="Net 30",
             percentage_advance=Decimal("0.00"),
             percentage_on_delivery=Decimal("0.00"),
@@ -1714,7 +1714,7 @@ class TestPaymentConditionRepr:
         """Test PaymentCondition string representation."""
         # Arrange
         payment_cond = PaymentCondition(
-            code="REPR",
+            payment_condition_number="REPR",
             name="Test Payment Condition",
             percentage_advance=Decimal("0.00"),
             percentage_on_delivery=Decimal("0.00"),

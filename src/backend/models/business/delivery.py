@@ -419,9 +419,9 @@ class PaymentCondition(Base, TimestampMixin, ActiveMixin):
     Manages standard payment conditions that can be applied to
     quotes, orders, and invoices.
 
-    Attributes:
+    attributes:
         id: Primary key
-        code: Short code (e.g., "NET30", "COD", "50-50")
+        payment_condition_number: Short number/code (e.g., "001", "NET30")
         name: Payment condition name
         revision: Payment condition revision number (e.g., "A", "B", "C")
         description: Detailed description
@@ -440,12 +440,12 @@ class PaymentCondition(Base, TimestampMixin, ActiveMixin):
     id = Column(Integer, primary_key=True)
 
     # Identification
-    code = Column(
+    payment_condition_number = Column(
         String(20),
         nullable=False,
         unique=True,
         index=True,
-        comment="Short code (e.g., NET30, COD, 50-50)",
+        comment="Short number/code (e.g., 001, NET30, COD)",
     )
     name = Column(
         String(100), nullable=False, comment="Payment condition name"
@@ -520,11 +520,11 @@ class PaymentCondition(Base, TimestampMixin, ActiveMixin):
     )
 
     # Validation
-    @validates("code")
-    def validate_code(self, key: str, value: str) -> str:
-        """Validate code format."""
+    @validates("payment_condition_number")
+    def validate_payment_condition_number(self, key: str, value: str) -> str:
+        """Validate payment condition number format."""
         if not value or not value.strip():
-            raise ValueError("Payment condition code cannot be empty")
+            raise ValueError("Payment condition number cannot be empty")
         return value.strip().upper()
 
     @validates("name")
@@ -569,4 +569,4 @@ class PaymentCondition(Base, TimestampMixin, ActiveMixin):
 
     def __repr__(self) -> str:
         """String representation."""
-        return f"<PaymentCondition(id={self.id}, code='{self.code}', name='{self.name}')>"
+        return f"<PaymentCondition(id={self.id}, payment_condition_number='{self.payment_condition_number}', name='{self.name}')>"

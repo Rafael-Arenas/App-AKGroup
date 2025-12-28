@@ -202,7 +202,7 @@ class PaymentConditionRepository(BaseRepository[PaymentCondition]):
 
     Example:
         repository = PaymentConditionRepository(session)
-        condition = repository.get_by_code("NET30")
+        condition = repository.get_by_number("001")
         default = repository.get_default()
     """
 
@@ -210,18 +210,18 @@ class PaymentConditionRepository(BaseRepository[PaymentCondition]):
         """Initialize PaymentConditionRepository."""
         super().__init__(session, PaymentCondition)
 
-    def get_by_code(self, code: str) -> Optional[PaymentCondition]:
-        """Get payment condition by code."""
-        logger.debug(f"Searching payment condition by code: {code}")
+    def get_by_number(self, number: str) -> Optional[PaymentCondition]:
+        """Get payment condition by number."""
+        logger.debug(f"Searching payment condition by number: {number}")
         condition = (
             self.session.query(PaymentCondition)
-            .filter(PaymentCondition.code == code.upper())
+            .filter(PaymentCondition.payment_condition_number == number.upper())
             .first()
         )
         if condition:
-            logger.debug(f"Payment condition found: {code}")
+            logger.debug(f"Payment condition found: {number}")
         else:
-            logger.debug(f"Payment condition not found: {code}")
+            logger.debug(f"Payment condition not found: {number}")
         return condition
 
     def get_default(self) -> Optional[PaymentCondition]:
@@ -233,7 +233,7 @@ class PaymentConditionRepository(BaseRepository[PaymentCondition]):
             .first()
         )
         if condition:
-            logger.debug(f"Default payment condition found: {condition.code}")
+            logger.debug(f"Default payment condition found: {condition.payment_condition_number}")
         else:
             logger.debug("No default payment condition found")
         return condition
