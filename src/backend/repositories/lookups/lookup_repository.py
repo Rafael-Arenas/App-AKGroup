@@ -8,7 +8,7 @@ FamilyType, Matter, SalesType, QuoteStatus, OrderStatus, PaymentStatus.
 from typing import Optional, List
 from sqlalchemy.orm import Session
 
-from src.backend.models.lookups.lookups import (
+from src.backend.models.lookups import (
     Country, City, CompanyType, Incoterm, Currency, Unit,
     FamilyType, Matter, SalesType, QuoteStatus, OrderStatus, PaymentStatus
 )
