@@ -23,7 +23,12 @@ from sqlalchemy.orm import sessionmaker
 from src.backend.config import get_settings
 from src.backend.models.core.companies import Company, CompanyTypeEnum
 from src.backend.models.core.products import Product, ProductType
-from src.backend.models.lookups.lookups import CompanyType
+
+try:
+    from src.backend.models.lookups import CompanyType
+except ImportError:
+    # Fallback por si acaso
+    from src.backend.models.lookups.lookups import CompanyType
 
 
 def get_session():
