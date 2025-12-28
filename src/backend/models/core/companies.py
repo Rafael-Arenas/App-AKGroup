@@ -217,8 +217,17 @@ class Company(Base, TimestampMixin, AuditMixin, ActiveMixin):
         """
         if not self.company_type:
             return None
+        
+        # El nombre en la tabla puede ser "Cliente" o "Proveedor" (en español)
+        # pero el Enum usa CLIENT o SUPPLIER.
+        name_upper = self.company_type.name.upper()
+        if "CLIENT" in name_upper or "CLIENTE" in name_upper:
+            return CompanyTypeEnum.CLIENT
+        if "SUPPLIER" in name_upper or "PROVEEDOR" in name_upper:
+            return CompanyTypeEnum.SUPPLIER
+            
         try:
-            return CompanyTypeEnum[self.company_type.name.upper()]
+            return CompanyTypeEnum[name_upper]
         except (KeyError, AttributeError):
             return None
 
