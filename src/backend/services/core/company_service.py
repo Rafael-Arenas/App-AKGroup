@@ -59,7 +59,8 @@ class CompanyService(BaseService[Company, CompanyCreate, CompanyUpdate, CompanyR
         Returns:
             Dict con todos los datos enriquecidos
         """
-        # Convertir a dict básico
+        # Convertir a dict básico usando el objeto ORM directamente
+        # Pydantic se encargará de la validación y serialización
         data = {
             'id': company.id,
             'name': company.name,
@@ -74,13 +75,11 @@ class CompanyService(BaseService[Company, CompanyCreate, CompanyUpdate, CompanyR
             'is_active': company.is_active,
             'created_at': company.created_at,
             'updated_at': company.updated_at,
+            'created_by': company.created_by_id,
+            'updated_by': company.updated_by_id,
         }
 
-        # Agregar campos de auditoría
-        data['created_by'] = company.created_by_id
-        data['updated_by'] = company.updated_by_id
-
-        # Agregar nombres de relaciones
+        # Nombres de relaciones para el frontend
         if company.company_type:
             data['company_type'] = company.company_type.name
 
@@ -89,10 +88,6 @@ class CompanyService(BaseService[Company, CompanyCreate, CompanyUpdate, CompanyR
 
         if company.city:
             data['city_name'] = company.city.name
-
-        # Agregar relaciones
-        data['ruts'] = company.ruts if hasattr(company, 'ruts') else []
-        data['plants'] = company.plants if hasattr(company, 'plants') else []
 
         return data
 
