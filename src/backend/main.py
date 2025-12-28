@@ -44,7 +44,7 @@ from src.backend.models.core import (  # noqa: F401
     Product,
     ProductComponent,
 )
-from src.backend.models.lookups.lookups import CompanyType, Unit  # noqa: F401
+from src.backend.models.lookups import CompanyType, Unit  # noqa: F401
 
 
 @asynccontextmanager
