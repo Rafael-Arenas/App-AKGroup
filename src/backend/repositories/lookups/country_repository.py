@@ -8,7 +8,7 @@ from typing import Optional, List
 
 from sqlalchemy.orm import Session
 
-from src.backend.models.lookups.lookups import Country
+from src.backend.models.lookups import Country
 from src.backend.repositories.base import BaseRepository
 from src.backend.utils.logger import logger
 
