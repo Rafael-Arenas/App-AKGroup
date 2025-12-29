@@ -4,7 +4,7 @@ Script para insertar ciudades chilenas en la base de datos.
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from src.backend.models.lookups.lookups import City, Country
+from src.backend.models.lookups import City, Country
 
 # Crear engine y sesión
 engine = create_engine('sqlite:///app_akgroup.db', echo=False)
