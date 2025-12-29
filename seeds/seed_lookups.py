@@ -10,7 +10,7 @@ sys.path.append(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__f
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from src.backend.models.lookups.lookups import (
+from src.backend.models.lookups import (
     Currency, Incoterm, QuoteStatus, OrderStatus, PaymentStatus,
     FamilyType, Matter, SalesType
 )
