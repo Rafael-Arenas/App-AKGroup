@@ -2,7 +2,7 @@
 Sequence service for generating standardized document numbers.
 """
 
-from datetime import date
+from datetime import date, datetime
 from sqlalchemy.orm import Session
 from sqlalchemy import select, and_
 
@@ -18,7 +18,7 @@ class SequenceService:
     def __init__(self, session: Session):
         self.session = session
 
-    def get_next_number(self, name: str, prefix: str = None, year: int = None) -> int:
+    def get_next_number(self, name: str, prefix: str = None, year: int = None, trigram: str = None) -> int:
         """
         Get the next sequential number and increment the counter.
         
