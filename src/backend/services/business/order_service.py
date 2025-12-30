@@ -23,6 +23,10 @@ from src.backend.services.base import BaseService
 from src.backend.exceptions.service import ValidationException
 from src.backend.exceptions.repository import NotFoundException
 from src.backend.utils.logger import logger
+from src.backend.services.core.sequence_service import SequenceService
+from src.backend.config.settings import settings
+from src.backend.models.business.quotes import Quote
+from src.backend.models.core.companies import Company
 
 
 class OrderService(BaseService[Order, OrderCreate, OrderUpdate, OrderResponse]):
@@ -59,6 +63,7 @@ class OrderService(BaseService[Order, OrderCreate, OrderUpdate, OrderResponse]):
         )
         self.order_repo: OrderRepository = repository
         self.quote_repo = QuoteRepository(session)
+        self.sequence_service = SequenceService(session)
 
     def validate_create(self, entity: Order) -> None:
         """
@@ -289,6 +294,42 @@ class OrderService(BaseService[Order, OrderCreate, OrderUpdate, OrderResponse]):
         logger.success(f"Totals calculated for order_id={order_id}: total={order.total}")
         return self.response_schema.model_validate(order)
 
+    def create(self, schema: OrderCreate, user_id: int) -> OrderResponse:
+        """
+        Create a new order.
+        """
+        logger.info(f"Servicio: creando {self.model.__name__}")
+
+        try:
+            self.session.info["user_id"] = user_id
+
+            entity_data = schema.model_dump()
+            # Generate order number if not provided or empty
+            if not entity_data.get("order_number") or entity_data.get("order_number") == "STRING":
+                # Fetch company to get trigram
+                company = self.session.query(Company).filter(Company.id == entity_data.get("company_id")).first()
+                company_trigram = company.trigram if company else None
+
+                entity_data["order_number"] = self.sequence_service.generate_document_number(
+                    prefix="OC",
+                    company_trigram=company_trigram
+                )
+
+            entity = self.model(**entity_data)
+
+            # Validate
+            self.validate_create(entity)
+
+            # Save
+            created = self.repository.create(entity)
+
+            logger.success(f"{self.model.__name__} creado exitosamente: id={created.id}")
+            return self.response_schema.model_validate(created)
+
+        except Exception as e:
+            logger.error(f"Error al crear {self.model.__name__}: {str(e)}")
+            raise
+
     def create_from_quote(
         self,
         quote_id: int,
@@ -357,8 +398,7 @@ class OrderService(BaseService[Order, OrderCreate, OrderUpdate, OrderResponse]):
 
         # Generate order number if not provided
         if not order_number:
-            # Simple auto-generation (could be enhanced with sequence)
-            order_number = f"O-{date.today().year}-{quote_id:04d}"
+            order_number = self.sequence_service.generate_document_number("OC")
 
         # Create order from quote data
         order = Order(
