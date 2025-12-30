@@ -49,8 +49,8 @@ class Sequence(Base, TimestampMixin):
         comment="Last sequential value generated"
     )
     __table_args__ = (
-        UniqueConstraint("name", "year", "prefix", name="uq_sequence_name_year_prefix"),
-        Index("ix_sequences_lookup", "name", "year", "prefix"),
+        UniqueConstraint("name", "year", "prefix", "trigram", name="uq_sequence_name_year_prefix_trigram"),
+        Index("ix_sequences_lookup", "name", "year", "prefix", "trigram"),
     )
 
     def __repr__(self) -> str:
