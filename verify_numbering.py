@@ -76,7 +76,7 @@ def verify():
 
     print("\n--- Testing Shared Sequence (Order) ---")
     order_service = OrderService(OrderRepository(db), db)
-    o1 = order_service.create_from_quote(q1.id, staff.id)
+    o1 = order_service.create_from_quote(q1.id, staff.id, status_id=1, payment_status_id=1)
     print(f"Order for AKG (from Q1): {o1.order_number}")
     
     db.commit()
