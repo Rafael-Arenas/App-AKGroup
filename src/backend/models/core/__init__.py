@@ -14,6 +14,7 @@ Estado: 6/6 archivos completados (100%)
 
 from .addresses import Address, AddressType
 from .companies import Company, CompanyRut, CompanyTypeEnum, Plant
+from .sequences import Sequence
 from .contacts import Contact, Service
 from .notes import Note, NotePriority
 from .products import (
@@ -46,4 +47,5 @@ __all__ = [
     "ProductComponent",
     "ProductType",
     "PriceCalculationMode",
+    "Sequence",
 ]
