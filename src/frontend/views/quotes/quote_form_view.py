@@ -71,6 +71,7 @@ class QuoteFormView(ft.Column):
             required=True,
             validators=["required"],
             prefix_icon=ft.Icons.NUMBERS,
+            read_only=True, # Always read-only
         )
         
         self.revision = ValidatedTextField(
@@ -497,8 +498,9 @@ class QuoteFormView(ft.Column):
 
             else:
                 # Defaults for New Quote
-                self.quote_number.set_value("") 
+                self.quote_number.set_value("[ ASIGNACIÓN AUTOMÁTICA ]")
                 self.revision.set_value("A")
+
                 self._set_date_value(self.quote_date, self.quote_date_picker, date.today())
                 
                 if statuses:
@@ -554,8 +556,12 @@ class QuoteFormView(ft.Column):
 
         try:
             # Prepare data
+            qn_value = self.quote_number.get_value()
+            if qn_value == "[ ASIGNACIÓN AUTOMÁTICA ]":
+                qn_value = "STRING"
+                
             data = {
-                "quote_number": self.quote_number.get_value(),
+                "quote_number": qn_value,
                 "revision": self.revision.get_value(),
                 "subject": self.subject.get_value(),
                 "company_id": self.company_id,
@@ -581,11 +587,15 @@ class QuoteFormView(ft.Column):
                     self.page.overlay[-1].open = True
                     self.page.update()
             else:
-                await quote_api.create(data)
+                result = await quote_api.create(data)
+                assigned_number = result.get("quote_number", "")
                 if self.page:
-                    self.page.overlay.append(ft.SnackBar(content=ft.Text(t("quotes.messages.created")), bgcolor=ft.Colors.GREEN))
+                    # Show the actual assigned number in the success message
+                    success_msg = f"Cotización {assigned_number} creada exitosamente"
+                    self.page.overlay.append(ft.SnackBar(content=ft.Text(success_msg), bgcolor=ft.Colors.GREEN))
                     self.page.overlay[-1].open = True
                     self.page.update()
+
 
             if self.on_save_callback:
                 self.on_save_callback()
