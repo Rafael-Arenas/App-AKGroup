@@ -124,8 +124,7 @@ class FakeDataGenerator:
         valid_until = today + timedelta(days=random.randint(15, 45))
         shipping_date = today + timedelta(days=random.randint(20, 60))
 
-        quote_prefix = random.choice(["Q", "COT", "OF"])
-        quote_number = f"{quote_prefix}-{today.year}-{random.randint(100, 999)}"
+        quote_number = "[ ASIGNACIÓN AUTOMÁTICA ]"
 
         revision = random.choice(["A", "B", "C", "D"])
         subject = random.choice(cls.QUOTE_TOPICS)
