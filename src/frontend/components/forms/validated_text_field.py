@@ -28,6 +28,7 @@ class ValidatedTextField(ft.Container):
         multiline: Si True, permite múltiples líneas
         prefix_icon: Ícono prefijo (opcional)
         suffix_icon: Ícono sufijo (opcional)
+        read_only: Si True, el campo es de solo lectura (opcional)
 
     Example:
         >>> def custom_validation(value: str) -> str | None:
@@ -56,6 +57,7 @@ class ValidatedTextField(ft.Container):
         multiline: bool = False,
         prefix_icon: str | None = None,
         suffix_icon: str | None = None,
+        read_only: bool = False,
     ):
         """Inicializa el campo de texto validado."""
         super().__init__()
@@ -70,6 +72,7 @@ class ValidatedTextField(ft.Container):
         self.multiline = multiline
         self.prefix_icon = prefix_icon
         self.suffix_icon = suffix_icon
+        self.read_only = read_only
         self.error_message = ""
 
         # Inicializar controles internos inmediatamente
@@ -83,6 +86,7 @@ class ValidatedTextField(ft.Container):
             max_lines=5 if self.multiline else 1,
             prefix_icon=self.prefix_icon,
             suffix_icon=self.suffix_icon,
+            read_only=self.read_only,
             on_change=self._on_change,
         )
 
