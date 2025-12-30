@@ -24,6 +24,8 @@ from src.backend.services.base import BaseService
 from src.backend.exceptions.service import ValidationException
 from src.backend.exceptions.repository import NotFoundException
 from src.backend.utils.logger import logger
+from src.backend.services.core.sequence_service import SequenceService
+from src.backend.models.core.companies import Company
 
 
 class QuoteService(BaseService[Quote, QuoteCreate, QuoteUpdate, QuoteResponse]):
@@ -60,6 +62,7 @@ class QuoteService(BaseService[Quote, QuoteCreate, QuoteUpdate, QuoteResponse]):
         )
         self.quote_repo: QuoteRepository = repository
         self.product_repo = QuoteProductRepository(session)
+        self.sequence_service = SequenceService(session)
 
     def create(self, schema: QuoteCreate, user_id: int) -> QuoteResponse:
         """
@@ -75,7 +78,20 @@ class QuoteService(BaseService[Quote, QuoteCreate, QuoteUpdate, QuoteResponse]):
 
             # Create entity from schema, excluding products
             # products must be handled separately (e.g. via add_product)
+            # Generate quote number if not provided or empty
             entity_data = schema.model_dump(exclude={"products"})
+            # Automatic numbering if not provided
+            if not entity_data.get("quote_number") or entity_data.get("quote_number") == "STRING":
+                # Fetch company to get trigram
+                company = self.session.query(Company).filter(Company.id == schema.company_id).first()
+                company_trigram = company.trigram if company else None
+                
+                quote_number = self.sequence_service.generate_document_number(
+                    prefix="C",
+                    company_trigram=company_trigram
+                )
+                entity_data["quote_number"] = quote_number
+
             entity = self.model(**entity_data)
 
             # Validate
