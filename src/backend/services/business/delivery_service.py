@@ -30,6 +30,7 @@ from src.backend.services.base import BaseService
 from src.backend.exceptions.service import ValidationException
 from src.backend.exceptions.repository import NotFoundException
 from src.backend.utils.logger import logger
+from src.backend.services.core.sequence_service import SequenceService
 
 
 class DeliveryOrderService(BaseService[DeliveryOrder, DeliveryOrderCreate, DeliveryOrderUpdate, DeliveryOrderResponse]):
@@ -55,6 +56,45 @@ class DeliveryOrderService(BaseService[DeliveryOrder, DeliveryOrderCreate, Deliv
             response_schema=DeliveryOrderResponse,
         )
         self.delivery_repo: DeliveryOrderRepository = repository
+        self.sequence_service = SequenceService(session)
+
+    def create(self, schema: "DeliveryOrderCreate", user_id: int) -> "DeliveryOrderResponse":
+        """
+        Create a new delivery order.
+        """
+        logger.info(f"Servicio: creando {self.model.__name__}")
+
+        try:
+            self.session.info["user_id"] = user_id
+
+            entity_data = schema.model_dump()
+            # Generate delivery number if not provided or empty
+            if not entity_data.get("delivery_number") or entity_data.get("delivery_number") == "STRING":
+                company_trigram = None
+                if schema.order_id:
+                    order = self.order_repo.get_by_id(schema.order_id)
+                    if order and order.company:
+                        company_trigram = order.company.trigram
+
+                entity_data["delivery_number"] = self.sequence_service.generate_document_number(
+                    prefix="DOC",
+                    company_trigram=company_trigram
+                )
+
+            entity = self.model(**entity_data)
+
+            # Validate
+            self.validate_create(entity)
+
+            # Save
+            created = self.repository.create(entity)
+
+            logger.success(f"{self.model.__name__} creado exitosamente: id={created.id}")
+            return self.response_schema.model_validate(created)
+
+        except Exception as e:
+            logger.error(f"Error al crear {self.model.__name__}: {str(e)}")
+            raise
 
     def validate_create(self, entity: DeliveryOrder) -> None:
         """
