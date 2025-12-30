@@ -61,6 +61,9 @@ class Settings(BaseSettings):
     default_pagination_limit: int = 100
     max_pagination_limit: int = 1000
 
+    # Business numbering
+    internal_company_trigram: str = "MDO"
+
     # API settings
     api_host: str = "0.0.0.0"
     api_port: int = 8000
