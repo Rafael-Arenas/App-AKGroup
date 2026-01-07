@@ -340,7 +340,7 @@ class DataTable(ft.Container):
                 padding=LayoutConstants.PADDING_SM,
                 width=col.width,
                 expand=col.width is None,
-                alignment=ft.Alignment(0, 0)  # center_left,
+                alignment=ft.Alignment(-1, 0),  # left
             )
             cells.append(cell)
 
