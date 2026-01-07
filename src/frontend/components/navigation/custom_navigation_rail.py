@@ -100,7 +100,7 @@ class CustomNavigationRail(ft.Container):
                 vertical=LayoutConstants.PADDING_SM,
                 horizontal=LayoutConstants.PADDING_MD,
             ),
-            alignment=ft.Alignment(0, 0)  # center_left,  # Siempre en la misma posición
+            alignment=ft.Alignment(-1, 0),  # left - Siempre fijo a la izquierda
         )
 
         # Secciones de navegación con traducciones
