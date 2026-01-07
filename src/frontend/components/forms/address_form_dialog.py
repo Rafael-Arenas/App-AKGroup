@@ -105,7 +105,7 @@ class AddressFormDialog:
         """Establece el estado de loading."""
         self._is_loading = loading
         self._save_button.disabled = loading
-        self._save_button.text = "Guardando..." if loading else "Guardar"
+        self._save_button.content = ft.Text("Guardando..." if loading else "Guardar")
         self._cancel_button.disabled = loading
         if self._page:
             self._page.update()
@@ -269,13 +269,11 @@ class AddressFormDialog:
             )
 
             # Botones
-            self._cancel_button = ft.TextButton(
-                text="Cancelar",
+            self._cancel_button = ft.TextButton(content=ft.Text("Cancelar"),
                 on_click=self._on_cancel_click,
             )
 
-            self._save_button = ft.ElevatedButton(
-                text="Guardar",
+            self._save_button = ft.Button(content=ft.Text("Guardar"),
                 icon=ft.Icons.SAVE,
                 on_click=self._on_save_click,
             )

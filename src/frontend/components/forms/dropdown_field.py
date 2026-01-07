@@ -71,10 +71,9 @@ class DropdownField(ft.Container):
             label=self.label,
             hint_text=self.hint_text,
             options=dropdown_options,
-            prefix_icon=self.prefix_icon,
-            on_change=self._on_change,
             expand=True,
         )
+        self._dropdown.on_change = self._on_change
 
         self._error_text = ft.Text(
             "",
@@ -173,8 +172,11 @@ class DropdownField(ft.Container):
         """
         if self._dropdown:
             self._dropdown.value = value
-            if self.page:
-                self.update()
+            try:
+                if self.page:
+                    self.update()
+            except RuntimeError:
+                pass
 
     def set_options(self, options: list[dict[str, str]]) -> None:
         """
@@ -197,8 +199,13 @@ class DropdownField(ft.Container):
                 )
                 for opt in options
             ]
-            if self.page:
-                self.update()
+            # Actualizar solo si está montado
+            try:
+                if self.page:
+                    self.update()
+            except RuntimeError:
+                # El control aún no está montado
+                pass
 
     def set_error(self, message: str) -> None:
         """
@@ -216,8 +223,11 @@ class DropdownField(ft.Container):
             self._error_text.visible = True
 
         logger.debug(f"Validation error set: {message}")
-        if self.page:
-            self.update()
+        try:
+            if self.page:
+                self.update()
+        except RuntimeError:
+            pass
 
     def clear_error(self) -> None:
         """
@@ -230,8 +240,11 @@ class DropdownField(ft.Container):
         if self._error_text:
             self._error_text.visible = False
 
-        if self.page:
-            self.update()
+        try:
+            if self.page:
+                self.update()
+        except RuntimeError:
+            pass
 
     def set_enabled(self, enabled: bool) -> None:
         """
@@ -245,18 +258,23 @@ class DropdownField(ft.Container):
         """
         if self._dropdown:
             self._dropdown.disabled = not enabled
-            if self.page:
-                self.update()
+            try:
+                if self.page:
+                    self.update()
+            except RuntimeError:
+                pass
 
     def clear(self) -> None:
         """
         Limpia la selección.
-
+        
         Example:
             >>> dropdown.clear()
         """
         if self._dropdown:
             self._dropdown.value = None
-            self.clear_error()
-            if self.page:
-                self.update()
+            try:
+                if self.page:
+                    self.update()
+            except RuntimeError:
+                pass

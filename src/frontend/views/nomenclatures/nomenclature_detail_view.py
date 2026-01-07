@@ -62,7 +62,7 @@ class NomenclatureDetailView(ft.Container):
             return ft.Container(
                 content=LoadingSpinner(message=t("common.loading")),
                 expand=True,
-                alignment=ft.alignment.center,
+                alignment=ft.Alignment(0, 0),  # center
             )
         elif self._error_message:
             return ft.Container(
@@ -71,7 +71,7 @@ class NomenclatureDetailView(ft.Container):
                     on_retry=self.load_nomenclature,
                 ),
                 expand=True,
-                alignment=ft.alignment.center,
+                alignment=ft.Alignment(0, 0),  # center
             )
 
         # Badge de estado
@@ -93,8 +93,7 @@ class NomenclatureDetailView(ft.Container):
         # Header
         header = ft.Row(
             controls=[
-                ft.Icon(
-                    name=ft.Icons.LIST_ALT,
+                ft.Icon(ft.Icons.LIST_ALT,
                     size=LayoutConstants.ICON_SIZE_XL,
                 ),
                 ft.Column(
@@ -251,8 +250,7 @@ class NomenclatureDetailView(ft.Container):
                             weight=LayoutConstants.FONT_WEIGHT_SEMIBOLD,
                             width=150,
                         ),
-                        ft.TextButton(
-                            text=self._nomenclature.get("image_url", "-") or "-",
+                        ft.TextButton(content=ft.Text(self._nomenclature.get("image_url"), "-") or "-",
                             url=self._nomenclature.get("image_url", "#"),
                             disabled=not self._nomenclature.get("image_url")
                         ) if self._nomenclature.get("image_url") else ft.Text("-", size=LayoutConstants.FONT_SIZE_MD),
@@ -266,8 +264,7 @@ class NomenclatureDetailView(ft.Container):
                             weight=LayoutConstants.FONT_WEIGHT_SEMIBOLD,
                             width=150,
                         ),
-                        ft.TextButton(
-                            text=self._nomenclature.get("plan_url", "-") or "-",
+                        ft.TextButton(content=ft.Text(self._nomenclature.get("plan_url"), "-") or "-",
                             url=self._nomenclature.get("plan_url", "#"),
                             disabled=not self._nomenclature.get("plan_url")
                         ) if self._nomenclature.get("plan_url") else ft.Text("-", size=LayoutConstants.FONT_SIZE_MD),

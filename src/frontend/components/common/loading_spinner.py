@@ -76,7 +76,7 @@ class LoadingSpinner(ft.Container):
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                 spacing=LayoutConstants.SPACING_MD,
             ),
-            alignment=ft.alignment.center,
+            alignment=ft.Alignment(0, 0),  # center
             expand=False,
         )
 

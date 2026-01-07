@@ -63,8 +63,7 @@ class ProductCard(ft.Container):
         bom_indicator = None
         if is_nomenclature:
             bom_indicator = ft.Container(
-                content=ft.Icon(
-                    name=ft.Icons.LIST_ALT,
+                content=ft.Icon(ft.Icons.LIST_ALT,
                     size=LayoutConstants.ICON_SIZE_SM,
                 ),
                 tooltip="Tiene lista de materiales",
@@ -85,8 +84,7 @@ class ProductCard(ft.Container):
                     # Header con ícono y código
                     ft.Row(
                         controls=[
-                            ft.Icon(
-                                name=ft.Icons.INVENTORY_2,
+                            ft.Icon(ft.Icons.INVENTORY_2,
                                 size=LayoutConstants.ICON_SIZE_LG,
                             ),
                             ft.Text(

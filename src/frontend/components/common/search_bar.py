@@ -227,11 +227,11 @@ class SearchBar(ft.Container):
             ),
             actions=[
                 ft.TextButton(
-                    text=t("common.clear_history"),
+                    content=ft.Text(t("common.clear_history")),
                     on_click=lambda e: self._clear_history(e, e.page),
                 ),
                 ft.TextButton(
-                    text=t("common.close"),
+                    content=ft.Text(t("common.close")),
                     on_click=lambda e: self._close_history_dialog(e, e.page),
                 ),
             ],

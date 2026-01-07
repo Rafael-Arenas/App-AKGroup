@@ -71,8 +71,7 @@ class EmptyState(ft.Container):
         Establece las propiedades del Container directamente.
         """
         controls = [
-            ft.Icon(
-                name=self._icon,
+            ft.Icon(self._icon,
                 size=LayoutConstants.ICON_SIZE_XL * 2,
             ),
             ft.Text(
@@ -90,8 +89,7 @@ class EmptyState(ft.Container):
 
         if self._action_text and self._on_action:
             controls.append(
-                ft.ElevatedButton(
-                    text=self._action_text,
+                ft.Button(content=ft.Text(self._action_text),
                     icon=ft.Icons.ADD,
                     on_click=self._handle_action,
                 )
@@ -103,7 +101,7 @@ class EmptyState(ft.Container):
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             spacing=LayoutConstants.SPACING_LG,
         )
-        self.alignment = ft.alignment.center
+        self.alignment = ft.Alignment(0, 0)  # center
         self.padding = LayoutConstants.PADDING_XL
         self.expand = True
 

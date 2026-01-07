@@ -114,10 +114,7 @@ class MainView(ft.Container):
             padding=0,
         )
 
-        # Cargar vista inicial (Dashboard)
-        self._load_initial_view()
-
-        # Layout principal
+        # Layout principal (la vista inicial se carga en did_mount)
         main_layout = ft.Column(
             controls=[
                 self._app_bar,
@@ -154,6 +151,9 @@ class MainView(ft.Container):
         Suscribe observers a los estados de navegación, idioma y tema.
         """
         logger.info("MainView mounted, subscribing to state observers")
+
+        # Cargar vista inicial (Dashboard)
+        self._load_initial_view()
 
         # Suscribirse a cambios de navegación
         app_state.navigation.add_observer(self._on_navigation_changed)
@@ -323,8 +323,7 @@ class MainView(ft.Container):
         return ft.Container(
             content=ft.Column(
                 controls=[
-                    ft.Icon(
-                        name=ft.Icons.CONSTRUCTION,
+                    ft.Icon(ft.Icons.CONSTRUCTION,
                         size=LayoutConstants.ICON_SIZE_XL,
                     ),
                     ft.Text(
@@ -342,7 +341,7 @@ class MainView(ft.Container):
                 spacing=LayoutConstants.SPACING_MD,
             ),
             expand=True,
-            alignment=ft.alignment.center,
+            alignment=ft.Alignment(0, 0),  # center
         )
 
     def _update_breadcrumb(self) -> None:

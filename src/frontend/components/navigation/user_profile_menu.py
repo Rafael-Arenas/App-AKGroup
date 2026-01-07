@@ -102,7 +102,7 @@ class UserProfileMenu(ft.PopupMenuButton):
                 width=avatar_size,
                 height=avatar_size,
                 border_radius=avatar_size // 2,
-                alignment=ft.alignment.center,
+                alignment=ft.Alignment(0, 0),  # center
             )
 
     def _get_initials(self, name: str) -> str:
@@ -165,7 +165,7 @@ class UserProfileMenu(ft.PopupMenuButton):
         items.append(
             ft.PopupMenuItem(
                 icon=ft.Icons.PERSON_OUTLINE,
-                text=t("navigation.profile"),
+                content=ft.Text(t("navigation.profile")),
                 on_click=self._on_profile_click,
             )
         )
@@ -174,7 +174,7 @@ class UserProfileMenu(ft.PopupMenuButton):
         items.append(
             ft.PopupMenuItem(
                 icon=ft.Icons.SETTINGS_OUTLINED,
-                text=t("navigation.settings"),
+                content=ft.Text(t("navigation.settings")),
                 on_click=self._on_settings_click,
             )
         )
@@ -186,7 +186,7 @@ class UserProfileMenu(ft.PopupMenuButton):
         items.append(
             ft.PopupMenuItem(
                 icon=ft.Icons.LOGOUT,
-                text=t("navigation.logout"),
+                content=ft.Text(t("navigation.logout")),
                 on_click=self._on_logout,
             )
         )

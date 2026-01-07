@@ -84,7 +84,7 @@ class CompanyDetailView(ft.Container):
             return ft.Container(
                 content=LoadingSpinner(message=t("companies.messages.loading")),
                 expand=True,
-                alignment=ft.alignment.center,
+                alignment=ft.Alignment(0, 0),  # center
             )
         elif self._error_message:
             return ft.Container(
@@ -93,7 +93,7 @@ class CompanyDetailView(ft.Container):
                     on_retry=self.load_company,
                 ),
                 expand=True,
-                alignment=ft.alignment.center,
+                alignment=ft.Alignment(0, 0),  # center
             )
 
         # Badges más pequeños
@@ -131,8 +131,7 @@ class CompanyDetailView(ft.Container):
         header = ft.Container(
             content=ft.Row(
                 controls=[
-                    ft.Icon(
-                        name=ft.Icons.BUSINESS,
+                    ft.Icon(ft.Icons.BUSINESS,
                         size=LayoutConstants.ICON_SIZE_LG,
                     ),
                     ft.Column(
@@ -320,8 +319,7 @@ class CompanyDetailView(ft.Container):
             return ft.Container(
                 content=ft.Column(
                     controls=[
-                        ft.Icon(
-                            name=ft.Icons.LOCATION_OFF,
+                        ft.Icon(ft.Icons.LOCATION_OFF,
                             size=LayoutConstants.ICON_SIZE_LG,
                             color=ft.Colors.GREY_400,
                         ),
@@ -330,8 +328,8 @@ class CompanyDetailView(ft.Container):
                             size=LayoutConstants.FONT_SIZE_MD,
                             color=ft.Colors.GREY_600,
                         ),
-                        ft.ElevatedButton(
-                            text=t("companies.actions.add_first_address"),
+                        ft.Button(
+                            content=ft.Text(t("companies.actions.add_first_address")),
                             icon=ft.Icons.ADD,
                             on_click=self._on_add_address,
                         ),
@@ -340,7 +338,7 @@ class CompanyDetailView(ft.Container):
                     spacing=LayoutConstants.SPACING_SM,
                 ),
                 padding=LayoutConstants.PADDING_MD,
-                alignment=ft.alignment.center,
+                alignment=ft.Alignment(0, 0),  # center
             )
 
         # Lista de direcciones
@@ -395,8 +393,7 @@ class CompanyDetailView(ft.Container):
                     controls=[
                         ft.Row(
                             controls=[
-                                ft.Icon(
-                                    name=ft.Icons.LOCATION_ON,
+                                ft.Icon(ft.Icons.LOCATION_ON,
                                     size=LayoutConstants.ICON_SIZE_MD,
                                 ),
                                 ft.Column(
@@ -454,8 +451,8 @@ class CompanyDetailView(ft.Container):
             address_cards.append(address_card)
 
         # Botón para agregar nueva dirección
-        add_button = ft.ElevatedButton(
-            text=t("companies.address.add"),
+        add_button = ft.Button(
+            content=ft.Text(t("companies.address.add")),
             icon=ft.Icons.ADD,
             on_click=self._on_add_address,
         )
@@ -482,8 +479,7 @@ class CompanyDetailView(ft.Container):
             return ft.Container(
                 content=ft.Column(
                     controls=[
-                        ft.Icon(
-                            name=ft.Icons.CONTACTS_OUTLINED,
+                        ft.Icon(ft.Icons.CONTACTS_OUTLINED,
                             size=LayoutConstants.ICON_SIZE_LG,
                             color=ft.Colors.GREY_400,
                         ),
@@ -492,8 +488,8 @@ class CompanyDetailView(ft.Container):
                             size=LayoutConstants.FONT_SIZE_MD,
                             color=ft.Colors.GREY_600,
                         ),
-                        ft.ElevatedButton(
-                            text=t("companies.actions.add_first_contact"),
+                        ft.Button(
+                            content=ft.Text(t("companies.actions.add_first_contact")),
                             icon=ft.Icons.ADD,
                             on_click=self._on_add_contact,
                         ),
@@ -502,7 +498,7 @@ class CompanyDetailView(ft.Container):
                     spacing=LayoutConstants.SPACING_SM,
                 ),
                 padding=LayoutConstants.PADDING_MD,
-                alignment=ft.alignment.center,
+                alignment=ft.Alignment(0, 0),  # center
             )
 
         # Tabla de contactos
@@ -603,8 +599,8 @@ class CompanyDetailView(ft.Container):
             contact_rows.append(contact_row)
 
         # Botón para agregar nuevo contacto
-        add_button = ft.ElevatedButton(
-            text=t("companies.contact.add"),
+        add_button = ft.Button(
+            content=ft.Text(t("companies.contact.add")),
             icon=ft.Icons.ADD,
             on_click=self._on_add_contact,
         )
@@ -631,8 +627,7 @@ class CompanyDetailView(ft.Container):
             return ft.Container(
                 content=ft.Column(
                     controls=[
-                        ft.Icon(
-                            name=ft.Icons.ASSIGNMENT_IND_OUTLINED,
+                        ft.Icon(ft.Icons.ASSIGNMENT_IND_OUTLINED,
                             size=LayoutConstants.ICON_SIZE_LG,
                             color=ft.Colors.GREY_400,
                         ),
@@ -641,8 +636,7 @@ class CompanyDetailView(ft.Container):
                             size=LayoutConstants.FONT_SIZE_MD,
                             color=ft.Colors.GREY_600,
                         ),
-                        ft.ElevatedButton(
-                            text="Agregar primer RUT",
+                        ft.Button(content=ft.Text("Agregar primer RUT"),
                             icon=ft.Icons.ADD,
                             on_click=self._on_add_rut,
                         ),
@@ -651,7 +645,7 @@ class CompanyDetailView(ft.Container):
                     spacing=LayoutConstants.SPACING_SM,
                 ),
                 padding=LayoutConstants.PADDING_MD,
-                alignment=ft.alignment.center,
+                alignment=ft.Alignment(0, 0),  # center
             )
 
         # Lista de RUTs
@@ -726,8 +720,7 @@ class CompanyDetailView(ft.Container):
             rut_cards.append(rut_card)
 
         # Botón para agregar nuevo RUT
-        add_button = ft.ElevatedButton(
-            text="Agregar RUT",
+        add_button = ft.Button(content=ft.Text("Agregar RUT"),
             icon=ft.Icons.ADD,
             on_click=self._on_add_rut,
         )
@@ -754,8 +747,7 @@ class CompanyDetailView(ft.Container):
             return ft.Container(
                 content=ft.Column(
                     controls=[
-                        ft.Icon(
-                            name=ft.Icons.FACTORY_OUTLINED,
+                        ft.Icon(ft.Icons.FACTORY_OUTLINED,
                             size=LayoutConstants.ICON_SIZE_LG,
                             color=ft.Colors.GREY_400,
                         ),
@@ -764,8 +756,7 @@ class CompanyDetailView(ft.Container):
                             size=LayoutConstants.FONT_SIZE_MD,
                             color=ft.Colors.GREY_600,
                         ),
-                        ft.ElevatedButton(
-                            text="Agregar primera planta",
+                        ft.Button(content=ft.Text("Agregar primera planta"),
                             icon=ft.Icons.ADD,
                             on_click=self._on_add_plant,
                         ),
@@ -774,7 +765,7 @@ class CompanyDetailView(ft.Container):
                     spacing=LayoutConstants.SPACING_SM,
                 ),
                 padding=LayoutConstants.PADDING_MD,
-                alignment=ft.alignment.center,
+                alignment=ft.Alignment(0, 0),  # center
             )
 
         # Lista de plantas
@@ -801,8 +792,7 @@ class CompanyDetailView(ft.Container):
                     controls=[
                         ft.Row(
                             controls=[
-                                ft.Icon(
-                                    name=ft.Icons.FACTORY,
+                                ft.Icon(ft.Icons.FACTORY,
                                     size=LayoutConstants.ICON_SIZE_MD,
                                 ),
                                 ft.Column(
@@ -862,8 +852,7 @@ class CompanyDetailView(ft.Container):
             plant_cards.append(plant_card)
 
         # Botón para agregar nueva planta
-        add_button = ft.ElevatedButton(
-            text="Agregar Planta",
+        add_button = ft.Button(content=ft.Text("Agregar Planta"),
             icon=ft.Icons.ADD,
             on_click=self._on_add_plant,
         )
@@ -1211,7 +1200,8 @@ class CompanyDetailView(ft.Container):
         is_default_checkbox = ft.Checkbox(label=t("companies.labels.main_address"), value=False)
 
         def close_bottom_sheet():
-            self.page.close(bottom_sheet)
+            bottom_sheet.open = False
+            self.page.update()
 
         async def save_address():
             # Validación simple
@@ -1298,9 +1288,9 @@ class CompanyDetailView(ft.Container):
                         is_default_checkbox,
                         ft.Row(
                             controls=[
-                                ft.TextButton("Cancelar", on_click=lambda _: close_bottom_sheet()),
-                                ft.ElevatedButton(
-                                    "Guardar",
+                                ft.TextButton(content=ft.Text("Cancelar"), on_click=lambda _: close_bottom_sheet()),
+                                ft.Button(
+                                    content=ft.Text("Guardar"),
                                     icon=ft.Icons.SAVE,
                                     on_click=lambda _: self.page.run_task(save_address),
                                 ),
@@ -1316,7 +1306,9 @@ class CompanyDetailView(ft.Container):
             ),
         )
 
-        self.page.open(bottom_sheet)
+        self.page.overlay.append(bottom_sheet)
+        bottom_sheet.open = True
+        self.page.update()
         logger.info("BottomSheet opened for adding address")
 
     def _on_edit_address(self, e: ft.ControlEvent, address: dict) -> None:
@@ -1463,7 +1455,8 @@ class CompanyDetailView(ft.Container):
         )
 
         def close_bottom_sheet():
-            self.page.close(bottom_sheet)
+            bottom_sheet.open = False
+            self.page.update()
 
         async def save_address():
             # Validación simple
@@ -1551,9 +1544,9 @@ class CompanyDetailView(ft.Container):
                         is_default_checkbox,
                         ft.Row(
                             controls=[
-                                ft.TextButton("Cancelar", on_click=lambda _: close_bottom_sheet()),
-                                ft.ElevatedButton(
-                                    "Guardar",
+                                ft.TextButton(content=ft.Text("Cancelar"), on_click=lambda _: close_bottom_sheet()),
+                                ft.Button(
+                                    content=ft.Text("Guardar"),
                                     icon=ft.Icons.SAVE,
                                     on_click=lambda _: self.page.run_task(save_address),
                                 ),
@@ -1569,7 +1562,9 @@ class CompanyDetailView(ft.Container):
             ),
         )
 
-        self.page.open(bottom_sheet)
+        self.page.overlay.append(bottom_sheet)
+        bottom_sheet.open = True
+        self.page.update()
         logger.info("BottomSheet opened for editing address")
 
     def _on_delete_address(self, e: ft.ControlEvent, address: dict) -> None:
@@ -1657,7 +1652,8 @@ class CompanyDetailView(ft.Container):
         position_field = ft.TextField(label="Cargo")
 
         def close_bottom_sheet():
-            self.page.close(bottom_sheet)
+            bottom_sheet.open = False
+            self.page.update()
 
         async def save_contact():
             # Validación simple
@@ -1745,9 +1741,9 @@ class CompanyDetailView(ft.Container):
                         position_field,
                         ft.Row(
                             controls=[
-                                ft.TextButton("Cancelar", on_click=lambda _: close_bottom_sheet()),
-                                ft.ElevatedButton(
-                                    "Guardar",
+                                ft.TextButton(content=ft.Text("Cancelar"), on_click=lambda _: close_bottom_sheet()),
+                                ft.Button(
+                                    content=ft.Text("Guardar"),
                                     icon=ft.Icons.SAVE,
                                     on_click=lambda _: self.page.run_task(save_contact),
                                 ),
@@ -1763,7 +1759,9 @@ class CompanyDetailView(ft.Container):
             ),
         )
 
-        self.page.open(bottom_sheet)
+        self.page.overlay.append(bottom_sheet)
+        bottom_sheet.open = True
+        self.page.update()
         logger.info("BottomSheet opened for adding contact")
 
     def _on_edit_contact(self, e: ft.ControlEvent, contact: dict) -> None:
@@ -1795,7 +1793,8 @@ class CompanyDetailView(ft.Container):
         )
 
         def close_bottom_sheet():
-            self.page.close(bottom_sheet)
+            bottom_sheet.open = False
+            self.page.update()
 
         async def save_contact():
             # Validación simple
@@ -1884,9 +1883,9 @@ class CompanyDetailView(ft.Container):
                         position_field,
                         ft.Row(
                             controls=[
-                                ft.TextButton("Cancelar", on_click=lambda _: close_bottom_sheet()),
-                                ft.ElevatedButton(
-                                    "Guardar",
+                                ft.TextButton(content=ft.Text("Cancelar"), on_click=lambda _: close_bottom_sheet()),
+                                ft.Button(
+                                    content=ft.Text("Guardar"),
                                     icon=ft.Icons.SAVE,
                                     on_click=lambda _: self.page.run_task(save_contact),
                                 ),
@@ -1902,7 +1901,9 @@ class CompanyDetailView(ft.Container):
             ),
         )
 
-        self.page.open(bottom_sheet)
+        self.page.overlay.append(bottom_sheet)
+        bottom_sheet.open = True
+        self.page.update()
         logger.info("BottomSheet opened for editing contact")
 
     def _on_delete_contact(self, e: ft.ControlEvent, contact: dict) -> None:
@@ -2075,7 +2076,8 @@ class CompanyDetailView(ft.Container):
         self.page.run_task(load_countries)
 
         def close_bottom_sheet():
-            self.page.close(bottom_sheet)
+            bottom_sheet.open = False
+            self.page.update()
 
         async def save_plant():
             logger.info("Iniciando guardado de planta...")
@@ -2168,9 +2170,9 @@ class CompanyDetailView(ft.Container):
                         ),
                         ft.Row(
                             controls=[
-                                ft.TextButton("Cancelar", on_click=lambda _: close_bottom_sheet()),
-                                ft.ElevatedButton(
-                                    "Guardar",
+                                ft.TextButton(content=ft.Text("Cancelar"), on_click=lambda _: close_bottom_sheet()),
+                                ft.Button(
+                                    content=ft.Text("Guardar"),
                                     icon=ft.Icons.SAVE,
                                     on_click=lambda _: self.page.run_task(save_plant),
                                 ),
@@ -2186,7 +2188,9 @@ class CompanyDetailView(ft.Container):
             ),
         )
 
-        self.page.open(bottom_sheet)
+        self.page.overlay.append(bottom_sheet)
+        bottom_sheet.open = True
+        self.page.update()
         logger.info("BottomSheet opened for adding plant")
 
     def _on_edit_plant(self, e: ft.ControlEvent, plant: dict) -> None:
@@ -2309,7 +2313,8 @@ class CompanyDetailView(ft.Container):
         self.page.run_task(load_countries)
 
         def close_bottom_sheet():
-            self.page.close(bottom_sheet)
+            bottom_sheet.open = False
+            self.page.update()
 
         async def save_plant():
             if not name_field.value:
@@ -2377,8 +2382,8 @@ class CompanyDetailView(ft.Container):
                         ),
                         ft.Row(
                             controls=[
-                                ft.TextButton("Cancelar", on_click=lambda _: close_bottom_sheet()),
-                                ft.ElevatedButton("Guardar", icon=ft.Icons.SAVE, on_click=lambda _: self.page.run_task(save_plant)),
+                                ft.TextButton(content=ft.Text("Cancelar"), on_click=lambda _: close_bottom_sheet()),
+                                ft.Button(content=ft.Text("Guardar"), icon=ft.Icons.SAVE, on_click=lambda _: self.page.run_task(save_plant)),
                             ],
                             alignment=ft.MainAxisAlignment.END,
                             spacing=10,
@@ -2391,7 +2396,9 @@ class CompanyDetailView(ft.Container):
             ),
         )
 
-        self.page.open(bottom_sheet)
+        self.page.overlay.append(bottom_sheet)
+        bottom_sheet.open = True
+        self.page.update()
         logger.info("BottomSheet opened for editing plant")
 
     def _on_delete_plant(self, e: ft.ControlEvent, plant: dict) -> None:
@@ -2530,20 +2537,31 @@ class CompanyDetailView(ft.Container):
         )
 
         def close_bottom_sheet():
-            self.page.close(bottom_sheet)
+            bottom_sheet.open = False
+            self.page.update()
 
         async def save_rut():
+            logger.info(f"save_rut (add) called with value: '{rut_field.value}'")
             # Validación
             is_valid, error = validate_rut(rut_field.value)
+            logger.info(f"RUT validation: is_valid={is_valid}, error={error}")
             if not is_valid:
-                rut_field.error_text = error
-                rut_field.update()
+                close_bottom_sheet()
+                snack = ft.SnackBar(
+                    content=ft.Text(f"RUT inválido: {error}"),
+                    bgcolor=ft.Colors.ORANGE_400,
+                )
+                self.page.overlay.append(snack)
+                snack.open = True
+                self.page.update()
+                logger.warning(f"RUT validation failed: {error}")
                 return
 
             try:
                 import httpx
                 # Enviar el RUT formateado
                 formatted_rut = format_rut(rut_field.value)
+                logger.info(f"Sending RUT to API: {formatted_rut}")
                 data = {
                     "rut": formatted_rut,
                     "is_main": is_main_checkbox.value,
@@ -2607,9 +2625,9 @@ class CompanyDetailView(ft.Container):
                         is_main_checkbox,
                         ft.Row(
                             controls=[
-                                ft.TextButton("Cancelar", on_click=lambda _: close_bottom_sheet()),
-                                ft.ElevatedButton(
-                                    "Guardar",
+                                ft.TextButton(content=ft.Text("Cancelar"), on_click=lambda _: close_bottom_sheet()),
+                                ft.Button(
+                                    content=ft.Text("Guardar"),
                                     icon=ft.Icons.SAVE,
                                     on_click=lambda _: self.page.run_task(save_rut),
                                 ),
@@ -2625,7 +2643,9 @@ class CompanyDetailView(ft.Container):
             ),
         )
 
-        self.page.open(bottom_sheet)
+        self.page.overlay.append(bottom_sheet)
+        bottom_sheet.open = True
+        self.page.update()
         logger.info("BottomSheet opened for adding RUT")
 
     def _on_edit_rut(self, e: ft.ControlEvent, rut: dict) -> None:
@@ -2666,7 +2686,8 @@ class CompanyDetailView(ft.Container):
         )
 
         def close_bottom_sheet():
-            self.page.close(bottom_sheet)
+            bottom_sheet.open = False
+            self.page.update()
 
         async def save_rut():
             # Validación
@@ -2744,9 +2765,9 @@ class CompanyDetailView(ft.Container):
                         is_main_checkbox,
                         ft.Row(
                             controls=[
-                                ft.TextButton("Cancelar", on_click=lambda _: close_bottom_sheet()),
-                                ft.ElevatedButton(
-                                    "Guardar",
+                                ft.TextButton(content=ft.Text("Cancelar"), on_click=lambda _: close_bottom_sheet()),
+                                ft.Button(
+                                    content=ft.Text("Guardar"),
                                     icon=ft.Icons.SAVE,
                                     on_click=lambda _: self.page.run_task(save_rut),
                                 ),
@@ -2762,7 +2783,9 @@ class CompanyDetailView(ft.Container):
             ),
         )
 
-        self.page.open(bottom_sheet)
+        self.page.overlay.append(bottom_sheet)
+        bottom_sheet.open = True
+        self.page.update()
         logger.info("BottomSheet opened for editing RUT")
 
     def _on_delete_rut(self, e: ft.ControlEvent, rut: dict) -> None:

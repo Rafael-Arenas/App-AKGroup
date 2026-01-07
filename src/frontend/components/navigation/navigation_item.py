@@ -109,7 +109,7 @@ class NavigationItem(ft.Container):
                 [
                     ft.Container(
                         content=icon_widget,
-                        alignment=ft.alignment.center,
+                        alignment=ft.Alignment(0, 0),  # center
                     ),
                     ft.Container(
                         content=ft.Text(
@@ -122,7 +122,7 @@ class NavigationItem(ft.Container):
                         border_radius=LayoutConstants.BADGE_SIZE_SM // 2,
                         width=LayoutConstants.BADGE_SIZE_SM,
                         height=LayoutConstants.BADGE_SIZE_SM,
-                        alignment=ft.alignment.center,
+                        alignment=ft.Alignment(0, 0),  # center
                         right=-4,
                         top=-4,
                     ),
@@ -140,7 +140,7 @@ class NavigationItem(ft.Container):
             ft.Container(
                 content=icon_with_badge,
                 width=LayoutConstants.ICON_SIZE_MD + 8,
-                alignment=ft.alignment.center_left,
+                alignment=ft.Alignment(0, 0)  # center_left,
             ),
             ft.Container(width=LayoutConstants.SPACING_MD),
             ft.Container(
@@ -172,7 +172,7 @@ class NavigationItem(ft.Container):
                         horizontal=6,
                         vertical=2,
                     ),
-                    alignment=ft.alignment.center,
+                    alignment=ft.Alignment(0, 0),  # center
                     opacity=1.0 if self.is_expanded else 0.0,
                     animate_opacity=LayoutConstants.get_animation(),
                 )

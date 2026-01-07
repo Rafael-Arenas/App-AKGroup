@@ -68,7 +68,7 @@ class QuoteDetailView(ft.Container):
             return ft.Container(
                 content=LoadingSpinner(message=t("common.loading")),
                 expand=True,
-                alignment=ft.alignment.center,
+                alignment=ft.Alignment(0, 0),  # center
             )
         elif self._error_message:
             return ft.Container(
@@ -77,7 +77,7 @@ class QuoteDetailView(ft.Container):
                     on_retry=self.load_quote,
                 ),
                 expand=True,
-                alignment=ft.alignment.center,
+                alignment=ft.Alignment(0, 0),  # center
             )
 
         if not self._quote:
@@ -87,7 +87,7 @@ class QuoteDetailView(ft.Container):
                     on_retry=self.load_quote,
                 ),
                 expand=True,
-                alignment=ft.alignment.center,
+                alignment=ft.Alignment(0, 0),  # center
             )
 
         # Badge de estado (TODO: Usar colores/labels reales de estado cuando estén disponibles)
@@ -134,8 +134,7 @@ class QuoteDetailView(ft.Container):
                             tooltip="Volver",
                             on_click=self._on_back_click,
                         ),
-                        ft.Icon(
-                            name=ft.Icons.DESCRIPTION,
+                        ft.Icon(ft.Icons.DESCRIPTION,
                             size=LayoutConstants.ICON_SIZE_XL,
                         ),
                         ft.Column(

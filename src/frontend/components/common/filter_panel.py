@@ -131,7 +131,7 @@ class FilterPanel(ft.Container):
                 width=LayoutConstants.BADGE_SIZE,
                 height=LayoutConstants.BADGE_SIZE,
                 border_radius=LayoutConstants.RADIUS_FULL,
-                alignment=ft.alignment.center,
+                alignment=ft.Alignment(0, 0),  # center
             )
 
         header = ft.Container(
@@ -181,12 +181,12 @@ class FilterPanel(ft.Container):
             buttons = ft.Row(
                 controls=[
                     ft.TextButton(
-                        text=t("common.clear_filters"),
+                        content=ft.Text(t("common.clear_filters")),
                         icon=ft.Icons.CLEAR,
                         on_click=self._handle_clear,
                     ),
-                    ft.ElevatedButton(
-                        text=t("common.apply_filters"),
+                    ft.Button(
+                        content=ft.Text(t("common.apply_filters")),
                         icon=ft.Icons.CHECK,
                         on_click=self._handle_apply,
                     ),

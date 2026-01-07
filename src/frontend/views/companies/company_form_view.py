@@ -165,14 +165,14 @@ class CompanyFormView(ft.Column):
         )
 
         # Botones de acción
-        self._save_button = ft.ElevatedButton(
-            text=t("common.save"),
+        self._save_button = ft.Button(
+            content=ft.Text(t("common.save")),
             icon=ft.Icons.SAVE,
             on_click=self._on_save_click,
         )
 
-        self._cancel_button = ft.ElevatedButton(
-            text=t("common.cancel"),
+        self._cancel_button = ft.Button(
+            content=ft.Text(t("common.cancel")),
             on_click=self._on_cancel_click,
         )
 
@@ -264,7 +264,7 @@ class CompanyFormView(ft.Column):
             ft.Container(
                 content=LoadingSpinner(message=t("companies.form.loading")),
                 expand=True,
-                alignment=ft.alignment.center,
+                alignment=ft.Alignment(0, 0),  # center
             )
         ]
         if self.page:
@@ -279,7 +279,7 @@ class CompanyFormView(ft.Column):
                     on_retry=self._load_form_data,
                 ),
                 expand=True,
-                alignment=ft.alignment.center,
+                alignment=ft.Alignment(0, 0),  # center
             )
         ]
         if self.page:
@@ -604,7 +604,7 @@ class CompanyFormView(ft.Column):
 
         # Deshabilitar botones
         self._save_button.disabled = True
-        self._save_button.text = t("companies.form.saving")
+        self._save_button.content = ft.Text(t("companies.form.saving"))
         self._cancel_button.disabled = True
 
         if self.page:
@@ -664,7 +664,7 @@ class CompanyFormView(ft.Column):
 
             # Rehabilitar botones
             self._save_button.disabled = False
-            self._save_button.text = t("common.save")
+            self._save_button.content = ft.Text(t("common.save"))
             self._cancel_button.disabled = False
 
             if self.page:

@@ -84,11 +84,10 @@ class ValidatedTextField(ft.Container):
             multiline=self.multiline,
             min_lines=3 if self.multiline else 1,
             max_lines=5 if self.multiline else 1,
-            prefix_icon=self.prefix_icon,
             suffix_icon=self.suffix_icon,
             read_only=self.read_only,
-            on_change=self._on_change,
         )
+        self._text_field.on_change = self._on_change
 
         self._error_text = ft.Text(
             "",
@@ -221,8 +220,11 @@ class ValidatedTextField(ft.Container):
         """
         if self._text_field:
             self._text_field.value = value
-            if self.page:
-                self.update()
+            try:
+                if self.page:
+                    self.update()
+            except RuntimeError:
+                pass
 
     def set_error(self, message: str) -> None:
         """
@@ -240,8 +242,11 @@ class ValidatedTextField(ft.Container):
             self._error_text.visible = True
 
         logger.debug(f"Validation error set: {message}")
-        if self.page:
-            self.update()
+        try:
+            if self.page:
+                self.update()
+        except RuntimeError:
+            pass
 
     def clear_error(self) -> None:
         """
@@ -254,8 +259,11 @@ class ValidatedTextField(ft.Container):
         if self._error_text:
             self._error_text.visible = False
 
-        if self.page:
-            self.update()
+        try:
+            if self.page:
+                self.update()
+        except RuntimeError:
+            pass
 
     def set_enabled(self, enabled: bool) -> None:
         """
@@ -269,5 +277,8 @@ class ValidatedTextField(ft.Container):
         """
         if self._text_field:
             self._text_field.disabled = not enabled
-            if self.page:
-                self.update()
+            try:
+                if self.page:
+                    self.update()
+            except RuntimeError:
+                pass

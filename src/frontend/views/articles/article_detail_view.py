@@ -61,7 +61,7 @@ class ArticleDetailView(ft.Container):
             return ft.Container(
                 content=LoadingSpinner(message=t("common.loading")),
                 expand=True,
-                alignment=ft.alignment.center,
+                alignment=ft.Alignment(0, 0),  # center
             )
         elif self._error_message:
             return ft.Container(
@@ -70,7 +70,7 @@ class ArticleDetailView(ft.Container):
                     on_retry=self.load_article,
                 ),
                 expand=True,
-                alignment=ft.alignment.center,
+                alignment=ft.Alignment(0, 0),  # center
             )
 
         # Badge de estado
@@ -92,8 +92,7 @@ class ArticleDetailView(ft.Container):
         # Header
         header = ft.Row(
             controls=[
-                ft.Icon(
-                    name=ft.Icons.INVENTORY_2,
+                ft.Icon(ft.Icons.INVENTORY_2,
                     size=LayoutConstants.ICON_SIZE_XL,
                 ),
                 ft.Column(

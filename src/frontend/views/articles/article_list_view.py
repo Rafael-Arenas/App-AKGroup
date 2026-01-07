@@ -98,7 +98,7 @@ class ArticleListView(ft.Container):
             return ft.Container(
                 content=LoadingSpinner(message=f"Cargando {t('articles.title').lower()}..."),
                 expand=True,
-                alignment=ft.alignment.center,
+                alignment=ft.Alignment(0, 0),  # center
             )
 
         if self._error_message:
@@ -108,7 +108,7 @@ class ArticleListView(ft.Container):
                     on_retry=self.load_articles,
                 ),
                 expand=True,
-                alignment=ft.alignment.center,
+                alignment=ft.Alignment(0, 0),  # center
             )
 
         if not self._articles:
@@ -121,7 +121,7 @@ class ArticleListView(ft.Container):
                     on_action=self._on_create_article,
                 ),
                 expand=True,
-                alignment=ft.alignment.center,
+                alignment=ft.Alignment(0, 0),  # center
             )
 
         # Contenido principal con datos
@@ -135,7 +135,6 @@ class ArticleListView(ft.Container):
                 ),
                 ft.FloatingActionButton(
                     icon=ft.Icons.ADD,
-                    text=t("articles.create"),
                     on_click=self._on_create_article,
                 ),
             ],

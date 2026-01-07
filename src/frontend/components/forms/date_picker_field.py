@@ -80,11 +80,12 @@ class DatePickerField(ft.Container):
             visible=False,
         )
 
-        # Crear DatePicker
-        first_date = self.min_date or datetime(1900, 1, 1)
-        last_date = self.max_date or datetime(2100, 12, 31)
+        # Crear DatePicker - usar 1970 como mínimo para evitar errores de timezone en Windows
+        first_date = self.min_date or datetime(1970, 1, 1, 12, 0)
+        last_date = self.max_date or datetime(2100, 12, 31, 12, 0)
 
         self._date_picker = ft.DatePicker(
+            value=None,
             first_date=first_date,
             last_date=last_date,
             on_change=self._on_date_selected,

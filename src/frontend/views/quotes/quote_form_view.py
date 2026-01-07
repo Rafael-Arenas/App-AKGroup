@@ -96,7 +96,14 @@ class QuoteFormView(ft.Column):
         )
 
         # Date Fields (Native Flet implementation)
+        # Must specify first_date and last_date to avoid serialization issues
+        today = datetime.now()
+        first_date = datetime(year=today.year - 5, month=1, day=1)
+        last_date = datetime(year=today.year + 5, month=12, day=31)
+        
         self.quote_date_picker = ft.DatePicker(
+            first_date=first_date,
+            last_date=last_date,
             on_change=self._on_quote_date_change,
             on_dismiss=lambda _: None,
         )
@@ -108,6 +115,8 @@ class QuoteFormView(ft.Column):
         )
 
         self.valid_until_picker = ft.DatePicker(
+            first_date=first_date,
+            last_date=last_date,
             on_change=self._on_valid_until_change,
             on_dismiss=lambda _: None,
         )
@@ -119,6 +128,8 @@ class QuoteFormView(ft.Column):
         )
 
         self.shipping_date_picker = ft.DatePicker(
+            first_date=first_date,
+            last_date=last_date,
             on_change=self._on_shipping_date_change,
             on_dismiss=lambda _: None,
         )
@@ -168,25 +179,20 @@ class QuoteFormView(ft.Column):
 
     def did_mount(self):
         if self.page:
-            self.page.overlay.extend([
-                self.quote_date_picker,
-                self.valid_until_picker,
-                self.shipping_date_picker
-            ])
             self.page.run_task(self._load_data)
 
-    # Date Picker Handlers
+    # Date Picker Handlers - use page.show_dialog() for Flet v0.80
     def _open_quote_date_picker(self, e):
-        self.quote_date_picker.open = True
-        self.page.update()
+        if self.page:
+            self.page.show_dialog(self.quote_date_picker)
         
     def _open_valid_until_picker(self, e):
-        self.valid_until_picker.open = True
-        self.page.update()
+        if self.page:
+            self.page.show_dialog(self.valid_until_picker)
         
     def _open_shipping_date_picker(self, e):
-        self.shipping_date_picker.open = True
-        self.page.update()
+        if self.page:
+            self.page.show_dialog(self.shipping_date_picker)
 
     def _format_date_for_display(self, dt_value) -> str:
         if not dt_value:
@@ -217,29 +223,31 @@ class QuoteFormView(ft.Column):
             self.shipping_date.value = self._format_date_for_display(self.shipping_date_picker.value)
             self.update()
 
-    def _set_date_value(self, text_field: ft.TextField, date_picker: ft.DatePicker, value: Any):
+    def _populate_date_field(self, field_name: str, value: Any):
+        """Populate a date field from API data (str or date object)."""
         if not value:
-            text_field.value = ""
-            date_picker.value = None
             return
-
+        
         dt_val = None
         if isinstance(value, str):
             try:
-                # Handle YYYY-MM-DD from API
                 dt_val = datetime.strptime(value, "%Y-%m-%d").date()
             except ValueError:
-                pass
-        elif isinstance(value, (date, datetime)):
-            dt_val = value
-
+                return
+        elif isinstance(value, date):
+            dt_val = value if not isinstance(value, datetime) else value.date()
+        elif isinstance(value, datetime):
+            dt_val = value.date()
+        
         if dt_val:
-            # ft.DatePicker expects datetime
-            if isinstance(dt_val, date) and not isinstance(dt_val, datetime):
-                dt_val = datetime.combine(dt_val, datetime.min.time())
-            
-            date_picker.value = dt_val
-            text_field.value = self._format_date_for_display(dt_val)
+            # Only set the TextField display value, NOT the DatePicker.value
+            # DatePicker.value causes msgpack serialization issues with astimezone()
+            if field_name == "quote_date":
+                self.quote_date.value = self._format_date_for_display(dt_val)
+            elif field_name == "valid_until":
+                self.valid_until.value = self._format_date_for_display(dt_val)
+            elif field_name == "shipping_date":
+                self.shipping_date.value = self._format_date_for_display(dt_val)
 
     def _get_api_date_string(self, text_value: str) -> Optional[str]:
         if not text_value:
@@ -254,7 +262,7 @@ class QuoteFormView(ft.Column):
     def _build_loading(self) -> ft.Control:
         return ft.Container(
             content=LoadingSpinner(message=t("common.loading")),
-            alignment=ft.alignment.center,
+            alignment=ft.Alignment(0, 0),  # center
             expand=True
         )
 
@@ -264,7 +272,7 @@ class QuoteFormView(ft.Column):
                 message=self._error_message,
                 on_retry=self._load_data
             ),
-            alignment=ft.alignment.center,
+            alignment=ft.Alignment(0, 0),  # center
             expand=True
         )
 
@@ -293,15 +301,15 @@ class QuoteFormView(ft.Column):
         )
 
         # Action Buttons
-        save_btn = ft.ElevatedButton(
-            text=t("common.save"),
+        save_btn = ft.Button(
+            content=ft.Text(t("common.save")),
             icon=ft.Icons.SAVE,
             on_click=self._save,
             disabled=self._is_saving
         )
         
-        cancel_btn = ft.ElevatedButton(
-            text=t("common.cancel"),
+        cancel_btn = ft.Button(
+            content=ft.Text(t("common.cancel")),
             on_click=self._cancel,
             disabled=self._is_saving
         )
@@ -470,12 +478,12 @@ class QuoteFormView(ft.Column):
                 self.notes.set_value(self._quote.get("notes", ""))
 
                 # Date fields
-                self._set_date_value(self.quote_date, self.quote_date_picker, self._quote.get("quote_date"))
+                self._populate_date_field("quote_date", self._quote.get("quote_date"))
                 if not self.quote_date.value:
-                    self._set_date_value(self.quote_date, self.quote_date_picker, date.today())
+                    self._populate_date_field("quote_date", date.today())
 
-                self._set_date_value(self.valid_until, self.valid_until_picker, self._quote.get("valid_until"))
-                self._set_date_value(self.shipping_date, self.shipping_date_picker, self._quote.get("shipping_date"))
+                self._populate_date_field("valid_until", self._quote.get("valid_until"))
+                self._populate_date_field("shipping_date", self._quote.get("shipping_date"))
 
                 # Dropdowns
                 if self._quote.get("status_id"):
@@ -501,7 +509,7 @@ class QuoteFormView(ft.Column):
                 self.quote_number.set_value("[ ASIGNACIÓN AUTOMÁTICA ]")
                 self.revision.set_value("A")
 
-                self._set_date_value(self.quote_date, self.quote_date_picker, date.today())
+                self._populate_date_field("quote_date", date.today())
                 
                 if statuses:
                     self.status.set_value(str(statuses[0]["id"]))

@@ -122,7 +122,7 @@ class ProductListView(ft.Container):
             return ft.Container(
                 content=LoadingSpinner(message=f"Cargando {t(title_key).lower()}..."),
                 expand=True,
-                alignment=ft.alignment.center,
+                alignment=ft.Alignment(0, 0),  # center
             )
 
         if self._error_message:
@@ -132,7 +132,7 @@ class ProductListView(ft.Container):
                     on_retry=self.load_products,
                 ),
                 expand=True,
-                alignment=ft.alignment.center,
+                alignment=ft.Alignment(0, 0),  # center
             )
 
         if not self._products:
@@ -145,7 +145,7 @@ class ProductListView(ft.Container):
                     on_action=self._on_create_product,
                 ),
                 expand=True,
-                alignment=ft.alignment.center,
+                alignment=ft.Alignment(0, 0),  # center
             )
 
         # Contenido principal con datos
@@ -159,7 +159,6 @@ class ProductListView(ft.Container):
                 ),
                 ft.FloatingActionButton(
                     icon=ft.Icons.ADD,
-                    text=create_text,
                     on_click=self._on_create_product,
                 ),
             ],

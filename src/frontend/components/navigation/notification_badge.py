@@ -79,7 +79,7 @@ class NotificationBadge(ft.Stack):
                 border_radius=LayoutConstants.BADGE_SIZE // 2,
                 width=LayoutConstants.BADGE_SIZE,
                 height=LayoutConstants.BADGE_SIZE,
-                alignment=ft.alignment.center,
+                alignment=ft.Alignment(0, 0),  # center
                 right=0,
                 top=0,
             )

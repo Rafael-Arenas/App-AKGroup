@@ -68,8 +68,7 @@ class CompanyCard(ft.Container):
                     # Header con ícono
                     ft.Row(
                         controls=[
-                            ft.Icon(
-                                name=ft.Icons.BUSINESS,
+                            ft.Icon(ft.Icons.BUSINESS,
                                 size=LayoutConstants.ICON_SIZE_LG,
                             ),
                             ft.Text(
@@ -155,8 +154,7 @@ class CompanyCard(ft.Container):
         """Crea una línea de información con ícono."""
         return ft.Row(
             controls=[
-                ft.Icon(
-                    name=icon,
+                ft.Icon(icon,
                     size=LayoutConstants.ICON_SIZE_SM,
                 ),
                 ft.Text(

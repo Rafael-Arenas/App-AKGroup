@@ -91,8 +91,7 @@ class Breadcrumb(ft.Row):
             else:
                 # Items anteriores con ruta: clickeables
                 controls.append(
-                    ft.TextButton(
-                        text=item["label"],
+                    ft.TextButton(content=ft.Text(item["label"]),
                         on_click=lambda e, route=item["route"]: self._handle_navigate(route),
                         style=ft.ButtonStyle(
                             padding=ft.padding.symmetric(

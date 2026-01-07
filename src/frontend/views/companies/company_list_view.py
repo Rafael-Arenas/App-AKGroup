@@ -120,7 +120,7 @@ class CompanyListView(ft.Container):
             return ft.Container(
                 content=LoadingSpinner(message=loading_message),
                 expand=True,
-                alignment=ft.alignment.center,
+                alignment=ft.Alignment(0, 0),  # center
             )
 
         if self._error_message:
@@ -130,7 +130,7 @@ class CompanyListView(ft.Container):
                     on_retry=self.load_companies,
                 ),
                 expand=True,
-                alignment=ft.alignment.center,
+                alignment=ft.Alignment(0, 0),  # center
             )
 
         if not self._companies:
@@ -160,7 +160,7 @@ class CompanyListView(ft.Container):
                     on_action=self._on_create_company,
                 ),
                 expand=True,
-                alignment=ft.alignment.center,
+                alignment=ft.Alignment(0, 0),  # center
             )
 
         # Contenido principal con datos
@@ -249,7 +249,6 @@ class CompanyListView(ft.Container):
                 ),
                 ft.FloatingActionButton(
                     icon=ft.Icons.ADD,
-                    text=t(f"{i18n_prefix}.create"),
                     on_click=self._on_create_company,
                 ),
             ],

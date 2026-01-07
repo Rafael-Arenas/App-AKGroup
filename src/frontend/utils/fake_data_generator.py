@@ -448,9 +448,9 @@ class FakeDataGenerator:
             form_view.notes.set_value(data["notes"])
 
             # Establecer fechas usando helpers del formulario
-            form_view._set_date_value(form_view.quote_date, form_view.quote_date_picker, data["quote_date"])
-            form_view._set_date_value(form_view.valid_until, form_view.valid_until_picker, data["valid_until"])
-            form_view._set_date_value(form_view.shipping_date, form_view.shipping_date_picker, data["shipping_date"])
+            form_view._populate_date_field("quote_date", data["quote_date"])
+            form_view._populate_date_field("valid_until", data["valid_until"])
+            form_view._populate_date_field("shipping_date", data["shipping_date"])
 
             # Seleccionar primeras opciones disponibles en los dropdowns
             cls._select_first_option(form_view.status)

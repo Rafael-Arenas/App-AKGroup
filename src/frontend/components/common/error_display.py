@@ -51,8 +51,7 @@ class ErrorDisplay(ft.Container):
             Control de Flet con el mensaje de error
         """
         content = [
-            ft.Icon(
-                name=ft.Icons.ERROR_OUTLINE,
+            ft.Icon(ft.Icons.ERROR_OUTLINE,
                 size=LayoutConstants.ICON_SIZE_XL,
             ),
             ft.Text(
@@ -65,8 +64,8 @@ class ErrorDisplay(ft.Container):
 
         if self.show_retry_button:
             content.append(
-                ft.ElevatedButton(
-                    text=t("common.retry"),
+                ft.Button(
+                    content=ft.Text(t("common.retry")),
                     icon=ft.Icons.REFRESH,
                     on_click=self._handle_retry,
                 )
@@ -78,7 +77,7 @@ class ErrorDisplay(ft.Container):
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                 spacing=LayoutConstants.SPACING_MD,
             ),
-            alignment=ft.alignment.center,
+            alignment=ft.Alignment(0, 0),  # center
             padding=LayoutConstants.PADDING_LG,
         )
 

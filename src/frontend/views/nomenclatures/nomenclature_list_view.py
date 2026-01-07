@@ -98,7 +98,7 @@ class NomenclatureListView(ft.Container):
             return ft.Container(
                 content=LoadingSpinner(message=f"Cargando {t('nomenclatures.title').lower()}..."),
                 expand=True,
-                alignment=ft.alignment.center,
+                alignment=ft.Alignment(0, 0),  # center
             )
 
         if self._error_message:
@@ -108,7 +108,7 @@ class NomenclatureListView(ft.Container):
                     on_retry=self.load_nomenclatures,
                 ),
                 expand=True,
-                alignment=ft.alignment.center,
+                alignment=ft.Alignment(0, 0),  # center
             )
 
         if not self._nomenclatures:
@@ -121,7 +121,7 @@ class NomenclatureListView(ft.Container):
                     on_action=self._on_create_nomenclature,
                 ),
                 expand=True,
-                alignment=ft.alignment.center,
+                alignment=ft.Alignment(0, 0),  # center
             )
 
         # Contenido principal con datos
@@ -135,7 +135,6 @@ class NomenclatureListView(ft.Container):
                 ),
                 ft.FloatingActionButton(
                     icon=ft.Icons.ADD,
-                    text=t("nomenclatures.create"),
                     on_click=self._on_create_nomenclature,
                 ),
             ],

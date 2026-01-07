@@ -66,7 +66,7 @@ class DashboardView(ft.Container):
             return ft.Container(
                 content=LoadingSpinner(message="Cargando dashboard..."),
                 expand=True,
-                alignment=ft.alignment.center,
+                alignment=ft.Alignment(0, 0),  # center
             )
 
         if self._error_message:
@@ -76,7 +76,7 @@ class DashboardView(ft.Container):
                     on_retry=self.load_dashboard_data,
                 ),
                 expand=True,
-                alignment=ft.alignment.center,
+                alignment=ft.Alignment(0, 0),  # center
             )
 
         # Contenido principal
@@ -178,7 +178,7 @@ class DashboardView(ft.Container):
                             size=LayoutConstants.FONT_SIZE_MD,
                         ),
                         padding=LayoutConstants.PADDING_XL,
-                        alignment=ft.alignment.center,
+                        alignment=ft.Alignment(0, 0),  # center
                         border_radius=LayoutConstants.RADIUS_MD,
                     ),
                 ],

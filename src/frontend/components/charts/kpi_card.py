@@ -139,8 +139,7 @@ class KPICard(ft.Container):
         # Header con ícono y label
         header = ft.Row(
             controls=[
-                ft.Icon(
-                    name=self.icon,
+                ft.Icon(self.icon,
                     size=LayoutConstants.ICON_SIZE_LG,
                 ),
                 ft.Text(
@@ -167,8 +166,7 @@ class KPICard(ft.Container):
             change_controls.append(
                 ft.Row(
                     controls=[
-                        ft.Icon(
-                            name=trend_icon,
+                        ft.Icon(trend_icon,
                             size=LayoutConstants.ICON_SIZE_SM,
                         ),
                         ft.Text(

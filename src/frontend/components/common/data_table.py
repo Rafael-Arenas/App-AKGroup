@@ -266,7 +266,7 @@ class DataTable(ft.Container):
                     ),
                     padding=LayoutConstants.PADDING_SM,
                     width=120,
-                    alignment=ft.alignment.center,
+                    alignment=ft.Alignment(0, 0),  # center
                 )
             )
 
@@ -340,7 +340,7 @@ class DataTable(ft.Container):
                 padding=LayoutConstants.PADDING_SM,
                 width=col.width,
                 expand=col.width is None,
-                alignment=ft.alignment.center_left,
+                alignment=ft.Alignment(0, 0)  # center_left,
             )
             cells.append(cell)
 
@@ -374,7 +374,7 @@ class DataTable(ft.Container):
                 ),
                 padding=LayoutConstants.PADDING_SM,
                 width=120,
-                alignment=ft.alignment.center,
+                alignment=ft.Alignment(0, 0),  # center
             )
             cells.append(actions_cell)
 
@@ -654,8 +654,12 @@ class DataTable(ft.Container):
         logger.debug(f"DataTable content rebuilt")
 
         # Solo actualizar si está montado en una página
-        if self.page:
-            self.update()
+        try:
+            if self.page:
+                self.update()
+        except RuntimeError:
+            # El control aún no está montado, se actualizará cuando se monte
+            pass
 
     def get_selected_data(self) -> list[dict[str, Any]]:
         """

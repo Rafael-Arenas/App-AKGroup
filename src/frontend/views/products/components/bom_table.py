@@ -59,7 +59,7 @@ class BOMTable(ft.Container):
                     size=LayoutConstants.FONT_SIZE_MD,
                 ),
                 padding=LayoutConstants.PADDING_LG,
-                alignment=ft.alignment.center,
+                alignment=ft.Alignment(0, 0),  # center
             )
 
         # Crear columnas de la tabla

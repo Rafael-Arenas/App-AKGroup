@@ -138,8 +138,7 @@ class ConfirmDialog:
             modal=True,
             title=ft.Row(
                 controls=[
-                    ft.Icon(
-                        name=variant_icon,
+                    ft.Icon(variant_icon,
                         size=LayoutConstants.ICON_SIZE_LG,
                     ),
                     ft.Text(
@@ -155,12 +154,10 @@ class ConfirmDialog:
                 size=LayoutConstants.FONT_SIZE_MD,
             ),
             actions=[
-                ft.TextButton(
-                    text=self.cancel_text,
+                ft.TextButton(content=ft.Text(self.cancel_text),
                     on_click=self._handle_cancel,
                 ),
-                ft.ElevatedButton(
-                    text=self.confirm_text,
+                ft.Button(content=ft.Text(self.confirm_text),
                     on_click=self._handle_confirm,
                 ),
             ],

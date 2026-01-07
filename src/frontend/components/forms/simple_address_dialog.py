@@ -73,8 +73,8 @@ def show_simple_address_dialog(
             tight=True,
         ),
         actions=[
-            ft.TextButton("Cancelar", on_click=close_dialog),
-            ft.ElevatedButton("Guardar", on_click=save_and_close),
+            ft.TextButton(content=ft.Text("Cancelar"), on_click=close_dialog),
+            ft.Button(content=ft.Text("Guardar"), on_click=save_and_close),
         ],
     )
 

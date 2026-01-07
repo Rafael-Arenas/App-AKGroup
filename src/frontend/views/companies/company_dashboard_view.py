@@ -54,7 +54,7 @@ class CompanyDashboardView(ft.Container):
             return ft.Container(
                 content=LoadingSpinner(message=t("companies.messages.loading")),
                 expand=True,
-                alignment=ft.alignment.center,
+                alignment=ft.Alignment(0, 0),  # center
             )
             
         if self._error_message:
@@ -64,7 +64,7 @@ class CompanyDashboardView(ft.Container):
                     on_retry=self.load_company,
                 ),
                 expand=True,
-                alignment=ft.alignment.center,
+                alignment=ft.Alignment(0, 0),  # center
             )
 
         # Header

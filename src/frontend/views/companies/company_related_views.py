@@ -53,7 +53,7 @@ class CompanyRelatedBaseView(ft.Container):
             return ft.Container(
                 content=LoadingSpinner(message=t("companies.messages.loading")),
                 expand=True,
-                alignment=ft.alignment.center,
+                alignment=ft.Alignment(0, 0),  # center
             )
             
         if self._error_message:
@@ -63,7 +63,7 @@ class CompanyRelatedBaseView(ft.Container):
                     on_retry=self.load_data,
                 ),
                 expand=True,
-                alignment=ft.alignment.center,
+                alignment=ft.Alignment(0, 0),  # center
             )
 
         # Header con botón de volver
@@ -112,7 +112,7 @@ class CompanyRelatedBaseView(ft.Container):
                 alignment=ft.MainAxisAlignment.CENTER,
             ),
             expand=True,
-            alignment=ft.alignment.center
+            alignment=ft.Alignment(0, 0)  # center
         )
 
     def did_mount(self):
@@ -223,7 +223,7 @@ class CompanyQuotesView(CompanyRelatedBaseView):
                     on_action=self._on_create_quote
                 ),
                 expand=True,
-                alignment=ft.alignment.center
+                alignment=ft.Alignment(0, 0)  # center
             )
 
         # SearchBar
@@ -262,7 +262,6 @@ class CompanyQuotesView(CompanyRelatedBaseView):
                         ft.Container(content=self._search_bar, expand=True),
                         ft.FloatingActionButton(
                             icon=ft.Icons.ADD,
-                            text=t("quotes.create"),
                             on_click=self._on_create_quote,
                         )
                     ]),

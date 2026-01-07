@@ -99,7 +99,7 @@ class CompanyListView(ft.Container):
             expand=True,
         )
 
-    async def did_mount_async(self) -> None:
+    async def did_mount(self) -> None:
         """Se ejecuta cuando el componente se monta en la página."""
         await self.load_companies()
 
@@ -176,7 +176,7 @@ class CompanyListView(ft.Container):
                         text_align=ft.TextAlign.CENTER,
                         color=ft.Colors.GREY,
                     ),
-                    alignment=ft.alignment.center,
+                    alignment=ft.Alignment(0, 0),  # center
                     padding=50,
                 )
             )

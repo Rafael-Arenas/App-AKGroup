@@ -30,7 +30,7 @@ class BaseCard(ft.Container):
         ...     icon=ft.Icons.INFO,
         ...     content=ft.Text("Contenido de la tarjeta"),
         ...     collapsible=True,
-        ...     actions=[ft.ElevatedButton("Guardar")]
+        ...     actions=[ft.Button("Guardar")]
         ... )
         >>> page.add(card)
     """
@@ -79,8 +79,7 @@ class BaseCard(ft.Container):
 
         if self.icon:
             header_controls.append(
-                ft.Icon(
-                    name=self.icon,
+                ft.Icon(self.icon,
                     size=LayoutConstants.ICON_SIZE_MD,
                 )
             )
@@ -187,7 +186,7 @@ class BaseCard(ft.Container):
             actions: Lista de controles para el footer
 
         Example:
-            >>> card.set_actions([ft.ElevatedButton("Guardar")])
+            >>> card.set_actions([ft.Button("Guardar")])
             >>> card.update()
         """
         self.actions = actions
