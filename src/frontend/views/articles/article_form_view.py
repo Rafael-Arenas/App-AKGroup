@@ -278,6 +278,7 @@ class ArticleFormView(ft.Column):
             prefix_icon=ft.Icons.UPDATE,
             max_length=20,
         )
+        self._revision_field.set_value("A")
 
         self._notes_field = ValidatedTextField(
             label=t("articles.form.notes"),
