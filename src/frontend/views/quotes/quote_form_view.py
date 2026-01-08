@@ -81,6 +81,7 @@ class QuoteFormView(ft.Column):
             prefix_icon=ft.Icons.HISTORY,
             max_length=10,
         )
+        self.revision.set_value("A")
 
         self.subject = ValidatedTextField(
             label=t("quotes.fields.subject"),
