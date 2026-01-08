@@ -359,7 +359,27 @@ class CompanyQuotesView(CompanyRelatedBaseView):
 
 
 class CompanyOrdersView(CompanyRelatedBaseView):
-    def __init__(self, company_id: int, company_type: str, on_back: Callable[[], None]):
+    def __init__(
+        self, 
+        company_id: int, 
+        company_type: str, 
+        on_back: Callable[[], None],
+        on_view_order: Callable[[int], None] | None = None,
+        on_create_order: Callable[[], None] | None = None,
+        on_edit_order: Callable[[int], None] | None = None,
+    ):
+        self.on_view_order = on_view_order
+        self.on_create_order = on_create_order
+        self.on_edit_order = on_edit_order
+        
+        self._orders: list[dict] = []
+        self._total_orders: int = 0
+        self._current_page: int = 1
+        self._page_size: int = 10
+        self._search_query: str = ""
+        self._data_table: DataTable | None = None
+        self._search_bar: SearchBar | None = None
+        
         super().__init__(
             company_id=company_id,
             company_type=company_type,
@@ -368,6 +388,191 @@ class CompanyOrdersView(CompanyRelatedBaseView):
             color=ft.Colors.GREEN,
             on_back=on_back
         )
+
+    async def did_mount_async(self):
+        await self.load_data()
+
+    async def load_data(self):
+        self._is_loading = True
+        self._error_message = ""
+        if self.page:
+            self.content = self.build()
+            self.update()
+
+        try:
+            await self._load_company_data()
+            await self._load_child_data()
+            self._is_loading = False
+            if self.page:
+                self.content = self.build()
+                self.update()
+        except Exception as e:
+            logger.error(f"Error loading orders: {e}")
+            self._is_loading = False
+            self._error_message = str(e)
+            if self.page:
+                self.content = self.build()
+                self.update()
+
+    async def _load_company_data(self):
+        from src.frontend.services.api import company_api
+        self._company = await company_api.get_by_id(self.company_id)
+
+    async def _load_child_data(self):
+        from src.frontend.services.api import order_api
+        
+        response = await order_api.get_by_company(
+            company_id=self.company_id,
+            page=self._current_page,
+            page_size=self._page_size
+        )
+        self._orders = response.get("items", [])
+        self._total_orders = response.get("total", 0)
+
+    def build_content(self) -> ft.Control:
+        if not self._orders and not self._search_query:
+            return ft.Container(
+                content=EmptyState(
+                    icon=ft.Icons.SHOPPING_CART_OUTLINED,
+                    title=t("orders.no_orders"),
+                    message=t("orders.no_orders_message", {"company_name": self._company.get('name')}),
+                    action_text=t("orders.create"),
+                    on_action=self._on_create_order
+                ),
+                expand=True,
+                alignment=ft.Alignment(0, 0)
+            )
+
+        # SearchBar
+        self._search_bar = SearchBar(
+            placeholder=t("orders.search_placeholder"),
+            on_search=self._on_search,
+        )
+
+        # DataTable
+        self._data_table = DataTable(
+            columns=[
+                {"key": "order_number", "label": "orders.columns.order_number", "sortable": True},
+                {"key": "revision", "label": "orders.columns.revision", "sortable": True},
+                {"key": "date", "label": "orders.columns.order_date", "sortable": True},
+                {"key": "total", "label": "orders.columns.total_amount", "sortable": True},
+                {"key": "status", "label": "orders.columns.status", "sortable": True},
+            ],
+            on_row_click=self._on_row_click,
+            on_edit=self._on_edit_order,
+            on_delete=self._on_delete_order,
+            page_size=self._page_size,
+            on_page_change=self._on_page_change,
+        )
+
+        formatted_data = self._format_orders_for_table(self._orders)
+        self._data_table.set_data(
+            formatted_data,
+            total=self._total_orders,
+            current_page=self._current_page,
+        )
+
+        return ft.Column(
+            controls=[
+                ft.Container(
+                    content=ft.Row([
+                        ft.Container(content=self._search_bar, expand=True),
+                        ft.FloatingActionButton(
+                            icon=ft.Icons.ADD,
+                            on_click=self._on_create_order,
+                        )
+                    ]),
+                    padding=ft.padding.symmetric(horizontal=LayoutConstants.PADDING_LG),
+                ),
+                ft.Container(
+                    content=self._data_table,
+                    padding=ft.padding.only(
+                        left=LayoutConstants.PADDING_LG,
+                        right=LayoutConstants.PADDING_LG,
+                        bottom=LayoutConstants.PADDING_LG,
+                    ),
+                    expand=True,
+                ),
+            ],
+            spacing=LayoutConstants.SPACING_MD,
+            expand=True
+        )
+
+    def _format_orders_for_table(self, orders: list[dict]) -> list[dict]:
+        formatted = []
+        for order in orders:
+            formatted.append({
+                "id": order.get("id"),
+                "order_number": order.get("order_number", "-"),
+                "revision": order.get("revision", "-"),
+                "date": order.get("order_date", "")[:10] if order.get("order_date") else "-",
+                "total": f"${float(order.get('total', 0)):,.2f}",
+                "status": str(order.get("status_id", "Pendiente")),
+                "_original": order,
+            })
+        return formatted
+
+    def _on_search(self, query: str):
+        self._search_query = query
+        self._current_page = 1
+        if self.page:
+            self.page.run_task(self.load_data)
+
+    def _on_page_change(self, page: int):
+        self._current_page = page
+        if self.page:
+            self.page.run_task(self.load_data)
+
+    def _on_row_click(self, row_data: dict):
+        order = row_data.get("_original")
+        if not order:
+            return
+            
+        if self.on_view_order:
+            self.on_view_order(order["id"])
+
+    def _on_create_order(self, e=None):
+        if self.on_create_order:
+            self.on_create_order()
+
+    def _on_edit_order(self, row_data: dict):
+        order = row_data.get("_original")
+        if not order:
+            return
+        
+        if self.on_edit_order:
+            self.on_edit_order(order["id"])
+
+    def _on_delete_order(self, row_data: dict):
+        if not self.page:
+            return
+            
+        order = row_data.get("_original")
+        if not order:
+            return
+
+        def confirm_delete():
+            self.page.run_task(self._delete_order_task, order["id"])
+
+        dialog = ConfirmDialog(
+            title=t("common.confirm_delete"),
+            message=t("orders.messages.delete_confirm", number=order.get('order_number')),
+            on_confirm=confirm_delete,
+            variant="danger",
+            confirm_text=t("common.delete")
+        )
+        dialog.show(self.page)
+
+    async def _delete_order_task(self, order_id: int):
+        from src.frontend.services.api import order_api
+        try:
+            await order_api.delete(order_id, user_id=1)
+            self.page.show_snack_bar(ft.SnackBar(content=ft.Text(t("orders.messages.deleted"))))
+            await self.load_data()
+        except Exception as e:
+            logger.error(f"Error deleting order: {e}")
+            if self.page:
+                self.page.show_snack_bar(ft.SnackBar(content=ft.Text(t("orders.messages.error_deleting", error=str(e))), bgcolor="error"))
 
 class CompanyDeliveriesView(CompanyRelatedBaseView):
     def __init__(self, company_id: int, company_type: str, on_back: Callable[[], None]):
