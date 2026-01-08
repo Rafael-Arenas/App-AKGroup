@@ -736,6 +736,7 @@ class MainView(ft.Container):
             company_type=company_type,
             on_edit=lambda qid: self.navigate_to_quote_form(company_id, company_type, qid),
             on_delete=lambda qid: self._on_quote_deleted(qid, company_id, company_type),
+            on_create_order=lambda qid: self.navigate_to_order_form(company_id, company_type, qid),
             on_back=lambda: self.navigate_to_company_quotes(company_id, company_type),
         )
 
@@ -797,6 +798,47 @@ class MainView(ft.Container):
             {"label": f"{section_key}.title", "route": f"/companies/{company_type.lower()}s"},
             {"label": "dashboard.title", "route": dashboard_route},
             {"label": "quotes.title", "route": quotes_route},
+            {"label": action_key, "route": None},
+        ])
+
+    def navigate_to_order_form(
+        self, 
+        company_id: int, 
+        company_type: str, 
+        quote_id: int | None = None,
+        order_id: int | None = None
+    ) -> None:
+        """
+        Navega a la vista de formulario de orden.
+        """
+        from src.frontend.views.orders.order_form_view import OrderFormView
+
+        logger.info(
+            f"Navigating to order form: company_id={company_id}, quote_id={quote_id}, "
+            f"order_id={order_id}, mode={'edit' if order_id else 'create'}"
+        )
+
+        form_view = OrderFormView(
+            company_id=company_id,
+            quote_id=quote_id,
+            order_id=order_id,
+            on_save=lambda: self.navigate_to_company_orders(company_id, company_type),
+            on_cancel=lambda: self.navigate_to_company_orders(company_id, company_type),
+        )
+
+        if self._content_area:
+            self._content_area.content = form_view
+            if self.page:
+                self.update()
+
+        section_key = "clients" if company_type == "CLIENT" else "suppliers"
+        dashboard_route = f"/companies/dashboard/{company_id}/{company_type}"
+        action_key = "orders.edit" if order_id else "orders.create"
+        
+        app_state.navigation.set_breadcrumb([
+            {"label": f"{section_key}.title", "route": f"/companies/{company_type.lower()}s"},
+            {"label": "dashboard.title", "route": dashboard_route},
+            {"label": "orders.title", "route": f"{dashboard_route}/orders"},
             {"label": action_key, "route": None},
         ])
 

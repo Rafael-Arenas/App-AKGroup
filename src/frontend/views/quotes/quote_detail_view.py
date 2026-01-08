@@ -38,6 +38,7 @@ class QuoteDetailView(ft.Container):
         company_type: str,
         on_edit: Callable[[int], None] | None = None,
         on_delete: Callable[[int], None] | None = None,
+        on_create_order: Callable[[int], None] | None = None,
         on_back: Callable[[], None] | None = None,
     ):
         """Inicializa la vista de detalle de cotización."""
@@ -47,6 +48,7 @@ class QuoteDetailView(ft.Container):
         self.company_type = company_type
         self.on_edit = on_edit
         self.on_delete = on_delete
+        self.on_create_order = on_create_order
         self.on_back = on_back
 
         self._is_loading: bool = True
@@ -164,6 +166,11 @@ class QuoteDetailView(ft.Container):
                 ),
                 ft.Row(
                     controls=[
+                        ft.Button(
+                            content=ft.Text("Generar Orden"),
+                            icon=ft.Icons.SHOPPING_BAG,
+                            on_click=self._on_create_order_click,
+                        ),
                         ft.IconButton(
                             icon=ft.Icons.EDIT,
                             tooltip=t("common.edit"),
@@ -437,6 +444,11 @@ class QuoteDetailView(ft.Container):
         """Callback para editar."""
         if self.on_edit:
             self.on_edit(self.quote_id)
+
+    def _on_create_order_click(self, e: ft.ControlEvent) -> None:
+        """Callback para crear orden desde la cotización."""
+        if self.on_create_order:
+            self.on_create_order(self.quote_id)
 
     def _on_delete_click(self, e: ft.ControlEvent) -> None:
         """Callback para eliminar."""
