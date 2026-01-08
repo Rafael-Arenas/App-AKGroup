@@ -561,14 +561,29 @@
     "create": "Crear Orden",
     "edit": "Editar Orden",
     "view": "Ver Orden",
+    "detail": "Detalle de Orden",
     "no_orders": "No hay órdenes",
     "no_orders_message": "No se encontraron órdenes para {company_name}",
     "search_placeholder": "Buscar órdenes...",
     "fields": {
       "revision": "Revisión",
       "order_number": "Número de Orden",
+      "order_date": "Fecha de Orden",
+      "promised_date": "Fecha Prometida",
+      "completed_date": "Fecha de Completado",
+      "order_type": "Tipo de Orden",
+      "staff": "Vendedor",
+      "project_number": "Número de Proyecto",
       "customer_po": "Nº Compra Cliente (OC)",
-      "project_number": "Número de Proyecto"
+      "customer_po_number": "OC del Cliente",
+      "currency": "Moneda",
+      "exchange_rate": "Tipo de Cambio",
+      "incoterm": "Incoterm",
+      "payment_terms": "Términos de Pago",
+      "is_export": "Es Exportación",
+      "subtotal": "Subtotal",
+      "taxes": "Impuestos ({percent}%)",
+      "total_amount": "Total"
     },
     "columns": {
       "order_number": "Nº Orden",
@@ -576,6 +591,34 @@
       "order_date": "Fecha",
       "total_amount": "Total",
       "status": "Estado"
+    },
+    "status": {
+      "pending": "Pendiente",
+      "confirmed": "Confirmada",
+      "in_progress": "En Progreso",
+      "completed": "Completada",
+      "cancelled": "Cancelada"
+    },
+    "payment_status": {
+      "pending": "Pendiente",
+      "partial": "Parcial",
+      "paid": "Pagada"
+    },
+    "sections": {
+      "general_info": "Información General",
+      "financial_details": "Detalles Financieros",
+      "products": "Productos",
+      "customer_notes": "Notas del Cliente",
+      "internal_notes": "Notas Internas",
+      "notes": "Notas",
+      "no_notes": "Sin notas"
+    },
+    "products_table": {
+      "product": "Producto",
+      "quantity": "Cantidad",
+      "unit_price": "Precio Unitario",
+      "discount": "Descuento",
+      "total": "Total"
     },
     "form": {
       "edit_title": "Editar Orden",
@@ -585,6 +628,8 @@
       "fake_data_error": "No se pudieron generar los datos ficticios: {error}"
     },
     "messages": {
+      "not_found": "Orden no encontrada",
+      "error_loading": "Error al cargar la orden: {error}",
       "deleted": "Orden eliminada exitosamente",
       "error_deleting": "Error al eliminar la orden: {error}",
       "delete_confirm": "¿Está seguro que desea eliminar la orden {number}?"
