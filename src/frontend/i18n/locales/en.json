@@ -566,6 +566,13 @@
       "order_number": "Order Number",
       "customer_po": "Customer PO (OC)",
       "project_number": "Project Number"
+    },
+    "form": {
+      "edit_title": "Edit Order",
+      "create_title": "Create Order",
+      "generate_fake_data": "Generate fake data",
+      "fake_data_success": "Fake data generated successfully",
+      "fake_data_error": "Failed to generate fake data: {error}"
     }
   },
   "deliveries": {

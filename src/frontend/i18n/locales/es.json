@@ -566,6 +566,13 @@
       "order_number": "Número de Orden",
       "customer_po": "Nº Compra Cliente (OC)",
       "project_number": "Número de Proyecto"
+    },
+    "form": {
+      "edit_title": "Editar Orden",
+      "create_title": "Crear Orden",
+      "generate_fake_data": "Generar datos ficticios",
+      "fake_data_success": "Datos ficticios generados exitosamente",
+      "fake_data_error": "No se pudieron generar los datos ficticios: {error}"
     }
   },
   "deliveries": {
