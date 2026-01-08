@@ -23,6 +23,7 @@ class APISettings(BaseSettings):
         env_file=".env",
         env_prefix="API_",
         case_sensitive=False,
+        extra="ignore",
     )
 
     backend_base_url: str = "http://localhost:8000"
