@@ -466,6 +466,49 @@ class FakeDataGenerator:
             logger.exception(f"Error populating quote form: {e}")
     
     @classmethod
+    def generate_order_data(cls) -> Dict[str, Any]:
+        """
+        Genera datos ficticios para una orden.
+
+        Returns:
+            Diccionario con los datos generados.
+        """
+        logger.debug("Generating fake order data")
+
+        order_number = "[ ASIGNACIÓN AUTOMÁTICA ]"
+        revision = random.choice(["A", "B", "1.0", "Rev. 1"])
+        customer_po_number = f"PO-{random.randint(100000, 999999)}"
+        project_number = f"PRJ-{random.randint(1000, 9999)}"
+
+        return {
+            "order_number": order_number,
+            "revision": revision,
+            "customer_po_number": customer_po_number,
+            "project_number": project_number,
+        }
+
+    @classmethod
+    def populate_order_form(cls, form_view) -> None:
+        """
+        Pobla un formulario de orden con datos ficticios.
+
+        Args:
+            form_view: Instancia de OrderFormView.
+        """
+        try:
+            data = cls.generate_order_data()
+
+            form_view.order_number.set_value(data["order_number"])
+            form_view.revision.set_value(data["revision"])
+            form_view.customer_po_number.set_value(data["customer_po_number"])
+            form_view.project_number.set_value(data["project_number"])
+
+            logger.success(f"Order form populated with fake data: {data['order_number']}")
+
+        except Exception as e:
+            logger.exception(f"Error populating order form: {e}")
+
+    @classmethod
     def populate_nomenclature_form(cls, form_view) -> None:
         """
         Pobla un formulario de nomenclatura con datos ficticios.
