@@ -126,7 +126,6 @@ class FakeDataGenerator:
 
         quote_number = "[ ASIGNACIÓN AUTOMÁTICA ]"
 
-        revision = random.choice(["A", "B", "C", "D"])
         subject = random.choice(cls.QUOTE_TOPICS)
         unit = random.choice(cls.QUOTE_UNIT_OPTIONS)
 
@@ -137,7 +136,6 @@ class FakeDataGenerator:
 
         return {
             "quote_number": quote_number,
-            "revision": revision,
             "subject": subject,
             "unit": unit,
             "quote_date": today,
@@ -206,9 +204,6 @@ class FakeDataGenerator:
         image_url = f"https://picsum.photos/seed/{reference}/400/300.jpg"
         plan_url = f"https://example.com/plans/{reference}.pdf"
         
-        # Generar revisión
-        revision = f"v{random.randint(1, 5)}.{random.randint(0, 9)}"
-        
         # Generar notas
         notes = f"Notas del artículo {reference}. Revisar especificaciones técnicas antes de uso."
         
@@ -236,7 +231,6 @@ class FakeDataGenerator:
             "customs_number": customs_number,
             "image_url": image_url,
             "plan_url": plan_url,
-            "revision": revision,
             "notes": notes,
             "is_active": True
         }
@@ -288,11 +282,7 @@ class FakeDataGenerator:
         image_url = f"https://picsum.photos/seed/{reference}/600/400.jpg"
         plan_url = f"https://example.com/nomenclatures/{reference}.pdf"
         
-        # Generar revisión
-        revision = f"R{random.randint(1, 9)}"
-        
         return {
-            "revision": revision,
             "reference": reference,
             "designation_es": designation_es,
             "designation_en": designation_en,
@@ -409,7 +399,6 @@ class FakeDataGenerator:
             # Poblar campos adicionales
             form_view._designation_fr_field.set_value(data["designation_fr"])
             form_view._designation_en_field.set_value(data["designation_en"])
-            form_view._revision_field.set_value(data["revision"])
             form_view._notes_field.set_value(data["notes"])
             
             # Mantener el estado activo
@@ -442,7 +431,6 @@ class FakeDataGenerator:
             data = cls.generate_quote_data()
 
             form_view.quote_number.set_value(data["quote_number"])
-            form_view.revision.set_value(data["revision"])
             form_view.subject.set_value(data["subject"])
             form_view.unit.set_value(data["unit"])
             form_view.notes.set_value(data["notes"])
@@ -476,13 +464,11 @@ class FakeDataGenerator:
         logger.debug("Generating fake order data")
 
         order_number = "[ ASIGNACIÓN AUTOMÁTICA ]"
-        revision = random.choice(["A", "B", "1.0", "Rev. 1"])
         customer_po_number = f"PO-{random.randint(100000, 999999)}"
         project_number = f"PRJ-{random.randint(1000, 9999)}"
 
         return {
             "order_number": order_number,
-            "revision": revision,
             "customer_po_number": customer_po_number,
             "project_number": project_number,
         }
@@ -499,7 +485,6 @@ class FakeDataGenerator:
             data = cls.generate_order_data()
 
             form_view.order_number.set_value(data["order_number"])
-            form_view.revision.set_value(data["revision"])
             form_view.customer_po_number.set_value(data["customer_po_number"])
             form_view.project_number.set_value(data["project_number"])
 
@@ -520,7 +505,6 @@ class FakeDataGenerator:
             data = cls.generate_nomenclature_data()
             
             # Poblar campos básicos
-            form_view._revision_field.set_value(data["revision"])
             form_view._reference_field.set_value(data["reference"])
             form_view._designation_es_field.set_value(data["designation_es"])
             form_view._designation_en_field.set_value(data["designation_en"])
