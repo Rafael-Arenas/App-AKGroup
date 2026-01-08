@@ -312,7 +312,8 @@ class OrderService(BaseService[Order, OrderCreate, OrderUpdate, OrderResponse]):
 
                 entity_data["order_number"] = self.sequence_service.generate_document_number(
                     prefix="OC",
-                    company_trigram=company_trigram
+                    company_trigram=company_trigram,
+                    padding=2
                 )
 
             entity = self.model(**entity_data)
@@ -398,7 +399,13 @@ class OrderService(BaseService[Order, OrderCreate, OrderUpdate, OrderResponse]):
 
         # Generate order number if not provided
         if not order_number:
-            order_number = self.sequence_service.generate_document_number("OC")
+            company = self.session.query(Company).filter(Company.id == quote.company_id).first()
+            company_trigram = company.trigram if company else None
+            order_number = self.sequence_service.generate_document_number(
+                prefix="OC",
+                company_trigram=company_trigram,
+                padding=2
+            )
 
         # Create order from quote data
         order = Order(
