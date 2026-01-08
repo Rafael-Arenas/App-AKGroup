@@ -561,11 +561,21 @@
     "create": "Create Order",
     "edit": "Edit Order",
     "view": "View Order",
+    "no_orders": "No orders",
+    "no_orders_message": "No orders found for {company_name}",
+    "search_placeholder": "Search orders...",
     "fields": {
       "revision": "Revision",
       "order_number": "Order Number",
       "customer_po": "Customer PO (OC)",
       "project_number": "Project Number"
+    },
+    "columns": {
+      "order_number": "Order #",
+      "revision": "Revision",
+      "order_date": "Date",
+      "total_amount": "Total",
+      "status": "Status"
     },
     "form": {
       "edit_title": "Edit Order",
@@ -573,6 +583,11 @@
       "generate_fake_data": "Generate fake data",
       "fake_data_success": "Fake data generated successfully",
       "fake_data_error": "Failed to generate fake data: {error}"
+    },
+    "messages": {
+      "deleted": "Order deleted successfully",
+      "error_deleting": "Error deleting order: {error}",
+      "delete_confirm": "Are you sure you want to delete order {number}?"
     }
   },
   "deliveries": {

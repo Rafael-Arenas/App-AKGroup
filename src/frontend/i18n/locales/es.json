@@ -561,11 +561,21 @@
     "create": "Crear Orden",
     "edit": "Editar Orden",
     "view": "Ver Orden",
+    "no_orders": "No hay órdenes",
+    "no_orders_message": "No se encontraron órdenes para {company_name}",
+    "search_placeholder": "Buscar órdenes...",
     "fields": {
       "revision": "Revisión",
       "order_number": "Número de Orden",
       "customer_po": "Nº Compra Cliente (OC)",
       "project_number": "Número de Proyecto"
+    },
+    "columns": {
+      "order_number": "Nº Orden",
+      "revision": "Revisión",
+      "order_date": "Fecha",
+      "total_amount": "Total",
+      "status": "Estado"
     },
     "form": {
       "edit_title": "Editar Orden",
@@ -573,6 +583,11 @@
       "generate_fake_data": "Generar datos ficticios",
       "fake_data_success": "Datos ficticios generados exitosamente",
       "fake_data_error": "No se pudieron generar los datos ficticios: {error}"
+    },
+    "messages": {
+      "deleted": "Orden eliminada exitosamente",
+      "error_deleting": "Error al eliminar la orden: {error}",
+      "delete_confirm": "¿Está seguro que desea eliminar la orden {number}?"
     }
   },
   "deliveries": {
