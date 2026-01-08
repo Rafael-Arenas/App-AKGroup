@@ -761,6 +761,44 @@ class MainView(ft.Container):
         logger.success(f"Quote deleted: {quote_id}")
         self.navigate_to_company_quotes(company_id, company_type)
 
+    def navigate_to_order_detail(self, company_id: int, company_type: str, order_id: int) -> None:
+        """
+        Navega a la vista de detalle de orden.
+        """
+        from src.frontend.views.orders.order_detail_view import OrderDetailView
+
+        logger.info(f"Navigating to order detail: company_id={company_id}, order_id={order_id}")
+
+        detail_view = OrderDetailView(
+            order_id=order_id,
+            company_id=company_id,
+            company_type=company_type,
+            on_edit=lambda oid: self.navigate_to_order_form(company_id, company_type, order_id=oid),
+            on_delete=lambda oid: self._on_order_deleted(oid, company_id, company_type),
+            on_back=lambda: self.navigate_to_company_orders(company_id, company_type),
+        )
+
+        if self._content_area:
+            self._content_area.content = detail_view
+            if self.page:
+                self.update()
+
+        section_key = "clients" if company_type == "CLIENT" else "suppliers"
+        dashboard_route = f"/companies/dashboard/{company_id}/{company_type}"
+        orders_route = f"{dashboard_route}/orders"
+        
+        app_state.navigation.set_breadcrumb([
+            {"label": f"{section_key}.title", "route": f"/companies/{company_type.lower()}s"},
+            {"label": "dashboard.title", "route": dashboard_route},
+            {"label": "orders.title", "route": orders_route},
+            {"label": "orders.detail", "route": None},
+        ])
+
+    def _on_order_deleted(self, order_id: int, company_id: int, company_type: str) -> None:
+        """Callback cuando se elimina una orden desde el detalle."""
+        logger.success(f"Order deleted: {order_id}")
+        self.navigate_to_company_orders(company_id, company_type)
+
     def navigate_to_quote_form(self, company_id: int, company_type: str, quote_id: int | None = None) -> None:
         """
         Navega a la vista de formulario de cotización.
@@ -852,7 +890,7 @@ class MainView(ft.Container):
             company_id=company_id,
             company_type=company_type,
             on_back=lambda: self.navigate_to_company_dashboard(company_id, company_type),
-            on_view_order=lambda order_id: self.navigate_to_order_detail(order_id),
+            on_view_order=lambda order_id: self.navigate_to_order_detail(company_id, company_type, order_id),
             on_create_order=lambda: self.navigate_to_order_form(company_id=company_id, company_type=company_type),
             on_edit_order=lambda order_id: self.navigate_to_order_form(company_id=company_id, company_type=company_type, order_id=order_id),
         )
