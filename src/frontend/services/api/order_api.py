@@ -47,18 +47,15 @@ class OrderAPIService:
 
     async def create(self, data: Dict[str, Any], user_id: int) -> Dict[str, Any]:
         """Create a new order."""
-        params = {"user_id": user_id}
-        return await self._client.post("/orders/", json=data, params=params)
+        return await self._client.post(f"/orders/?user_id={user_id}", json=data)
 
     async def update(self, order_id: int, data: Dict[str, Any], user_id: int) -> Dict[str, Any]:
         """Update an existing order."""
-        params = {"user_id": user_id}
-        return await self._client.put(f"/orders/{order_id}", json=data, params=params)
+        return await self._client.put(f"/orders/{order_id}?user_id={user_id}", json=data)
 
     async def delete(self, order_id: int, user_id: int) -> None:
         """Delete an order."""
-        params = {"user_id": user_id}
-        await self._client.delete(f"/orders/{order_id}", params=params)
+        await self._client.delete(f"/orders/{order_id}?user_id={user_id}")
 
     async def create_from_quote(
         self, 
