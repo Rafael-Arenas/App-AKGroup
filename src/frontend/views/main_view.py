@@ -851,7 +851,10 @@ class MainView(ft.Container):
         view = CompanyOrdersView(
             company_id=company_id,
             company_type=company_type,
-            on_back=lambda: self.navigate_to_company_dashboard(company_id, company_type)
+            on_back=lambda: self.navigate_to_company_dashboard(company_id, company_type),
+            on_view_order=lambda order_id: self.navigate_to_order_detail(order_id),
+            on_create_order=lambda: self.navigate_to_order_form(company_id=company_id, company_type=company_type),
+            on_edit_order=lambda order_id: self.navigate_to_order_form(company_id=company_id, company_type=company_type, order_id=order_id),
         )
         
         if self._content_area:
