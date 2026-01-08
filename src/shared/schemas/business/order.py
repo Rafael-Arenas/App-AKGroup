@@ -41,6 +41,7 @@ class OrderBase(BaseModel):
     promised_date: Optional[date] = Field(None, description="Promised delivery date")
     completed_date: Optional[date] = Field(None, description="Completion date")
     project_number: Optional[str] = Field(None, max_length=100, description="Project number")
+    customer_po_number: Optional[str] = Field(None, max_length=100, description="Customer's purchase order number")
     incoterm_id: Optional[int] = Field(None, gt=0, description="Incoterm ID")
     currency_id: int = Field(..., gt=0, description="Currency ID")
     exchange_rate: Optional[Decimal] = Field(None, gt=0, description="Exchange rate")
@@ -117,6 +118,7 @@ class OrderUpdate(BaseModel):
     promised_date: Optional[date] = None
     completed_date: Optional[date] = None
     project_number: Optional[str] = Field(None, max_length=100)
+    customer_po_number: Optional[str] = Field(None, max_length=100)
     incoterm_id: Optional[int] = Field(None, gt=0)
     currency_id: Optional[int] = Field(None, gt=0)
     exchange_rate: Optional[Decimal] = Field(None, gt=0)
