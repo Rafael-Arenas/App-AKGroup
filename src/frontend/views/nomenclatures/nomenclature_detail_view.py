@@ -250,7 +250,8 @@ class NomenclatureDetailView(ft.Container):
                             weight=LayoutConstants.FONT_WEIGHT_SEMIBOLD,
                             width=150,
                         ),
-                        ft.TextButton(content=ft.Text(self._nomenclature.get("image_url"), "-") or "-",
+                        ft.TextButton(
+                            content=ft.Text(self._nomenclature.get("image_url") or "-"),
                             url=self._nomenclature.get("image_url", "#"),
                             disabled=not self._nomenclature.get("image_url")
                         ) if self._nomenclature.get("image_url") else ft.Text("-", size=LayoutConstants.FONT_SIZE_MD),
@@ -264,7 +265,8 @@ class NomenclatureDetailView(ft.Container):
                             weight=LayoutConstants.FONT_WEIGHT_SEMIBOLD,
                             width=150,
                         ),
-                        ft.TextButton(content=ft.Text(self._nomenclature.get("plan_url"), "-") or "-",
+                        ft.TextButton(
+                            content=ft.Text(self._nomenclature.get("plan_url") or "-"),
                             url=self._nomenclature.get("plan_url", "#"),
                             disabled=not self._nomenclature.get("plan_url")
                         ) if self._nomenclature.get("plan_url") else ft.Text("-", size=LayoutConstants.FONT_SIZE_MD),
