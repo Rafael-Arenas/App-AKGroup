@@ -59,14 +59,15 @@ class SequenceService:
         
         return sequence.last_value
 
-    def generate_document_number(self, prefix: str, company_trigram: str = None) -> str:
+    def generate_document_number(self, prefix: str, company_trigram: str = None, padding: int = 3) -> str:
         """
-        Generate a formatted document number (e.g., C-2025-MDO-001).
+        Generate a formatted document number (e.g., C-2025-MDO-001 or OC-2025-MDO-01).
         
         Args:
             prefix: Document type prefix (C, OC, DOC)
             company_trigram: Optional 3-letter company code. 
                              If not provided, uses the internal company trigram from settings.
+            padding: Number of digits for the sequential part (default: 3)
         
         Returns:
             Formatted document number string
@@ -83,4 +84,4 @@ class SequenceService:
             trigram=trigram
         )
 
-        return f"{prefix}-{year}-{trigram}-{next_val:03d}"
+        return f"{prefix}-{year}-{trigram}-{next_val:0{padding}d}"
