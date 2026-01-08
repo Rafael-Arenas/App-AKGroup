@@ -246,6 +246,7 @@ def create_order(
     order: OrderCreate,
     user_id: int = Query(..., description="User creating the order"),
     service: OrderService = Depends(get_order_service),
+    db: Session = Depends(get_db),
 ) -> OrderResponse:
     """
     Create a new order.
@@ -254,6 +255,7 @@ def create_order(
         order: Order data
         user_id: User creating the order
         service: Order service instance
+        db: Database session
 
     Returns:
         Created order
@@ -264,15 +266,21 @@ def create_order(
     logger.info(f"POST /orders - Creating order: {order.order_number}")
     try:
         created = service.create(order, user_id=user_id)
+        
+        # Commit the transaction to save to database
+        db.commit()
+        
         logger.success(f"Order created: id={created.id}, number={order.order_number}")
         return created
     except ValidationException as e:
+        db.rollback()
         logger.warning(f"Validation error: {e}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e)
         )
     except Exception as e:
+        db.rollback()
         logger.error(f"Error creating order: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -288,6 +296,7 @@ def create_order_from_quote(
     status_id: int = Query(..., description="Initial order status ID"),
     payment_status_id: int = Query(..., description="Initial payment status ID"),
     service: OrderService = Depends(get_order_service),
+    db: Session = Depends(get_db),
 ) -> OrderResponse:
     """
     Create order from an accepted quote.
@@ -301,6 +310,7 @@ def create_order_from_quote(
         status_id: Initial order status
         payment_status_id: Initial payment status
         service: Order service instance
+        db: Database session
 
     Returns:
         Created order
@@ -318,21 +328,28 @@ def create_order_from_quote(
             status_id=status_id,
             payment_status_id=payment_status_id,
         )
+        
+        # Commit the transaction to save to database
+        db.commit()
+        
         logger.success(f"Order created from quote_id={quote_id}: order_id={order.id}")
         return order
     except NotFoundException as e:
+        db.rollback()
         logger.warning(f"Quote not found: id={quote_id}")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e)
         )
     except ValidationException as e:
+        db.rollback()
         logger.warning(f"Validation error: {e}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e)
         )
     except Exception as e:
+        db.rollback()
         logger.error(f"Error creating order from quote: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -346,6 +363,7 @@ def update_order(
     order: OrderUpdate,
     user_id: int = Query(..., description="User updating the order"),
     service: OrderService = Depends(get_order_service),
+    db: Session = Depends(get_db),
 ) -> OrderResponse:
     """
     Update an existing order.
@@ -355,6 +373,7 @@ def update_order(
         order: Order update data
         user_id: User updating the order
         service: Order service instance
+        db: Database session
 
     Returns:
         Updated order
@@ -366,21 +385,28 @@ def update_order(
     logger.info(f"PUT /orders/{order_id}")
     try:
         updated = service.update(order_id, order, user_id=user_id)
+        
+        # Commit the transaction to save to database
+        db.commit()
+        
         logger.success(f"Order updated: id={order_id}")
         return updated
     except NotFoundException as e:
+        db.rollback()
         logger.warning(f"Order not found: id={order_id}")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e)
         )
     except ValidationException as e:
+        db.rollback()
         logger.warning(f"Validation error: {e}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e)
         )
     except Exception as e:
+        db.rollback()
         logger.error(f"Error updating order: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
