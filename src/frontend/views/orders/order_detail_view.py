@@ -215,27 +215,29 @@ class OrderDetailView(ft.Container):
             alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
         )
 
-        # Información General
+        # Información General de la Orden
         general_info_controls = [
+            self._create_info_row(t("orders.fields.revision"), self._order.get("revision", "-")),
+            self._create_info_row(t("orders.fields.order_number"), self._order.get("order_number", "-")),
             self._create_info_row(t("orders.fields.order_date"), self._order.get("order_date", "-")),
             self._create_info_row(t("orders.fields.promised_date"), self._order.get("promised_date", "-") or "-"),
             self._create_info_row(t("orders.fields.order_type"), self._order.get("order_type", "-")),
             self._create_info_row(t("orders.fields.staff"), str(self._order.get("staff_id", "-"))),
         ]
         
-        if self._order.get("completed_date"):
+        if self._order.get("customer_po_number"):
             general_info_controls.append(
-                self._create_info_row(t("orders.fields.completed_date"), self._order.get("completed_date", "-"))
+                self._create_info_row(t("orders.fields.customer_po_number"), self._order.get("customer_po_number", "-"))
             )
         
         if self._order.get("project_number"):
             general_info_controls.append(
                 self._create_info_row(t("orders.fields.project_number"), self._order.get("project_number", "-"))
             )
-            
-        if self._order.get("customer_po_number"):
+        
+        if self._order.get("completed_date"):
             general_info_controls.append(
-                self._create_info_row(t("orders.fields.customer_po_number"), self._order.get("customer_po_number", "-"))
+                self._create_info_row(t("orders.fields.completed_date"), self._order.get("completed_date", "-"))
             )
 
         general_info = ft.Column(
@@ -362,18 +364,133 @@ class OrderDetailView(ft.Container):
             content=ft.Column(notes_content),
         )
 
+        # Información de Entregas (Delivery Orders)
+        deliveries = self._order.get("delivery_orders", [])
+        delivery_controls = []
+        
+        if deliveries:
+            for delivery in deliveries:
+                delivery_controls.append(
+                    self._create_info_row(
+                        t("orders.delivery.number"),
+                        f"{delivery.get('delivery_number', '-')} (Rev. {delivery.get('revision', '-')})"
+                    )
+                )
+        else:
+            delivery_controls.append(
+                ft.Text(t("orders.delivery.no_deliveries"), italic=True, color=ft.Colors.GREY)
+            )
+        
+        delivery_card = BaseCard(
+            title=t("orders.sections.deliveries"),
+            icon=ft.Icons.LOCAL_SHIPPING,
+            content=ft.Column(delivery_controls, spacing=LayoutConstants.SPACING_SM),
+        )
+
+        # Direcciones Asociadas
+        addresses_controls = []
+        
+        shipping_addr = self._order.get("shipping_address")
+        if shipping_addr:
+            addr_text = f"{shipping_addr.get('street', '')}, {shipping_addr.get('city', '')}"
+            addresses_controls.append(
+                self._create_info_row(t("orders.address.shipping"), addr_text)
+            )
+        
+        billing_addr = self._order.get("billing_address")
+        if billing_addr:
+            addr_text = f"{billing_addr.get('street', '')}, {billing_addr.get('city', '')}"
+            addresses_controls.append(
+                self._create_info_row(t("orders.address.billing"), addr_text)
+            )
+        
+        if not addresses_controls:
+            addresses_controls.append(
+                ft.Text(t("orders.address.no_addresses"), italic=True, color=ft.Colors.GREY)
+            )
+        
+        addresses_card = BaseCard(
+            title=t("orders.sections.addresses"),
+            icon=ft.Icons.LOCATION_ON,
+            content=ft.Column(addresses_controls, spacing=LayoutConstants.SPACING_SM),
+        )
+
+        # Transporte Asociado
+        transport = self._order.get("transport")
+        transport_controls = []
+        
+        if transport:
+            transport_controls.append(
+                self._create_info_row(t("orders.transport.name"), transport.get("name", "-"))
+            )
+            if transport.get("delivery_number"):
+                transport_controls.append(
+                    self._create_info_row(t("orders.transport.delivery_number"), transport.get("delivery_number", "-"))
+                )
+        else:
+            transport_controls.append(
+                ft.Text(t("orders.transport.no_transport"), italic=True, color=ft.Colors.GREY)
+            )
+        
+        transport_card = BaseCard(
+            title=t("orders.sections.transport"),
+            icon=ft.Icons.LOCAL_SHIPPING_OUTLINED,
+            content=ft.Column(transport_controls, spacing=LayoutConstants.SPACING_SM),
+        )
+
+        # Condición de Pago
+        payment_condition = self._order.get("payment_condition")
+        payment_controls = []
+        
+        if payment_condition:
+            payment_controls.append(
+                self._create_info_row(
+                    t("orders.payment.condition_number"),
+                    f"{payment_condition.get('payment_condition_number', '-')} (Rev. {payment_condition.get('revision', '-')})"
+                )
+            )
+            payment_controls.append(
+                self._create_info_row(t("orders.payment.name"), payment_condition.get("name", "-"))
+            )
+            
+            payment_type = payment_condition.get("payment_type")
+            if payment_type:
+                payment_controls.append(
+                    self._create_info_row(
+                        t("orders.payment.type"),
+                        f"{payment_type.get('name', '-')} ({payment_type.get('days', 0)} días)"
+                    )
+                )
+        else:
+            payment_controls.append(
+                ft.Text(t("orders.payment.no_payment_condition"), italic=True, color=ft.Colors.GREY)
+            )
+        
+        payment_card = BaseCard(
+            title=t("orders.sections.payment_condition"),
+            icon=ft.Icons.PAYMENT,
+            content=ft.Column(payment_controls, spacing=LayoutConstants.SPACING_SM),
+        )
+
         # Layout Final
         
-        # Columna izquierda (Info General y Financiera)
+        # Columna izquierda (Info General, Entregas, Direcciones)
         left_col = ft.Column(
-            controls=[general_card, financial_card, notes_card],
+            controls=[general_card, delivery_card, addresses_card],
             spacing=LayoutConstants.SPACING_MD,
             expand=1,
         )
         
-        # Columna derecha (Productos y Totales)
+        # Columna central (Transporte, Pago, Financiera)
+        center_col = ft.Column(
+            controls=[transport_card, payment_card, financial_card],
+            spacing=LayoutConstants.SPACING_MD,
+            expand=1,
+        )
+        
+        # Columna derecha (Productos, Totales, Notas)
         right_col = ft.Column(
-            controls=[products_card, totals_card],
+            controls=[products_card, totals_card, notes_card],
             spacing=LayoutConstants.SPACING_MD,
             expand=2,
         )
@@ -382,7 +499,7 @@ class OrderDetailView(ft.Container):
             controls=[
                 header,
                 ft.Row(
-                    controls=[left_col, right_col],
+                    controls=[left_col, center_col, right_col],
                     vertical_alignment=ft.CrossAxisAlignment.START,
                     expand=True,
                     spacing=LayoutConstants.SPACING_LG,
