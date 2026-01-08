@@ -121,7 +121,7 @@ class OrderFormView(ft.Column):
                 order_data = await order_api.get_by_id(self.order_id)
                 self.order_number.set_value(order_data.get("order_number", ""))
                 self.revision.set_value(order_data.get("revision", ""))
-                self.customer_po.set_value(order_data.get("customer_po", ""))
+                self.customer_po_number.set_value(order_data.get("customer_po_number", ""))
                 self.project_number.set_value(order_data.get("project_number", ""))
 
             self._is_loading = False
