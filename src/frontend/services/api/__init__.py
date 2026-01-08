@@ -18,6 +18,7 @@ from .product_api import ProductAPIService
 from .lookup_api import LookupAPIService
 from .plant_api import PlantAPIService
 from .quote_api import QuoteAPIService
+from .order_api import OrderAPIService
 from .contact_api import ContactAPIService
 from .company_rut_api import CompanyRutAPIService
 from .staff_api import StaffAPIService
@@ -30,6 +31,7 @@ ProductAPI = ProductAPIService
 LookupAPI = LookupAPIService
 PlantAPI = PlantAPIService
 QuoteAPI = QuoteAPIService
+OrderAPI = OrderAPIService
 ContactAPI = ContactAPIService
 CompanyRutAPI = CompanyRutAPIService
 StaffAPI = StaffAPIService
@@ -41,6 +43,7 @@ product_api = ProductAPIService()
 lookup_api = LookupAPIService()
 plant_api = PlantAPIService()
 quote_api = QuoteAPIService()
+order_api = OrderAPIService()
 contact_api = ContactAPIService()
 company_rut_api = CompanyRutAPIService()
 staff_api = StaffAPIService()
@@ -61,6 +64,7 @@ __all__ = [
     "LookupAPIService",
     "PlantAPIService",
     "QuoteAPIService",
+    "OrderAPIService",
     "ContactAPIService",
     "CompanyRutAPIService",
     "StaffAPIService",
@@ -70,6 +74,7 @@ __all__ = [
     "LookupAPI",
     "PlantAPI",
     "QuoteAPI",
+    "OrderAPI",
     "ContactAPI",
     "CompanyRutAPI",
     "StaffAPI",
@@ -79,6 +84,7 @@ __all__ = [
     "lookup_api",
     "plant_api",
     "quote_api",
+    "order_api",
     "contact_api",
     "company_rut_api",
     "staff_api",
