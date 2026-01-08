@@ -559,7 +559,14 @@
     "description": "Work order management",
     "list_title": "Order List",
     "create": "Create Order",
-    "view": "View Order"
+    "edit": "Edit Order",
+    "view": "View Order",
+    "fields": {
+      "revision": "Revision",
+      "order_number": "Order Number",
+      "customer_po": "Customer PO (OC)",
+      "project_number": "Project Number"
+    }
   },
   "deliveries": {
     "title": "Deliveries",

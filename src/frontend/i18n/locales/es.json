@@ -559,7 +559,14 @@
     "description": "Gestión de órdenes",
     "list_title": "Lista de Órdenes",
     "create": "Crear Orden",
-    "view": "Ver Orden"
+    "edit": "Editar Orden",
+    "view": "Ver Orden",
+    "fields": {
+      "revision": "Revisión",
+      "order_number": "Número de Orden",
+      "customer_po": "Nº Compra Cliente (OC)",
+      "project_number": "Número de Proyecto"
+    }
   },
   "deliveries": {
     "title": "Entregas",
