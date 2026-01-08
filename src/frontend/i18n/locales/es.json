@@ -608,6 +608,10 @@
       "general_info": "Información General",
       "financial_details": "Detalles Financieros",
       "products": "Productos",
+      "deliveries": "Entregas",
+      "addresses": "Direcciones",
+      "transport": "Transporte",
+      "payment_condition": "Condición de Pago",
       "customer_notes": "Notas del Cliente",
       "internal_notes": "Notas Internas",
       "notes": "Notas",
@@ -619,6 +623,26 @@
       "unit_price": "Precio Unitario",
       "discount": "Descuento",
       "total": "Total"
+    },
+    "delivery": {
+      "number": "Número de Entrega",
+      "no_deliveries": "Sin entregas registradas"
+    },
+    "address": {
+      "shipping": "Dirección de Envío",
+      "billing": "Dirección de Facturación",
+      "no_addresses": "Sin direcciones asociadas"
+    },
+    "transport": {
+      "name": "Nombre del Transporte",
+      "delivery_number": "Número de Guía",
+      "no_transport": "Sin transporte asignado"
+    },
+    "payment": {
+      "condition_number": "Número de Condición",
+      "name": "Nombre",
+      "type": "Tipo de Pago",
+      "no_payment_condition": "Sin condición de pago definida"
     },
     "form": {
       "edit_title": "Editar Orden",
