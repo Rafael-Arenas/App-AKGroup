@@ -43,6 +43,7 @@ class Order(Base, TimestampMixin, AuditMixin, ActiveMixin):
         order_type: Type of order ('sales' or 'purchase')
         quote_id: Foreign key to Quote (if created from quote)
         customer_quote_number: Customer's quote/reference number
+        customer_po_number: Customer's purchase order number
         project_number: Project number/identifier
         company_id: Foreign key to Company (customer/supplier)
         contact_id: Foreign key to Contact
@@ -114,6 +115,12 @@ class Order(Base, TimestampMixin, AuditMixin, ActiveMixin):
         nullable=True,
         index=True,
         comment="Customer's quote/reference number",
+    )
+    customer_po_number = Column(
+        String(100),
+        nullable=True,
+        index=True,
+        comment="Customer's purchase order number",
     )
     project_number = Column(
         String(100),
