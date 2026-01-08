@@ -91,6 +91,7 @@ class NomenclatureFormView(ft.Column):
             prefix_icon=ft.Icons.VERIFIED,
             max_length=20,
         )
+        self._revision_field.set_value("A")
 
         self._reference_field = ValidatedTextField(
             label=t("nomenclatures.form.reference") + " *",
