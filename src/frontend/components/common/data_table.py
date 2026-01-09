@@ -646,19 +646,17 @@ class DataTable(ft.Container):
             self._total_items = total
         if current_page is not None:
             self._current_page = current_page - 1  # Convert to 0-indexed
+        
         logger.info(f"Table data set: {len(data)} rows, total={total}, page={current_page}")
 
         # Siempre reconstruir el contenido cuando cambian los datos
-        new_content = self.build()
-        self.content = new_content
-        logger.debug(f"DataTable content rebuilt")
+        self.content = self.build()
 
         # Solo actualizar si está montado en una página
         try:
             if self.page:
                 self.update()
-        except RuntimeError:
-            # El control aún no está montado, se actualizará cuando se monte
+        except Exception:
             pass
 
     def get_selected_data(self) -> list[dict[str, Any]]:
