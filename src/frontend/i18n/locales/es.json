@@ -474,6 +474,7 @@
     "delete": "Eliminar Cotización",
     "view": "Ver Cotización",
     "detail": "Detalles de la Cotización",
+    "add_products": "Agregar Productos",
     "no_quotes": "No hay cotizaciones registradas",
     "no_quotes_message": "No hay cotizaciones registradas para {company_name}. Comienza creando la primera.",
     "create_first": "Crear Primera Cotización",
