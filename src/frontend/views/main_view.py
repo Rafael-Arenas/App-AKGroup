@@ -737,6 +737,7 @@ class MainView(ft.Container):
             on_edit=lambda qid: self.navigate_to_quote_form(company_id, company_type, qid),
             on_delete=lambda qid: self._on_quote_deleted(qid, company_id, company_type),
             on_create_order=lambda qid: self.navigate_to_order_form(company_id, company_type, qid),
+            on_add_products=lambda qid: self.navigate_to_quote_products(company_id, company_type, qid),
             on_back=lambda: self.navigate_to_company_quotes(company_id, company_type),
         )
 
@@ -754,6 +755,44 @@ class MainView(ft.Container):
             {"label": "dashboard.title", "route": dashboard_route},
             {"label": "quotes.title", "route": quotes_route},
             {"label": "quotes.detail", "route": None},
+        ])
+
+    def navigate_to_quote_products(self, company_id: int, company_type: str, quote_id: int) -> None:
+        """
+        Navega a la vista de agregar productos a una cotización.
+        
+        Args:
+            company_id: ID de la empresa
+            company_type: Tipo de empresa
+            quote_id: ID de la cotización
+        """
+        from src.frontend.views.quotes.quote_products_view import QuoteProductsView
+
+        logger.info(f"Navigating to quote products: company_id={company_id}, quote_id={quote_id}")
+
+        products_view = QuoteProductsView(
+            quote_id=quote_id,
+            company_id=company_id,
+            company_type=company_type,
+            on_back=lambda: self.navigate_to_quote_detail(company_id, company_type, quote_id),
+            on_product_added=lambda: self.navigate_to_quote_detail(company_id, company_type, quote_id),
+        )
+
+        if self._content_area:
+            self._content_area.content = products_view
+            if self.page:
+                self.update()
+
+        section_key = "clients" if company_type == "CLIENT" else "suppliers"
+        dashboard_route = f"/companies/dashboard/{company_id}/{company_type}"
+        quotes_route = f"{dashboard_route}/quotes"
+        
+        app_state.navigation.set_breadcrumb([
+            {"label": f"{section_key}.title", "route": f"/companies/{company_type.lower()}s"},
+            {"label": "dashboard.title", "route": dashboard_route},
+            {"label": "quotes.title", "route": quotes_route},
+            {"label": "quotes.detail", "route": f"{quotes_route}/{quote_id}"},
+            {"label": "quotes.add_products", "route": None},
         ])
 
     def _on_quote_deleted(self, quote_id: int, company_id: int, company_type: str) -> None:
