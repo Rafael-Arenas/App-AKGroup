@@ -11,7 +11,7 @@ from loguru import logger
 from src.frontend.app_state import app_state
 from src.frontend.layout_constants import LayoutConstants
 from src.frontend.i18n.translation_manager import t
-from src.frontend.components.common import BaseCard, LoadingSpinner, ErrorDisplay, ConfirmDialog, DataTable
+from src.frontend.components.common import BaseCard, LoadingSpinner, ErrorDisplay, ConfirmDialog, DataTable, EmptyState
 
 
 class QuoteDetailView(ft.Container):
@@ -39,6 +39,7 @@ class QuoteDetailView(ft.Container):
         on_edit: Callable[[int], None] | None = None,
         on_delete: Callable[[int], None] | None = None,
         on_create_order: Callable[[int], None] | None = None,
+        on_add_products: Callable[[int], None] | None = None,
         on_back: Callable[[], None] | None = None,
     ):
         """Inicializa la vista de detalle de cotización."""
@@ -49,6 +50,7 @@ class QuoteDetailView(ft.Container):
         self.on_edit = on_edit
         self.on_delete = on_delete
         self.on_create_order = on_create_order
+        self.on_add_products = on_add_products
         self.on_back = on_back
 
         self._is_loading: bool = True
@@ -66,48 +68,59 @@ class QuoteDetailView(ft.Container):
 
     def build(self) -> ft.Control:
         """Construye el componente de detalle de cotización."""
+        # Contenedor para actualización dinámica
+        self._main_container = ft.Column(expand=True, scroll=ft.ScrollMode.AUTO, spacing=LayoutConstants.SPACING_LG)
+
         if self._is_loading:
-            return ft.Container(
-                content=LoadingSpinner(message=t("common.loading")),
-                expand=True,
-                alignment=ft.Alignment(0, 0),  # center
-            )
+            self._main_container.controls = [
+                ft.Container(
+                    content=LoadingSpinner(message=t("common.loading")),
+                    expand=True,
+                    alignment=ft.Alignment(0, 0),
+                )
+            ]
+            return self._main_container
         elif self._error_message:
-            return ft.Container(
-                content=ErrorDisplay(
-                    message=self._error_message,
-                    on_retry=self.load_quote,
-                ),
-                expand=True,
-                alignment=ft.Alignment(0, 0),  # center
-            )
+            self._main_container.controls = [
+                ft.Container(
+                    content=ErrorDisplay(
+                        message=self._error_message,
+                        on_retry=self.load_quote,
+                    ),
+                    expand=True,
+                    alignment=ft.Alignment(0, 0),
+                )
+            ]
+            return self._main_container
 
         if not self._quote:
-             return ft.Container(
-                content=ErrorDisplay(
-                    message=t("quotes.messages.not_found"),
-                    on_retry=self.load_quote,
-                ),
-                expand=True,
-                alignment=ft.Alignment(0, 0),  # center
-            )
+             self._main_container.controls = [
+                ft.Container(
+                    content=ErrorDisplay(
+                        message=t("quotes.messages.not_found"),
+                        on_retry=self.load_quote,
+                    ),
+                    expand=True,
+                    alignment=ft.Alignment(0, 0),
+                )
+            ]
+             return self._main_container
 
-        # Badge de estado (TODO: Usar colores/labels reales de estado cuando estén disponibles)
+        # Badge de estado
         status_id = self._quote.get("status_id")
-        status_text = t("quotes.status.draft") # Default
+        status_text = t("quotes.status.draft")
         status_color = ft.Colors.GREY
         
-        # Mapeo simple temporal hasta tener los lookups cargados o status name en respuesta
-        if status_id == 1: # Borrador
+        if status_id == 1:
              status_text = t("quotes.status.draft")
              status_color = ft.Colors.GREY
-        elif status_id == 2: # Enviada
+        elif status_id == 2:
              status_text = t("quotes.status.sent")
              status_color = ft.Colors.BLUE
-        elif status_id == 3: # Aceptada
+        elif status_id == 3:
              status_text = t("quotes.status.accepted")
              status_color = ft.Colors.GREEN
-        elif status_id == 4: # Rechazada
+        elif status_id == 4:
              status_text = t("quotes.status.rejected")
              status_color = ft.Colors.RED
         
@@ -195,7 +208,7 @@ class QuoteDetailView(ft.Container):
                 self._create_info_row(t("quotes.fields.valid_until"), self._quote.get("valid_until", "-") or "-"),
                 self._create_info_row(t("quotes.fields.shipping_date"), self._quote.get("shipping_date", "-") or "-"),
                 self._create_info_row(t("quotes.fields.revision"), self._quote.get("revision", "-")),
-                self._create_info_row(t("quotes.fields.staff"), str(self._quote.get("staff_id", "-"))), # TODO: Mostrar nombre si viene en la respuesta
+                self._create_info_row(t("quotes.fields.staff"), str(self._quote.get("staff_id", "-"))),
             ],
             spacing=LayoutConstants.SPACING_SM,
         )
@@ -209,7 +222,7 @@ class QuoteDetailView(ft.Container):
         # Información Financiera
         financial_info = ft.Column(
             controls=[
-                 self._create_info_row(t("quotes.fields.currency"), str(self._quote.get("currency_id", "-"))), # TODO: Map ID to Name
+                 self._create_info_row(t("quotes.fields.currency"), str(self._quote.get("currency_id", "-"))),
                  self._create_info_row(t("quotes.fields.exchange_rate"), f"{float(self._quote.get('exchange_rate', 1) or 1):.2f}"),
                  self._create_info_row(t("quotes.fields.incoterm"), str(self._quote.get("incoterm_id", "-") or "-")),
             ],
@@ -224,46 +237,83 @@ class QuoteDetailView(ft.Container):
 
         # Productos
         products = self._quote.get("products", [])
-        products_table = DataTable(
-            columns=[
-                {"key": "product_name", "label": t("quotes.products_table.product"), "sortable": True},
-                {"key": "quantity", "label": t("quotes.products_table.quantity"), "numeric": True},
-                {"key": "unit_price", "label": t("quotes.products_table.unit_price"), "numeric": True},
-                {"key": "discount", "label": t("quotes.products_table.discount"), "numeric": True},
-                {"key": "total", "label": t("quotes.products_table.total"), "numeric": True},
-            ],
-            page_size=100, # Show all products usually
-        )
         
-        # Formatear productos para la tabla
-        formatted_products = []
-        for p in products:
-            # TODO: El backend debería mandar el nombre del producto, si no, solo tenemos ID
-            # Asumimos que podría venir 'product_name' o similar si se hace join, 
-            # por ahora mostraremos ID si no hay nombre.
-            product_name = p.get("product_name", f"Producto #{p.get('product_id')}") 
+        if not products:
+            products_content = EmptyState(
+                icon=ft.Icons.SHOPPING_CART_OUTLINED,
+                title="No hay productos",
+                message="Esta cotización aún no tiene productos asociados. Agrega artículos o nomenclaturas para comenzar.",
+                action_text="Agregar Productos",
+                on_action=self._on_add_products_click,
+            )
+        else:
+            products_table = DataTable(
+                columns=[
+                    {"key": "product_name", "label": t("quotes.products_table.product"), "sortable": True},
+                    {"key": "quantity", "label": t("quotes.products_table.quantity"), "numeric": True},
+                    {"key": "unit_price", "label": t("quotes.products_table.unit_price"), "numeric": True},
+                    {"key": "discount", "label": t("quotes.products_table.discount"), "numeric": True},
+                    {"key": "total", "label": t("quotes.products_table.total"), "numeric": True},
+                ],
+                page_size=100,
+            )
             
-            qty = float(p.get("quantity", 0))
-            price = float(p.get("unit_price", 0))
-            disc_pct = float(p.get("discount_percentage", 0))
-            subtotal = float(p.get("subtotal", 0))
+            formatted_products = []
+            for p in products:
+                product_name = p.get("product_name", f"Producto #{p.get('product_id')}") 
+                qty = float(p.get("quantity", 0))
+                price = float(p.get("unit_price", 0))
+                disc_pct = float(p.get("discount_percentage", 0))
+                subtotal = float(p.get("subtotal", 0))
 
-            formatted_products.append({
-                "id": p.get("id"),
-                "product_name": product_name,
-                "quantity": f"{qty:.2f}",
-                "unit_price": f"${price:,.2f}",
-                "discount": f"{disc_pct}%",
-                "total": f"${subtotal:,.2f}",
-            })
-            
-        products_table.set_data(formatted_products, total=len(products))
+                formatted_products.append({
+                    "id": p.get("id"),
+                    "product_name": product_name,
+                    "quantity": f"{qty:.2f}",
+                    "unit_price": f"${price:,.2f}",
+                    "discount": f"{disc_pct}%",
+                    "total": f"${subtotal:,.2f}",
+                })
+                
+            products_table.set_data(formatted_products, total=len(products))
+            products_content = products_table
 
-        products_card = BaseCard(
-            title=f"{t('quotes.sections.products')} ({len(products)})",
-            icon=ft.Icons.SHOPPING_CART_OUTLINED,
-            content=products_table,
-        )
+        if products:
+            products_card_content = ft.Column(
+                controls=[
+                    ft.Row(
+                        controls=[
+                            ft.Text(
+                                f"{t('quotes.sections.products')} ({len(products)})",
+                                size=LayoutConstants.FONT_SIZE_LG,
+                                weight=LayoutConstants.FONT_WEIGHT_SEMIBOLD,
+                                expand=True,
+                            ),
+                            ft.IconButton(
+                                icon=ft.Icons.ADD,
+                                tooltip="Agregar más productos",
+                                on_click=lambda e: self._on_add_products_click(),
+                            ),
+                        ],
+                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                    ),
+                    products_content,
+                ],
+                spacing=LayoutConstants.SPACING_SM,
+            )
+            products_card = ft.Card(
+                content=ft.Container(
+                    content=products_card_content,
+                    padding=LayoutConstants.PADDING_LG,
+                ),
+                elevation=2,
+            )
+        else:
+            products_card = BaseCard(
+                title=f"{t('quotes.sections.products')} ({len(products)})",
+                icon=ft.Icons.SHOPPING_CART_OUTLINED,
+                content=products_content,
+            )
 
         # Totales
         tax_percent = float(self._quote.get('tax_percentage', 19))
@@ -307,38 +357,29 @@ class QuoteDetailView(ft.Container):
         )
 
         # Layout Final
-        
-        # Columna izquierda (Info General y Financiera)
         left_col = ft.Column(
             controls=[general_card, financial_card, notes_card],
             spacing=LayoutConstants.SPACING_MD,
             expand=1,
         )
         
-        # Columna derecha (Productos y Totales)
         right_col = ft.Column(
             controls=[products_card, totals_card],
             spacing=LayoutConstants.SPACING_MD,
             expand=2,
         )
 
-        content = ft.Column(
-            controls=[
-                header,
-                ft.Row(
-                    controls=[left_col, right_col],
-                    vertical_alignment=ft.CrossAxisAlignment.START,
-                    expand=True,
-                    spacing=LayoutConstants.SPACING_LG,
-                )
-            ],
-            spacing=LayoutConstants.SPACING_LG,
-            scroll=ft.ScrollMode.AUTO,
-            expand=True,
-        )
+        self._main_container.controls = [
+            header,
+            ft.Row(
+                controls=[left_col, right_col],
+                vertical_alignment=ft.CrossAxisAlignment.START,
+                expand=True,
+                spacing=LayoutConstants.SPACING_LG,
+            )
+        ]
 
-        return content
-
+        return self._main_container
     def _create_info_row(self, label: str, value: str) -> ft.Row:
         """Crea una fila de información."""
         return ft.Row(
@@ -468,6 +509,11 @@ class QuoteDetailView(ft.Container):
         """Callback cuando se confirma la eliminación."""
         if self.on_delete:
             self.on_delete(self.quote_id)
+
+    def _on_add_products_click(self, e=None) -> None:
+        """Callback para agregar productos."""
+        if self.on_add_products:
+            self.on_add_products(self.quote_id)
 
     def _on_back_click(self, e: ft.ControlEvent) -> None:
         """Callback para volver atrás."""
