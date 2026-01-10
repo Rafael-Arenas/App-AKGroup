@@ -86,10 +86,22 @@ class QuoteProductsView(ft.Column):
 
     def build(self) -> ft.Container:
         """Construye el componente de vista de productos."""
-        # Contenedores para actualización dinámica
-        self._products_container = ft.Column(expand=True)
+        # Contenedores para actualización dinámica con estado inicial
+        self._products_container = ft.Column(
+            controls=[LoadingSpinner(message="Cargando productos...")],
+            expand=True
+        )
         self._details_container = ft.Column()
-        self._selected_container = ft.Column(expand=True)
+        self._selected_container = ft.Column(
+            controls=[
+                EmptyState(
+                    icon=ft.Icons.SHOPPING_CART_OUTLINED,
+                    title="Sin productos",
+                    message="Selecciona productos para agregarlos",
+                )
+            ],
+            expand=True
+        )
 
         # Header
         header = ft.Row(
@@ -285,10 +297,6 @@ class QuoteProductsView(ft.Column):
             content=self._selected_container,
         )
 
-        # Inicializar contenido dinámico
-        self._update_products_ui()
-        self._update_selected_ui()
-
         # Layout principal (envuelto en Container para padding)
         content = ft.Container(
             content=ft.Column(
@@ -344,12 +352,16 @@ class QuoteProductsView(ft.Column):
                 formatted_products.append({
                     "id": p.get("id"),
                     "reference": p.get("reference", ""),
-                    "designation": p.get("designation_es", ""),
+                    "designation": p.get("designation_es") or p.get("name") or p.get("short_designation", "-"),
                     "family": p.get("family_type", {}).get("name", "-") if isinstance(p.get("family_type"), dict) else "-",
                     "actions": t("common.select"),
                     "_raw": p,
                 })
+            
+            # Actualizar datos de la tabla
             self._products_table.set_data(formatted_products, total=len(formatted_products))
+            
+            # ASEGURAR que la tabla esté en los controles del contenedor
             self._products_container.controls.append(self._products_table)
 
     def _update_selected_ui(self) -> None:
@@ -406,6 +418,8 @@ class QuoteProductsView(ft.Column):
         logger.info("QuoteProductsView mounted")
         app_state.theme.add_observer(self._on_state_changed)
         app_state.i18n.add_observer(self._on_state_changed)
+        
+        # Cargar productos - esto inicializará la UI automáticamente
         if self.page:
             self.page.run_task(self.load_products)
 
@@ -440,8 +454,14 @@ class QuoteProductsView(ft.Column):
                 limit=100,
             )
 
+            # El backend devuelve una lista directamente para /type/{TYPE}
             self._products = result if isinstance(result, list) else []
             logger.info(f"Received {len(self._products)} products from API")
+
+            # Depuración: Loguear el primer producto para ver qué campos trae
+            if self._products:
+                logger.debug(f"Sample product keys: {list(self._products[0].keys())}")
+                logger.debug(f"Sample product: {self._products[0]}")
 
             logger.success(f"Products loaded successfully: {len(self._products)} items")
 
@@ -456,6 +476,10 @@ class QuoteProductsView(ft.Column):
             self._update_products_ui()
             if self.page:
                 self.update()
+                # Pequeña pausa y re-actualización para asegurar que Flet renderice
+                import asyncio
+                await asyncio.sleep(0.1)
+                self.update()
 
     def _on_product_type_click(self, product_type: str) -> None:
         """Callback cuando se hace click en un tipo de producto."""
@@ -465,14 +489,29 @@ class QuoteProductsView(ft.Column):
         self._product_type = product_type
         logger.info(f"Product type changed: {self._product_type}")
         
+        # Actualizar visualmente los botones inmediatamente
+        if self._article_button:
+            self._article_button.style.bgcolor = ft.Colors.PRIMARY if self._product_type == "article" else ft.Colors.GREY_300
+            # Actualizar colores de texto/icono si es necesario (Flet v0.80+)
+            for ctrl in self._article_button.content.controls:
+                if isinstance(ctrl, (ft.Icon, ft.Text)):
+                    ctrl.color = ft.Colors.WHITE if self._product_type == "article" else None
+        
+        if self._nomenclature_button:
+            self._nomenclature_button.style.bgcolor = ft.Colors.PRIMARY if self._product_type == "nomenclature" else ft.Colors.GREY_300
+            for ctrl in self._nomenclature_button.content.controls:
+                if isinstance(ctrl, (ft.Icon, ft.Text)):
+                    ctrl.color = ft.Colors.WHITE if self._product_type == "nomenclature" else None
+
         # Limpiar selección actual del producto
         self._selected_product = None
         self._search_query = ""
         if self._search_field:
             self._search_field.value = ""
         
-        # Recargar productos (esto reconstruirá la vista con el nuevo tipo)
+        # Recargar productos
         if self.page:
+            self.update() # Actualizar estado visual de botones
             self.page.run_task(self.load_products)
 
     def _on_search_change(self, e: ft.ControlEvent) -> None:
@@ -518,13 +557,17 @@ class QuoteProductsView(ft.Column):
                 page_size=100,
             )
 
-            all_products = result.get("items", [])
+            # El backend devuelve una lista directamente para /search o un dict con 'items'
+            if isinstance(result, dict):
+                all_products = result.get("items", [])
+            else:
+                all_products = result if isinstance(result, list) else []
             
-            # Filtrar por tipo (comparar en minúsculas para consistencia)
-            product_type_lower = self._product_type.lower()
+            # Filtrar por tipo (comparar en mayúsculas para consistencia)
+            product_type_upper = self._product_type.upper()
             self._products = [
                 p for p in all_products 
-                if p.get("product_type", "").lower() == product_type_lower
+                if p.get("product_type", "").upper() == product_type_upper
             ]
 
             logger.success(f"Search completed: {len(self._products)} results")
@@ -608,7 +651,7 @@ class QuoteProductsView(ft.Column):
         selected_item = {
             "product_id": self._selected_product.get("id"),
             "reference": self._selected_product.get("reference", ""),
-            "designation": self._selected_product.get("designation_es", ""),
+            "designation": self._selected_product.get("designation_es") or self._selected_product.get("name") or self._selected_product.get("short_designation", "-"),
             "quantity": float(quantity),
             "unit_price": float(unit_price),
             "discount_percentage": float(discount),
@@ -730,9 +773,8 @@ class QuoteProductsView(ft.Column):
 
     def _on_state_changed(self) -> None:
         """Observer: Se ejecuta cuando cambia el estado."""
-        logger.debug("QuoteProductsView state changed, rebuilding content")
-        # No reconstruir durante la carga para evitar conflictos
-        if not self._is_loading:
-            self.controls = [self.build()]
-            if self.page:
-                self.update()
+        logger.debug("QuoteProductsView state changed, updating view")
+        # Solo actualizar la vista existente, no reconstruir
+        # Reconstruir crearía nuevos contenedores y rompería las referencias
+        if self.page and not self._is_loading:
+            self.update()
