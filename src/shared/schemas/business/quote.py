@@ -73,6 +73,20 @@ class QuoteProductUpdate(BaseModel):
     notes: Optional[str] = Field(None, max_length=1000)
 
 
+
+class ProductSummary(BaseModel):
+    """Resumen de producto para incluir en respuestas de quote product."""
+    
+    id: int
+    reference: str
+    designation_es: Optional[str] = None
+    designation_en: Optional[str] = None
+    designation_fr: Optional[str] = None
+    product_type: str = "article"
+    
+    model_config = ConfigDict(from_attributes=True)
+
+
 class QuoteProductResponse(QuoteProductBase):
     """
     Schema for quote product response.
@@ -89,7 +103,13 @@ class QuoteProductResponse(QuoteProductBase):
             "unit_price": "1500.00",
             "discount_percentage": "10.00",
             "discount_amount": "750.00",
-            "subtotal": "6750.00"
+            "subtotal": "6750.00",
+            "product": {
+                "id": 10,
+                "reference": "PROD-001",
+                "designation_es": "Tornillo M6",
+                "product_type": "article"
+            }
         }
     """
 
@@ -97,6 +117,7 @@ class QuoteProductResponse(QuoteProductBase):
     quote_id: int
     discount_amount: Decimal
     subtotal: Decimal
+    product: Optional[ProductSummary] = None
 
     model_config = ConfigDict(from_attributes=True)
 
