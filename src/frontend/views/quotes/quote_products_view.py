@@ -88,18 +88,10 @@ class QuoteProductsView(ft.Column):
         """Construye el componente de vista de productos."""
         # Contenedores para actualización dinámica con estado inicial
         self._products_container = ft.Column(
-            controls=[LoadingSpinner(message="Cargando productos...")],
             expand=True
         )
         self._details_container = ft.Column()
         self._selected_container = ft.Column(
-            controls=[
-                EmptyState(
-                    icon=ft.Icons.SHOPPING_CART_OUTLINED,
-                    title="Sin productos",
-                    message="Selecciona productos para agregarlos",
-                )
-            ],
             expand=True
         )
 
@@ -358,11 +350,35 @@ class QuoteProductsView(ft.Column):
                     "_raw": p,
                 })
             
-            # Actualizar datos de la tabla
-            self._products_table.set_data(formatted_products, total=len(formatted_products))
+            logger.debug(f"Formatted {len(formatted_products)} products for display")
             
-            # ASEGURAR que la tabla esté en los controles del contenedor
-            self._products_container.controls.append(self._products_table)
+            # Crear una nueva tabla con los datos (en lugar de reutilizar la existente)
+            # Esto es necesario porque Flet no propaga correctamente las actualizaciones
+            # cuando se usa set_data en una tabla ya montada
+            products_table = DataTable(
+                columns=[
+                    {"key": "reference", "label": "articles.columns.code", "sortable": True},
+                    {"key": "designation", "label": "articles.columns.name", "sortable": True},
+                    {"key": "family", "label": "articles.form.family_type", "sortable": True},
+                    {"key": "actions", "label": "common.actions", "sortable": False},
+                ],
+                data=formatted_products,
+                page_size=10,
+                on_row_click=self._on_product_select,
+            )
+            self._products_container.controls.append(products_table)
+            
+            logger.debug(f"Products table added to container. Container has {len(self._products_container.controls)} controls")
+        
+        # Actualizar la vista completa si está montada
+        if self.page:
+            # Forzar actualización del contenedor de productos primero
+            try:
+                self._products_container.update()
+            except Exception:
+                pass
+            self.update()
+            logger.debug("Parent view updated after products UI change")
 
     def _update_selected_ui(self) -> None:
         """Actualiza la sección de productos seleccionados."""
@@ -391,10 +407,23 @@ class QuoteProductsView(ft.Column):
                     "actions": t("common.remove"),
                     "_original": item,
                 })
-            self._selected_products_table.set_data(formatted_selected, total=len(formatted_selected))
+            
+            # Crear una nueva tabla con los datos
+            selected_table = DataTable(
+                columns=[
+                    {"key": "reference", "label": "articles.columns.code", "sortable": False},
+                    {"key": "designation", "label": "articles.columns.name", "sortable": False},
+                    {"key": "quantity", "label": "articles.form.quantity", "sortable": False},
+                    {"key": "unit_price", "label": "quotes.products_table.unit_price", "sortable": False},
+                    {"key": "actions", "label": "common.actions", "sortable": False},
+                ],
+                data=formatted_selected,
+                page_size=10,
+                on_row_click=self._on_remove_selected_product,
+            )
             
             self._selected_container.controls.extend([
-                self._selected_products_table,
+                selected_table,
                 ft.Divider(),
                 ft.Row(
                     controls=[
@@ -412,6 +441,16 @@ class QuoteProductsView(ft.Column):
                     alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                 ),
             ])
+        
+        # Actualizar la vista completa si está montada
+        if self.page:
+            # Forzar actualización del contenedor de seleccionados primero
+            try:
+                self._selected_container.update()
+            except Exception:
+                pass
+            self.update()
+            logger.debug("Parent view updated after selected UI change")
 
     def did_mount(self) -> None:
         """Lifecycle: Se ejecuta cuando el componente se monta."""
@@ -419,7 +458,11 @@ class QuoteProductsView(ft.Column):
         app_state.theme.add_observer(self._on_state_changed)
         app_state.i18n.add_observer(self._on_state_changed)
         
-        # Cargar productos - esto inicializará la UI automáticamente
+        # Inicializar UI con estados base
+        self._update_products_ui()
+        self._update_selected_ui()
+        
+        # Cargar productos
         if self.page:
             self.page.run_task(self.load_products)
 
