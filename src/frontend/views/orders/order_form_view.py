@@ -271,8 +271,21 @@ class OrderFormView(ft.Column):
 
         except Exception as ex:
             logger.error(f"Error saving order: {ex}")
+            error_str = str(ex)
+            
+            # Detectar errores específicos y mostrar mensajes amigables
+            if "UNIQUE constraint failed: orders.quote_id" in error_str:
+                error_msg = t("orders.messages.quote_already_has_order")
+            elif "UNIQUE constraint failed" in error_str:
+                error_msg = t("orders.messages.duplicate_order")
+            else:
+                # Truncar mensaje si es muy largo
+                if len(error_str) > 100:
+                    error_msg = f"Error: {error_str[:100]}..."
+                else:
+                    error_msg = f"Error: {error_str}"
+            
             if self.page:
-                error_msg = f"Error al guardar: {str(ex)}"
                 self.page.overlay.append(ft.SnackBar(content=ft.Text(error_msg), bgcolor=ft.Colors.ERROR))
                 self.page.overlay[-1].open = True
                 self.page.update()
