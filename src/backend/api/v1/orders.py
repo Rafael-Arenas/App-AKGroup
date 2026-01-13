@@ -17,6 +17,9 @@ from src.shared.schemas.business.order import (
     OrderUpdate,
     OrderResponse,
     OrderListResponse,
+    OrderProductCreate,
+    OrderProductUpdate,
+    OrderProductResponse,
 )
 from src.backend.exceptions.service import ValidationException
 from src.backend.exceptions.repository import NotFoundException
@@ -210,21 +213,21 @@ def get_order(
     service: OrderService = Depends(get_order_service),
 ) -> OrderResponse:
     """
-    Get order by ID.
+    Get order by ID with all products.
 
     Args:
         order_id: Order ID
         service: Order service instance
 
     Returns:
-        Order data
+        Order data with products
 
     Raises:
         404: If order not found
     """
     logger.info(f"GET /orders/{order_id}")
     try:
-        order = service.get_by_id(order_id)
+        order = service.get_with_products(order_id)
         logger.success(f"Order found: id={order_id}")
         return order
     except NotFoundException as e:
@@ -419,6 +422,7 @@ def calculate_order_totals(
     order_id: int,
     user_id: int = Query(..., description="User performing calculation"),
     service: OrderService = Depends(get_order_service),
+    db: Session = Depends(get_db),
 ) -> OrderResponse:
     """
     Recalculate order totals.
@@ -439,15 +443,18 @@ def calculate_order_totals(
     logger.info(f"POST /orders/{order_id}/calculate")
     try:
         order = service.calculate_totals(order_id, user_id)
+        db.commit()
         logger.success(f"Order totals calculated: id={order_id}")
         return order
     except NotFoundException as e:
+        db.rollback()
         logger.warning(f"Order not found: id={order_id}")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e)
         )
     except Exception as e:
+        db.rollback()
         logger.error(f"Error calculating order totals: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -488,3 +495,160 @@ def delete_order(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error deleting order: {str(e)}"
         )
+
+
+# ============================================================================
+# ORDER PRODUCT ENDPOINTS
+# ============================================================================
+
+@router.post("/{order_id}/products", response_model=OrderProductResponse, status_code=status.HTTP_201_CREATED)
+def add_order_product(
+    order_id: int,
+    product: OrderProductCreate,
+    user_id: int = Query(..., description="User adding the product"),
+    service: OrderService = Depends(get_order_service),
+    db: Session = Depends(get_db),
+) -> OrderProductResponse:
+    """
+    Add product to order.
+
+    Args:
+        order_id: Order ID
+        product: Product data
+        user_id: User adding the product
+        service: Order service instance
+        db: Database session
+
+    Returns:
+        Created order product
+
+    Raises:
+        404: If order not found
+        400: If validation fails
+    """
+    logger.info(f"POST /orders/{order_id}/products")
+    try:
+        created = service.add_product(order_id, product, user_id)
+        db.commit()
+        logger.success(f"Product added to order_id={order_id}")
+        return created
+    except NotFoundException as e:
+        db.rollback()
+        logger.warning(f"Order not found: id={order_id}")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e)
+        )
+    except ValidationException as e:
+        db.rollback()
+        logger.warning(f"Validation error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Error adding product to order: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error adding product: {str(e)}"
+        )
+
+
+@router.put("/{order_id}/products/{product_id}", response_model=OrderProductResponse)
+def update_order_product(
+    order_id: int,
+    product_id: int,
+    product: OrderProductUpdate,
+    user_id: int = Query(..., description="User updating the product"),
+    service: OrderService = Depends(get_order_service),
+    db: Session = Depends(get_db),
+) -> OrderProductResponse:
+    """
+    Update order product.
+
+    Args:
+        order_id: Order ID
+        product_id: Order product ID
+        product: Update data
+        user_id: User updating the product
+        service: Order service instance
+        db: Database session
+
+    Returns:
+        Updated order product
+
+    Raises:
+        404: If order or product not found
+        400: If validation fails
+    """
+    logger.info(f"PUT /orders/{order_id}/products/{product_id}")
+    try:
+        updated = service.update_product(order_id, product_id, product, user_id)
+        db.commit()
+        logger.success(f"Product updated in order_id={order_id}")
+        return updated
+    except NotFoundException as e:
+        db.rollback()
+        logger.warning(f"Order or product not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e)
+        )
+    except ValidationException as e:
+        db.rollback()
+        logger.warning(f"Validation error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Error updating order product: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error updating product: {str(e)}"
+        )
+
+
+@router.delete("/{order_id}/products/{product_id}", status_code=status.HTTP_204_NO_CONTENT)
+def remove_order_product(
+    order_id: int,
+    product_id: int,
+    user_id: int = Query(..., description="User removing the product"),
+    service: OrderService = Depends(get_order_service),
+    db: Session = Depends(get_db),
+) -> None:
+    """
+    Remove product from order.
+
+    Args:
+        order_id: Order ID
+        product_id: Order product ID
+        user_id: User removing the product
+        service: Order service instance
+        db: Database session
+
+    Raises:
+        404: If order or product not found
+    """
+    logger.info(f"DELETE /orders/{order_id}/products/{product_id}")
+    try:
+        service.remove_product(order_id, product_id, user_id)
+        db.commit()
+        logger.success(f"Product removed from order_id={order_id}")
+    except NotFoundException as e:
+        db.rollback()
+        logger.warning(f"Order or product not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e)
+        )
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Error removing order product: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error removing product: {str(e)}"
+        )
+
