@@ -130,6 +130,7 @@ class DataTable(ft.Container):
         Returns:
             Control de Flet con la tabla
         """
+        logger.debug(f"DataTable.build called. Data length: {len(self.data)}")
         if not self.data:
             return EmptyState(
                 icon=ft.Icons.TABLE_CHART,
@@ -146,6 +147,8 @@ class DataTable(ft.Container):
             spacing=0,
             scroll=ft.ScrollMode.AUTO,
         )
+        
+        logger.debug(f"DataTable content built. Rows: {len(table_content.controls) - 1}")
 
         # Construir paginación si es necesaria
         pagination = None
@@ -175,9 +178,11 @@ class DataTable(ft.Container):
         # Envolver tabla en contenedor con borde
         table_container = ft.Container(
             content=table_content,
-            border=ft.border.all(1),
+            border=ft.border.all(1, ft.Colors.OUTLINE),
             border_radius=LayoutConstants.RADIUS_SM,
             expand=True,
+            bgcolor=ft.Colors.SURFACE,
+            clip_behavior=ft.ClipBehavior.ANTI_ALIAS,
         )
 
         controls = [table_container]
