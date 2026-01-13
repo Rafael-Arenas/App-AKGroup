@@ -249,29 +249,47 @@ class QuoteDetailView(ft.Container):
         else:
             products_table = DataTable(
                 columns=[
-                    {"key": "product_name", "label": t("quotes.products_table.product"), "sortable": True},
-                    {"key": "quantity", "label": t("quotes.products_table.quantity"), "numeric": True},
-                    {"key": "unit_price", "label": t("quotes.products_table.unit_price"), "numeric": True},
-                    {"key": "discount", "label": t("quotes.products_table.discount"), "numeric": True},
-                    {"key": "total", "label": t("quotes.products_table.total"), "numeric": True},
+                    {"key": "product_name", "label": "quotes.products_table.product", "sortable": True},
+                    {"key": "product_type", "label": "articles.form.type", "sortable": True},
+                    {"key": "quantity", "label": "quotes.products_table.quantity", "numeric": True},
+                    {"key": "unit_price", "label": "quotes.products_table.unit_price", "numeric": True},
+                    {"key": "total", "label": "quotes.products_table.total", "numeric": True},
                 ],
                 page_size=100,
             )
             
+            # Obtener idioma actual para seleccionar la designación correcta
+            current_lang = app_state.i18n.current_language
+            
             formatted_products = []
             for p in products:
-                product_name = p.get("product_name", f"Producto #{p.get('product_id')}") 
+                product_info = p.get("product", {}) or {}
+                
+                # Seleccionar nombre según idioma
+                if current_lang == "es":
+                    product_name = product_info.get("designation_es") or product_info.get("designation_en") or product_info.get("reference", "")
+                elif current_lang == "fr":
+                    product_name = product_info.get("designation_fr") or product_info.get("designation_es") or product_info.get("reference", "")
+                else:
+                    product_name = product_info.get("designation_en") or product_info.get("designation_es") or product_info.get("reference", "")
+                
+                if not product_name:
+                    product_name = f"Producto #{p.get('product_id')}"
+                
+                # Tipo de producto
+                product_type_raw = product_info.get("product_type", "article")
+                product_type = t(f"articles.types.{product_type_raw}") if product_type_raw else "-"
+                
                 qty = float(p.get("quantity", 0))
                 price = float(p.get("unit_price", 0))
-                disc_pct = float(p.get("discount_percentage", 0))
                 subtotal = float(p.get("subtotal", 0))
 
                 formatted_products.append({
                     "id": p.get("id"),
                     "product_name": product_name,
+                    "product_type": product_type,
                     "quantity": f"{qty:.2f}",
                     "unit_price": f"${price:,.2f}",
-                    "discount": f"{disc_pct}%",
                     "total": f"${subtotal:,.2f}",
                 })
                 
