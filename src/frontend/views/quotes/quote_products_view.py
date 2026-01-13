@@ -2,6 +2,7 @@
 Vista para agregar productos (artículos y nomenclaturas) a una cotización.
 
 Permite seleccionar entre artículos y nomenclaturas, buscar productos y agregarlos a la cotización.
+Versión simplificada que evita problemas con actualizaciones dinámicas de DataTable.
 """
 from typing import Callable
 from decimal import Decimal
@@ -15,7 +16,6 @@ from src.frontend.components.common import (
     BaseCard,
     LoadingSpinner,
     ErrorDisplay,
-    DataTable,
     EmptyState,
 )
 from src.frontend.components.forms import ValidatedTextField
@@ -47,53 +47,93 @@ class QuoteProductsView(ft.Column):
     ):
         """Inicializa la vista de productos de cotización."""
         super().__init__()
-        
+
         self.quote_id = quote_id
         self.company_id = company_id
         self.company_type = company_type
         self.on_back = on_back
         self.on_product_added = on_product_added
 
+        # Estado
         self._is_loading: bool = False
         self._error_message: str = ""
-        self._product_type: str = "article"  # "article" o "nomenclature"
-        self._products: list[dict] = []
+        self._articles: list[dict] = []
+        self._nomenclatures: list[dict] = []
         self._selected_product: dict | None = None
         self._search_query: str = ""
-        self._selected_products: list[dict] = []  # Lista de productos seleccionados para agregar
-
-        # Componentes de formulario
-        self._search_field: ft.TextField | None = None
-        self._products_table: DataTable | None = None
-        self._selected_products_table: DataTable | None = None
-        self._details_form: ft.Column | None = None
-        self._quantity_field: ValidatedTextField | None = None
-        self._unit_price_field: ValidatedTextField | None = None
-        self._discount_field: ValidatedTextField | None = None
-        self._notes_field: ft.TextField | None = None
-        self._article_button: ft.Button | None = None
-        self._nomenclature_button: ft.Button | None = None
+        self._selected_products: list[dict] = []  # Lista de productos para agregar
+        self._active_type: str = "article"  # "article" o "nomenclature"
 
         # Configurar propiedades de la columna
         self.expand = True
         self.spacing = LayoutConstants.SPACING_LG
         self.scroll = ft.ScrollMode.AUTO
 
-        # Construir contenido inicial
-        self.controls = [self.build()]
-
         logger.info(f"QuoteProductsView initialized: quote_id={quote_id}")
 
-    def build(self) -> ft.Container:
-        """Construye el componente de vista de productos."""
-        # Contenedores para actualización dinámica con estado inicial
-        self._products_container = ft.Column(
-            expand=True
-        )
-        self._details_container = ft.Column()
-        self._selected_container = ft.Column(
-            expand=True
-        )
+    def did_mount(self) -> None:
+        """Lifecycle: Se ejecuta cuando el componente se monta."""
+        logger.info("QuoteProductsView mounted")
+        app_state.theme.add_observer(self._on_state_changed)
+        app_state.i18n.add_observer(self._on_state_changed)
+
+        # Configurar breadcrumb
+        app_state.navigation.set_breadcrumb([
+            {"label": "clients.title", "route": "/companies/clients"},
+            {"label": "dashboard.title", "route": f"/companies/dashboard/{self.company_id}/{self.company_type}"},
+            {"label": "quotes.title", "route": f"/companies/dashboard/{self.company_id}/{self.company_type}/quotes"},
+            {"label": "quotes.detail", "route": f"/companies/dashboard/{self.company_id}/{self.company_type}/quotes/{self.quote_id}"},
+            {"label": "quotes.add_products", "route": None},
+        ])
+
+        # Cargar productos
+        if self.page:
+            self.page.run_task(self._load_all_products)
+
+    def will_unmount(self) -> None:
+        """Lifecycle: Se ejecuta cuando el componente se desmonta."""
+        app_state.theme.remove_observer(self._on_state_changed)
+        app_state.i18n.remove_observer(self._on_state_changed)
+
+    async def _load_all_products(self) -> None:
+        """Carga todos los productos (artículos y nomenclaturas)."""
+        logger.info("Loading all products...")
+        self._is_loading = True
+        self._error_message = ""
+        self._rebuild_ui()
+
+        try:
+            from src.frontend.services.api import product_api
+
+            # Cargar artículos
+            articles_result = await product_api.get_by_type(
+                product_type="article",
+                skip=0,
+                limit=100,
+            )
+            self._articles = articles_result if isinstance(articles_result, list) else []
+            logger.success(f"Loaded {len(self._articles)} articles")
+
+            # Cargar nomenclaturas
+            nomenclatures_result = await product_api.get_by_type(
+                product_type="nomenclature",
+                skip=0,
+                limit=100,
+            )
+            self._nomenclatures = nomenclatures_result if isinstance(nomenclatures_result, list) else []
+            logger.success(f"Loaded {len(self._nomenclatures)} nomenclatures")
+
+        except Exception as e:
+            logger.exception(f"Error loading products: {e}")
+            self._error_message = f"Error al cargar productos: {str(e)}"
+
+        finally:
+            self._is_loading = False
+            self._rebuild_ui()
+
+    def _rebuild_ui(self) -> None:
+        """Reconstruye toda la UI."""
+        self.controls.clear()
 
         # Header
         header = ft.Row(
@@ -113,637 +153,426 @@ class QuoteProductsView(ft.Column):
             spacing=LayoutConstants.SPACING_SM,
         )
 
-        # Selector de tipo de producto
-        self._article_button = ft.Button(
-            content=ft.Row(
-                controls=[
-                    ft.Icon(ft.Icons.INVENTORY_2, color=ft.Colors.WHITE if self._product_type == "article" else None),
-                    ft.Text(t("articles.types.article"), color=ft.Colors.WHITE if self._product_type == "article" else None),
-                ],
-                spacing=8,
-            ),
-            on_click=lambda e: self._on_product_type_click("article"),
-            style=ft.ButtonStyle(
-                bgcolor=ft.Colors.PRIMARY if self._product_type == "article" else ft.Colors.GREY_300,
-            ),
-        )
-        
-        self._nomenclature_button = ft.Button(
-            content=ft.Row(
-                controls=[
-                    ft.Icon(ft.Icons.LIST_ALT, color=ft.Colors.WHITE if self._product_type == "nomenclature" else None),
-                    ft.Text(t("articles.types.nomenclature"), color=ft.Colors.WHITE if self._product_type == "nomenclature" else None),
-                ],
-                spacing=8,
-            ),
-            on_click=lambda e: self._on_product_type_click("nomenclature"),
-            style=ft.ButtonStyle(
-                bgcolor=ft.Colors.PRIMARY if self._product_type == "nomenclature" else ft.Colors.GREY_300,
-            ),
-        )
-        
-        product_type_selector = ft.Row(
-            controls=[
-                ft.Text(
-                    f"{t('articles.form.type')}:",
-                    size=LayoutConstants.FONT_SIZE_LG,
-                    weight=LayoutConstants.FONT_WEIGHT_SEMIBOLD,
+        # Contenido principal
+        if self._is_loading:
+            content = ft.Container(
+                content=LoadingSpinner(message="Cargando productos..."),
+                expand=True,
+                alignment=ft.Alignment(0, 0),  # center
+            )
+        elif self._error_message:
+            content = ErrorDisplay(message=self._error_message)
+        else:
+            content = self._build_main_content()
+
+        self.controls.extend([
+            ft.Container(
+                content=ft.Column(
+                    controls=[header, content],
+                    spacing=LayoutConstants.SPACING_LG,
+                    expand=True,
                 ),
-                ft.Container(width=20),
-                self._article_button,
-                self._nomenclature_button,
+                padding=LayoutConstants.PADDING_LG,
+                expand=True,
+            )
+        ])
+
+        if self.page:
+            self.update()
+
+    def _build_main_content(self) -> ft.Control:
+        """Construye el contenido principal con selector de tipo."""
+        # Botones de selección de tipo
+        is_article = self._active_type == "article"
+        
+        type_selector = ft.Row(
+            controls=[
+                ft.Container(
+                    content=ft.Row(
+                        controls=[
+                            ft.Icon(ft.Icons.INVENTORY_2, color=ft.Colors.WHITE if is_article else None, size=20),
+                            ft.Text(
+                                f"{t('articles.types.article')} ({len(self._articles)})",
+                                color=ft.Colors.WHITE if is_article else None,
+                                weight=ft.FontWeight.BOLD if is_article else None,
+                            ),
+                        ],
+                        spacing=8,
+                    ),
+                    padding=ft.padding.symmetric(horizontal=16, vertical=10),
+                    bgcolor=ft.Colors.PRIMARY if is_article else ft.Colors.SURFACE_CONTAINER,
+                    border_radius=8,
+                    on_click=lambda e: self._switch_type("article"),
+                    ink=True,
+                ),
+                ft.Container(
+                    content=ft.Row(
+                        controls=[
+                            ft.Icon(ft.Icons.LIST_ALT, color=ft.Colors.WHITE if not is_article else None, size=20),
+                            ft.Text(
+                                f"{t('articles.types.nomenclature')} ({len(self._nomenclatures)})",
+                                color=ft.Colors.WHITE if not is_article else None,
+                                weight=ft.FontWeight.BOLD if not is_article else None,
+                            ),
+                        ],
+                        spacing=8,
+                    ),
+                    padding=ft.padding.symmetric(horizontal=16, vertical=10),
+                    bgcolor=ft.Colors.PRIMARY if not is_article else ft.Colors.SURFACE_CONTAINER,
+                    border_radius=8,
+                    on_click=lambda e: self._switch_type("nomenclature"),
+                    ink=True,
+                ),
             ],
             spacing=LayoutConstants.SPACING_SM,
         )
 
-        # Buscador
-        self._search_field = ft.TextField(
-            label=t("common.search"),
-            hint_text=t("articles.search_placeholder"),
-            prefix_icon=ft.Icons.SEARCH,
-            on_change=self._on_search_change,
-            on_submit=self._on_search_submit,
+        # Lista de productos según el tipo seleccionado
+        if self._active_type == "article":
+            products_list = self._build_products_list(self._articles, "article")
+        else:
+            products_list = self._build_products_list(self._nomenclatures, "nomenclature")
+
+        # Panel izquierdo con selector y lista
+        left_panel = ft.Column(
+            controls=[
+                type_selector,
+                ft.Divider(),
+                ft.Container(content=products_list, expand=True),
+            ],
+            spacing=LayoutConstants.SPACING_MD,
             expand=True,
         )
 
-        search_row = ft.Row(
+        # Panel de productos seleccionados (lado derecho)
+        selected_panel = self._build_selected_panel()
+
+        # Layout principal
+        return ft.Row(
             controls=[
-                self._search_field,
-                ft.Button(
-                    content=ft.Text(t("common.search")),
-                    icon=ft.Icons.SEARCH,
-                    on_click=self._on_search_click,
+                ft.Container(content=left_panel, expand=3),
+                ft.VerticalDivider(width=1),
+                ft.Container(content=selected_panel, expand=2),
+            ],
+            expand=True,
+            spacing=LayoutConstants.SPACING_MD,
+        )
+
+    def _switch_type(self, product_type: str) -> None:
+        """Cambia el tipo de producto activo."""
+        if self._active_type != product_type:
+            self._active_type = product_type
+            logger.info(f"Switched to product type: {product_type}")
+            self._rebuild_ui()
+
+    def _build_products_list(self, products: list[dict], product_type: str) -> ft.Control:
+        """Construye la lista de productos como cards."""
+        if not products:
+            return ft.Container(
+                content=EmptyState(
+                    icon=ft.Icons.INVENTORY_2,
+                    title="Sin productos",
+                    message=f"No hay {product_type}s disponibles",
+                ),
+                expand=True,
+                padding=LayoutConstants.PADDING_LG,
+            )
+
+        # Crear lista de cards
+        product_cards = []
+        for p in products:
+            card = self._build_product_card(p)
+            product_cards.append(card)
+
+        return ft.Container(
+            content=ft.Column(
+                controls=product_cards,
+                spacing=LayoutConstants.SPACING_SM,
+                scroll=ft.ScrollMode.AUTO,
+                expand=True,
+            ),
+            padding=LayoutConstants.PADDING_MD,
+            expand=True,
+        )
+
+    def _build_product_card(self, product: dict) -> ft.Control:
+        """Construye una card para un producto."""
+        reference = product.get("reference", "")
+        name = product.get("designation_es") or product.get("designation_en") or product.get("short_designation", "-")
+        family = product.get("family_type", {}).get("name", "-") if isinstance(product.get("family_type"), dict) else "-"
+        price = product.get("sale_price", "0")
+
+        # Verificar si ya está seleccionado
+        is_selected = any(sp.get("product_id") == product.get("id") for sp in self._selected_products)
+
+        return ft.Container(
+            content=ft.Row(
+                controls=[
+                    ft.Column(
+                        controls=[
+                            ft.Text(reference, weight=ft.FontWeight.BOLD, size=LayoutConstants.FONT_SIZE_MD),
+                            ft.Text(name, size=LayoutConstants.FONT_SIZE_SM, color=ft.Colors.ON_SURFACE_VARIANT),
+                            ft.Text(f"Familia: {family}", size=LayoutConstants.FONT_SIZE_XS, color=ft.Colors.ON_SURFACE_VARIANT),
+                        ],
+                        spacing=2,
+                        expand=True,
+                    ),
+                    ft.Column(
+                        controls=[
+                            ft.Text(f"${float(price):,.2f}", weight=ft.FontWeight.BOLD, color=ft.Colors.PRIMARY),
+                            ft.IconButton(
+                                icon=ft.Icons.CHECK_CIRCLE if is_selected else ft.Icons.ADD_CIRCLE_OUTLINE,
+                                icon_color=ft.Colors.GREEN if is_selected else ft.Colors.PRIMARY,
+                                tooltip="Ya agregado" if is_selected else "Agregar",
+                                on_click=lambda e, p=product: self._on_add_product(p),
+                                disabled=is_selected,
+                            ),
+                        ],
+                        horizontal_alignment=ft.CrossAxisAlignment.END,
+                    ),
+                ],
+                alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+            ),
+            padding=LayoutConstants.PADDING_MD,
+            border=ft.border.all(1, ft.Colors.OUTLINE_VARIANT),
+            border_radius=LayoutConstants.RADIUS_SM,
+            bgcolor=ft.Colors.SURFACE_CONTAINER_LOWEST if is_selected else ft.Colors.SURFACE,
+            on_hover=lambda e: setattr(e.control, 'bgcolor', ft.Colors.SURFACE_CONTAINER if e.data == "true" else ft.Colors.SURFACE),
+        )
+
+    def _build_selected_panel(self) -> ft.Control:
+        """Construye el panel de productos seleccionados."""
+        header = ft.Row(
+            controls=[
+                ft.Icon(ft.Icons.SHOPPING_CART, size=LayoutConstants.ICON_SIZE_MD),
+                ft.Text(
+                    f"Productos a agregar ({len(self._selected_products)})",
+                    size=LayoutConstants.FONT_SIZE_LG,
+                    weight=ft.FontWeight.BOLD,
                 ),
             ],
             spacing=LayoutConstants.SPACING_SM,
         )
 
-        # Tabla de productos
-        self._products_table = DataTable(
-            columns=[
-                {"key": "reference", "label": "articles.columns.code", "sortable": True},
-                {"key": "designation", "label": "articles.columns.name", "sortable": True},
-                {"key": "family", "label": "articles.form.family_type", "sortable": True},
-                {"key": "actions", "label": "common.actions", "sortable": False},
-            ],
-            page_size=10,
-            on_row_click=self._on_product_select,
-        )
+        if not self._selected_products:
+            content = EmptyState(
+                icon=ft.Icons.SHOPPING_CART_OUTLINED,
+                title="Sin productos",
+                message="Haz clic en + para agregar productos",
+            )
+            footer = ft.Container()
+        else:
+            # Lista de productos seleccionados
+            selected_cards = []
+            for i, item in enumerate(self._selected_products):
+                card = self._build_selected_item_card(item, i)
+                selected_cards.append(card)
 
-        # Formulario de detalles
-        self._quantity_field = ValidatedTextField(
-            label=t("articles.form.quantity"),
-            hint_text=t("articles.form.quantity"),
-            required=True,
-        )
+            content = ft.Column(
+                controls=selected_cards,
+                spacing=LayoutConstants.SPACING_SM,
+                scroll=ft.ScrollMode.AUTO,
+                expand=True,
+            )
 
-        self._unit_price_field = ValidatedTextField(
-            label=t("quotes.products_table.unit_price"),
-            hint_text="0.00",
-            required=True,
-        )
+            # Total y botón guardar
+            total_amount = sum(
+                float(item.get("quantity", 0)) * float(item.get("unit_price", 0))
+                for item in self._selected_products
+            )
 
-        self._discount_field = ValidatedTextField(
-            label=t("quotes.products_table.discount"),
-            hint_text="0",
-            required=False,
-        )
-
-        self._notes_field = ft.TextField(
-            label=t("quotes.fields.notes"),
-            hint_text=t("quotes.fields.notes"),
-            multiline=True,
-            min_lines=2,
-            max_lines=4,
-        )
-
-        self._details_form = ft.Column(
-            controls=[
-                ft.Text(
-                    t("quotes.products_table.product"),
-                    size=LayoutConstants.FONT_SIZE_LG,
-                    weight=LayoutConstants.FONT_WEIGHT_SEMIBOLD,
-                ),
-                ft.Divider(),
-                self._quantity_field,
-                self._unit_price_field,
-                self._discount_field,
-                self._notes_field,
-                ft.Row(
-                    controls=[
-                        ft.Button(
-                            content=ft.Text(t("common.cancel")),
-                            on_click=self._on_cancel_click,
-                        ),
-                        ft.Button(
-                            content=ft.Text(t("common.add")),
-                            icon=ft.Icons.ADD,
-                            on_click=self._on_add_product_click,
-                        ),
-                    ],
-                    alignment=ft.MainAxisAlignment.END,
-                    spacing=LayoutConstants.SPACING_SM,
-                ),
-            ],
-            spacing=LayoutConstants.SPACING_MD,
-            visible=False,
-        )
-
-        # Tabla de seleccionados
-        self._selected_products_table = DataTable(
-            columns=[
-                {"key": "reference", "label": "articles.columns.code", "sortable": False},
-                {"key": "designation", "label": "articles.columns.name", "sortable": False},
-                {"key": "quantity", "label": "articles.form.quantity", "sortable": False},
-                {"key": "unit_price", "label": "quotes.products_table.unit_price", "sortable": False},
-                {"key": "actions", "label": "common.actions", "sortable": False},
-            ],
-            page_size=10,
-            on_row_click=self._on_remove_selected_product,
-        )
-
-        # Cards
-        products_card = BaseCard(
-            title=t("articles.title"),
-            icon=ft.Icons.INVENTORY_2,
-            content=ft.Column(
+            footer = ft.Column(
                 controls=[
-                    search_row,
                     ft.Divider(),
-                    self._products_container,
+                    ft.Row(
+                        controls=[
+                            ft.Text("Total estimado:", weight=ft.FontWeight.BOLD),
+                            ft.Text(f"${total_amount:,.2f}", weight=ft.FontWeight.BOLD, color=ft.Colors.PRIMARY),
+                        ],
+                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                    ),
+                    ft.ElevatedButton(
+                        content=ft.Text(t("common.save")),
+                        icon=ft.Icons.SAVE,
+                        on_click=self._on_save_click,
+                        bgcolor=ft.Colors.PRIMARY,
+                        color=ft.Colors.ON_PRIMARY,
+                    ),
                 ],
-                spacing=LayoutConstants.SPACING_MD,
-            ),
-        )
+                spacing=LayoutConstants.SPACING_SM,
+            )
 
-        details_card = BaseCard(
-            title=t("common.edit"),
-            icon=ft.Icons.EDIT,
-            content=self._details_container,
-        )
-        self._details_container.controls = [self._details_form]
-
-        selected_card = BaseCard(
-            title=t("quotes.sections.products"),
-            icon=ft.Icons.SHOPPING_CART,
-            content=self._selected_container,
-        )
-
-        # Layout principal (envuelto en Container para padding)
-        content = ft.Container(
+        return ft.Container(
             content=ft.Column(
                 controls=[
                     header,
-                    product_type_selector,
-                    ft.Row(
-                        controls=[
-                            ft.Container(content=products_card, expand=2),
-                            ft.Container(content=details_card, expand=1),
-                            ft.Container(content=selected_card, expand=2),
-                        ],
-                        vertical_alignment=ft.CrossAxisAlignment.START,
-                        expand=True,
-                        spacing=LayoutConstants.SPACING_LG,
-                    ),
+                    ft.Divider(),
+                    ft.Container(content=content, expand=True),
+                    footer,
                 ],
-                spacing=LayoutConstants.SPACING_LG,
+                spacing=LayoutConstants.SPACING_SM,
                 expand=True,
             ),
-            padding=LayoutConstants.PADDING_LG,
+            padding=LayoutConstants.PADDING_MD,
+            border=ft.border.all(1, ft.Colors.OUTLINE),
+            border_radius=LayoutConstants.RADIUS_MD,
             expand=True,
         )
 
-        return content
+    def _build_selected_item_card(self, item: dict, index: int) -> ft.Control:
+        """Construye una card para un producto seleccionado."""
+        subtotal = float(item.get("quantity", 0)) * float(item.get("unit_price", 0))
 
-    def _update_products_ui(self) -> None:
-        """Actualiza la sección de productos disponibles."""
-        if not hasattr(self, "_products_container"):
-            return
-
-        self._products_container.controls.clear()
-
-        if self._is_loading:
-            self._products_container.controls.append(
-                LoadingSpinner(message="Cargando productos...")
-            )
-        elif self._error_message:
-            self._products_container.controls.append(
-                ErrorDisplay(message=self._error_message)
-            )
-        elif not self._products:
-            self._products_container.controls.append(
-                EmptyState(
-                    icon=ft.Icons.INVENTORY_2,
-                    title="Sin productos",
-                    message=f"No hay {self._product_type}s disponibles",
-                )
-            )
-        else:
-            formatted_products = []
-            for p in self._products:
-                formatted_products.append({
-                    "id": p.get("id"),
-                    "reference": p.get("reference", ""),
-                    "designation": p.get("designation_es") or p.get("name") or p.get("short_designation", "-"),
-                    "family": p.get("family_type", {}).get("name", "-") if isinstance(p.get("family_type"), dict) else "-",
-                    "actions": t("common.select"),
-                    "_raw": p,
-                })
-            
-            logger.debug(f"Formatted {len(formatted_products)} products for display")
-            
-            # Crear una nueva tabla con los datos (en lugar de reutilizar la existente)
-            # Esto es necesario porque Flet no propaga correctamente las actualizaciones
-            # cuando se usa set_data en una tabla ya montada
-            products_table = DataTable(
-                columns=[
-                    {"key": "reference", "label": "articles.columns.code", "sortable": True},
-                    {"key": "designation", "label": "articles.columns.name", "sortable": True},
-                    {"key": "family", "label": "articles.form.family_type", "sortable": True},
-                    {"key": "actions", "label": "common.actions", "sortable": False},
+        return ft.Container(
+            content=ft.Column(
+                controls=[
+                    ft.Row(
+                        controls=[
+                            ft.Text(item.get("reference", ""), weight=ft.FontWeight.BOLD),
+                            ft.IconButton(
+                                icon=ft.Icons.DELETE_OUTLINE,
+                                icon_color=ft.Colors.ERROR,
+                                tooltip="Eliminar",
+                                on_click=lambda e, idx=index: self._on_remove_product(idx),
+                                icon_size=18,
+                            ),
+                        ],
+                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                    ),
+                    ft.Text(item.get("designation", ""), size=LayoutConstants.FONT_SIZE_SM),
+                    ft.Row(
+                        controls=[
+                            ft.Text(f"Cant: {item.get('quantity', 0)}", size=LayoutConstants.FONT_SIZE_XS),
+                            ft.Text(f"P.U: ${float(item.get('unit_price', 0)):,.2f}", size=LayoutConstants.FONT_SIZE_XS),
+                            ft.Text(f"= ${subtotal:,.2f}", size=LayoutConstants.FONT_SIZE_XS, weight=ft.FontWeight.BOLD),
+                        ],
+                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                    ),
                 ],
-                data=formatted_products,
-                page_size=10,
-                on_row_click=self._on_product_select,
-            )
-            self._products_container.controls.append(products_table)
-            
-            logger.debug(f"Products table added to container. Container has {len(self._products_container.controls)} controls")
+                spacing=2,
+            ),
+            padding=LayoutConstants.PADDING_SM,
+            border=ft.border.all(1, ft.Colors.OUTLINE_VARIANT),
+            border_radius=LayoutConstants.RADIUS_SM,
+            bgcolor=ft.Colors.SURFACE_CONTAINER_LOWEST,
+        )
+
+    def _on_add_product(self, product: dict) -> None:
+        """Muestra diálogo para agregar un producto."""
+        product_name = product.get("designation_es") or product.get("designation_en") or product.get("reference", "")
+        sale_price = product.get("sale_price", "0")
+
+        # Campos del formulario
+        quantity_field = ft.TextField(
+            label="Cantidad",
+            value="1",
+            keyboard_type=ft.KeyboardType.NUMBER,
+            autofocus=True,
+        )
         
-        # Actualizar la vista completa si está montada
-        if self.page:
-            # Forzar actualización del contenedor de productos primero
+        price_field = ft.TextField(
+            label="Precio Unitario",
+            value=str(sale_price),
+            keyboard_type=ft.KeyboardType.NUMBER,
+        )
+
+        discount_field = ft.TextField(
+            label="Descuento (%)",
+            value="0",
+            keyboard_type=ft.KeyboardType.NUMBER,
+        )
+
+        notes_field = ft.TextField(
+            label="Notas",
+            multiline=True,
+            min_lines=2,
+            max_lines=3,
+        )
+
+        def handle_add(e):
             try:
-                self._products_container.update()
-            except Exception:
-                pass
-            self.update()
-            logger.debug("Parent view updated after products UI change")
+                qty = Decimal(quantity_field.value or "1")
+                price = Decimal(price_field.value or "0")
+                discount = Decimal(discount_field.value or "0")
 
-    def _update_selected_ui(self) -> None:
-        """Actualiza la sección de productos seleccionados."""
-        if not hasattr(self, "_selected_container"):
-            return
+                if qty <= 0:
+                    quantity_field.error_text = "Debe ser mayor a 0"
+                    quantity_field.update()
+                    return
 
-        self._selected_container.controls.clear()
+                if price <= 0:
+                    price_field.error_text = "Debe ser mayor a 0"
+                    price_field.update()
+                    return
 
-        if not self._selected_products:
-            self._selected_container.controls.append(
-                EmptyState(
-                    icon=ft.Icons.SHOPPING_CART_OUTLINED,
-                    title="Sin productos",
-                    message="Selecciona productos para agregarlos",
-                )
-            )
-        else:
-            formatted_selected = []
-            for item in self._selected_products:
-                formatted_selected.append({
-                    "id": item["product_id"],
-                    "reference": item["reference"],
-                    "designation": item["designation"],
-                    "quantity": f"{item['quantity']:.2f}",
-                    "unit_price": f"${item['unit_price']:,.2f}",
-                    "actions": t("common.remove"),
-                    "_original": item,
+                # Agregar a la lista
+                self._selected_products.append({
+                    "product_id": product.get("id"),
+                    "reference": product.get("reference", ""),
+                    "designation": product_name,
+                    "quantity": float(qty),
+                    "unit_price": float(price),
+                    "discount_percentage": float(discount),
+                    "notes": notes_field.value or None,
+                    "sequence": len(self._selected_products) + 1,
                 })
-            
-            # Crear una nueva tabla con los datos
-            selected_table = DataTable(
-                columns=[
-                    {"key": "reference", "label": "articles.columns.code", "sortable": False},
-                    {"key": "designation", "label": "articles.columns.name", "sortable": False},
-                    {"key": "quantity", "label": "articles.form.quantity", "sortable": False},
-                    {"key": "unit_price", "label": "quotes.products_table.unit_price", "sortable": False},
-                    {"key": "actions", "label": "common.actions", "sortable": False},
-                ],
-                data=formatted_selected,
-                page_size=10,
-                on_row_click=self._on_remove_selected_product,
-            )
-            
-            self._selected_container.controls.extend([
-                selected_table,
-                ft.Divider(),
-                ft.Row(
-                    controls=[
-                        ft.Text(
-                            f"Total: {len(self._selected_products)} {t('quotes.sections.products').lower()}",
-                            size=LayoutConstants.FONT_SIZE_MD,
-                            weight=LayoutConstants.FONT_WEIGHT_SEMIBOLD,
-                        ),
-                        ft.Button(
-                            content=ft.Text(t("common.save")),
-                            icon=ft.Icons.SAVE,
-                            on_click=self._on_save_selection_click,
-                        ),
-                    ],
-                    alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                ),
-            ])
-        
-        # Actualizar la vista completa si está montada
-        if self.page:
-            # Forzar actualización del contenedor de seleccionados primero
-            try:
-                self._selected_container.update()
-            except Exception:
-                pass
-            self.update()
-            logger.debug("Parent view updated after selected UI change")
 
-    def did_mount(self) -> None:
-        """Lifecycle: Se ejecuta cuando el componente se monta."""
-        logger.info("QuoteProductsView mounted")
-        app_state.theme.add_observer(self._on_state_changed)
-        app_state.i18n.add_observer(self._on_state_changed)
-        
-        # Inicializar UI con estados base
-        self._update_products_ui()
-        self._update_selected_ui()
-        
-        # Cargar productos
-        if self.page:
-            self.page.run_task(self.load_products)
+                logger.info(f"Product added to selection: {product.get('reference')}")
 
-    def will_unmount(self) -> None:
-        """Lifecycle: Se ejecuta cuando el componente se desmonta."""
-        app_state.theme.remove_observer(self._on_state_changed)
-        app_state.i18n.remove_observer(self._on_state_changed)
-
-    async def load_products(self) -> None:
-        """Carga los productos desde la API según el tipo seleccionado."""
-        logger.info(f"Loading products: type={self._product_type}")
-        self._is_loading = True
-        self._error_message = ""
-        self._products = []
-
-        # Actualizar UI para mostrar carga
-        self._update_products_ui()
-        if self.page:
-            self.update()
-
-        try:
-            from src.frontend.services.api import product_api
-
-            # Los tipos válidos en el API son "article" y "nomenclature" (minúsculas)
-            product_type_api = self._product_type.lower()
-            logger.debug(f"Requesting products with type: {product_type_api}")
-
-            # Obtener productos por tipo
-            result = await product_api.get_by_type(
-                product_type=product_type_api,
-                skip=0,
-                limit=100,
-            )
-
-            # El backend devuelve una lista directamente para /type/{TYPE}
-            self._products = result if isinstance(result, list) else []
-            logger.info(f"Received {len(self._products)} products from API")
-
-            # Depuración: Loguear el primer producto para ver qué campos trae
-            if self._products:
-                logger.debug(f"Sample product keys: {list(self._products[0].keys())}")
-                logger.debug(f"Sample product: {self._products[0]}")
-
-            logger.success(f"Products loaded successfully: {len(self._products)} items")
-
-        except Exception as e:
-            logger.exception(f"Error loading products: {e}")
-            self._error_message = f"Error al cargar productos: {str(e)}"
-            self._products = []
-
-        finally:
-            self._is_loading = False
-            # Actualizar UI con resultados
-            self._update_products_ui()
-            if self.page:
-                self.update()
-                # Pequeña pausa y re-actualización para asegurar que Flet renderice
-                import asyncio
-                await asyncio.sleep(0.1)
-                self.update()
-
-    def _on_product_type_click(self, product_type: str) -> None:
-        """Callback cuando se hace click en un tipo de producto."""
-        if self._product_type == product_type:
-            return  # Ya está seleccionado
-            
-        self._product_type = product_type
-        logger.info(f"Product type changed: {self._product_type}")
-        
-        # Actualizar visualmente los botones inmediatamente
-        if self._article_button:
-            self._article_button.style.bgcolor = ft.Colors.PRIMARY if self._product_type == "article" else ft.Colors.GREY_300
-            # Actualizar colores de texto/icono si es necesario (Flet v0.80+)
-            for ctrl in self._article_button.content.controls:
-                if isinstance(ctrl, (ft.Icon, ft.Text)):
-                    ctrl.color = ft.Colors.WHITE if self._product_type == "article" else None
-        
-        if self._nomenclature_button:
-            self._nomenclature_button.style.bgcolor = ft.Colors.PRIMARY if self._product_type == "nomenclature" else ft.Colors.GREY_300
-            for ctrl in self._nomenclature_button.content.controls:
-                if isinstance(ctrl, (ft.Icon, ft.Text)):
-                    ctrl.color = ft.Colors.WHITE if self._product_type == "nomenclature" else None
-
-        # Limpiar selección actual del producto
-        self._selected_product = None
-        self._search_query = ""
-        if self._search_field:
-            self._search_field.value = ""
-        
-        # Recargar productos
-        if self.page:
-            self.update() # Actualizar estado visual de botones
-            self.page.run_task(self.load_products)
-
-    def _on_search_change(self, e: ft.ControlEvent) -> None:
-        """Callback cuando cambia el texto de búsqueda."""
-        self._search_query = e.control.value
-
-    def _on_search_submit(self, e: ft.ControlEvent) -> None:
-        """Callback cuando se envía la búsqueda."""
-        self._perform_search()
-
-    def _on_search_click(self, e: ft.ControlEvent) -> None:
-        """Callback cuando se hace click en buscar."""
-        self._perform_search()
-
-    def _perform_search(self) -> None:
-        """Realiza la búsqueda de productos."""
-        if not self._search_query.strip():
-            if self.page:
-                self.page.run_task(self.load_products)
-            return
-
-        logger.info(f"Searching products: query={self._search_query}")
-        if self.page:
-            self.page.run_task(self._search_products)
-
-    async def _search_products(self) -> None:
-        """Busca productos por query."""
-        self._is_loading = True
-        self._error_message = ""
-        self._products = []
-        
-        # Actualizar UI para mostrar carga
-        self._update_products_ui()
-        if self.page:
-            self.update()
-
-        try:
-            from src.frontend.services.api import product_api
-
-            result = await product_api.search(
-                query=self._search_query,
-                page=1,
-                page_size=100,
-            )
-
-            # El backend devuelve una lista directamente para /search o un dict con 'items'
-            if isinstance(result, dict):
-                all_products = result.get("items", [])
-            else:
-                all_products = result if isinstance(result, list) else []
-            
-            # Filtrar por tipo (comparar en mayúsculas para consistencia)
-            product_type_upper = self._product_type.upper()
-            self._products = [
-                p for p in all_products 
-                if p.get("product_type", "").upper() == product_type_upper
-            ]
-
-            logger.success(f"Search completed: {len(self._products)} results")
-
-        except Exception as e:
-            logger.exception(f"Error searching products: {e}")
-            self._error_message = f"Error al buscar productos: {str(e)}"
-            self._products = []
-
-        finally:
-            self._is_loading = False
-            # Actualizar UI con resultados
-            self._update_products_ui()
-            if self.page:
-                self.update()
-
-    def _on_product_select(self, row_data: dict) -> None:
-        """Callback cuando se selecciona un producto."""
-        self._selected_product = row_data.get("_raw")
-        logger.info(f"Product selected: {self._selected_product.get('reference')}")
-        
-        # Mostrar formulario de detalles
-        self._show_details_form()
-
-    def _show_details_form(self) -> None:
-        """Muestra el formulario de detalles del producto."""
-        if not self._selected_product or not self._details_form:
-            return
-
-        # Mostrar formulario
-        self._details_form.visible = True
-
-        # Limpiar campos
-        self._quantity_field.set_value("")
-        self._unit_price_field.set_value("")
-        self._discount_field.set_value("0")
-        self._notes_field.value = ""
-
-        if self.page:
-            self.update()
-
-    def _hide_details_form(self) -> None:
-        """Oculta el formulario de detalles del producto."""
-        if self._details_form:
-            self._details_form.visible = False
-
-        if self.page:
-            self.update()
-
-    def _on_cancel_click(self, e: ft.ControlEvent) -> None:
-        """Callback para cancelar la selección."""
-        self._selected_product = None
-        self._hide_details_form()
-
-    def _on_add_product_click(self, e: ft.ControlEvent) -> None:
-        """Callback para agregar el producto a la lista de seleccionados."""
-        if not self._selected_product:
-            return
-
-        # Validar campos
-        if not self._quantity_field.validate():
-            return
-        if not self._unit_price_field.validate():
-            return
-
-        # Preparar datos
-        try:
-            quantity = Decimal(self._quantity_field.get_value())
-            unit_price = Decimal(self._unit_price_field.get_value())
-            discount = Decimal(self._discount_field.get_value() or "0")
-        except Exception as e:
-            logger.error(f"Error parsing values: {e}")
-            if self.page:
-                snackbar = ft.SnackBar(content=ft.Text("Error: Valores numéricos inválidos"))
-                self.page.overlay.append(snackbar)
-                snackbar.open = True
+                # Cerrar diálogo y actualizar UI
+                dlg.open = False
                 self.page.update()
-            return
+                self._rebuild_ui()
 
-        # Agregar a la lista de seleccionados
-        selected_item = {
-            "product_id": self._selected_product.get("id"),
-            "reference": self._selected_product.get("reference", ""),
-            "designation": self._selected_product.get("designation_es") or self._selected_product.get("name") or self._selected_product.get("short_designation", "-"),
-            "quantity": float(quantity),
-            "unit_price": float(unit_price),
-            "discount_percentage": float(discount),
-            "notes": self._notes_field.value or None,
-            "sequence": len(self._selected_products) + 1,
-            "_raw": self._selected_product,
-        }
+            except Exception as ex:
+                logger.error(f"Error adding product: {ex}")
+                quantity_field.error_text = "Valor inválido"
+                quantity_field.update()
 
-        self._selected_products.append(selected_item)
-        logger.info(f"Product added to selection: {selected_item['reference']}")
-
-        # Actualizar tabla de seleccionados
-        self._update_selected_products_table()
-
-        # Limpiar selección y ocultar formulario
-        self._selected_product = None
-        self._hide_details_form()
-
-        # Mostrar mensaje
-        if self.page:
-            snackbar = ft.SnackBar(
-                content=ft.Text("Producto agregado a la selección"),
-                bgcolor=ft.Colors.GREEN,
-            )
-            self.page.overlay.append(snackbar)
-            snackbar.open = True
+        def handle_cancel(e):
+            dlg.open = False
             self.page.update()
 
-    def _update_selected_products_table(self) -> None:
-        """Actualiza la tabla de productos seleccionados."""
-        self._update_selected_ui()
-        if self.page:
-            self.update()
+        dlg = ft.AlertDialog(
+            modal=True,
+            title=ft.Text(f"Agregar: {product_name[:40]}..."),
+            content=ft.Container(
+                content=ft.Column(
+                    controls=[
+                        quantity_field,
+                        price_field,
+                        discount_field,
+                        notes_field,
+                    ],
+                    spacing=LayoutConstants.SPACING_MD,
+                    tight=True,
+                ),
+                width=400,
+            ),
+            actions=[
+                ft.TextButton(content=ft.Text("Cancelar"), on_click=handle_cancel),
+                ft.ElevatedButton(content=ft.Text("Agregar"), on_click=handle_add),
+            ],
+            actions_alignment=ft.MainAxisAlignment.END,
+        )
 
-    def _on_remove_selected_product(self, row_data: dict) -> None:
-        """Callback para eliminar un producto de la selección."""
-        original = row_data.get("_original")
-        if original in self._selected_products:
-            self._selected_products.remove(original)
-            logger.info(f"Product removed from selection: {original['reference']}")
-            self._update_selected_products_table()
+        self.page.overlay.append(dlg)
+        dlg.open = True
+        self.page.update()
 
-    def _on_save_selection_click(self, e: ft.ControlEvent) -> None:
-        """Callback para guardar todos los productos seleccionados."""
+    def _on_remove_product(self, index: int) -> None:
+        """Elimina un producto de la selección."""
+        if 0 <= index < len(self._selected_products):
+            removed = self._selected_products.pop(index)
+            logger.info(f"Product removed from selection: {removed.get('reference')}")
+            self._rebuild_ui()
+
+    def _on_save_click(self, e: ft.ControlEvent) -> None:
+        """Guarda todos los productos seleccionados."""
         if not self._selected_products:
             return
 
         logger.info(f"Saving {len(self._selected_products)} products to quote")
-        
         if self.page:
             self.page.run_task(self._save_all_products)
 
@@ -770,9 +599,9 @@ class QuoteProductsView(ft.Column):
                     success_count += 1
                     logger.success(f"Product saved: {item['reference']}")
 
-                except Exception as e:
+                except Exception as ex:
                     error_count += 1
-                    logger.error(f"Error saving product {item['reference']}: {e}")
+                    logger.error(f"Error saving product {item['reference']}: {ex}")
 
             # Mostrar resultado
             if self.page:
@@ -792,7 +621,7 @@ class QuoteProductsView(ft.Column):
 
             # Limpiar selección
             self._selected_products.clear()
-            self._update_selected_products_table()
+            self._rebuild_ui()
 
             # Notificar al padre
             if self.on_product_added:
@@ -816,8 +645,6 @@ class QuoteProductsView(ft.Column):
 
     def _on_state_changed(self) -> None:
         """Observer: Se ejecuta cuando cambia el estado."""
-        logger.debug("QuoteProductsView state changed, updating view")
-        # Solo actualizar la vista existente, no reconstruir
-        # Reconstruir crearía nuevos contenedores y rompería las referencias
+        logger.debug("QuoteProductsView state changed")
         if self.page and not self._is_loading:
-            self.update()
+            self._rebuild_ui()
