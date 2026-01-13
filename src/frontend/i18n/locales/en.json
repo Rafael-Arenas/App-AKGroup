@@ -532,7 +532,8 @@
       "additional_notes": "Additional Notes",
       "customer_notes": "Customer Notes",
       "notes": "Notes",
-      "products": "Products"
+      "products": "Products",
+      "no_notes": "No notes"
     },
     "messages": {
       "created": "Quote created successfully",

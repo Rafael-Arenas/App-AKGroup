@@ -533,7 +533,8 @@
       "additional_notes": "Notas Adicionales",
       "customer_notes": "Notas del Cliente",
       "notes": "Notas",
-      "products": "Productos"
+      "products": "Productos",
+      "no_notes": "Sin notas"
     },
     "messages": {
       "created": "Cotización creada exitosamente",
