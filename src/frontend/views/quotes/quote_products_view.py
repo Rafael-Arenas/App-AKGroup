@@ -61,7 +61,8 @@ class QuoteProductsView(ft.Column):
         self._nomenclatures: list[dict] = []
         self._selected_product: dict | None = None
         self._search_query: str = ""
-        self._selected_products: list[dict] = []  # Lista de productos para agregar
+        self._selected_products: list[dict] = []  # Lista de productos pendientes de agregar
+        self._existing_products: list[dict] = []  # Productos ya guardados en la cotización
         self._active_type: str = "article"  # "article" o "nomenclature"
 
         # Configurar propiedades de la columna
@@ -96,14 +97,38 @@ class QuoteProductsView(ft.Column):
         app_state.i18n.remove_observer(self._on_state_changed)
 
     async def _load_all_products(self) -> None:
-        """Carga todos los productos (artículos y nomenclaturas)."""
+        """Carga todos los productos (artículos y nomenclaturas) y los existentes en la cotización."""
         logger.info("Loading all products...")
         self._is_loading = True
         self._error_message = ""
         self._rebuild_ui()
 
         try:
-            from src.frontend.services.api import product_api
+            from src.frontend.services.api import product_api, quote_api
+
+            # Cargar productos existentes de la cotización
+            try:
+                quote_data = await quote_api.get_by_id(self.quote_id)
+                existing_items = quote_data.get("products", []) if isinstance(quote_data, dict) else []
+                
+                # Formatear productos existentes
+                self._existing_products = []
+                for item in existing_items:
+                    product_info = item.get("product", {}) or {}
+                    self._existing_products.append({
+                        "quote_product_id": item.get("id"),  # ID del registro quote_product
+                        "product_id": item.get("product_id"),
+                        "reference": product_info.get("reference", item.get("reference", "")),
+                        "designation": product_info.get("designation_es") or product_info.get("designation_en") or "-",
+                        "quantity": float(item.get("quantity", 0)),
+                        "unit_price": float(item.get("unit_price", 0)),
+                        "discount_percentage": float(item.get("discount_percentage", 0)),
+                        "notes": item.get("notes"),
+                    })
+                logger.success(f"Loaded {len(self._existing_products)} existing products from quote")
+            except Exception as e:
+                logger.warning(f"Could not load existing quote products: {e}")
+                self._existing_products = []
 
             # Cargar artículos
             articles_result = await product_api.get_by_type(
@@ -302,8 +327,10 @@ class QuoteProductsView(ft.Column):
         family = product.get("family_type", {}).get("name", "-") if isinstance(product.get("family_type"), dict) else "-"
         price = product.get("sale_price", "0")
 
-        # Verificar si ya está seleccionado
-        is_selected = any(sp.get("product_id") == product.get("id") for sp in self._selected_products)
+        # Verificar si ya está seleccionado (pendiente) o guardado (existente)
+        is_pending = any(sp.get("product_id") == product.get("id") for sp in self._selected_products)
+        is_saved = any(ep.get("product_id") == product.get("id") for ep in self._existing_products)
+        is_added = is_pending or is_saved
 
         return ft.Container(
             content=ft.Row(
@@ -321,11 +348,11 @@ class QuoteProductsView(ft.Column):
                         controls=[
                             ft.Text(f"${float(price):,.2f}", weight=ft.FontWeight.BOLD, color=ft.Colors.PRIMARY),
                             ft.IconButton(
-                                icon=ft.Icons.CHECK_CIRCLE if is_selected else ft.Icons.ADD_CIRCLE_OUTLINE,
-                                icon_color=ft.Colors.GREEN if is_selected else ft.Colors.PRIMARY,
-                                tooltip="Ya agregado" if is_selected else "Agregar",
+                                icon=ft.Icons.CHECK_CIRCLE if is_added else ft.Icons.ADD_CIRCLE_OUTLINE,
+                                icon_color=ft.Colors.GREEN if is_saved else (ft.Colors.ORANGE if is_pending else ft.Colors.PRIMARY),
+                                tooltip="Ya guardado" if is_saved else ("Pendiente" if is_pending else "Agregar"),
                                 on_click=lambda e, p=product: self._on_add_product(p),
-                                disabled=is_selected,
+                                disabled=is_added,
                             ),
                         ],
                         horizontal_alignment=ft.CrossAxisAlignment.END,
@@ -334,19 +361,21 @@ class QuoteProductsView(ft.Column):
                 alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
             ),
             padding=LayoutConstants.PADDING_MD,
-            border=ft.border.all(1, ft.Colors.OUTLINE_VARIANT),
+            border=ft.border.all(1, ft.Colors.GREEN_400 if is_saved else (ft.Colors.ORANGE_400 if is_pending else ft.Colors.OUTLINE_VARIANT)),
             border_radius=LayoutConstants.RADIUS_SM,
-            bgcolor=ft.Colors.SURFACE_CONTAINER_LOWEST if is_selected else ft.Colors.SURFACE,
-            on_hover=lambda e: setattr(e.control, 'bgcolor', ft.Colors.SURFACE_CONTAINER if e.data == "true" else ft.Colors.SURFACE),
+            bgcolor=ft.Colors.GREY_800 if is_saved else (ft.Colors.GREY_700 if is_pending else ft.Colors.GREY_900),
         )
 
     def _build_selected_panel(self) -> ft.Control:
-        """Construye el panel de productos seleccionados."""
+        """Construye el panel de productos seleccionados y existentes."""
+        total_products = len(self._existing_products) + len(self._selected_products)
+        
+        # Header principal
         header = ft.Row(
             controls=[
                 ft.Icon(ft.Icons.SHOPPING_CART, size=LayoutConstants.ICON_SIZE_MD),
                 ft.Text(
-                    f"Productos a agregar ({len(self._selected_products)})",
+                    f"Productos ({total_products})",
                     size=LayoutConstants.FONT_SIZE_LG,
                     weight=ft.FontWeight.BOLD,
                 ),
@@ -354,7 +383,65 @@ class QuoteProductsView(ft.Column):
             spacing=LayoutConstants.SPACING_SM,
         )
 
-        if not self._selected_products:
+        sections = []
+
+        # Sección de productos existentes (ya guardados)
+        if self._existing_products:
+            existing_header = ft.Container(
+                content=ft.Row(
+                    controls=[
+                        ft.Icon(ft.Icons.CHECK_CIRCLE, color=ft.Colors.GREEN, size=16),
+                        ft.Text(
+                            f"Guardados ({len(self._existing_products)})",
+                            size=LayoutConstants.FONT_SIZE_SM,
+                            weight=ft.FontWeight.BOLD,
+                            color=ft.Colors.GREEN,
+                        ),
+                    ],
+                    spacing=4,
+                ),
+                padding=ft.padding.only(top=8, bottom=4),
+            )
+            
+            existing_cards = []
+            for item in self._existing_products:
+                card = self._build_existing_item_card(item)
+                existing_cards.append(card)
+
+        # Sección de productos pendientes (por guardar) - AHORA PRIMERO
+        if self._selected_products:
+            pending_header = ft.Container(
+                content=ft.Row(
+                    controls=[
+                        ft.Icon(ft.Icons.PENDING, color=ft.Colors.ORANGE, size=16),
+                        ft.Text(
+                            f"Pendientes ({len(self._selected_products)})",
+                            size=LayoutConstants.FONT_SIZE_SM,
+                            weight=ft.FontWeight.BOLD,
+                            color=ft.Colors.ORANGE,
+                        ),
+                    ],
+                    spacing=4,
+                ),
+                padding=ft.padding.only(top=8, bottom=4),
+            )
+            
+            pending_cards = []
+            for i, item in enumerate(self._selected_products):
+                card = self._build_selected_item_card(item, i)
+                pending_cards.append(card)
+            
+            # Pendientes primero
+            sections.append(pending_header)
+            sections.extend(pending_cards)
+
+        # Guardados después
+        if self._existing_products:
+            sections.append(existing_header)
+            sections.extend(existing_cards)
+
+        # Contenido vacío si no hay productos
+        if not sections:
             content = EmptyState(
                 icon=ft.Icons.SHOPPING_CART_OUTLINED,
                 title="Sin productos",
@@ -362,45 +449,59 @@ class QuoteProductsView(ft.Column):
             )
             footer = ft.Container()
         else:
-            # Lista de productos seleccionados
-            selected_cards = []
-            for i, item in enumerate(self._selected_products):
-                card = self._build_selected_item_card(item, i)
-                selected_cards.append(card)
-
             content = ft.Column(
-                controls=selected_cards,
+                controls=sections,
                 spacing=LayoutConstants.SPACING_SM,
                 scroll=ft.ScrollMode.AUTO,
                 expand=True,
             )
 
-            # Total y botón guardar
-            total_amount = sum(
-                float(item.get("quantity", 0)) * float(item.get("unit_price", 0))
-                for item in self._selected_products
-            )
+            # Total y botón guardar (solo si hay pendientes)
+            if self._selected_products:
+                total_pending = sum(
+                    float(item.get("quantity", 0)) * float(item.get("unit_price", 0))
+                    for item in self._selected_products
+                )
 
-            footer = ft.Column(
-                controls=[
-                    ft.Divider(),
-                    ft.Row(
-                        controls=[
-                            ft.Text("Total estimado:", weight=ft.FontWeight.BOLD),
-                            ft.Text(f"${total_amount:,.2f}", weight=ft.FontWeight.BOLD, color=ft.Colors.PRIMARY),
-                        ],
-                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                    ),
-                    ft.ElevatedButton(
-                        content=ft.Text(t("common.save")),
-                        icon=ft.Icons.SAVE,
-                        on_click=self._on_save_click,
-                        bgcolor=ft.Colors.PRIMARY,
-                        color=ft.Colors.ON_PRIMARY,
-                    ),
-                ],
-                spacing=LayoutConstants.SPACING_SM,
-            )
+                footer = ft.Column(
+                    controls=[
+                        ft.Divider(),
+                        ft.Row(
+                            controls=[
+                                ft.Text("Total pendiente:", weight=ft.FontWeight.BOLD),
+                                ft.Text(f"${total_pending:,.2f}", weight=ft.FontWeight.BOLD, color=ft.Colors.ORANGE),
+                            ],
+                            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                        ),
+                        ft.ElevatedButton(
+                            content=ft.Text(t("common.save")),
+                            icon=ft.Icons.SAVE,
+                            on_click=self._on_save_click,
+                            bgcolor=ft.Colors.PRIMARY,
+                            color=ft.Colors.ON_PRIMARY,
+                        ),
+                    ],
+                    spacing=LayoutConstants.SPACING_SM,
+                )
+            else:
+                # Mostrar total de existentes si no hay pendientes
+                total_existing = sum(
+                    float(item.get("quantity", 0)) * float(item.get("unit_price", 0))
+                    for item in self._existing_products
+                )
+                footer = ft.Column(
+                    controls=[
+                        ft.Divider(),
+                        ft.Row(
+                            controls=[
+                                ft.Text("Total guardado:", weight=ft.FontWeight.BOLD),
+                                ft.Text(f"${total_existing:,.2f}", weight=ft.FontWeight.BOLD, color=ft.Colors.GREEN),
+                            ],
+                            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                        ),
+                    ],
+                    spacing=LayoutConstants.SPACING_SM,
+                )
 
         return ft.Container(
             content=ft.Column(
@@ -417,6 +518,38 @@ class QuoteProductsView(ft.Column):
             border=ft.border.all(1, ft.Colors.OUTLINE),
             border_radius=LayoutConstants.RADIUS_MD,
             expand=True,
+        )
+
+    def _build_existing_item_card(self, item: dict) -> ft.Control:
+        """Construye una card para un producto ya guardado en la cotización."""
+        subtotal = float(item.get("quantity", 0)) * float(item.get("unit_price", 0))
+
+        return ft.Container(
+            content=ft.Column(
+                controls=[
+                    ft.Row(
+                        controls=[
+                            ft.Text(item.get("reference", ""), weight=ft.FontWeight.BOLD),
+                            ft.Icon(ft.Icons.CHECK_CIRCLE, color=ft.Colors.GREEN, size=16),
+                        ],
+                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                    ),
+                    ft.Text(item.get("designation", ""), size=LayoutConstants.FONT_SIZE_SM),
+                    ft.Row(
+                        controls=[
+                            ft.Text(f"Cant: {item.get('quantity', 0)}", size=LayoutConstants.FONT_SIZE_XS),
+                            ft.Text(f"P.U: ${float(item.get('unit_price', 0)):,.2f}", size=LayoutConstants.FONT_SIZE_XS),
+                            ft.Text(f"= ${subtotal:,.2f}", size=LayoutConstants.FONT_SIZE_XS, weight=ft.FontWeight.BOLD),
+                        ],
+                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                    ),
+                ],
+                spacing=2,
+            ),
+            padding=LayoutConstants.PADDING_SM,
+            border=ft.border.all(1, ft.Colors.GREEN_400),
+            border_radius=LayoutConstants.RADIUS_SM,
+            bgcolor=ft.Colors.GREY_800,
         )
 
     def _build_selected_item_card(self, item: dict, index: int) -> ft.Control:
@@ -452,9 +585,9 @@ class QuoteProductsView(ft.Column):
                 spacing=2,
             ),
             padding=LayoutConstants.PADDING_SM,
-            border=ft.border.all(1, ft.Colors.OUTLINE_VARIANT),
+            border=ft.border.all(1, ft.Colors.ORANGE_400),
             border_radius=LayoutConstants.RADIUS_SM,
-            bgcolor=ft.Colors.SURFACE_CONTAINER_LOWEST,
+            bgcolor=ft.Colors.GREY_700,
         )
 
     def _on_add_product(self, product: dict) -> None:
@@ -505,8 +638,8 @@ class QuoteProductsView(ft.Column):
                     price_field.update()
                     return
 
-                # Agregar a la lista
-                self._selected_products.append({
+                # Agregar al principio de la lista
+                self._selected_products.insert(0, {
                     "product_id": product.get("id"),
                     "reference": product.get("reference", ""),
                     "designation": product_name,
