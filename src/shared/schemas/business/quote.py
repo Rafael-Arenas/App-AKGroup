@@ -295,6 +295,7 @@ class QuoteUpdate(BaseModel):
 
     subject: Optional[str] = Field(None, min_length=1, max_length=200)
     revision: Optional[str] = Field(None, min_length=1, max_length=10)
+    company_rut_id: Optional[int] = Field(None, gt=0)
     contact_id: Optional[int] = Field(None, gt=0)
     plant_id: Optional[int] = Field(None, gt=0)
     staff_id: Optional[int] = Field(None, gt=0)
