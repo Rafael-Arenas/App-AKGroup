@@ -498,27 +498,45 @@ class QuoteDetailView(ft.Container):
             content=ft.Column(notes_content),
         )
 
-        # Layout Final - Reorganizado con las nuevas tarjetas
-        left_col = ft.Column(
-            controls=[general_card, contact_card, rut_card, plant_card, staff_card, dates_card, notes_card],
-            spacing=LayoutConstants.SPACING_MD,
-            expand=1,
-        )
+        # === DISEÑO FINAL: Split Layout (Barra Lateral) ===
         
-        right_col = ft.Column(
-            controls=[products_card, totals_card],
-            spacing=LayoutConstants.SPACING_MD,
-            expand=2,
+        # Columna Principal (Izquierda - 70%): Productos y Notas
+        main_column = ft.Column(
+            controls=[
+                products_card,
+                ft.Container(
+                    content=totals_card,
+                    alignment=ft.Alignment(1, 0), # Alinear totales a la derecha
+                ),
+                notes_card,
+            ],
+            spacing=LayoutConstants.SPACING_LG,
+            expand=7,
         )
 
+        # Columna Lateral (Derecha - 30%): Información administrativa y de contacto
+        sidebar_column = ft.Column(
+            controls=[
+                general_card,
+                dates_card,
+                contact_card,
+                rut_card,
+                plant_card,
+                staff_card,
+            ],
+            spacing=LayoutConstants.SPACING_MD,
+            expand=3,
+        )
+
+        # Layout Final
         self._main_container.controls = [
             header,
+            ft.Divider(height=LayoutConstants.SPACING_MD, color=ft.Colors.TRANSPARENT),
             ft.Row(
-                controls=[left_col, right_col],
+                controls=[main_column, sidebar_column],
                 vertical_alignment=ft.CrossAxisAlignment.START,
-                expand=True,
                 spacing=LayoutConstants.SPACING_LG,
-            )
+            ),
         ]
 
         return self._main_container
