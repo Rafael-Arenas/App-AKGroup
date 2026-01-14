@@ -76,7 +76,12 @@ class OrderRepository(BaseRepository[Order]):
         order = (
             self.session.query(Order)
             .options(
-                selectinload(Order.products).selectinload(OrderProduct.product)
+                selectinload(Order.products).selectinload(OrderProduct.product),
+                selectinload(Order.contact),
+                selectinload(Order.company_rut),
+                selectinload(Order.plant),
+                selectinload(Order.staff),
+                selectinload(Order.incoterm)
             )
             .filter(Order.id == order_id)
             .first()
