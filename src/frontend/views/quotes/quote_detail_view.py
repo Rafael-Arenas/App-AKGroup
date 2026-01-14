@@ -39,6 +39,7 @@ class QuoteDetailView(ft.Container):
         on_edit: Callable[[int], None] | None = None,
         on_delete: Callable[[int], None] | None = None,
         on_create_order: Callable[[int], None] | None = None,
+        on_create_document: Callable[[int], None] | None = None,
         on_add_products: Callable[[int], None] | None = None,
         on_back: Callable[[], None] | None = None,
     ):
@@ -50,6 +51,7 @@ class QuoteDetailView(ft.Container):
         self.on_edit = on_edit
         self.on_delete = on_delete
         self.on_create_order = on_create_order
+        self.on_create_document = on_create_document
         self.on_add_products = on_add_products
         self.on_back = on_back
 
@@ -180,6 +182,11 @@ class QuoteDetailView(ft.Container):
                 ft.Row(
                     controls=[
                         ft.Button(
+                            content=ft.Text("Crear Documento"),
+                            icon=ft.Icons.PICTURE_AS_PDF,
+                            on_click=self._on_create_document_click,
+                        ),
+                        ft.Button(
                             content=ft.Text("Generar Orden"),
                             icon=ft.Icons.SHOPPING_BAG,
                             on_click=self._on_create_order_click,
@@ -201,14 +208,18 @@ class QuoteDetailView(ft.Container):
             alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
         )
 
-        # Información General
+        # Información General - Datos principales de la cotización
+        # Obtener nombre del incoterm
+        incoterm_data = self._quote.get("incoterm") or {}
+        incoterm_display = incoterm_data.get("code", "-") if incoterm_data else str(self._quote.get("incoterm_id", "-") or "-")
+        
         general_info = ft.Column(
             controls=[
-                self._create_info_row(t("quotes.fields.date"), self._quote.get("quote_date", "-")),
-                self._create_info_row(t("quotes.fields.valid_until"), self._quote.get("valid_until", "-") or "-"),
-                self._create_info_row(t("quotes.fields.shipping_date"), self._quote.get("shipping_date", "-") or "-"),
+                self._create_info_row("Asunto", self._quote.get("subject", "-")),
                 self._create_info_row(t("quotes.fields.revision"), self._quote.get("revision", "-")),
-                self._create_info_row(t("quotes.fields.staff"), str(self._quote.get("staff_id", "-"))),
+                self._create_info_row(t("quotes.fields.shipping_date"), self._quote.get("shipping_date", "-") or "-"),
+                self._create_info_row("Incoterm", incoterm_display),
+                self._create_info_row("Unidad", self._quote.get("unit", "-") or "-"),
             ],
             spacing=LayoutConstants.SPACING_SM,
         )
@@ -219,20 +230,133 @@ class QuoteDetailView(ft.Container):
             content=general_info,
         )
 
-        # Información Financiera
-        financial_info = ft.Column(
+        # === TARJETA: Contacto ===
+        contact_data = self._quote.get("contact") or {}
+        if contact_data:
+            contact_name = f"{contact_data.get('first_name', '')} {contact_data.get('last_name', '')}".strip()
+            contact_rows = [
+                self._create_info_row("Nombre", contact_name or "-"),
+            ]
+            if contact_data.get("position"):
+                contact_rows.append(self._create_info_row("Cargo", contact_data.get("position")))
+            if contact_data.get("email"):
+                contact_rows.append(self._create_info_row("Email", contact_data.get("email")))
+            if contact_data.get("phone"):
+                contact_rows.append(self._create_info_row("Teléfono", contact_data.get("phone")))
+            if contact_data.get("mobile"):
+                contact_rows.append(self._create_info_row("Móvil", contact_data.get("mobile")))
+            
+            contact_card = BaseCard(
+                title="Contacto",
+                icon=ft.Icons.PERSON_OUTLINED,
+                content=ft.Column(controls=contact_rows, spacing=LayoutConstants.SPACING_SM),
+            )
+        else:
+            contact_card = BaseCard(
+                title="Contacto",
+                icon=ft.Icons.PERSON_OUTLINED,
+                content=ft.Text("No asignado", italic=True, color=ft.Colors.GREY),
+            )
+
+        # === TARJETA: RUT ===
+        rut_data = self._quote.get("company_rut") or {}
+        if rut_data:
+            rut_rows = [
+                self._create_info_row("RUT", rut_data.get("rut", "-")),
+            ]
+            if rut_data.get("is_main"):
+                rut_rows.append(self._create_info_row("Principal", "Sí"))
+            
+            rut_card = BaseCard(
+                title="RUT Empresa",
+                icon=ft.Icons.BADGE_OUTLINED,
+                content=ft.Column(controls=rut_rows, spacing=LayoutConstants.SPACING_SM),
+            )
+        else:
+            rut_card = BaseCard(
+                title="RUT Empresa",
+                icon=ft.Icons.BADGE_OUTLINED,
+                content=ft.Text("No asignado", italic=True, color=ft.Colors.GREY),
+            )
+
+        # === TARJETA: Planta ===
+        plant_data = self._quote.get("plant") or {}
+        if plant_data:
+            plant_rows = [
+                self._create_info_row("Nombre", plant_data.get("name", "-")),
+            ]
+            if plant_data.get("address"):
+                plant_rows.append(self._create_info_row("Dirección", plant_data.get("address")))
+            if plant_data.get("phone"):
+                plant_rows.append(self._create_info_row("Teléfono", plant_data.get("phone")))
+            if plant_data.get("email"):
+                plant_rows.append(self._create_info_row("Email", plant_data.get("email")))
+            
+            plant_card = BaseCard(
+                title="Planta",
+                icon=ft.Icons.FACTORY_OUTLINED,
+                content=ft.Column(controls=plant_rows, spacing=LayoutConstants.SPACING_SM),
+            )
+        else:
+            plant_card = BaseCard(
+                title="Planta",
+                icon=ft.Icons.FACTORY_OUTLINED,
+                content=ft.Text("No asignada", italic=True, color=ft.Colors.GREY),
+            )
+
+        # === TARJETA: Personal Responsable ===
+        staff_data = self._quote.get("staff") or {}
+        if staff_data:
+            staff_name = f"{staff_data.get('first_name', '')} {staff_data.get('last_name', '')}".strip()
+            staff_rows = [
+                self._create_info_row("Nombre", staff_name or "-"),
+            ]
+            if staff_data.get("trigram"):
+                staff_rows.append(self._create_info_row("Trigrama", staff_data.get("trigram")))
+            if staff_data.get("position"):
+                staff_rows.append(self._create_info_row("Cargo", staff_data.get("position")))
+            if staff_data.get("email"):
+                staff_rows.append(self._create_info_row("Email", staff_data.get("email")))
+            if staff_data.get("phone"):
+                staff_rows.append(self._create_info_row("Teléfono", staff_data.get("phone")))
+            
+            staff_card = BaseCard(
+                title="Personal Responsable",
+                icon=ft.Icons.SUPPORT_AGENT_OUTLINED,
+                content=ft.Column(controls=staff_rows, spacing=LayoutConstants.SPACING_SM),
+            )
+        else:
+            staff_card = BaseCard(
+                title="Personal Responsable",
+                icon=ft.Icons.SUPPORT_AGENT_OUTLINED,
+                content=ft.Text(f"ID: {self._quote.get('staff_id', '-')}", italic=True, color=ft.Colors.GREY),
+            )
+
+        # Fechas - Registro y última modificación
+        created_at = self._quote.get("created_at", "-")
+        if created_at and created_at != "-":
+            if isinstance(created_at, str):
+                created_at = created_at[:19].replace("T", " ")  # Formatear datetime string
+        
+        updated_at = self._quote.get("updated_at", "-")
+        if updated_at and updated_at != "-":
+            if isinstance(updated_at, str):
+                updated_at = updated_at[:19].replace("T", " ")
+
+        dates_info = ft.Column(
             controls=[
-                 self._create_info_row(t("quotes.fields.currency"), str(self._quote.get("currency_id", "-"))),
-                 self._create_info_row(t("quotes.fields.exchange_rate"), f"{float(self._quote.get('exchange_rate', 1) or 1):.2f}"),
-                 self._create_info_row(t("quotes.fields.incoterm"), str(self._quote.get("incoterm_id", "-") or "-")),
+                self._create_info_row(t("quotes.fields.date"), self._quote.get("quote_date", "-")),
+                self._create_info_row(t("quotes.fields.valid_until"), self._quote.get("valid_until", "-") or "-"),
+                self._create_info_row("Fecha de Registro", str(created_at)),
+                self._create_info_row("Última Modificación", str(updated_at)),
             ],
             spacing=LayoutConstants.SPACING_SM,
         )
-        
-        financial_card = BaseCard(
-            title=t("quotes.sections.financial_details"),
-            icon=ft.Icons.ATTACH_MONEY,
-            content=financial_info,
+
+        dates_card = BaseCard(
+            title="Fechas",
+            icon=ft.Icons.CALENDAR_TODAY,
+            content=dates_info,
         )
 
         # Productos
@@ -374,9 +498,9 @@ class QuoteDetailView(ft.Container):
             content=ft.Column(notes_content),
         )
 
-        # Layout Final
+        # Layout Final - Reorganizado con las nuevas tarjetas
         left_col = ft.Column(
-            controls=[general_card, financial_card, notes_card],
+            controls=[general_card, contact_card, rut_card, plant_card, staff_card, dates_card, notes_card],
             spacing=LayoutConstants.SPACING_MD,
             expand=1,
         )
@@ -508,6 +632,20 @@ class QuoteDetailView(ft.Container):
         """Callback para crear orden desde la cotización."""
         if self.on_create_order:
             self.on_create_order(self.quote_id)
+
+    def _on_create_document_click(self, e: ft.ControlEvent) -> None:
+        """Callback para crear documento PDF de la cotización."""
+        if self.on_create_document:
+            self.on_create_document(self.quote_id)
+        else:
+            # Mostrar mensaje si no hay handler definido
+            if self.page:
+                self.page.snack_bar = ft.SnackBar(
+                    content=ft.Text("Funcionalidad de generación de documento pendiente de implementar"),
+                    bgcolor=ft.Colors.ORANGE_700,
+                )
+                self.page.snack_bar.open = True
+                self.page.update()
 
     def _on_delete_click(self, e: ft.ControlEvent) -> None:
         """Callback para eliminar."""
