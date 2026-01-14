@@ -279,30 +279,6 @@ class QuoteDetailView(ft.Container):
                 content=ft.Text("No asignado", italic=True, color=ft.Colors.GREY),
             )
 
-        # === TARJETA: Planta ===
-        plant_data = self._quote.get("plant") or {}
-        if plant_data:
-            plant_rows = [
-                self._create_info_row("Nombre", plant_data.get("name", "-")),
-            ]
-            if plant_data.get("address"):
-                plant_rows.append(self._create_info_row("Dirección", plant_data.get("address")))
-            if plant_data.get("phone"):
-                plant_rows.append(self._create_info_row("Teléfono", plant_data.get("phone")))
-            if plant_data.get("email"):
-                plant_rows.append(self._create_info_row("Email", plant_data.get("email")))
-            
-            plant_card = BaseCard(
-                title="Planta",
-                icon=ft.Icons.FACTORY_OUTLINED,
-                content=ft.Column(controls=plant_rows, spacing=LayoutConstants.SPACING_SM),
-            )
-        else:
-            plant_card = BaseCard(
-                title="Planta",
-                icon=ft.Icons.FACTORY_OUTLINED,
-                content=ft.Text("No asignada", italic=True, color=ft.Colors.GREY),
-            )
 
         # === TARJETA: Personal Responsable ===
         staff_data = self._quote.get("staff") or {}
@@ -521,7 +497,6 @@ class QuoteDetailView(ft.Container):
                 dates_card,
                 contact_card,
                 rut_card,
-                plant_card,
                 staff_card,
             ],
             spacing=LayoutConstants.SPACING_MD,
