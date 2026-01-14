@@ -658,7 +658,9 @@
       "error_loading": "Error al cargar la orden: {error}",
       "deleted": "Orden eliminada exitosamente",
       "error_deleting": "Error al eliminar la orden: {error}",
-      "delete_confirm": "¿Está seguro que desea eliminar la orden {number}?"
+      "delete_confirm": "¿Está seguro que desea eliminar la orden {number}?",
+      "quote_already_has_order": "Esta cotización ya tiene una orden asociada. No se puede crear otra orden desde la misma cotización.",
+      "duplicate_order": "Ya existe una orden con este número. Por favor, use un número diferente."
     }
   },
   "deliveries": {
