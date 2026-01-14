@@ -230,6 +230,16 @@ class OrderDetailView(ft.Container):
                 self._create_info_row(t("orders.fields.customer_po_number"), self._order.get("customer_po_number", "-"))
             )
         
+        if self._order.get("incoterm"):
+            incoterm_data = self._order.get("incoterm") or {}
+            general_info_controls.append(
+                self._create_info_row(t("orders.fields.incoterm"), f"{incoterm_data.get('code', '')} - {incoterm_data.get('name', '')}")
+            )
+        elif self._order.get("incoterm_id"):
+             general_info_controls.append(
+                self._create_info_row(t("orders.fields.incoterm"), str(self._order.get("incoterm_id", "-")))
+            )
+
         if self._order.get("project_number"):
             general_info_controls.append(
                 self._create_info_row(t("orders.fields.project_number"), self._order.get("project_number", "-"))
@@ -251,37 +261,6 @@ class OrderDetailView(ft.Container):
             content=general_info,
         )
 
-        # Información Financiera
-        financial_info_controls = [
-             self._create_info_row(t("orders.fields.currency"), str(self._order.get("currency_id", "-"))),
-             self._create_info_row(t("orders.fields.exchange_rate"), f"{float(self._order.get('exchange_rate', 1) or 1):.2f}"),
-        ]
-        
-        if self._order.get("incoterm_id"):
-            financial_info_controls.append(
-                self._create_info_row(t("orders.fields.incoterm"), str(self._order.get("incoterm_id", "-")))
-            )
-        
-        if self._order.get("payment_terms"):
-            financial_info_controls.append(
-                self._create_info_row(t("orders.fields.payment_terms"), self._order.get("payment_terms", "-"))
-            )
-        
-        if self._order.get("is_export"):
-            financial_info_controls.append(
-                self._create_info_row(t("orders.fields.is_export"), "Sí" if self._order.get("is_export") else "No")
-            )
-
-        financial_info = ft.Column(
-            controls=financial_info_controls,
-            spacing=LayoutConstants.SPACING_SM,
-        )
-        
-        financial_card = BaseCard(
-            title=t("orders.sections.financial_details"),
-            icon=ft.Icons.ATTACH_MONEY,
-            content=financial_info,
-        )
 
         # Productos
         products = self._order.get("products", [])
@@ -513,17 +492,6 @@ class OrderDetailView(ft.Container):
         else:
             rut_card = BaseCard(title="RUT Empresa", icon=ft.Icons.BADGE_OUTLINED, content=ft.Text("No asignado", italic=True, color=ft.Colors.GREY))
 
-        # 3. Planta
-        plant_data = self._order.get("plant") or {}
-        if plant_data:
-            plant_rows = [self._create_info_row("Nombre", plant_data.get("name", "-"))]
-            if plant_data.get("address"):
-                plant_rows.append(self._create_info_row("Dirección", plant_data.get("address")))
-            if plant_data.get("phone"):
-                plant_rows.append(self._create_info_row("Teléfono", plant_data.get("phone")))
-            plant_card = BaseCard(title="Planta", icon=ft.Icons.FACTORY_OUTLINED, content=ft.Column(plant_rows, spacing=LayoutConstants.SPACING_SM))
-        else:
-            plant_card = BaseCard(title="Planta", icon=ft.Icons.FACTORY_OUTLINED, content=ft.Text("No asignada", italic=True, color=ft.Colors.GREY))
 
         # 4. Personal Responsable
         staff_data = self._order.get("staff") or {}
@@ -561,8 +529,6 @@ class OrderDetailView(ft.Container):
         incoterm_data = self._order.get("incoterm") or {}
         
         logistics_rows = []
-        if incoterm_data:
-            logistics_rows.append(self._create_info_row("Incoterm", f"{incoterm_data.get('code', '')} - {incoterm_data.get('name', '')}"))
         
         if shipping_addr:
             logistics_rows.append(self._create_info_row("Entrega", f"{shipping_addr.get('street', '')}, {shipping_addr.get('city', '')}"))
@@ -600,11 +566,9 @@ class OrderDetailView(ft.Container):
         sidebar_column = ft.Column(
             controls=[
                 general_card,
-                financial_card,
                 dates_card,
                 contact_card,
                 rut_card,
-                plant_card,
                 staff_card,
                 logistics_card,
                 payment_card,
