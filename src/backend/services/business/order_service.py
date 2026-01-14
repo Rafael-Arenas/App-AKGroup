@@ -565,6 +565,7 @@ class OrderService(BaseService[Order, OrderCreate, OrderUpdate, OrderResponse]):
             order_type="sales",  # Default to sales order
             quote_id=quote_id,
             company_id=quote.company_id,
+            company_rut_id=quote.company_rut_id,
             contact_id=quote.contact_id,
             plant_id=quote.plant_id,
             staff_id=quote.staff_id,
