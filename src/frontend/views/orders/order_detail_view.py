@@ -11,7 +11,7 @@ from loguru import logger
 from src.frontend.app_state import app_state
 from src.frontend.layout_constants import LayoutConstants
 from src.frontend.i18n.translation_manager import t
-from src.frontend.components.common import BaseCard, LoadingSpinner, ErrorDisplay, ConfirmDialog, DataTable
+from src.frontend.components.common import BaseCard, LoadingSpinner, ErrorDisplay, ConfirmDialog, DataTable, EmptyState
 
 
 class OrderDetailView(ft.Container):
@@ -484,45 +484,152 @@ class OrderDetailView(ft.Container):
             content=ft.Column(payment_controls, spacing=LayoutConstants.SPACING_SM),
         )
 
-        # Layout Final
+        # === TARJETAS DETALLADAS (Sidebar) ===
         
-        # Columna izquierda (Info General, Entregas, Direcciones)
-        left_col = ft.Column(
-            controls=[general_card, delivery_card, addresses_card],
-            spacing=LayoutConstants.SPACING_MD,
-            expand=1,
+        # 1. Contacto
+        contact_data = self._order.get("contact") or {}
+        if contact_data:
+            contact_name = f"{contact_data.get('first_name', '')} {contact_data.get('last_name', '')}".strip()
+            contact_rows = [self._create_info_row("Nombre", contact_name or "-")]
+            if contact_data.get("position"):
+                contact_rows.append(self._create_info_row("Cargo", contact_data.get("position")))
+            if contact_data.get("email"):
+                contact_rows.append(self._create_info_row("Email", contact_data.get("email")))
+            if contact_data.get("phone"):
+                contact_rows.append(self._create_info_row("Teléfono", contact_data.get("phone")))
+            if contact_data.get("mobile"):
+                contact_rows.append(self._create_info_row("Móvil", contact_data.get("mobile")))
+            contact_card = BaseCard(title="Contacto", icon=ft.Icons.PERSON_OUTLINED, content=ft.Column(contact_rows, spacing=LayoutConstants.SPACING_SM))
+        else:
+            contact_card = BaseCard(title="Contacto", icon=ft.Icons.PERSON_OUTLINED, content=ft.Text("No asignado", italic=True, color=ft.Colors.GREY))
+
+        # 2. RUT Empresa
+        rut_data = self._order.get("company_rut") or {}
+        if rut_data:
+            rut_rows = [self._create_info_row("RUT", rut_data.get("rut", "-"))]
+            if rut_data.get("is_main"):
+                rut_rows.append(self._create_info_row("Principal", "Sí"))
+            rut_card = BaseCard(title="RUT Empresa", icon=ft.Icons.BADGE_OUTLINED, content=ft.Column(rut_rows, spacing=LayoutConstants.SPACING_SM))
+        else:
+            rut_card = BaseCard(title="RUT Empresa", icon=ft.Icons.BADGE_OUTLINED, content=ft.Text("No asignado", italic=True, color=ft.Colors.GREY))
+
+        # 3. Planta
+        plant_data = self._order.get("plant") or {}
+        if plant_data:
+            plant_rows = [self._create_info_row("Nombre", plant_data.get("name", "-"))]
+            if plant_data.get("address"):
+                plant_rows.append(self._create_info_row("Dirección", plant_data.get("address")))
+            if plant_data.get("phone"):
+                plant_rows.append(self._create_info_row("Teléfono", plant_data.get("phone")))
+            plant_card = BaseCard(title="Planta", icon=ft.Icons.FACTORY_OUTLINED, content=ft.Column(plant_rows, spacing=LayoutConstants.SPACING_SM))
+        else:
+            plant_card = BaseCard(title="Planta", icon=ft.Icons.FACTORY_OUTLINED, content=ft.Text("No asignada", italic=True, color=ft.Colors.GREY))
+
+        # 4. Personal Responsable
+        staff_data = self._order.get("staff") or {}
+        if staff_data:
+            staff_name = f"{staff_data.get('first_name', '')} {staff_data.get('last_name', '')}".strip()
+            staff_rows = [self._create_info_row("Nombre", staff_name or "-")]
+            if staff_data.get("trigram"):
+                staff_rows.append(self._create_info_row("Trigrama", staff_data.get("trigram")))
+            if staff_data.get("position"):
+                staff_rows.append(self._create_info_row("Cargo", staff_data.get("position")))
+            staff_card = BaseCard(title="Personal Responsable", icon=ft.Icons.SUPPORT_AGENT_OUTLINED, content=ft.Column(staff_rows, spacing=LayoutConstants.SPACING_SM))
+        else:
+            staff_card = BaseCard(title="Personal Responsable", icon=ft.Icons.SUPPORT_AGENT_OUTLINED, content=ft.Text(f"ID: {self._order.get('staff_id', '-')}", italic=True, color=ft.Colors.GREY))
+
+        # 5. Fechas (Expandido)
+        created_at = self._order.get("created_at", "-")
+        updated_at = self._order.get("updated_at", "-")
+        dates_info = ft.Column(
+            controls=[
+                self._create_info_row(t("orders.fields.order_date"), self._order.get("order_date", "-")),
+                self._create_info_row(t("orders.fields.promised_date"), self._order.get("promised_date", "-") or "-"),
+                self._create_info_row(t("orders.fields.completed_date"), self._order.get("completed_date", "-") or "-"),
+                ft.Divider(height=LayoutConstants.SPACING_XS),
+                self._create_info_row("Creado", str(created_at)[:19] if created_at != "-" else "-"),
+                self._create_info_row("Actualizado", str(updated_at)[:19] if updated_at != "-" else "-"),
+            ],
+            spacing=LayoutConstants.SPACING_SM,
         )
+        dates_card = BaseCard(title="Cronología", icon=ft.Icons.ACCESS_TIME, content=dates_info)
+
+        # 6. Logística y Direcciones
+        shipping_addr = self._order.get("shipping_address")
+        billing_addr = self._order.get("billing_address")
+        transport = self._order.get("transport")
+        incoterm_data = self._order.get("incoterm") or {}
         
-        # Columna central (Transporte, Pago, Financiera)
-        center_col = ft.Column(
-            controls=[transport_card, payment_card, financial_card],
-            spacing=LayoutConstants.SPACING_MD,
-            expand=1,
-        )
+        logistics_rows = []
+        if incoterm_data:
+            logistics_rows.append(self._create_info_row("Incoterm", f"{incoterm_data.get('code', '')} - {incoterm_data.get('name', '')}"))
         
-        # Columna derecha (Productos, Totales, Notas)
-        right_col = ft.Column(
-            controls=[products_card, totals_card, notes_card],
-            spacing=LayoutConstants.SPACING_MD,
-            expand=2,
+        if shipping_addr:
+            logistics_rows.append(self._create_info_row("Entrega", f"{shipping_addr.get('street', '')}, {shipping_addr.get('city', '')}"))
+        
+        if billing_addr:
+            logistics_rows.append(self._create_info_row("Facturación", f"{billing_addr.get('street', '')}, {billing_addr.get('city', '')}"))
+
+        if transport:
+            logistics_rows.append(self._create_info_row("Transporte", transport.get("name", "-")))
+
+        logistics_card = BaseCard(
+            title="Logística y Entrega",
+            icon=ft.Icons.LOCAL_SHIPPING_OUTLINED,
+            content=ft.Column(logistics_rows, spacing=LayoutConstants.SPACING_SM) if logistics_rows else ft.Text("No hay datos logísticos", italic=True, color=ft.Colors.GREY)
         )
 
-        content = ft.Column(
+        # === DISEÑO FINAL: Split Layout (Barra Lateral) ===
+        
+        # Columna Principal (Izquierda - 70%): Productos, Totales, Entregas, Notas
+        main_column = ft.Column(
+            controls=[
+                products_card,
+                ft.Container(
+                    content=totals_card,
+                    alignment=ft.Alignment(1, 0),
+                ),
+                delivery_card,
+                notes_card,
+            ],
+            spacing=LayoutConstants.SPACING_LG,
+            expand=7,
+        )
+
+        # Columna Lateral (Derecha - 30%): Info administrativa y comercial
+        sidebar_column = ft.Column(
+            controls=[
+                general_card,
+                financial_card,
+                dates_card,
+                contact_card,
+                rut_card,
+                plant_card,
+                staff_card,
+                logistics_card,
+                payment_card,
+            ],
+            spacing=LayoutConstants.SPACING_MD,
+            expand=3,
+        )
+
+        # Layout Final organizado
+        content_layout = ft.Column(
             controls=[
                 header,
+                ft.Divider(height=LayoutConstants.SPACING_MD, color=ft.Colors.TRANSPARENT),
                 ft.Row(
-                    controls=[left_col, center_col, right_col],
+                    controls=[main_column, sidebar_column],
                     vertical_alignment=ft.CrossAxisAlignment.START,
-                    expand=True,
                     spacing=LayoutConstants.SPACING_LG,
-                )
+                ),
             ],
             spacing=LayoutConstants.SPACING_LG,
             scroll=ft.ScrollMode.AUTO,
             expand=True,
         )
 
-        return content
+        return content_layout
 
     def _create_info_row(self, label: str, value: str) -> ft.Row:
         """Crea una fila de información."""
