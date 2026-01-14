@@ -150,6 +150,13 @@ class Order(Base, TimestampMixin, AuditMixin, ActiveMixin):
         nullable=True,
         comment="Company plant",
     )
+    company_rut_id = Column(
+        Integer,
+        ForeignKey("company_ruts.id", ondelete="RESTRICT"),
+        nullable=True,
+        index=True,
+        comment="Specific customer RUT for this order",
+    )
 
     # Address information
     shipping_address_id = Column(
@@ -276,6 +283,7 @@ class Order(Base, TimestampMixin, AuditMixin, ActiveMixin):
     # Relationships
     quote = relationship("Quote", back_populates="order", foreign_keys=[quote_id])
     company = relationship("Company", back_populates="orders", foreign_keys=[company_id])
+    company_rut = relationship("CompanyRut", foreign_keys=[company_rut_id])
     contact = relationship("Contact", foreign_keys=[contact_id])
     plant = relationship("Plant", foreign_keys=[plant_id])
     shipping_address = relationship("Address", foreign_keys=[shipping_address_id])
@@ -401,6 +409,7 @@ class Order(Base, TimestampMixin, AuditMixin, ActiveMixin):
         """
         self.quote_id = quote.id
         self.company_id = quote.company_id
+        self.company_rut_id = quote.company_rut_id
         self.contact_id = quote.contact_id
         self.plant_id = quote.plant_id
         self.staff_id = quote.staff_id
