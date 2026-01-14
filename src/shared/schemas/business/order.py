@@ -72,6 +72,54 @@ class OrderProductResponse(OrderProductBase):
     model_config = ConfigDict(from_attributes=True)
 
 
+# === RELATED ENTITY SUMMARIES (FOR RESPONSES) ===
+
+class ContactSummary(BaseModel):
+    """Resumen de contacto para incluir en respuestas de orden."""
+    id: int
+    first_name: str
+    last_name: str
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    mobile: Optional[str] = None
+    position: Optional[str] = None
+    model_config = ConfigDict(from_attributes=True)
+
+class CompanyRutSummary(BaseModel):
+    """Resumen de RUT de empresa para incluir en respuestas de orden."""
+    id: int
+    rut: str
+    is_main: bool = False
+    model_config = ConfigDict(from_attributes=True)
+
+class PlantSummary(BaseModel):
+    """Resumen de planta para incluir en respuestas de orden."""
+    id: int
+    name: str
+    address: Optional[str] = None
+    phone: Optional[str] = None
+    email: Optional[str] = None
+    model_config = ConfigDict(from_attributes=True)
+
+class StaffSummary(BaseModel):
+    """Resumen de personal para incluir en respuestas de orden."""
+    id: int
+    first_name: str
+    last_name: str
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    position: Optional[str] = None
+    trigram: Optional[str] = None
+    model_config = ConfigDict(from_attributes=True)
+
+class IncotermSummary(BaseModel):
+    """Resumen de incoterm para incluir en respuestas de orden."""
+    id: int
+    code: str
+    name: Optional[str] = None
+    model_config = ConfigDict(from_attributes=True)
+
+
 # ============================================================================
 # ORDER SCHEMAS
 # ============================================================================
@@ -97,6 +145,7 @@ class OrderBase(BaseModel):
     )
     quote_id: Optional[int] = Field(None, gt=0, description="Source quote ID")
     company_id: int = Field(..., gt=0, description="Company ID (customer/supplier)")
+    company_rut_id: Optional[int] = Field(None, gt=0, description="Company RUT ID")
     contact_id: Optional[int] = Field(None, gt=0, description="Contact person ID")
     plant_id: Optional[int] = Field(None, gt=0, description="Plant ID")
     staff_id: int = Field(..., gt=0, description="Staff member ID")
@@ -178,6 +227,7 @@ class OrderUpdate(BaseModel):
 
     revision: Optional[str] = Field(None, min_length=1, max_length=10)
     order_type: Optional[str] = None
+    company_rut_id: Optional[int] = Field(None, gt=0)
     contact_id: Optional[int] = Field(None, gt=0)
     plant_id: Optional[int] = Field(None, gt=0)
     staff_id: Optional[int] = Field(None, gt=0)
@@ -226,6 +276,13 @@ class OrderResponse(OrderBase):
     tax_amount: Decimal
     total: Decimal
     products: List[OrderProductResponse] = Field(default_factory=list)
+
+    # Related entities (expanded)
+    contact: Optional[ContactSummary] = None
+    company_rut: Optional[CompanyRutSummary] = None
+    plant: Optional[PlantSummary] = None
+    staff: Optional[StaffSummary] = None
+    incoterm: Optional[IncotermSummary] = None
 
     model_config = ConfigDict(from_attributes=True)
 
