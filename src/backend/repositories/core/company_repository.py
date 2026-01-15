@@ -6,7 +6,7 @@ Maneja el acceso a datos para empresas, sus RUTs y plantas.
 
 from typing import Optional, List
 
-from sqlalchemy import or_
+from sqlalchemy import or_, select
 from sqlalchemy.orm import Session, selectinload
 
 from src.backend.models.core.companies import Company, CompanyRut, Plant
@@ -52,12 +52,8 @@ class CompanyRepository(BaseRepository[Company]):
                 print(f"Empresa encontrada: {company.name}")
         """
         logger.debug(f"Buscando empresa por trigram: {trigram}")
-
-        company = (
-            self.session.query(Company)
-            .filter(Company.trigram == trigram.upper())
-            .first()
-        )
+        stmt = select(Company).filter(Company.trigram == trigram.upper())
+        company = self.session.execute(stmt).scalar_one_or_none()
 
         if company:
             logger.debug(f"Empresa encontrada: {company.name} (trigram={trigram})")
@@ -82,14 +78,13 @@ class CompanyRepository(BaseRepository[Company]):
                 print(company.name)
         """
         logger.debug(f"Buscando empresas por nombre: {name}")
-
         search_pattern = f"%{name}%"
-        companies = (
-            self.session.query(Company)
+        stmt = (
+            select(Company)
             .filter(Company.name.ilike(search_pattern))
             .order_by(Company.name)
-            .all()
         )
+        companies = list(self.session.execute(stmt).scalars().all())
 
         logger.debug(f"Encontradas {len(companies)} empresa(s) con nombre '{name}'")
         return companies
@@ -119,13 +114,13 @@ class CompanyRepository(BaseRepository[Company]):
         """
         logger.debug(f"Obteniendo empresas por tipo: {company_type_id}, is_active={is_active}")
 
-        query = self.session.query(Company).filter(Company.company_type_id == company_type_id)
+        stmt = select(Company).filter(Company.company_type_id == company_type_id)
 
         # Aplicar filtro de estado si se especifica
         if is_active is not None:
-            query = query.filter(Company.is_active == is_active)
+            stmt = stmt.filter(Company.is_active == is_active)
 
-        companies = query.offset(skip).limit(limit).all()
+        companies = list(self.session.execute(stmt.offset(skip).limit(limit)).scalars().all())
 
         logger.debug(f"Encontradas {len(companies)} empresa(s) del tipo {company_type_id}")
         return companies
@@ -148,12 +143,12 @@ class CompanyRepository(BaseRepository[Company]):
         """
         logger.debug(f"Obteniendo empresa id={company_id} con plantas")
 
-        company = (
-            self.session.query(Company)
+        stmt = (
+            select(Company)
             .options(selectinload(Company.plants))
             .filter(Company.id == company_id)
-            .first()
         )
+        company = self.session.execute(stmt).scalar_one_or_none()
 
         if company:
             logger.debug(f"Empresa encontrada con {len(company.plants)} planta(s)")
@@ -177,13 +172,12 @@ class CompanyRepository(BaseRepository[Company]):
                     print(rut.rut)
         """
         logger.debug(f"Obteniendo empresa id={company_id} con RUTs")
-
-        company = (
-            self.session.query(Company)
+        stmt = (
+            select(Company)
             .options(selectinload(Company.ruts))
             .filter(Company.id == company_id)
-            .first()
         )
+        company = self.session.execute(stmt).scalar_one_or_none()
 
         if company:
             logger.debug(f"Empresa encontrada con {len(company.ruts)} RUT(s)")
@@ -207,16 +201,15 @@ class CompanyRepository(BaseRepository[Company]):
                 print(f"RUTs: {len(company.ruts)}")
         """
         logger.debug(f"Obteniendo empresa id={company_id} con todas las relaciones")
-
-        company = (
-            self.session.query(Company)
+        stmt = (
+            select(Company)
             .options(
                 selectinload(Company.plants),
                 selectinload(Company.ruts),
             )
             .filter(Company.id == company_id)
-            .first()
         )
+        company = self.session.execute(stmt).scalar_one_or_none()
 
         return company
 
@@ -235,14 +228,13 @@ class CompanyRepository(BaseRepository[Company]):
             active_companies = repo.get_active_companies()
         """
         logger.debug(f"Obteniendo empresas activas - skip={skip}, limit={limit}")
-
-        companies = (
-            self.session.query(Company)
+        stmt = (
+            select(Company)
             .filter(Company.is_active == True)
             .offset(skip)
             .limit(limit)
-            .all()
         )
+        companies = list(self.session.execute(stmt).scalars().all())
 
         logger.debug(f"Encontradas {len(companies)} empresa(s) activa(s)")
         return companies
@@ -273,12 +265,8 @@ class CompanyRutRepository(BaseRepository[CompanyRut]):
             CompanyRut si existe, None en caso contrario
         """
         logger.debug(f"Buscando RUT: {rut}")
-
-        company_rut = (
-            self.session.query(CompanyRut)
-            .filter(CompanyRut.rut == rut.upper())
-            .first()
-        )
+        stmt = select(CompanyRut).filter(CompanyRut.rut == rut.upper())
+        company_rut = self.session.execute(stmt).scalar_one_or_none()
 
         return company_rut
 
@@ -293,12 +281,8 @@ class CompanyRutRepository(BaseRepository[CompanyRut]):
             Lista de RUTs de la empresa
         """
         logger.debug(f"Obteniendo RUTs de empresa id={company_id}")
-
-        ruts = (
-            self.session.query(CompanyRut)
-            .filter(CompanyRut.company_id == company_id)
-            .all()
-        )
+        stmt = select(CompanyRut).filter(CompanyRut.company_id == company_id)
+        ruts = list(self.session.execute(stmt).scalars().all())
 
         logger.debug(f"Encontrados {len(ruts)} RUT(s)")
         return ruts
@@ -314,15 +298,11 @@ class CompanyRutRepository(BaseRepository[CompanyRut]):
             RUT principal si existe, None en caso contrario
         """
         logger.debug(f"Obteniendo RUT principal de empresa id={company_id}")
-
-        primary_rut = (
-            self.session.query(CompanyRut)
-            .filter(
-                CompanyRut.company_id == company_id,
-                CompanyRut.is_main == True
-            )
-            .first()
+        stmt = select(CompanyRut).filter(
+            CompanyRut.company_id == company_id,
+            CompanyRut.is_main == True
         )
+        primary_rut = self.session.execute(stmt).scalar_one_or_none()
 
         return primary_rut
 
@@ -352,13 +332,8 @@ class PlantRepository(BaseRepository[Plant]):
             Lista de plantas
         """
         logger.debug(f"Obteniendo plantas de empresa id={company_id}")
-
-        plants = (
-            self.session.query(Plant)
-            .filter(Plant.company_id == company_id)
-            .order_by(Plant.name)
-            .all()
-        )
+        stmt = select(Plant).filter(Plant.company_id == company_id).order_by(Plant.name)
+        plants = list(self.session.execute(stmt).scalars().all())
 
         logger.debug(f"Encontradas {len(plants)} planta(s)")
         return plants
@@ -374,16 +349,11 @@ class PlantRepository(BaseRepository[Plant]):
             Lista de plantas activas
         """
         logger.debug(f"Obteniendo plantas activas de empresa id={company_id}")
-
-        plants = (
-            self.session.query(Plant)
-            .filter(
-                Plant.company_id == company_id,
-                Plant.is_active == True
-            )
-            .order_by(Plant.name)
-            .all()
-        )
+        stmt = select(Plant).filter(
+            Plant.company_id == company_id,
+            Plant.is_active == True
+        ).order_by(Plant.name)
+        plants = list(self.session.execute(stmt).scalars().all())
 
         logger.debug(f"Encontradas {len(plants)} planta(s) activa(s)")
         return plants
@@ -400,17 +370,12 @@ class PlantRepository(BaseRepository[Plant]):
             Lista de plantas que coinciden
         """
         logger.debug(f"Buscando plantas de empresa id={company_id} por nombre: {name}")
-
         search_pattern = f"%{name}%"
-        plants = (
-            self.session.query(Plant)
-            .filter(
-                Plant.company_id == company_id,
-                Plant.name.ilike(search_pattern)
-            )
-            .order_by(Plant.name)
-            .all()
-        )
+        stmt = select(Plant).filter(
+            Plant.company_id == company_id,
+            Plant.name.ilike(search_pattern)
+        ).order_by(Plant.name)
+        plants = list(self.session.execute(stmt).scalars().all())
 
         logger.debug(f"Encontradas {len(plants)} planta(s)")
         return plants

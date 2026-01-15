@@ -5,7 +5,7 @@ Maneja el acceso a datos para servicios/departamentos.
 """
 
 from typing import Optional, List
-
+from sqlalchemy import select, func
 from sqlalchemy.orm import Session
 
 from src.backend.models.core.contacts import Service
@@ -52,11 +52,8 @@ class ServiceRepository(BaseRepository[Service]):
         """
         logger.debug(f"Buscando servicio por nombre: {name}")
 
-        service = (
-            self.session.query(Service)
-            .filter(Service.name == name.strip())
-            .first()
-        )
+        stmt = select(Service).filter(Service.name == name.strip())
+        service = self.session.execute(stmt).scalar_one_or_none()
 
         if service:
             logger.debug(f"Servicio encontrado: {service.name} (id={service.id})")
@@ -71,24 +68,12 @@ class ServiceRepository(BaseRepository[Service]):
 
         Args:
             name: Texto a buscar en el nombre
-
-        Returns:
-            Lista de servicios que coinciden
-
-        Example:
-            services = repo.search_by_name("vent")
-            for service in services:
-                print(service.name)
         """
         logger.debug(f"Buscando servicios por nombre: {name}")
 
         search_pattern = f"%{name}%"
-        services = (
-            self.session.query(Service)
-            .filter(Service.name.ilike(search_pattern))
-            .order_by(Service.name)
-            .all()
-        )
+        stmt = select(Service).filter(Service.name.ilike(search_pattern)).order_by(Service.name)
+        services = list(self.session.execute(stmt).scalars().all())
 
         logger.debug(f"Encontrados {len(services)} servicio(s) con nombre '{name}'")
         return services
@@ -96,27 +81,17 @@ class ServiceRepository(BaseRepository[Service]):
     def get_active_services(self, skip: int = 0, limit: int = 100) -> List[Service]:
         """
         Obtiene solo los servicios activos.
-
-        Args:
-            skip: Registros a saltar
-            limit: Número máximo de registros
-
-        Returns:
-            Lista de servicios activos
-
-        Example:
-            active_services = repo.get_active_services()
         """
         logger.debug(f"Obteniendo servicios activos - skip={skip}, limit={limit}")
 
-        services = (
-            self.session.query(Service)
+        stmt = (
+            select(Service)
             .filter(Service.is_active == True)
             .order_by(Service.name)
             .offset(skip)
             .limit(limit)
-            .all()
         )
+        services = list(self.session.execute(stmt).scalars().all())
 
         logger.debug(f"Encontrados {len(services)} servicio(s) activo(s)")
         return services
@@ -124,26 +99,16 @@ class ServiceRepository(BaseRepository[Service]):
     def get_all_ordered(self, skip: int = 0, limit: int = 100) -> List[Service]:
         """
         Obtiene todos los servicios ordenados alfabéticamente.
-
-        Args:
-            skip: Registros a saltar
-            limit: Número máximo de registros
-
-        Returns:
-            Lista de servicios ordenados por nombre
-
-        Example:
-            services = repo.get_all_ordered()
         """
         logger.debug(f"Obteniendo servicios ordenados - skip={skip}, limit={limit}")
 
-        services = (
-            self.session.query(Service)
+        stmt = (
+            select(Service)
             .order_by(Service.name)
             .offset(skip)
             .limit(limit)
-            .all()
         )
+        services = list(self.session.execute(stmt).scalars().all())
 
         logger.debug(f"Encontrados {len(services)} servicio(s)")
         return services
@@ -151,26 +116,13 @@ class ServiceRepository(BaseRepository[Service]):
     def count_contacts(self, service_id: int) -> int:
         """
         Cuenta cuántos contactos están asociados a un servicio.
-
-        Args:
-            service_id: ID del servicio
-
-        Returns:
-            Número de contactos
-
-        Example:
-            count = repo.count_contacts(service_id=1)
-            print(f"Contactos en el servicio: {count}")
         """
         from src.backend.models.core.contacts import Contact
 
         logger.debug(f"Contando contactos del servicio id={service_id}")
 
-        count = (
-            self.session.query(Contact)
-            .filter(Contact.service_id == service_id)
-            .count()
-        )
+        stmt = select(func.count(Contact.id)).filter(Contact.service_id == service_id)
+        count = self.session.execute(stmt).scalar() or 0
 
         logger.debug(f"Servicio id={service_id} tiene {count} contacto(s)")
         return count

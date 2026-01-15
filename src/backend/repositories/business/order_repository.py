@@ -8,7 +8,7 @@ order number lookups, company filtering, and status tracking.
 from typing import Optional, List
 from datetime import date
 from sqlalchemy.orm import Session, selectinload
-from sqlalchemy import and_, or_
+from sqlalchemy import select, and_, or_, delete
 
 from src.backend.models.business.orders import Order, OrderProduct
 from src.backend.repositories.base import BaseRepository
@@ -48,11 +48,8 @@ class OrderRepository(BaseRepository[Order]):
             Order if found, None otherwise
         """
         logger.debug(f"Searching order by number: {order_number}")
-        order = (
-            self.session.query(Order)
-            .filter(Order.order_number == order_number.upper())
-            .first()
-        )
+        stmt = select(Order).filter(Order.order_number == order_number.upper())
+        order = self.session.execute(stmt).scalar_one_or_none()
         if order:
             logger.debug(f"Order found: {order_number}")
         else:
@@ -73,8 +70,8 @@ class OrderRepository(BaseRepository[Order]):
             Order with products loaded, None if not found
         """
         logger.debug(f"Getting order id={order_id} with products (eager loading)")
-        order = (
-            self.session.query(Order)
+        stmt = (
+            select(Order)
             .options(
                 selectinload(Order.products).selectinload(OrderProduct.product),
                 selectinload(Order.contact),
@@ -85,8 +82,8 @@ class OrderRepository(BaseRepository[Order]):
                 selectinload(Order.quote)  # Cargar cotización origen
             )
             .filter(Order.id == order_id)
-            .first()
         )
+        order = self.session.execute(stmt).scalar_one_or_none()
         if order:
             logger.debug(f"Order found with {len(order.products)} product(s)")
         else:
@@ -111,14 +108,14 @@ class OrderRepository(BaseRepository[Order]):
             List of orders for the company
         """
         logger.debug(f"Getting orders for company_id={company_id}")
-        orders = (
-            self.session.query(Order)
+        stmt = (
+            select(Order)
             .filter(Order.company_id == company_id)
             .order_by(Order.order_date.desc())
             .offset(skip)
             .limit(limit)
-            .all()
         )
+        orders = list(self.session.execute(stmt).scalars().all())
         logger.debug(f"Found {len(orders)} order(s) for company_id={company_id}")
         return orders
 
@@ -130,14 +127,14 @@ class OrderRepository(BaseRepository[Order]):
     ) -> List[Order]:
         """Get orders by status."""
         logger.debug(f"Getting orders with status_id={status_id}")
-        orders = (
-            self.session.query(Order)
+        stmt = (
+            select(Order)
             .filter(Order.status_id == status_id)
             .order_by(Order.order_date.desc())
             .offset(skip)
             .limit(limit)
-            .all()
         )
+        orders = list(self.session.execute(stmt).scalars().all())
         logger.debug(f"Found {len(orders)} order(s) with status_id={status_id}")
         return orders
 
@@ -149,14 +146,14 @@ class OrderRepository(BaseRepository[Order]):
     ) -> List[Order]:
         """Get orders by payment status."""
         logger.debug(f"Getting orders with payment_status_id={payment_status_id}")
-        orders = (
-            self.session.query(Order)
+        stmt = (
+            select(Order)
             .filter(Order.payment_status_id == payment_status_id)
             .order_by(Order.order_date.desc())
             .offset(skip)
             .limit(limit)
-            .all()
         )
+        orders = list(self.session.execute(stmt).scalars().all())
         logger.debug(f"Found {len(orders)} order(s) with payment_status_id={payment_status_id}")
         return orders
 
@@ -168,25 +165,22 @@ class OrderRepository(BaseRepository[Order]):
     ) -> List[Order]:
         """Get orders assigned to staff member."""
         logger.debug(f"Getting orders for staff_id={staff_id}")
-        orders = (
-            self.session.query(Order)
+        stmt = (
+            select(Order)
             .filter(Order.staff_id == staff_id)
             .order_by(Order.order_date.desc())
             .offset(skip)
             .limit(limit)
-            .all()
         )
+        orders = list(self.session.execute(stmt).scalars().all())
         logger.debug(f"Found {len(orders)} order(s) for staff_id={staff_id}")
         return orders
 
     def get_by_quote(self, quote_id: int) -> Optional[Order]:
         """Get order created from a specific quote."""
         logger.debug(f"Getting order for quote_id={quote_id}")
-        order = (
-            self.session.query(Order)
-            .filter(Order.quote_id == quote_id)
-            .first()
-        )
+        stmt = select(Order).filter(Order.quote_id == quote_id)
+        order = self.session.execute(stmt).scalar_one_or_none()
         if order:
             logger.debug(f"Order found for quote_id={quote_id}")
         else:
@@ -196,8 +190,8 @@ class OrderRepository(BaseRepository[Order]):
     def get_overdue_orders(self, skip: int = 0, limit: int = 100) -> List[Order]:
         """Get orders that are overdue (promised date passed, not completed)."""
         logger.debug("Getting overdue orders")
-        orders = (
-            self.session.query(Order)
+        stmt = (
+            select(Order)
             .filter(
                 and_(
                     Order.promised_date.isnot(None),
@@ -208,8 +202,8 @@ class OrderRepository(BaseRepository[Order]):
             .order_by(Order.promised_date)
             .offset(skip)
             .limit(limit)
-            .all()
         )
+        orders = list(self.session.execute(stmt).scalars().all())
         logger.debug(f"Found {len(orders)} overdue order(s)")
         return orders
 
@@ -221,28 +215,28 @@ class OrderRepository(BaseRepository[Order]):
     ) -> List[Order]:
         """Get orders by type (sales or purchase)."""
         logger.debug(f"Getting orders with order_type={order_type}")
-        orders = (
-            self.session.query(Order)
+        stmt = (
+            select(Order)
             .filter(Order.order_type == order_type)
             .order_by(Order.order_date.desc())
             .offset(skip)
             .limit(limit)
-            .all()
         )
+        orders = list(self.session.execute(stmt).scalars().all())
         logger.debug(f"Found {len(orders)} {order_type} order(s)")
         return orders
 
     def get_export_orders(self, skip: int = 0, limit: int = 100) -> List[Order]:
         """Get export orders only."""
         logger.debug("Getting export orders")
-        orders = (
-            self.session.query(Order)
+        stmt = (
+            select(Order)
             .filter(Order.is_export == True)
             .order_by(Order.order_date.desc())
             .offset(skip)
             .limit(limit)
-            .all()
         )
+        orders = list(self.session.execute(stmt).scalars().all())
         logger.debug(f"Found {len(orders)} export order(s)")
         return orders
 
@@ -255,14 +249,14 @@ class OrderRepository(BaseRepository[Order]):
         """Search orders by project number."""
         logger.debug(f"Searching orders by project_number: '{project_number}'")
         search_pattern = f"%{project_number}%"
-        orders = (
-            self.session.query(Order)
+        stmt = (
+            select(Order)
             .filter(Order.project_number.ilike(search_pattern))
             .order_by(Order.order_date.desc())
             .offset(skip)
             .limit(limit)
-            .all()
         )
+        orders = list(self.session.execute(stmt).scalars().all())
         logger.debug(f"Found {len(orders)} order(s) matching project_number")
         return orders
 
@@ -286,12 +280,12 @@ class OrderProductRepository(BaseRepository[OrderProduct]):
         Returns products ordered by sequence number.
         """
         logger.debug(f"Getting products for order_id={order_id}")
-        products = (
-            self.session.query(OrderProduct)
+        stmt = (
+            select(OrderProduct)
             .filter(OrderProduct.order_id == order_id)
             .order_by(OrderProduct.sequence)
-            .all()
         )
+        products = list(self.session.execute(stmt).scalars().all())
         logger.debug(f"Found {len(products)} product(s) for order_id={order_id}")
         return products
 
@@ -303,24 +297,22 @@ class OrderProductRepository(BaseRepository[OrderProduct]):
     ) -> List[OrderProduct]:
         """Get all order line items containing a specific product."""
         logger.debug(f"Getting order products for product_id={product_id}")
-        products = (
-            self.session.query(OrderProduct)
+        stmt = (
+            select(OrderProduct)
             .filter(OrderProduct.product_id == product_id)
             .offset(skip)
             .limit(limit)
-            .all()
         )
+        products = list(self.session.execute(stmt).scalars().all())
         logger.debug(f"Found {len(products)} order product(s) for product_id={product_id}")
         return products
 
     def delete_by_order(self, order_id: int) -> int:
         """Delete all products for a specific order."""
         logger.debug(f"Deleting all products for order_id={order_id}")
-        count = (
-            self.session.query(OrderProduct)
-            .filter(OrderProduct.order_id == order_id)
-            .delete()
-        )
+        stmt = delete(OrderProduct).filter(OrderProduct.order_id == order_id)
+        result = self.session.execute(stmt)
+        count = result.rowcount
         self.session.flush()
         logger.warning(f"Deleted {count} product(s) for order_id={order_id}")
         return count

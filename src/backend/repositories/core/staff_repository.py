@@ -5,7 +5,7 @@ Maneja el acceso a datos para usuarios/staff del sistema.
 """
 
 from typing import Optional, List
-
+from sqlalchemy import select, or_
 from sqlalchemy.orm import Session
 
 from src.backend.models.core.staff import Staff
@@ -52,11 +52,8 @@ class StaffRepository(BaseRepository[Staff]):
         """
         logger.debug(f"Buscando staff por username: {username}")
 
-        staff = (
-            self.session.query(Staff)
-            .filter(Staff.username == username.lower())
-            .first()
-        )
+        stmt = select(Staff).filter(Staff.username == username.lower())
+        staff = self.session.execute(stmt).scalar_one_or_none()
 
         if staff:
             logger.debug(f"Staff encontrado: {staff.full_name} (id={staff.id})")
@@ -82,11 +79,8 @@ class StaffRepository(BaseRepository[Staff]):
         """
         logger.debug(f"Buscando staff por email: {email}")
 
-        staff = (
-            self.session.query(Staff)
-            .filter(Staff.email == email.lower())
-            .first()
-        )
+        stmt = select(Staff).filter(Staff.email == email.lower())
+        staff = self.session.execute(stmt).scalar_one_or_none()
 
         if staff:
             logger.debug(f"Staff encontrado: {staff.full_name}")
@@ -112,11 +106,8 @@ class StaffRepository(BaseRepository[Staff]):
         """
         logger.debug(f"Buscando staff por trigram: {trigram}")
 
-        staff = (
-            self.session.query(Staff)
-            .filter(Staff.trigram == trigram.upper())
-            .first()
-        )
+        stmt = select(Staff).filter(Staff.trigram == trigram.upper())
+        staff = self.session.execute(stmt).scalar_one_or_none()
 
         if staff:
             logger.debug(f"Staff encontrado: {staff.full_name} (trigram={trigram})")
@@ -141,14 +132,14 @@ class StaffRepository(BaseRepository[Staff]):
         """
         logger.debug(f"Obteniendo staff activo - skip={skip}, limit={limit}")
 
-        staff_list = (
-            self.session.query(Staff)
+        stmt = (
+            select(Staff)
             .filter(Staff.is_active == True)
             .order_by(Staff.last_name, Staff.first_name)
             .offset(skip)
             .limit(limit)
-            .all()
         )
+        staff_list = list(self.session.execute(stmt).scalars().all())
 
         logger.debug(f"Encontrados {len(staff_list)} usuario(s) activo(s)")
         return staff_list
@@ -169,14 +160,14 @@ class StaffRepository(BaseRepository[Staff]):
         """
         logger.debug(f"Obteniendo administradores - skip={skip}, limit={limit}")
 
-        admins = (
-            self.session.query(Staff)
+        stmt = (
+            select(Staff)
             .filter(Staff.is_admin == True)
             .order_by(Staff.last_name, Staff.first_name)
             .offset(skip)
             .limit(limit)
-            .all()
         )
+        admins = list(self.session.execute(stmt).scalars().all())
 
         logger.debug(f"Encontrados {len(admins)} administrador(es)")
         return admins
@@ -193,15 +184,15 @@ class StaffRepository(BaseRepository[Staff]):
         """
         logger.debug("Obteniendo administradores activos")
 
-        admins = (
-            self.session.query(Staff)
+        stmt = (
+            select(Staff)
             .filter(
                 Staff.is_admin == True,
                 Staff.is_active == True
             )
             .order_by(Staff.last_name, Staff.first_name)
-            .all()
         )
+        admins = list(self.session.execute(stmt).scalars().all())
 
         logger.debug(f"Encontrados {len(admins)} administrador(es) activo(s)")
         return admins
@@ -224,15 +215,17 @@ class StaffRepository(BaseRepository[Staff]):
         logger.debug(f"Buscando staff por nombre: {name}")
 
         search_pattern = f"%{name}%"
-        staff_list = (
-            self.session.query(Staff)
+        stmt = (
+            select(Staff)
             .filter(
-                (Staff.first_name.ilike(search_pattern)) |
-                (Staff.last_name.ilike(search_pattern))
+                or_(
+                    Staff.first_name.ilike(search_pattern),
+                    Staff.last_name.ilike(search_pattern)
+                )
             )
             .order_by(Staff.last_name, Staff.first_name)
-            .all()
         )
+        staff_list = list(self.session.execute(stmt).scalars().all())
 
         logger.debug(f"Encontrados {len(staff_list)} usuario(s)")
         return staff_list
@@ -253,12 +246,12 @@ class StaffRepository(BaseRepository[Staff]):
         logger.debug(f"Buscando staff por posición: {position}")
 
         search_pattern = f"%{position}%"
-        staff_list = (
-            self.session.query(Staff)
+        stmt = (
+            select(Staff)
             .filter(Staff.position.ilike(search_pattern))
             .order_by(Staff.last_name, Staff.first_name)
-            .all()
         )
+        staff_list = list(self.session.execute(stmt).scalars().all())
 
         logger.debug(f"Encontrados {len(staff_list)} usuario(s)")
         return staff_list

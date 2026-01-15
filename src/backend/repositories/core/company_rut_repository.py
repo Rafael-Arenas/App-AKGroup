@@ -5,7 +5,7 @@ Maneja el acceso a datos para RUTs de empresas.
 """
 
 from typing import Optional, List
-
+from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
 from src.backend.models.core.companies import CompanyRut
@@ -52,12 +52,12 @@ class CompanyRutRepository(BaseRepository[CompanyRut]):
         """
         logger.debug(f"Obteniendo RUTs de empresa id={company_id}")
 
-        ruts = (
-            self.session.query(CompanyRut)
+        stmt = (
+            select(CompanyRut)
             .filter(CompanyRut.company_id == company_id)
             .order_by(CompanyRut.is_main.desc(), CompanyRut.created_at)
-            .all()
         )
+        ruts = list(self.session.execute(stmt).scalars().all())
 
         logger.debug(f"Encontrados {len(ruts)} RUT(s)")
         return ruts
@@ -79,14 +79,11 @@ class CompanyRutRepository(BaseRepository[CompanyRut]):
         """
         logger.debug(f"Obteniendo RUT principal de empresa id={company_id}")
 
-        rut = (
-            self.session.query(CompanyRut)
-            .filter(
-                CompanyRut.company_id == company_id,
-                CompanyRut.is_main == True
-            )
-            .first()
+        stmt = select(CompanyRut).filter(
+            CompanyRut.company_id == company_id,
+            CompanyRut.is_main == True
         )
+        rut = self.session.execute(stmt).scalar_one_or_none()
 
         if rut:
             logger.debug(f"RUT principal encontrado: {rut.rut}")
@@ -115,11 +112,8 @@ class CompanyRutRepository(BaseRepository[CompanyRut]):
         from src.backend.models.base.validators import RutValidator
         normalized_rut = RutValidator.validate(rut)
 
-        company_rut = (
-            self.session.query(CompanyRut)
-            .filter(CompanyRut.rut == normalized_rut)
-            .first()
-        )
+        stmt = select(CompanyRut).filter(CompanyRut.rut == normalized_rut)
+        company_rut = self.session.execute(stmt).scalar_one_or_none()
 
         if company_rut:
             logger.debug(f"RUT encontrado: {company_rut.rut}")
@@ -146,10 +140,15 @@ class CompanyRutRepository(BaseRepository[CompanyRut]):
             raise ValueError(f"No existe RUT con id={rut_id}")
 
         # Desmarcar todos los RUTs de la empresa
-        self.session.query(CompanyRut).filter(
-            CompanyRut.company_id == rut.company_id,
-            CompanyRut.is_main == True
-        ).update({"is_main": False})
+        stmt = (
+            update(CompanyRut)
+            .filter(
+                CompanyRut.company_id == rut.company_id,
+                CompanyRut.is_main == True
+            )
+            .values(is_main=False)
+        )
+        self.session.execute(stmt)
 
         # Marcar el RUT seleccionado como principal
         rut.is_main = True
@@ -171,15 +170,15 @@ class CompanyRutRepository(BaseRepository[CompanyRut]):
         """
         logger.debug(f"Obteniendo RUTs secundarios de empresa id={company_id}")
 
-        ruts = (
-            self.session.query(CompanyRut)
+        stmt = (
+            select(CompanyRut)
             .filter(
                 CompanyRut.company_id == company_id,
                 CompanyRut.is_main == False
             )
             .order_by(CompanyRut.created_at)
-            .all()
         )
+        ruts = list(self.session.execute(stmt).scalars().all())
 
         logger.debug(f"Encontrados {len(ruts)} RUT(s) secundario(s)")
         return ruts

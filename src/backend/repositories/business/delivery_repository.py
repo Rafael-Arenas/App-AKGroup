@@ -7,7 +7,7 @@ Handles data access for DeliveryOrder, DeliveryDate, Transport, and PaymentCondi
 from typing import Optional, List
 from datetime import date
 from sqlalchemy.orm import Session
-from sqlalchemy import and_
+from sqlalchemy import select, and_, or_
 
 from src.backend.models.business.delivery import DeliveryOrder, DeliveryDate, Transport, PaymentCondition
 from src.backend.repositories.base import BaseRepository
@@ -46,11 +46,8 @@ class DeliveryOrderRepository(BaseRepository[DeliveryOrder]):
             DeliveryOrder if found, None otherwise
         """
         logger.debug(f"Searching delivery order by number: {delivery_number}")
-        delivery = (
-            self.session.query(DeliveryOrder)
-            .filter(DeliveryOrder.delivery_number == delivery_number.upper())
-            .first()
-        )
+        stmt = select(DeliveryOrder).filter(DeliveryOrder.delivery_number == delivery_number.upper())
+        delivery = self.session.execute(stmt).scalar_one_or_none()
         if delivery:
             logger.debug(f"Delivery order found: {delivery_number}")
         else:
@@ -60,12 +57,12 @@ class DeliveryOrderRepository(BaseRepository[DeliveryOrder]):
     def get_by_order(self, order_id: int) -> List[DeliveryOrder]:
         """Get all delivery orders for an order."""
         logger.debug(f"Getting delivery orders for order_id={order_id}")
-        deliveries = (
-            self.session.query(DeliveryOrder)
+        stmt = (
+            select(DeliveryOrder)
             .filter(DeliveryOrder.order_id == order_id)
             .order_by(DeliveryOrder.delivery_date.desc())
-            .all()
         )
+        deliveries = list(self.session.execute(stmt).scalars().all())
         logger.debug(f"Found {len(deliveries)} delivery order(s)")
         return deliveries
 
@@ -77,14 +74,14 @@ class DeliveryOrderRepository(BaseRepository[DeliveryOrder]):
     ) -> List[DeliveryOrder]:
         """Get delivery orders by company."""
         logger.debug(f"Getting delivery orders for company_id={company_id}")
-        deliveries = (
-            self.session.query(DeliveryOrder)
+        stmt = (
+            select(DeliveryOrder)
             .filter(DeliveryOrder.company_id == company_id)
             .order_by(DeliveryOrder.delivery_date.desc())
             .offset(skip)
             .limit(limit)
-            .all()
         )
+        deliveries = list(self.session.execute(stmt).scalars().all())
         logger.debug(f"Found {len(deliveries)} delivery order(s)")
         return deliveries
 
@@ -96,28 +93,28 @@ class DeliveryOrderRepository(BaseRepository[DeliveryOrder]):
     ) -> List[DeliveryOrder]:
         """Get delivery orders by status."""
         logger.debug(f"Getting delivery orders with status={status}")
-        deliveries = (
-            self.session.query(DeliveryOrder)
+        stmt = (
+            select(DeliveryOrder)
             .filter(DeliveryOrder.status == status)
             .order_by(DeliveryOrder.delivery_date.desc())
             .offset(skip)
             .limit(limit)
-            .all()
         )
+        deliveries = list(self.session.execute(stmt).scalars().all())
         logger.debug(f"Found {len(deliveries)} delivery order(s)")
         return deliveries
 
     def get_pending_deliveries(self, skip: int = 0, limit: int = 100) -> List[DeliveryOrder]:
         """Get pending deliveries."""
         logger.debug("Getting pending deliveries")
-        deliveries = (
-            self.session.query(DeliveryOrder)
+        stmt = (
+            select(DeliveryOrder)
             .filter(DeliveryOrder.status.in_(["pending", "in_transit"]))
             .order_by(DeliveryOrder.delivery_date)
             .offset(skip)
             .limit(limit)
-            .all()
         )
+        deliveries = list(self.session.execute(stmt).scalars().all())
         logger.debug(f"Found {len(deliveries)} pending delivery order(s)")
         return deliveries
 
@@ -136,12 +133,12 @@ class DeliveryDateRepository(BaseRepository[DeliveryDate]):
     def get_by_delivery_order(self, delivery_order_id: int) -> List[DeliveryDate]:
         """Get all delivery dates for a delivery order."""
         logger.debug(f"Getting delivery dates for delivery_order_id={delivery_order_id}")
-        dates = (
-            self.session.query(DeliveryDate)
+        stmt = (
+            select(DeliveryDate)
             .filter(DeliveryDate.delivery_order_id == delivery_order_id)
             .order_by(DeliveryDate.planned_date)
-            .all()
         )
+        dates = list(self.session.execute(stmt).scalars().all())
         logger.debug(f"Found {len(dates)} delivery date(s)")
         return dates
 
@@ -163,11 +160,8 @@ class TransportRepository(BaseRepository[Transport]):
     def get_by_name(self, name: str) -> Optional[Transport]:
         """Get transport by name."""
         logger.debug(f"Searching transport by name: {name}")
-        transport = (
-            self.session.query(Transport)
-            .filter(Transport.name == name)
-            .first()
-        )
+        stmt = select(Transport).filter(Transport.name == name)
+        transport = self.session.execute(stmt).scalar_one_or_none()
         if transport:
             logger.debug(f"Transport found: {name}")
         else:
@@ -182,14 +176,14 @@ class TransportRepository(BaseRepository[Transport]):
     ) -> List[Transport]:
         """Get transports by type."""
         logger.debug(f"Getting transports with type={transport_type}")
-        transports = (
-            self.session.query(Transport)
+        stmt = (
+            select(Transport)
             .filter(Transport.transport_type == transport_type)
             .order_by(Transport.name)
             .offset(skip)
             .limit(limit)
-            .all()
         )
+        transports = list(self.session.execute(stmt).scalars().all())
         logger.debug(f"Found {len(transports)} transport(s)")
         return transports
 
@@ -213,11 +207,8 @@ class PaymentConditionRepository(BaseRepository[PaymentCondition]):
     def get_by_number(self, number: str) -> Optional[PaymentCondition]:
         """Get payment condition by number."""
         logger.debug(f"Searching payment condition by number: {number}")
-        condition = (
-            self.session.query(PaymentCondition)
-            .filter(PaymentCondition.payment_condition_number == number.upper())
-            .first()
-        )
+        stmt = select(PaymentCondition).filter(PaymentCondition.payment_condition_number == number.upper())
+        condition = self.session.execute(stmt).scalar_one_or_none()
         if condition:
             logger.debug(f"Payment condition found: {number}")
         else:
@@ -227,11 +218,8 @@ class PaymentConditionRepository(BaseRepository[PaymentCondition]):
     def get_default(self) -> Optional[PaymentCondition]:
         """Get default payment condition."""
         logger.debug("Getting default payment condition")
-        condition = (
-            self.session.query(PaymentCondition)
-            .filter(PaymentCondition.is_default == True)
-            .first()
-        )
+        stmt = select(PaymentCondition).filter(PaymentCondition.is_default == True)
+        condition = self.session.execute(stmt).scalar_one_or_none()
         if condition:
             logger.debug(f"Default payment condition found: {condition.payment_condition_number}")
         else:

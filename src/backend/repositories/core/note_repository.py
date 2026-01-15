@@ -5,7 +5,7 @@ Maneja el acceso a datos para notas asociadas a cualquier entidad del sistema.
 """
 
 from typing import Optional, List
-
+from sqlalchemy import select, or_, func
 from sqlalchemy.orm import Session
 
 from src.backend.models.core.notes import Note, NotePriority
@@ -64,8 +64,8 @@ class NoteRepository(BaseRepository[Note]):
             f"skip={skip}, limit={limit}"
         )
 
-        notes = (
-            self.session.query(Note)
+        stmt = (
+            select(Note)
             .filter(
                 Note.entity_type == entity_type.lower(),
                 Note.entity_id == entity_id
@@ -73,8 +73,8 @@ class NoteRepository(BaseRepository[Note]):
             .order_by(Note.priority.desc(), Note.created_at.desc())
             .offset(skip)
             .limit(limit)
-            .all()
         )
+        notes = list(self.session.execute(stmt).scalars().all())
 
         logger.debug(f"Encontradas {len(notes)} nota(s)")
         return notes
@@ -103,21 +103,21 @@ class NoteRepository(BaseRepository[Note]):
         """
         logger.debug(
             f"Obteniendo notas de {entity_type} id={entity_id} "
-            f"con prioridad={priority.value}"
+            f"con prioridad={priority.name}"
         )
 
-        notes = (
-            self.session.query(Note)
+        stmt = (
+            select(Note)
             .filter(
                 Note.entity_type == entity_type.lower(),
                 Note.entity_id == entity_id,
                 Note.priority == priority
             )
             .order_by(Note.created_at.desc())
-            .all()
         )
+        notes = list(self.session.execute(stmt).scalars().all())
 
-        logger.debug(f"Encontradas {len(notes)} nota(s) con prioridad {priority.value}")
+        logger.debug(f"Encontradas {len(notes)} nota(s) con prioridad {priority.name}")
         return notes
 
     def get_urgent_notes(
@@ -163,16 +163,16 @@ class NoteRepository(BaseRepository[Note]):
             f"{entity_type} id={entity_id}"
         )
 
-        notes = (
-            self.session.query(Note)
+        stmt = (
+            select(Note)
             .filter(
                 Note.entity_type == entity_type.lower(),
                 Note.entity_id == entity_id,
                 Note.priority.in_([NotePriority.HIGH, NotePriority.URGENT])
             )
             .order_by(Note.priority.desc(), Note.created_at.desc())
-            .all()
         )
+        notes = list(self.session.execute(stmt).scalars().all())
 
         logger.debug(f"Encontradas {len(notes)} nota(s) importantes")
         return notes
@@ -204,16 +204,16 @@ class NoteRepository(BaseRepository[Note]):
             f"con categoría='{category}'"
         )
 
-        notes = (
-            self.session.query(Note)
+        stmt = (
+            select(Note)
             .filter(
                 Note.entity_type == entity_type.lower(),
                 Note.entity_id == entity_id,
                 Note.category == category
             )
             .order_by(Note.created_at.desc())
-            .all()
         )
+        notes = list(self.session.execute(stmt).scalars().all())
 
         logger.debug(f"Encontradas {len(notes)} nota(s) de categoría '{category}'")
         return notes
@@ -243,17 +243,19 @@ class NoteRepository(BaseRepository[Note]):
         )
 
         search_pattern = f"%{search_term}%"
-        notes = (
-            self.session.query(Note)
+        stmt = (
+            select(Note)
             .filter(
                 Note.entity_type == entity_type.lower(),
                 Note.entity_id == entity_id,
-                (Note.content.ilike(search_pattern)) |
-                (Note.title.ilike(search_pattern))
+                or_(
+                    Note.content.ilike(search_pattern),
+                    Note.title.ilike(search_pattern)
+                )
             )
             .order_by(Note.created_at.desc())
-            .all()
         )
+        notes = list(self.session.execute(stmt).scalars().all())
 
         logger.debug(f"Encontradas {len(notes)} nota(s)")
         return notes
@@ -285,14 +287,14 @@ class NoteRepository(BaseRepository[Note]):
             f"skip={skip}, limit={limit}"
         )
 
-        notes = (
-            self.session.query(Note)
+        stmt = (
+            select(Note)
             .filter(Note.entity_type == entity_type.lower())
             .order_by(Note.created_at.desc())
             .offset(skip)
             .limit(limit)
-            .all()
         )
+        notes = list(self.session.execute(stmt).scalars().all())
 
         logger.debug(f"Encontradas {len(notes)} nota(s) de tipo {entity_type}")
         return notes
@@ -314,14 +316,14 @@ class NoteRepository(BaseRepository[Note]):
         """
         logger.debug(f"Contando notas de {entity_type} id={entity_id}")
 
-        count = (
-            self.session.query(Note)
+        stmt = (
+            select(func.count(Note.id))
             .filter(
                 Note.entity_type == entity_type.lower(),
                 Note.entity_id == entity_id
             )
-            .count()
         )
+        count = self.session.execute(stmt).scalar() or 0
 
         logger.debug(f"{entity_type} id={entity_id} tiene {count} nota(s)")
         return count
@@ -355,16 +357,16 @@ class NoteRepository(BaseRepository[Note]):
 
         cutoff_date = datetime.now(timezone.utc) - timedelta(days=days)
 
-        notes = (
-            self.session.query(Note)
+        stmt = (
+            select(Note)
             .filter(
                 Note.entity_type == entity_type.lower(),
                 Note.entity_id == entity_id,
                 Note.created_at >= cutoff_date
             )
             .order_by(Note.created_at.desc())
-            .all()
         )
+        notes = list(self.session.execute(stmt).scalars().all())
 
         logger.debug(f"Encontradas {len(notes)} nota(s) recientes")
         return notes

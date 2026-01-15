@@ -5,7 +5,7 @@ Maneja el acceso a datos para países.
 """
 
 from typing import Optional, List
-
+from sqlalchemy import select, or_
 from sqlalchemy.orm import Session
 
 from src.backend.models.lookups import Country
@@ -51,11 +51,8 @@ class CountryRepository(BaseRepository[Country]):
         """
         logger.debug(f"Buscando país por nombre: {name}")
 
-        country = (
-            self.session.query(Country)
-            .filter(Country.name == name.strip())
-            .first()
-        )
+        stmt = select(Country).filter(Country.name == name.strip())
+        country = self.session.execute(stmt).scalar_one_or_none()
 
         if country:
             logger.debug(f"País encontrado: {country.name}")
@@ -82,14 +79,13 @@ class CountryRepository(BaseRepository[Country]):
 
         iso_code = iso_code.strip().upper()
 
-        country = (
-            self.session.query(Country)
-            .filter(
-                (Country.iso_code_alpha2 == iso_code) |
-                (Country.iso_code_alpha3 == iso_code)
+        stmt = select(Country).filter(
+            or_(
+                Country.iso_code_alpha2 == iso_code,
+                Country.iso_code_alpha3 == iso_code
             )
-            .first()
         )
+        country = self.session.execute(stmt).scalar_one_or_none()
 
         if country:
             logger.debug(f"País encontrado: {country.name}")
@@ -116,12 +112,12 @@ class CountryRepository(BaseRepository[Country]):
         logger.debug(f"Buscando países por nombre: {name}")
 
         search_pattern = f"%{name}%"
-        countries = (
-            self.session.query(Country)
+        stmt = (
+            select(Country)
             .filter(Country.name.ilike(search_pattern))
             .order_by(Country.name)
-            .all()
         )
+        countries = list(self.session.execute(stmt).scalars().all())
 
         logger.debug(f"Encontrados {len(countries)} país(es)")
         return countries
@@ -142,13 +138,13 @@ class CountryRepository(BaseRepository[Country]):
         """
         logger.debug(f"Obteniendo países ordenados - skip={skip}, limit={limit}")
 
-        countries = (
-            self.session.query(Country)
+        stmt = (
+            select(Country)
             .order_by(Country.name)
             .offset(skip)
             .limit(limit)
-            .all()
         )
+        countries = list(self.session.execute(stmt).scalars().all())
 
         logger.debug(f"Encontrados {len(countries)} país(es)")
         return countries

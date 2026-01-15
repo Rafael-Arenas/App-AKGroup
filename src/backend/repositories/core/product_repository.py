@@ -7,7 +7,7 @@ Maneja el acceso a datos para productos y sus componentes (BOM).
 from typing import Optional, List
 from decimal import Decimal
 
-from sqlalchemy import or_
+from sqlalchemy import or_, select
 from sqlalchemy.orm import Session, selectinload
 
 from src.backend.models.core.products import Product, ProductComponent
@@ -50,12 +50,8 @@ class ProductRepository(BaseRepository[Product]):
             product = repo.get_by_reference("PROD-001")
         """
         logger.debug(f"Buscando producto por referencia: {reference}")
-
-        product = (
-            self.session.query(Product)
-            .filter(Product.reference == reference.upper())
-            .first()
-        )
+        stmt = select(Product).filter(Product.reference == reference.upper())
+        product = self.session.execute(stmt).scalar_one_or_none()
 
         if product:
             logger.debug(f"Producto encontrado: {product.designation_es or product.designation_fr or product.designation_en} (reference={reference})")
@@ -79,10 +75,9 @@ class ProductRepository(BaseRepository[Product]):
             # Encuentra "Tornillo M6", "Tornillo M8", etc.
         """
         logger.debug(f"Buscando productos: query='{query}'")
-
         search_pattern = f"%{query}%"
-        products = (
-            self.session.query(Product)
+        stmt = (
+            select(Product)
             .filter(
                 or_(
                     Product.reference.ilike(search_pattern),
@@ -93,8 +88,8 @@ class ProductRepository(BaseRepository[Product]):
                 )
             )
             .order_by(Product.reference)
-            .all()
         )
+        products = list(self.session.execute(stmt).scalars().all())
 
         logger.debug(f"Encontrados {len(products)} producto(s) con '{query}'")
         return products
@@ -116,15 +111,14 @@ class ProductRepository(BaseRepository[Product]):
                     print(f"{comp.component.designation_es}: {comp.quantity}")
         """
         logger.debug(f"Obteniendo producto id={product_id} con componentes")
-
-        product = (
-            self.session.query(Product)
+        stmt = (
+            select(Product)
             .options(
                 selectinload(Product.components).selectinload(ProductComponent.component)
             )
             .filter(Product.id == product_id)
-            .first()
         )
+        product = self.session.execute(stmt).scalar_one_or_none()
 
         if product:
             logger.debug(f"Producto encontrado con {len(product.components)} componente(s)")
@@ -146,15 +140,14 @@ class ProductRepository(BaseRepository[Product]):
             active_products = repo.get_active_products()
         """
         logger.debug(f"Obteniendo productos activos - skip={skip}, limit={limit}")
-
-        products = (
-            self.session.query(Product)
+        stmt = (
+            select(Product)
             .filter(Product.is_active == True)
             .order_by(Product.reference)
             .offset(skip)
             .limit(limit)
-            .all()
         )
+        products = list(self.session.execute(stmt).scalars().all())
 
         logger.debug(f"Encontrados {len(products)} producto(s) activo(s)")
         return products
@@ -176,15 +169,14 @@ class ProductRepository(BaseRepository[Product]):
             nomenclatures = repo.get_by_type("NOMENCLATURE")
         """
         logger.debug(f"Obteniendo productos tipo={product_type}")
-
-        products = (
-            self.session.query(Product)
+        stmt = (
+            select(Product)
             .filter(Product.product_type == product_type.lower())  # Convert to lowercase for comparison
             .order_by(Product.reference)
             .offset(skip)
             .limit(limit)
-            .all()
         )
+        products = list(self.session.execute(stmt).scalars().all())
 
         logger.debug(f"Encontrados {len(products)} producto(s) tipo {product_type}")
         return products
@@ -206,9 +198,8 @@ class ProductRepository(BaseRepository[Product]):
                 print(f"{product.designation_es}: {product.stock_quantity} < {product.minimum_stock}")
         """
         logger.debug(f"Obteniendo productos con stock bajo")
-
-        products = (
-            self.session.query(Product)
+        stmt = (
+            select(Product)
             .filter(
                 Product.stock_quantity < Product.minimum_stock,
                 Product.minimum_stock.isnot(None),
@@ -217,8 +208,8 @@ class ProductRepository(BaseRepository[Product]):
             .order_by(Product.reference)
             .offset(skip)
             .limit(limit)
-            .all()
         )
+        products = list(self.session.execute(stmt).scalars().all())
 
         logger.debug(f"Encontrados {len(products)} producto(s) con stock bajo")
         return products
@@ -239,15 +230,14 @@ class ProductRepository(BaseRepository[Product]):
             products = repo.get_by_family(family_type_id=1)
         """
         logger.debug(f"Obteniendo productos familia={family_type_id}")
-
-        products = (
-            self.session.query(Product)
+        stmt = (
+            select(Product)
             .filter(Product.family_type_id == family_type_id)
             .order_by(Product.reference)
             .offset(skip)
             .limit(limit)
-            .all()
         )
+        products = list(self.session.execute(stmt).scalars().all())
 
         logger.debug(f"Encontrados {len(products)} producto(s) familia {family_type_id}")
         return products
@@ -283,13 +273,12 @@ class ProductComponentRepository(BaseRepository[ProductComponent]):
                 print(f"{comp.component.designation_es}: {comp.quantity}")
         """
         logger.debug(f"Obteniendo componentes de producto parent_id={parent_id}")
-
-        components = (
-            self.session.query(ProductComponent)
+        stmt = (
+            select(ProductComponent)
             .options(selectinload(ProductComponent.component))
             .filter(ProductComponent.parent_id == parent_id)
-            .all()
         )
+        components = list(self.session.execute(stmt).scalars().all())
 
         logger.debug(f"Encontrados {len(components)} componente(s)")
         return components
@@ -311,13 +300,12 @@ class ProductComponentRepository(BaseRepository[ProductComponent]):
                 print(f"Se usa en: {use.parent.designation_es}")
         """
         logger.debug(f"Obteniendo usos del componente component_id={component_id}")
-
-        uses = (
-            self.session.query(ProductComponent)
+        stmt = (
+            select(ProductComponent)
             .options(selectinload(ProductComponent.parent))
             .filter(ProductComponent.component_id == component_id)
-            .all()
         )
+        uses = list(self.session.execute(stmt).scalars().all())
 
         logger.debug(f"Componente usado en {len(uses)} producto(s)")
         return uses
@@ -339,15 +327,11 @@ class ProductComponentRepository(BaseRepository[ProductComponent]):
                 print(f"Cantidad: {comp.quantity}")
         """
         logger.debug(f"Obteniendo componente parent_id={parent_id}, component_id={component_id}")
-
-        component = (
-            self.session.query(ProductComponent)
-            .filter(
-                ProductComponent.parent_id == parent_id,
-                ProductComponent.component_id == component_id
-            )
-            .first()
+        stmt = select(ProductComponent).filter(
+            ProductComponent.parent_id == parent_id,
+            ProductComponent.component_id == component_id
         )
+        component = self.session.execute(stmt).scalar_one_or_none()
 
         return component
 

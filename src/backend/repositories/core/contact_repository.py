@@ -5,7 +5,7 @@ Maneja el acceso a datos para contactos de empresas.
 """
 
 from typing import Optional, List
-
+from sqlalchemy import select, or_
 from sqlalchemy.orm import Session
 
 from src.backend.models.core.contacts import Contact
@@ -52,12 +52,12 @@ class ContactRepository(BaseRepository[Contact]):
         """
         logger.debug(f"Obteniendo contactos de empresa id={company_id}")
 
-        contacts = (
-            self.session.query(Contact)
+        stmt = (
+            select(Contact)
             .filter(Contact.company_id == company_id)
             .order_by(Contact.last_name, Contact.first_name)
-            .all()
         )
+        contacts = list(self.session.execute(stmt).scalars().all())
 
         logger.debug(f"Encontrados {len(contacts)} contacto(s)")
         return contacts
@@ -77,15 +77,15 @@ class ContactRepository(BaseRepository[Contact]):
         """
         logger.debug(f"Obteniendo contactos activos de empresa id={company_id}")
 
-        contacts = (
-            self.session.query(Contact)
+        stmt = (
+            select(Contact)
             .filter(
                 Contact.company_id == company_id,
                 Contact.is_active == True
             )
             .order_by(Contact.last_name, Contact.first_name)
-            .all()
         )
+        contacts = list(self.session.execute(stmt).scalars().all())
 
         logger.debug(f"Encontrados {len(contacts)} contacto(s) activo(s)")
         return contacts
@@ -107,11 +107,8 @@ class ContactRepository(BaseRepository[Contact]):
         """
         logger.debug(f"Buscando contacto por email: {email}")
 
-        contact = (
-            self.session.query(Contact)
-            .filter(Contact.email == email.lower())
-            .first()
-        )
+        stmt = select(Contact).filter(Contact.email == email.lower())
+        contact = self.session.execute(stmt).scalar_one_or_none()
 
         if contact:
             logger.debug(f"Contacto encontrado: {contact.full_name}")
@@ -141,16 +138,18 @@ class ContactRepository(BaseRepository[Contact]):
         )
 
         search_pattern = f"%{name}%"
-        contacts = (
-            self.session.query(Contact)
+        stmt = (
+            select(Contact)
             .filter(
                 Contact.company_id == company_id,
-                (Contact.first_name.ilike(search_pattern)) |
-                (Contact.last_name.ilike(search_pattern))
+                or_(
+                    Contact.first_name.ilike(search_pattern),
+                    Contact.last_name.ilike(search_pattern)
+                )
             )
             .order_by(Contact.last_name, Contact.first_name)
-            .all()
         )
+        contacts = list(self.session.execute(stmt).scalars().all())
 
         logger.debug(f"Encontrados {len(contacts)} contacto(s)")
         return contacts
@@ -170,12 +169,12 @@ class ContactRepository(BaseRepository[Contact]):
         """
         logger.debug(f"Obteniendo contactos del servicio id={service_id}")
 
-        contacts = (
-            self.session.query(Contact)
+        stmt = (
+            select(Contact)
             .filter(Contact.service_id == service_id)
             .order_by(Contact.last_name, Contact.first_name)
-            .all()
         )
+        contacts = list(self.session.execute(stmt).scalars().all())
 
         logger.debug(f"Encontrados {len(contacts)} contacto(s)")
         return contacts
@@ -200,15 +199,15 @@ class ContactRepository(BaseRepository[Contact]):
         )
 
         search_pattern = f"%{position}%"
-        contacts = (
-            self.session.query(Contact)
+        stmt = (
+            select(Contact)
             .filter(
                 Contact.company_id == company_id,
                 Contact.position.ilike(search_pattern)
             )
             .order_by(Contact.last_name, Contact.first_name)
-            .all()
         )
+        contacts = list(self.session.execute(stmt).scalars().all())
 
         logger.debug(f"Encontrados {len(contacts)} contacto(s)")
         return contacts
@@ -229,14 +228,13 @@ class ContactRepository(BaseRepository[Contact]):
         logger.debug(f"Buscando contactos con teléfono: {phone}")
 
         # Buscar en phone y mobile
-        contacts = (
-            self.session.query(Contact)
-            .filter(
-                (Contact.phone == phone) |
-                (Contact.mobile == phone)
+        stmt = select(Contact).filter(
+            or_(
+                Contact.phone == phone,
+                Contact.mobile == phone
             )
-            .all()
         )
+        contacts = list(self.session.execute(stmt).scalars().all())
 
         logger.debug(f"Encontrados {len(contacts)} contacto(s)")
         return contacts

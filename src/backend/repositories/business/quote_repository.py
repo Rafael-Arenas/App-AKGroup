@@ -7,7 +7,7 @@ quote number lookups, company filtering, and status tracking.
 
 from typing import Optional, List
 from sqlalchemy.orm import Session, selectinload
-from sqlalchemy import and_, or_
+from sqlalchemy import select, and_, or_, delete
 
 from src.backend.models.business.quotes import Quote, QuoteProduct
 from src.backend.repositories.base import BaseRepository
@@ -52,11 +52,8 @@ class QuoteRepository(BaseRepository[Quote]):
                 print(f"Found quote: {quote.subject}")
         """
         logger.debug(f"Searching quote by number: {quote_number}")
-        quote = (
-            self.session.query(Quote)
-            .filter(Quote.quote_number == quote_number.upper())
-            .first()
-        )
+        stmt = select(Quote).filter(Quote.quote_number == quote_number.upper())
+        quote = self.session.execute(stmt).scalar_one_or_none()
         if quote:
             logger.debug(f"Quote found: {quote_number}")
         else:
@@ -82,8 +79,8 @@ class QuoteRepository(BaseRepository[Quote]):
                 print(f"Product: {product.product_id}, Qty: {product.quantity}")
         """
         logger.debug(f"Getting quote id={quote_id} with products (eager loading)")
-        quote = (
-            self.session.query(Quote)
+        stmt = (
+            select(Quote)
             .options(
                 selectinload(Quote.products).selectinload(QuoteProduct.product),
                 selectinload(Quote.contact),
@@ -93,8 +90,8 @@ class QuoteRepository(BaseRepository[Quote]):
                 selectinload(Quote.incoterm)
             )
             .filter(Quote.id == quote_id)
-            .first()
         )
+        quote = self.session.execute(stmt).scalar_one_or_none()
         if quote:
             logger.debug(f"Quote found with {len(quote.products)} product(s)")
         else:
@@ -125,14 +122,14 @@ class QuoteRepository(BaseRepository[Quote]):
             print(f"Found {len(quotes)} quotes for company")
         """
         logger.debug(f"Getting quotes for company_id={company_id} (skip={skip}, limit={limit})")
-        quotes = (
-            self.session.query(Quote)
+        stmt = (
+            select(Quote)
             .filter(Quote.company_id == company_id)
             .order_by(Quote.quote_date.desc())
             .offset(skip)
             .limit(limit)
-            .all()
         )
+        quotes = list(self.session.execute(stmt).scalars().all())
         logger.debug(f"Found {len(quotes)} quote(s) for company_id={company_id}")
         return quotes
 
@@ -157,14 +154,14 @@ class QuoteRepository(BaseRepository[Quote]):
             draft_quotes = repository.get_by_status(status_id=1, skip=0, limit=50)
         """
         logger.debug(f"Getting quotes with status_id={status_id}")
-        quotes = (
-            self.session.query(Quote)
+        stmt = (
+            select(Quote)
             .filter(Quote.status_id == status_id)
             .order_by(Quote.quote_date.desc())
             .offset(skip)
             .limit(limit)
-            .all()
         )
+        quotes = list(self.session.execute(stmt).scalars().all())
         logger.debug(f"Found {len(quotes)} quote(s) with status_id={status_id}")
         return quotes
 
@@ -186,14 +183,14 @@ class QuoteRepository(BaseRepository[Quote]):
             List of quotes assigned to the staff member
         """
         logger.debug(f"Getting quotes for staff_id={staff_id}")
-        quotes = (
-            self.session.query(Quote)
+        stmt = (
+            select(Quote)
             .filter(Quote.staff_id == staff_id)
             .order_by(Quote.quote_date.desc())
             .offset(skip)
             .limit(limit)
-            .all()
         )
+        quotes = list(self.session.execute(stmt).scalars().all())
         logger.debug(f"Found {len(quotes)} quote(s) for staff_id={staff_id}")
         return quotes
 
@@ -211,8 +208,8 @@ class QuoteRepository(BaseRepository[Quote]):
         from datetime import date
 
         logger.debug("Getting expired quotes")
-        quotes = (
-            self.session.query(Quote)
+        stmt = (
+            select(Quote)
             .filter(
                 and_(
                     Quote.valid_until.isnot(None),
@@ -222,8 +219,8 @@ class QuoteRepository(BaseRepository[Quote]):
             .order_by(Quote.valid_until.desc())
             .offset(skip)
             .limit(limit)
-            .all()
         )
+        quotes = list(self.session.execute(stmt).scalars().all())
         logger.debug(f"Found {len(quotes)} expired quote(s)")
         return quotes
 
@@ -246,14 +243,14 @@ class QuoteRepository(BaseRepository[Quote]):
         """
         logger.debug(f"Searching quotes by subject: '{subject}'")
         search_pattern = f"%{subject}%"
-        quotes = (
-            self.session.query(Quote)
+        stmt = (
+            select(Quote)
             .filter(Quote.subject.ilike(search_pattern))
             .order_by(Quote.quote_date.desc())
             .offset(skip)
             .limit(limit)
-            .all()
         )
+        quotes = list(self.session.execute(stmt).scalars().all())
         logger.debug(f"Found {len(quotes)} quote(s) matching subject")
         return quotes
 
@@ -296,12 +293,12 @@ class QuoteProductRepository(BaseRepository[QuoteProduct]):
             total = sum(p.subtotal for p in products)
         """
         logger.debug(f"Getting products for quote_id={quote_id}")
-        products = (
-            self.session.query(QuoteProduct)
+        stmt = (
+            select(QuoteProduct)
             .filter(QuoteProduct.quote_id == quote_id)
             .order_by(QuoteProduct.sequence)
-            .all()
         )
+        products = list(self.session.execute(stmt).scalars().all())
         logger.debug(f"Found {len(products)} product(s) for quote_id={quote_id}")
         return products
 
@@ -325,13 +322,13 @@ class QuoteProductRepository(BaseRepository[QuoteProduct]):
             List of quote products
         """
         logger.debug(f"Getting quote products for product_id={product_id}")
-        products = (
-            self.session.query(QuoteProduct)
+        stmt = (
+            select(QuoteProduct)
             .filter(QuoteProduct.product_id == product_id)
             .offset(skip)
             .limit(limit)
-            .all()
         )
+        products = list(self.session.execute(stmt).scalars().all())
         logger.debug(f"Found {len(products)} quote product(s) for product_id={product_id}")
         return products
 
@@ -349,11 +346,9 @@ class QuoteProductRepository(BaseRepository[QuoteProduct]):
             This is a hard delete. Use with caution.
         """
         logger.debug(f"Deleting all products for quote_id={quote_id}")
-        count = (
-            self.session.query(QuoteProduct)
-            .filter(QuoteProduct.quote_id == quote_id)
-            .delete()
-        )
+        stmt = delete(QuoteProduct).filter(QuoteProduct.quote_id == quote_id)
+        result = self.session.execute(stmt)
+        count = result.rowcount
         self.session.flush()
         logger.warning(f"Deleted {count} product(s) for quote_id={quote_id}")
         return count

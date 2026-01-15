@@ -5,7 +5,7 @@ Maneja el acceso a datos para direcciones de empresas.
 """
 
 from typing import Optional, List
-
+from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
 from src.backend.models.core.addresses import Address, AddressType
@@ -52,12 +52,12 @@ class AddressRepository(BaseRepository[Address]):
         """
         logger.debug(f"Obteniendo direcciones de empresa id={company_id}")
 
-        addresses = (
-            self.session.query(Address)
+        stmt = (
+            select(Address)
             .filter(Address.company_id == company_id)
             .order_by(Address.is_default.desc(), Address.created_at.desc())
-            .all()
         )
+        addresses = list(self.session.execute(stmt).scalars().all())
 
         logger.debug(f"Encontradas {len(addresses)} dirección(es)")
         return addresses
@@ -79,14 +79,11 @@ class AddressRepository(BaseRepository[Address]):
         """
         logger.debug(f"Obteniendo dirección por defecto de empresa id={company_id}")
 
-        address = (
-            self.session.query(Address)
-            .filter(
-                Address.company_id == company_id,
-                Address.is_default == True
-            )
-            .first()
+        stmt = select(Address).filter(
+            Address.company_id == company_id,
+            Address.is_default == True
         )
+        address = self.session.execute(stmt).scalar_one_or_none()
 
         if address:
             logger.debug(f"Dirección por defecto encontrada: id={address.id}")
@@ -121,15 +118,15 @@ class AddressRepository(BaseRepository[Address]):
             f"de empresa id={company_id}"
         )
 
-        addresses = (
-            self.session.query(Address)
+        stmt = (
+            select(Address)
             .filter(
                 Address.company_id == company_id,
                 Address.address_type == address_type
             )
             .order_by(Address.is_default.desc(), Address.created_at.desc())
-            .all()
         )
+        addresses = list(self.session.execute(stmt).scalars().all())
 
         logger.debug(f"Encontradas {len(addresses)} dirección(es) tipo {address_type.value}")
         return addresses
@@ -181,15 +178,15 @@ class AddressRepository(BaseRepository[Address]):
         logger.debug(f"Buscando direcciones en ciudad '{city}' de empresa id={company_id}")
 
         search_pattern = f"%{city}%"
-        addresses = (
-            self.session.query(Address)
+        stmt = (
+            select(Address)
             .filter(
                 Address.company_id == company_id,
                 Address.city.ilike(search_pattern)
             )
             .order_by(Address.is_default.desc())
-            .all()
         )
+        addresses = list(self.session.execute(stmt).scalars().all())
 
         logger.debug(f"Encontradas {len(addresses)} dirección(es) en '{city}'")
         return addresses
@@ -218,9 +215,8 @@ class AddressRepository(BaseRepository[Address]):
         )
 
         # Remover is_default de todas las direcciones de la empresa
-        self.session.query(Address).filter(
-            Address.company_id == company_id
-        ).update({"is_default": False})
+        stmt = update(Address).filter(Address.company_id == company_id).values(is_default=False)
+        self.session.execute(stmt)
 
         # Establecer la nueva dirección por defecto
         address = self.get_by_id(address_id)
@@ -256,14 +252,14 @@ class AddressRepository(BaseRepository[Address]):
             f"de empresa id={company_id}"
         )
 
-        addresses = (
-            self.session.query(Address)
+        stmt = (
+            select(Address)
             .filter(
                 Address.company_id == company_id,
                 Address.postal_code == postal_code
             )
-            .all()
         )
+        addresses = list(self.session.execute(stmt).scalars().all())
 
         logger.debug(f"Encontradas {len(addresses)} dirección(es)")
         return addresses

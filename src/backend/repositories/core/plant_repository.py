@@ -42,4 +42,4 @@ class PlantRepository(BaseRepository[Plant]):
             .options(joinedload(Plant.city))
             .where(self.model.id == plant_id)
         )
-        return self.session.execute(stmt).scalars().first()
+        return self.session.execute(stmt).scalar_one_or_none()

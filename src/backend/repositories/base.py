@@ -9,6 +9,7 @@ from abc import ABC, abstractmethod
 from datetime import datetime, timezone
 from typing import Generic, TypeVar, Optional, List
 
+from sqlalchemy import select, func, exists
 from sqlalchemy.orm import Session
 
 from src.backend.exceptions.repository import NotFoundException
@@ -101,7 +102,7 @@ class BaseRepository(IRepository[T], Generic[T]):
                 print(company.name)
         """
         logger.debug(f"Buscando {self.model.__name__} con id={id}")
-        entity = self.session.query(self.model).filter(self.model.id == id).first()
+        entity = self.session.get(self.model, id)
 
         if entity:
             logger.debug(f"{self.model.__name__} encontrado: id={id}")
@@ -129,7 +130,9 @@ class BaseRepository(IRepository[T], Generic[T]):
             companies = repository.get_all(skip=100, limit=100)
         """
         logger.debug(f"Obteniendo {self.model.__name__} - skip={skip}, limit={limit}")
-        entities = self.session.query(self.model).offset(skip).limit(limit).all()
+        stmt = select(self.model).offset(skip).limit(limit)
+        result = self.session.execute(stmt)
+        entities = list(result.scalars().all())
         logger.debug(f"Encontrados {len(entities)} {self.model.__name__}(s)")
         return entities
 
@@ -281,7 +284,8 @@ class BaseRepository(IRepository[T], Generic[T]):
             total = repository.count()
             print(f"Total de empresas: {total}")
         """
-        count = self.session.query(self.model).count()
+        stmt = select(func.count()).select_from(self.model)
+        count = self.session.execute(stmt).scalar() or 0
         logger.debug(f"Total {self.model.__name__}: {count}")
         return count
 
@@ -299,6 +303,7 @@ class BaseRepository(IRepository[T], Generic[T]):
             if repository.exists(123):
                 print("La empresa existe")
         """
-        exists = self.session.query(self.model).filter(self.model.id == id).count() > 0
-        logger.debug(f"{self.model.__name__} id={id} existe: {exists}")
-        return exists
+        stmt = select(exists().where(self.model.id == id))
+        exists_result = self.session.execute(stmt).scalar() or False
+        logger.debug(f"{self.model.__name__} id={id} existe: {exists_result}")
+        return exists_result
