@@ -81,7 +81,8 @@ class OrderRepository(BaseRepository[Order]):
                 selectinload(Order.company_rut),
                 selectinload(Order.plant),
                 selectinload(Order.staff),
-                selectinload(Order.incoterm)
+                selectinload(Order.incoterm),
+                selectinload(Order.quote)  # Cargar cotización origen
             )
             .filter(Order.id == order_id)
             .first()
