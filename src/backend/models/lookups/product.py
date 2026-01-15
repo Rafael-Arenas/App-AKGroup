@@ -41,6 +41,17 @@ class FamilyType(LookupBase):
             "length(trim(name)) > 0",
             name="name_not_empty",
         ),
+        # Unique name constraint
+        {"sqlite_autoincrement": True},
+    )
+
+    # Override name to add unique constraint
+    name = Column(
+        String(100),
+        nullable=False,
+        unique=True,
+        index=True,
+        comment="Family type name",
     )
 
 class Matter(LookupBase):
@@ -57,4 +68,13 @@ class Matter(LookupBase):
             "length(trim(name)) > 0",
             name="name_not_empty",
         ),
+    )
+
+    # Override name to add unique constraint
+    name = Column(
+        String(100),
+        nullable=False,
+        unique=True,
+        index=True,
+        comment="Matter/material name",
     )

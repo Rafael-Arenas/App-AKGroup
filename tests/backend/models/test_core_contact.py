@@ -35,7 +35,7 @@ from sqlalchemy.orm import Session
 
 from src.backend.models.core.companies import Company
 from src.backend.models.core.contacts import Contact, Service
-from src.backend.models.lookups.lookups import City, CompanyType, Country
+from src.backend.models.lookups import City, CompanyType, Country
 
 
 # ============= SERVICE MODEL TESTS =============

@@ -70,7 +70,7 @@ from src.backend.models.business.delivery import (
     PaymentCondition,
 )
 
-from src.backend.models.lookups.lookups import (
+from src.backend.models.lookups import (
     Country,
     City,
     Currency,

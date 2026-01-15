@@ -32,7 +32,7 @@ from sqlalchemy.exc import IntegrityError
 
 from src.backend.models.business.invoices import InvoiceSII, InvoiceExport
 from src.backend.models.core.companies import Company
-from src.backend.models.lookups.lookups import Currency, Incoterm
+from src.backend.models.lookups import Currency, Incoterm
 
 
 # ============= INVOICE SII MODEL TESTS =============
@@ -55,7 +55,7 @@ class TestInvoiceSIICreation:
         """
         # Create required dependencies
         from src.backend.models.core.staff import Staff
-        from src.backend.models.lookups.lookups import OrderStatus, PaymentStatus
+        from src.backend.models.lookups import OrderStatus, PaymentStatus
         from src.backend.models.business.orders import Order
 
         staff = Staff(
@@ -141,7 +141,7 @@ class TestInvoiceSIICreation:
     ):
         """Test creating InvoiceSII with only required fields."""
         from src.backend.models.core.staff import Staff
-        from src.backend.models.lookups.lookups import OrderStatus, PaymentStatus
+        from src.backend.models.lookups import OrderStatus, PaymentStatus
         from src.backend.models.business.orders import Order
 
         staff = Staff(
@@ -208,7 +208,7 @@ class TestInvoiceSIIValidation:
     ):
         """Test that invoice_number is stripped."""
         from src.backend.models.core.staff import Staff
-        from src.backend.models.lookups.lookups import OrderStatus, PaymentStatus
+        from src.backend.models.lookups import OrderStatus, PaymentStatus
         from src.backend.models.business.orders import Order
 
         staff = Staff(
@@ -263,7 +263,7 @@ class TestInvoiceSIIValidation:
     ):
         """Test that invoice_number cannot be empty."""
         from src.backend.models.core.staff import Staff
-        from src.backend.models.lookups.lookups import OrderStatus, PaymentStatus
+        from src.backend.models.lookups import OrderStatus, PaymentStatus
         from src.backend.models.business.orders import Order
 
         staff = Staff(
@@ -313,7 +313,7 @@ class TestInvoiceSIIValidation:
     ):
         """Test that valid invoice_type values are accepted."""
         from src.backend.models.core.staff import Staff
-        from src.backend.models.lookups.lookups import OrderStatus, PaymentStatus
+        from src.backend.models.lookups import OrderStatus, PaymentStatus
         from src.backend.models.business.orders import Order
 
         staff = Staff(
@@ -371,7 +371,7 @@ class TestInvoiceSIIValidation:
     ):
         """Test that invalid invoice_type raises ValueError."""
         from src.backend.models.core.staff import Staff
-        from src.backend.models.lookups.lookups import OrderStatus, PaymentStatus
+        from src.backend.models.lookups import OrderStatus, PaymentStatus
         from src.backend.models.business.orders import Order
 
         staff = Staff(
@@ -426,7 +426,7 @@ class TestInvoiceSIIConstraints:
     ):
         """Test that invoice_number must be unique."""
         from src.backend.models.core.staff import Staff
-        from src.backend.models.lookups.lookups import OrderStatus, PaymentStatus
+        from src.backend.models.lookups import OrderStatus, PaymentStatus
         from src.backend.models.business.orders import Order
 
         staff = Staff(
@@ -506,7 +506,7 @@ class TestInvoiceSIIConstraints:
     ):
         """Test that subtotal must be >= 0."""
         from src.backend.models.core.staff import Staff
-        from src.backend.models.lookups.lookups import OrderStatus, PaymentStatus
+        from src.backend.models.lookups import OrderStatus, PaymentStatus
         from src.backend.models.business.orders import Order
 
         staff = Staff(
@@ -565,7 +565,7 @@ class TestInvoiceSIIBusinessProperties:
     ):
         """Test is_overdue returns False when no due_date."""
         from src.backend.models.core.staff import Staff
-        from src.backend.models.lookups.lookups import OrderStatus, PaymentStatus
+        from src.backend.models.lookups import OrderStatus, PaymentStatus
         from src.backend.models.business.orders import Order
 
         staff = Staff(
@@ -620,7 +620,7 @@ class TestInvoiceSIIBusinessProperties:
     ):
         """Test is_overdue returns False when invoice is paid."""
         from src.backend.models.core.staff import Staff
-        from src.backend.models.lookups.lookups import OrderStatus, PaymentStatus
+        from src.backend.models.lookups import OrderStatus, PaymentStatus
         from src.backend.models.business.orders import Order
 
         staff = Staff(
@@ -676,7 +676,7 @@ class TestInvoiceSIIBusinessProperties:
     ):
         """Test is_overdue returns True when past due_date and unpaid."""
         from src.backend.models.core.staff import Staff
-        from src.backend.models.lookups.lookups import OrderStatus, PaymentStatus
+        from src.backend.models.lookups import OrderStatus, PaymentStatus
         from src.backend.models.business.orders import Order
 
         staff = Staff(
@@ -732,7 +732,7 @@ class TestInvoiceSIIBusinessProperties:
     ):
         """Test days_overdue property calculates correctly."""
         from src.backend.models.core.staff import Staff
-        from src.backend.models.lookups.lookups import OrderStatus, PaymentStatus
+        from src.backend.models.lookups import OrderStatus, PaymentStatus
         from src.backend.models.business.orders import Order
 
         staff = Staff(
@@ -788,7 +788,7 @@ class TestInvoiceSIIBusinessProperties:
     ):
         """Test is_paid property returns True when paid_date is set."""
         from src.backend.models.core.staff import Staff
-        from src.backend.models.lookups.lookups import OrderStatus, PaymentStatus
+        from src.backend.models.lookups import OrderStatus, PaymentStatus
         from src.backend.models.business.orders import Order
 
         staff = Staff(
@@ -847,7 +847,7 @@ class TestInvoiceSIIRepr:
     ):
         """Test InvoiceSII string representation."""
         from src.backend.models.core.staff import Staff
-        from src.backend.models.lookups.lookups import OrderStatus, PaymentStatus
+        from src.backend.models.lookups import OrderStatus, PaymentStatus
         from src.backend.models.business.orders import Order
 
         staff = Staff(
@@ -924,7 +924,7 @@ class TestInvoiceExportCreation:
         """
         # Create required dependencies
         from src.backend.models.core.staff import Staff
-        from src.backend.models.lookups.lookups import OrderStatus, PaymentStatus
+        from src.backend.models.lookups import OrderStatus, PaymentStatus
         from src.backend.models.business.orders import Order
 
         staff = Staff(
@@ -1021,7 +1021,7 @@ class TestInvoiceExportCreation:
     ):
         """Test creating InvoiceExport with only required fields."""
         from src.backend.models.core.staff import Staff
-        from src.backend.models.lookups.lookups import OrderStatus, PaymentStatus
+        from src.backend.models.lookups import OrderStatus, PaymentStatus
         from src.backend.models.business.orders import Order
 
         staff = Staff(
@@ -1094,7 +1094,7 @@ class TestInvoiceExportValidation:
     ):
         """Test that valid export invoice_type values are accepted."""
         from src.backend.models.core.staff import Staff
-        from src.backend.models.lookups.lookups import OrderStatus, PaymentStatus
+        from src.backend.models.lookups import OrderStatus, PaymentStatus
         from src.backend.models.business.orders import Order
 
         staff = Staff(
@@ -1158,7 +1158,7 @@ class TestInvoiceExportValidation:
     ):
         """Test that invalid export invoice_type raises ValueError."""
         from src.backend.models.core.staff import Staff
-        from src.backend.models.lookups.lookups import OrderStatus, PaymentStatus
+        from src.backend.models.lookups import OrderStatus, PaymentStatus
         from src.backend.models.business.orders import Order
 
         staff = Staff(
@@ -1215,7 +1215,7 @@ class TestInvoiceExportValidation:
     ):
         """Test that positive exchange_rate is valid."""
         from src.backend.models.core.staff import Staff
-        from src.backend.models.lookups.lookups import OrderStatus, PaymentStatus
+        from src.backend.models.lookups import OrderStatus, PaymentStatus
         from src.backend.models.business.orders import Order
 
         staff = Staff(
@@ -1276,7 +1276,7 @@ class TestInvoiceExportValidation:
     ):
         """Test that zero or negative exchange_rate raises ValueError."""
         from src.backend.models.core.staff import Staff
-        from src.backend.models.lookups.lookups import OrderStatus, PaymentStatus
+        from src.backend.models.lookups import OrderStatus, PaymentStatus
         from src.backend.models.business.orders import Order
 
         staff = Staff(
@@ -1351,7 +1351,7 @@ class TestInvoiceExportBusinessMethods:
     ):
         """Test calculate_clp_total method calculates correctly."""
         from src.backend.models.core.staff import Staff
-        from src.backend.models.lookups.lookups import OrderStatus, PaymentStatus
+        from src.backend.models.lookups import OrderStatus, PaymentStatus
         from src.backend.models.business.orders import Order
 
         staff = Staff(
@@ -1418,7 +1418,7 @@ class TestInvoiceExportRepr:
     ):
         """Test InvoiceExport string representation."""
         from src.backend.models.core.staff import Staff
-        from src.backend.models.lookups.lookups import OrderStatus, PaymentStatus
+        from src.backend.models.lookups import OrderStatus, PaymentStatus
         from src.backend.models.business.orders import Order
 
         staff = Staff(

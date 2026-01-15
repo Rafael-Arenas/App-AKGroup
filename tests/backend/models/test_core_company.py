@@ -35,7 +35,7 @@ import pytest
 from sqlalchemy.exc import IntegrityError
 
 from src.backend.models.core.companies import Plant, Company, CompanyRut, CompanyTypeEnum
-from src.backend.models.lookups.lookups import City, CompanyType, Country
+from src.backend.models.lookups import City, CompanyType, Country
 
 
 # ============= COMPANY MODEL TESTS =============

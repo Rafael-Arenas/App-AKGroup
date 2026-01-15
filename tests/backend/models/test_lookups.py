@@ -48,7 +48,7 @@ Note: Currency has its own dedicated test file (test_lookups_currency.py)
 import pytest
 from sqlalchemy.exc import IntegrityError
 
-from src.backend.models.lookups.lookups import (
+from src.backend.models.lookups import (
     City,
     CompanyType,
     Country,

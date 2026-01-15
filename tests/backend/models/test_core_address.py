@@ -27,7 +27,7 @@ from sqlalchemy.orm import Session
 
 from src.backend.models.core.addresses import Address, AddressType
 from src.backend.models.core.companies import Company
-from src.backend.models.lookups.lookups import City, CompanyType, Country
+from src.backend.models.lookups import City, CompanyType, Country
 
 
 # ============= ADDRESS TYPE ENUM TESTS =============

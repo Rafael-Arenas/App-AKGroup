@@ -50,7 +50,7 @@ from src.backend.models.business.delivery import (
     PaymentCondition,
 )
 from src.backend.models.core.companies import Company
-from src.backend.models.lookups.lookups import Currency
+from src.backend.models.lookups import Currency, PaymentType
 
 
 # ============= DELIVERY ORDER MODEL TESTS =============
@@ -74,7 +74,7 @@ class TestDeliveryOrderCreation:
         # Create required dependencies
         from src.backend.models.core.staff import Staff
         from src.backend.models.core.addresses import Address
-        from src.backend.models.lookups.lookups import OrderStatus, PaymentStatus
+        from src.backend.models.lookups import OrderStatus, PaymentStatus
         from src.backend.models.business.orders import Order
 
         staff = Staff(
@@ -170,7 +170,7 @@ class TestDeliveryOrderCreation:
         """Test creating DeliveryOrder with only required fields."""
         from src.backend.models.core.staff import Staff
         from src.backend.models.core.addresses import Address
-        from src.backend.models.lookups.lookups import OrderStatus, PaymentStatus
+        from src.backend.models.lookups import OrderStatus, PaymentStatus
         from src.backend.models.business.orders import Order
 
         staff = Staff(
@@ -240,7 +240,7 @@ class TestDeliveryOrderValidation:
         """Test that delivery_number is stripped and converted to uppercase."""
         from src.backend.models.core.staff import Staff
         from src.backend.models.core.addresses import Address
-        from src.backend.models.lookups.lookups import OrderStatus, PaymentStatus
+        from src.backend.models.lookups import OrderStatus, PaymentStatus
         from src.backend.models.business.orders import Order
 
         staff = Staff(
@@ -302,7 +302,7 @@ class TestDeliveryOrderValidation:
         """Test that delivery_number cannot be empty."""
         from src.backend.models.core.staff import Staff
         from src.backend.models.core.addresses import Address
-        from src.backend.models.lookups.lookups import OrderStatus, PaymentStatus
+        from src.backend.models.lookups import OrderStatus, PaymentStatus
         from src.backend.models.business.orders import Order
 
         staff = Staff(
@@ -359,7 +359,7 @@ class TestDeliveryOrderValidation:
         """Test that valid status values are accepted."""
         from src.backend.models.core.staff import Staff
         from src.backend.models.core.addresses import Address
-        from src.backend.models.lookups.lookups import OrderStatus, PaymentStatus
+        from src.backend.models.lookups import OrderStatus, PaymentStatus
         from src.backend.models.business.orders import Order
 
         staff = Staff(
@@ -423,7 +423,7 @@ class TestDeliveryOrderValidation:
         """Test that invalid status raises ValueError."""
         from src.backend.models.core.staff import Staff
         from src.backend.models.core.addresses import Address
-        from src.backend.models.lookups.lookups import OrderStatus, PaymentStatus
+        from src.backend.models.lookups import OrderStatus, PaymentStatus
         from src.backend.models.business.orders import Order
 
         staff = Staff(
@@ -485,7 +485,7 @@ class TestDeliveryOrderBusinessMethods:
         """Test is_delivered returns True when delivered with actual date."""
         from src.backend.models.core.staff import Staff
         from src.backend.models.core.addresses import Address
-        from src.backend.models.lookups.lookups import OrderStatus, PaymentStatus
+        from src.backend.models.lookups import OrderStatus, PaymentStatus
         from src.backend.models.business.orders import Order
 
         staff = Staff(
@@ -548,7 +548,7 @@ class TestDeliveryOrderBusinessMethods:
         """Test is_delivered returns False when not delivered."""
         from src.backend.models.core.staff import Staff
         from src.backend.models.core.addresses import Address
-        from src.backend.models.lookups.lookups import OrderStatus, PaymentStatus
+        from src.backend.models.lookups import OrderStatus, PaymentStatus
         from src.backend.models.business.orders import Order
 
         staff = Staff(
@@ -610,7 +610,7 @@ class TestDeliveryOrderBusinessMethods:
         """Test is_late returns True when delivered after planned date."""
         from src.backend.models.core.staff import Staff
         from src.backend.models.core.addresses import Address
-        from src.backend.models.lookups.lookups import OrderStatus, PaymentStatus
+        from src.backend.models.lookups import OrderStatus, PaymentStatus
         from src.backend.models.business.orders import Order
 
         staff = Staff(
@@ -673,7 +673,7 @@ class TestDeliveryOrderBusinessMethods:
         """Test days_late property calculates correctly."""
         from src.backend.models.core.staff import Staff
         from src.backend.models.core.addresses import Address
-        from src.backend.models.lookups.lookups import OrderStatus, PaymentStatus
+        from src.backend.models.lookups import OrderStatus, PaymentStatus
         from src.backend.models.business.orders import Order
 
         staff = Staff(
@@ -739,7 +739,7 @@ class TestDeliveryOrderBusinessMethods:
         """Test mark_delivered method updates delivery status and signature."""
         from src.backend.models.core.staff import Staff
         from src.backend.models.core.addresses import Address
-        from src.backend.models.lookups.lookups import OrderStatus, PaymentStatus
+        from src.backend.models.lookups import OrderStatus, PaymentStatus
         from src.backend.models.business.orders import Order
 
         staff = Staff(
@@ -819,7 +819,7 @@ class TestDeliveryOrderRepr:
         """Test DeliveryOrder string representation."""
         from src.backend.models.core.staff import Staff
         from src.backend.models.core.addresses import Address
-        from src.backend.models.lookups.lookups import OrderStatus, PaymentStatus
+        from src.backend.models.lookups import OrderStatus, PaymentStatus
         from src.backend.models.business.orders import Order
 
         staff = Staff(
@@ -893,7 +893,7 @@ class TestDeliveryDateCreation:
         """Test creating a DeliveryDate with all fields populated."""
         from src.backend.models.core.staff import Staff
         from src.backend.models.core.addresses import Address
-        from src.backend.models.lookups.lookups import OrderStatus, PaymentStatus
+        from src.backend.models.lookups import OrderStatus, PaymentStatus
         from src.backend.models.business.orders import Order
 
         staff = Staff(
@@ -972,7 +972,7 @@ class TestDeliveryDateCreation:
         """Test creating DeliveryDate with only required fields."""
         from src.backend.models.core.staff import Staff
         from src.backend.models.core.addresses import Address
-        from src.backend.models.lookups.lookups import OrderStatus, PaymentStatus
+        from src.backend.models.lookups import OrderStatus, PaymentStatus
         from src.backend.models.business.orders import Order
 
         staff = Staff(
@@ -1046,7 +1046,7 @@ class TestDeliveryDateValidation:
         """Test that valid status values are accepted."""
         from src.backend.models.core.staff import Staff
         from src.backend.models.core.addresses import Address
-        from src.backend.models.lookups.lookups import OrderStatus, PaymentStatus
+        from src.backend.models.lookups import OrderStatus, PaymentStatus
         from src.backend.models.business.orders import Order
 
         staff = Staff(
@@ -1117,7 +1117,7 @@ class TestDeliveryDateValidation:
         """Test that invalid status raises ValueError."""
         from src.backend.models.core.staff import Staff
         from src.backend.models.core.addresses import Address
-        from src.backend.models.lookups.lookups import OrderStatus, PaymentStatus
+        from src.backend.models.lookups import OrderStatus, PaymentStatus
         from src.backend.models.business.orders import Order
 
         staff = Staff(
@@ -1182,7 +1182,7 @@ class TestDeliveryDateValidation:
         """Test that positive quantity is valid."""
         from src.backend.models.core.staff import Staff
         from src.backend.models.core.addresses import Address
-        from src.backend.models.lookups.lookups import OrderStatus, PaymentStatus
+        from src.backend.models.lookups import OrderStatus, PaymentStatus
         from src.backend.models.business.orders import Order
 
         staff = Staff(
@@ -1252,7 +1252,7 @@ class TestDeliveryDateValidation:
         """Test that negative or zero quantity raises ValueError."""
         from src.backend.models.core.staff import Staff
         from src.backend.models.core.addresses import Address
-        from src.backend.models.lookups.lookups import OrderStatus, PaymentStatus
+        from src.backend.models.lookups import OrderStatus, PaymentStatus
         from src.backend.models.business.orders import Order
 
         staff = Staff(
@@ -1466,7 +1466,7 @@ class TestTransportRepr:
 class TestPaymentConditionCreation:
     """Tests for PaymentCondition model instantiation and creation."""
 
-    def test_create_payment_condition_with_all_fields(self, session):
+    def test_create_payment_condition_with_all_fields(self, session, sample_payment_type):
         """Test creating a PaymentCondition with all fields populated."""
         # Arrange & Act
         payment_cond = PaymentCondition(
@@ -1474,6 +1474,7 @@ class TestPaymentConditionCreation:
             name="50% Advance, 50% On Delivery",
             revision="A",
             description="Half payment upfront, half on delivery",
+            payment_type_id=sample_payment_type.id,
             days_to_pay=None,
             percentage_advance=Decimal("50.00"),
             percentage_on_delivery=Decimal("50.00"),
@@ -1498,12 +1499,13 @@ class TestPaymentConditionCreation:
         assert payment_cond.is_default is False
         assert payment_cond.is_active is True
 
-    def test_create_payment_condition_with_minimal_fields(self, session):
+    def test_create_payment_condition_with_minimal_fields(self, session, sample_payment_type):
         """Test creating PaymentCondition with only required fields."""
         # Arrange & Act
         payment_cond = PaymentCondition(
             payment_condition_number="NET30",
             name="Net 30 Days",
+            payment_type_id=sample_payment_type.id,
             percentage_advance=Decimal("0.00"),
             percentage_on_delivery=Decimal("0.00"),
             percentage_after_delivery=Decimal("100.00"),
@@ -1524,12 +1526,13 @@ class TestPaymentConditionCreation:
 class TestPaymentConditionValidation:
     """Tests for PaymentCondition field validators and constraints."""
 
-    def test_payment_condition_number_validator_strips_and_uppercases(self, session):
+    def test_payment_condition_number_validator_strips_and_uppercases(self, session, sample_payment_type):
         """Test that payment_condition_number is stripped and converted to uppercase."""
         # Arrange & Act
         payment_cond = PaymentCondition(
             payment_condition_number="  net60  ",
             name="Net 60 Days",
+            payment_type_id=sample_payment_type.id,
             percentage_advance=Decimal("0.00"),
             percentage_on_delivery=Decimal("0.00"),
             percentage_after_delivery=Decimal("100.00"),
@@ -1553,12 +1556,13 @@ class TestPaymentConditionValidation:
                 percentage_after_delivery=Decimal("100.00"),
             )
 
-    def test_name_validator_strips(self, session):
+    def test_name_validator_strips(self, session, sample_payment_type):
         """Test that name is stripped."""
         # Arrange & Act
         payment_cond = PaymentCondition(
             payment_condition_number="TEST",
             name="  Test Name  ",
+            payment_type_id=sample_payment_type.id,
             percentage_advance=Decimal("0.00"),
             percentage_on_delivery=Decimal("0.00"),
             percentage_after_delivery=Decimal("100.00"),
@@ -1586,12 +1590,13 @@ class TestPaymentConditionValidation:
 class TestPaymentConditionConstraints:
     """Tests for PaymentCondition database constraints."""
 
-    def test_payment_condition_number_unique_constraint(self, session):
+    def test_payment_condition_number_unique_constraint(self, session, sample_payment_type):
         """Test that payment condition number must be unique."""
         # Create first payment condition
         payment_cond1 = PaymentCondition(
             payment_condition_number="UNIQUE",
             name="First",
+            payment_type_id=sample_payment_type.id,
             percentage_advance=Decimal("0.00"),
             percentage_on_delivery=Decimal("0.00"),
             percentage_after_delivery=Decimal("100.00"),
@@ -1603,6 +1608,7 @@ class TestPaymentConditionConstraints:
         payment_cond2 = PaymentCondition(
             payment_condition_number="UNIQUE",
             name="Second",
+            payment_type_id=sample_payment_type.id,
             percentage_advance=Decimal("0.00"),
             percentage_on_delivery=Decimal("0.00"),
             percentage_after_delivery=Decimal("100.00"),
@@ -1613,12 +1619,13 @@ class TestPaymentConditionConstraints:
         with pytest.raises(IntegrityError):
             session.commit()
 
-    def test_check_constraint_percentages_sum_100(self, session):
+    def test_check_constraint_percentages_sum_100(self, session, sample_payment_type):
         """Test that percentages must sum to exactly 100."""
         # Test valid sum (100)
         payment_cond = PaymentCondition(
             payment_condition_number="VALID",
             name="Valid",
+            payment_type_id=sample_payment_type.id,
             percentage_advance=Decimal("30.00"),
             percentage_on_delivery=Decimal("40.00"),
             percentage_after_delivery=Decimal("30.00"),
@@ -1633,6 +1640,7 @@ class TestPaymentConditionConstraints:
         payment_cond2 = PaymentCondition(
             payment_condition_number="INVALID",
             name="Invalid",
+            payment_type_id=sample_payment_type.id,
             percentage_advance=Decimal("30.00"),
             percentage_on_delivery=Decimal("40.00"),
             percentage_after_delivery=Decimal("40.00"),  # Sums to 110
@@ -1670,12 +1678,13 @@ class TestPaymentConditionBusinessMethods:
         with pytest.raises(ValueError, match="Payment percentages must sum to 100"):
             payment_cond_invalid.validate_percentages()
 
-    def test_summary_property(self, session):
+    def test_summary_property(self, session, sample_payment_type):
         """Test summary property generates human-readable summary."""
         # Test 50-50 split
         payment_cond = PaymentCondition(
             payment_condition_number="50-50",
             name="50-50",
+            payment_type_id=sample_payment_type.id,
             percentage_advance=Decimal("50.00"),
             percentage_on_delivery=Decimal("50.00"),
             percentage_after_delivery=Decimal("0.00"),
@@ -1692,6 +1701,7 @@ class TestPaymentConditionBusinessMethods:
         payment_cond2 = PaymentCondition(
             payment_condition_number="NET30",
             name="Net 30",
+            payment_type_id=sample_payment_type.id,
             percentage_advance=Decimal("0.00"),
             percentage_on_delivery=Decimal("0.00"),
             percentage_after_delivery=Decimal("100.00"),
@@ -1710,12 +1720,13 @@ class TestPaymentConditionBusinessMethods:
 class TestPaymentConditionRepr:
     """Tests for PaymentCondition __repr__ method."""
 
-    def test_payment_condition_repr(self, session):
+    def test_payment_condition_repr(self, session, sample_payment_type):
         """Test PaymentCondition string representation."""
         # Arrange
         payment_cond = PaymentCondition(
             payment_condition_number="REPR",
             name="Test Payment Condition",
+            payment_type_id=sample_payment_type.id,
             percentage_advance=Decimal("0.00"),
             percentage_on_delivery=Decimal("0.00"),
             percentage_after_delivery=Decimal("100.00"),

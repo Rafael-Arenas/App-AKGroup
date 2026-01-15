@@ -24,7 +24,7 @@ from sqlalchemy.exc import IntegrityError
 
 from src.backend.models.business.orders import Order
 from src.backend.models.core.companies import Company
-from src.backend.models.lookups.lookups import Currency, Incoterm
+from src.backend.models.lookups import Currency, Incoterm
 
 
 # ============= ORDER MODEL TESTS =============
@@ -47,7 +47,7 @@ class TestOrderCreation:
         """
         # Create required dependencies
         from src.backend.models.core.staff import Staff
-        from src.backend.models.lookups.lookups import OrderStatus, PaymentStatus
+        from src.backend.models.lookups import OrderStatus, PaymentStatus
 
         staff = Staff(
             username="testuser_order1",
@@ -138,7 +138,7 @@ class TestOrderCreation:
     ):
         """Test creating Order with only required fields."""
         from src.backend.models.core.staff import Staff
-        from src.backend.models.lookups.lookups import OrderStatus, PaymentStatus
+        from src.backend.models.lookups import OrderStatus, PaymentStatus
 
         staff = Staff(
             username="testuser_order2",
@@ -199,7 +199,7 @@ class TestOrderCreation:
     ):
         """Test that Order default values are properly set."""
         from src.backend.models.core.staff import Staff
-        from src.backend.models.lookups.lookups import OrderStatus, PaymentStatus
+        from src.backend.models.lookups import OrderStatus, PaymentStatus
 
         staff = Staff(
             username="testuser_order3",
@@ -253,7 +253,7 @@ class TestOrderValidation:
     ):
         """Test that order_number is stripped and converted to uppercase."""
         from src.backend.models.core.staff import Staff
-        from src.backend.models.lookups.lookups import OrderStatus, PaymentStatus
+        from src.backend.models.lookups import OrderStatus, PaymentStatus
 
         staff = Staff(
             username="testuser_order4",
@@ -295,7 +295,7 @@ class TestOrderValidation:
     ):
         """Test that order_number cannot be empty."""
         from src.backend.models.core.staff import Staff
-        from src.backend.models.lookups.lookups import OrderStatus, PaymentStatus
+        from src.backend.models.lookups import OrderStatus, PaymentStatus
 
         staff = Staff(
             username="testuser_order5",
@@ -332,7 +332,7 @@ class TestOrderValidation:
     ):
         """Test that order_type 'sales' is valid."""
         from src.backend.models.core.staff import Staff
-        from src.backend.models.lookups.lookups import OrderStatus, PaymentStatus
+        from src.backend.models.lookups import OrderStatus, PaymentStatus
 
         staff = Staff(
             username="testuser_order6",
@@ -375,7 +375,7 @@ class TestOrderValidation:
     ):
         """Test that order_type 'purchase' is valid."""
         from src.backend.models.core.staff import Staff
-        from src.backend.models.lookups.lookups import OrderStatus, PaymentStatus
+        from src.backend.models.lookups import OrderStatus, PaymentStatus
 
         staff = Staff(
             username="testuser_order7",
@@ -418,7 +418,7 @@ class TestOrderValidation:
     ):
         """Test that invalid order_type raises ValueError."""
         from src.backend.models.core.staff import Staff
-        from src.backend.models.lookups.lookups import OrderStatus, PaymentStatus
+        from src.backend.models.lookups import OrderStatus, PaymentStatus
 
         staff = Staff(
             username="testuser_order8",
@@ -456,7 +456,7 @@ class TestOrderValidation:
     ):
         """Test that tax_percentage within 0-100 range is valid."""
         from src.backend.models.core.staff import Staff
-        from src.backend.models.lookups.lookups import OrderStatus, PaymentStatus
+        from src.backend.models.lookups import OrderStatus, PaymentStatus
 
         staff = Staff(
             username="testuser_order9",
@@ -499,7 +499,7 @@ class TestOrderValidation:
     ):
         """Test that negative tax_percentage raises ValueError."""
         from src.backend.models.core.staff import Staff
-        from src.backend.models.lookups.lookups import OrderStatus, PaymentStatus
+        from src.backend.models.lookups import OrderStatus, PaymentStatus
 
         staff = Staff(
             username="testuser_order10",
@@ -537,7 +537,7 @@ class TestOrderValidation:
     ):
         """Test that tax_percentage over 100 raises ValueError."""
         from src.backend.models.core.staff import Staff
-        from src.backend.models.lookups.lookups import OrderStatus, PaymentStatus
+        from src.backend.models.lookups import OrderStatus, PaymentStatus
 
         staff = Staff(
             username="testuser_order11",
@@ -579,7 +579,7 @@ class TestOrderConstraints:
     ):
         """Test that order_number must be unique."""
         from src.backend.models.core.staff import Staff
-        from src.backend.models.lookups.lookups import OrderStatus, PaymentStatus
+        from src.backend.models.lookups import OrderStatus, PaymentStatus
 
         staff = Staff(
             username="testuser_order12",
@@ -633,7 +633,7 @@ class TestOrderConstraints:
     ):
         """Test that subtotal must be >= 0."""
         from src.backend.models.core.staff import Staff
-        from src.backend.models.lookups.lookups import OrderStatus, PaymentStatus
+        from src.backend.models.lookups import OrderStatus, PaymentStatus
 
         staff = Staff(
             username="testuser_order13",
@@ -675,7 +675,7 @@ class TestOrderConstraints:
     ):
         """Test that tax_amount must be >= 0."""
         from src.backend.models.core.staff import Staff
-        from src.backend.models.lookups.lookups import OrderStatus, PaymentStatus
+        from src.backend.models.lookups import OrderStatus, PaymentStatus
 
         staff = Staff(
             username="testuser_order14",
@@ -717,7 +717,7 @@ class TestOrderConstraints:
     ):
         """Test that shipping_cost must be >= 0."""
         from src.backend.models.core.staff import Staff
-        from src.backend.models.lookups.lookups import OrderStatus, PaymentStatus
+        from src.backend.models.lookups import OrderStatus, PaymentStatus
 
         staff = Staff(
             username="testuser_order15",
@@ -763,7 +763,7 @@ class TestOrderRelationships:
     ):
         """Test that Order has relationship with Company."""
         from src.backend.models.core.staff import Staff
-        from src.backend.models.lookups.lookups import OrderStatus, PaymentStatus
+        from src.backend.models.lookups import OrderStatus, PaymentStatus
 
         staff = Staff(
             username="testuser_order16",
@@ -807,7 +807,7 @@ class TestOrderRelationships:
     ):
         """Test that Order has relationship with Staff."""
         from src.backend.models.core.staff import Staff
-        from src.backend.models.lookups.lookups import OrderStatus, PaymentStatus
+        from src.backend.models.lookups import OrderStatus, PaymentStatus
 
         staff = Staff(
             username="testuser_order17",
@@ -851,7 +851,7 @@ class TestOrderRelationships:
     ):
         """Test that Order has relationship with Currency."""
         from src.backend.models.core.staff import Staff
-        from src.backend.models.lookups.lookups import OrderStatus, PaymentStatus
+        from src.backend.models.lookups import OrderStatus, PaymentStatus
 
         staff = Staff(
             username="testuser_order18",
@@ -899,7 +899,7 @@ class TestOrderBusinessMethods:
     ):
         """Test calculate_totals method calculates tax and total correctly."""
         from src.backend.models.core.staff import Staff
-        from src.backend.models.lookups.lookups import OrderStatus, PaymentStatus
+        from src.backend.models.lookups import OrderStatus, PaymentStatus
 
         staff = Staff(
             username="testuser_order19",
@@ -948,7 +948,7 @@ class TestOrderBusinessMethods:
     ):
         """Test calculate_totals with zero tax percentage."""
         from src.backend.models.core.staff import Staff
-        from src.backend.models.lookups.lookups import OrderStatus, PaymentStatus
+        from src.backend.models.lookups import OrderStatus, PaymentStatus
 
         staff = Staff(
             username="testuser_order20",
@@ -995,7 +995,7 @@ class TestOrderBusinessMethods:
     ):
         """Test is_overdue returns False when no promised_date."""
         from src.backend.models.core.staff import Staff
-        from src.backend.models.lookups.lookups import OrderStatus, PaymentStatus
+        from src.backend.models.lookups import OrderStatus, PaymentStatus
 
         staff = Staff(
             username="testuser_order21",
@@ -1038,7 +1038,7 @@ class TestOrderBusinessMethods:
     ):
         """Test is_overdue returns False when order is completed."""
         from src.backend.models.core.staff import Staff
-        from src.backend.models.lookups.lookups import OrderStatus, PaymentStatus
+        from src.backend.models.lookups import OrderStatus, PaymentStatus
 
         staff = Staff(
             username="testuser_order22",
@@ -1082,7 +1082,7 @@ class TestOrderBusinessMethods:
     ):
         """Test is_overdue returns True when past promised_date and not completed."""
         from src.backend.models.core.staff import Staff
-        from src.backend.models.lookups.lookups import OrderStatus, PaymentStatus
+        from src.backend.models.lookups import OrderStatus, PaymentStatus
 
         staff = Staff(
             username="testuser_order23",
@@ -1126,7 +1126,7 @@ class TestOrderBusinessMethods:
     ):
         """Test days_until_required property calculates correctly."""
         from src.backend.models.core.staff import Staff
-        from src.backend.models.lookups.lookups import OrderStatus, PaymentStatus
+        from src.backend.models.lookups import OrderStatus, PaymentStatus
 
         staff = Staff(
             username="testuser_order24",
@@ -1169,7 +1169,7 @@ class TestOrderBusinessMethods:
     ):
         """Test days_until_required returns None when order completed."""
         from src.backend.models.core.staff import Staff
-        from src.backend.models.lookups.lookups import OrderStatus, PaymentStatus
+        from src.backend.models.lookups import OrderStatus, PaymentStatus
 
         staff = Staff(
             username="testuser_order25",
@@ -1213,7 +1213,7 @@ class TestOrderBusinessMethods:
     ):
         """Test processing_days property calculates correctly."""
         from src.backend.models.core.staff import Staff
-        from src.backend.models.lookups.lookups import OrderStatus, PaymentStatus
+        from src.backend.models.lookups import OrderStatus, PaymentStatus
 
         staff = Staff(
             username="testuser_order26",
@@ -1259,7 +1259,7 @@ class TestOrderBusinessMethods:
     ):
         """Test processing_days returns None when not completed."""
         from src.backend.models.core.staff import Staff
-        from src.backend.models.lookups.lookups import OrderStatus, PaymentStatus
+        from src.backend.models.lookups import OrderStatus, PaymentStatus
 
         staff = Staff(
             username="testuser_order27",
@@ -1303,7 +1303,7 @@ class TestOrderBusinessMethods:
         """Test create_from_quote copies data from quote to order."""
         from src.backend.models.core.staff import Staff
         from src.backend.models.business.quotes import Quote
-        from src.backend.models.lookups.lookups import QuoteStatus, OrderStatus, PaymentStatus
+        from src.backend.models.lookups import QuoteStatus, OrderStatus, PaymentStatus
 
         staff = Staff(
             username="testuser_order28",
@@ -1382,7 +1382,7 @@ class TestOrderRepr:
     ):
         """Test Order string representation."""
         from src.backend.models.core.staff import Staff
-        from src.backend.models.lookups.lookups import OrderStatus, PaymentStatus
+        from src.backend.models.lookups import OrderStatus, PaymentStatus
 
         staff = Staff(
             username="testuser_order29",

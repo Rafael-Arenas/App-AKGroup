@@ -398,7 +398,7 @@ class TestBaseRepositorySoftDelete:
     def test_soft_delete_without_mixin_raises_not_implemented(self, session):
         """Test que soft delete sin SoftDeleteMixin lanza NotImplementedError."""
         # Arrange - usar un modelo sin SoftDeleteMixin
-        from src.backend.models.lookups.lookups import Country
+        from src.backend.models.lookups import Country
 
         repo = BaseRepository(session, Country)
         country = Country(name="Test Country")

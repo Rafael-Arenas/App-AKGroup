@@ -20,7 +20,7 @@ from datetime import datetime, timezone
 import pytest
 from sqlalchemy.exc import IntegrityError
 
-from src.backend.models.lookups.lookups import Currency
+from src.backend.models.lookups import Currency
 
 
 class TestCurrencyCreation:

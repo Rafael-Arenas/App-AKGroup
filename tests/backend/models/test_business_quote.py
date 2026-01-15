@@ -32,7 +32,7 @@ from sqlalchemy.exc import IntegrityError
 
 from src.backend.models.business.quotes import Quote, QuoteProduct
 from src.backend.models.core.companies import Company
-from src.backend.models.lookups.lookups import Currency, Incoterm, QuoteStatus
+from src.backend.models.lookups import Currency, Incoterm, QuoteStatus
 
 
 # ============= QUOTE MODEL TESTS =============

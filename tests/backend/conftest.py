@@ -30,7 +30,7 @@ from sqlalchemy.orm import Session, sessionmaker
 
 # Import Base and all models
 from src.backend.models.base import Base
-from src.backend.models.lookups.lookups import (
+from src.backend.models.lookups import (
     City,
     CompanyType,
     Country,
@@ -38,6 +38,7 @@ from src.backend.models.lookups.lookups import (
     FamilyType,
     Incoterm,
     Matter,
+    PaymentType,
     QuoteStatus,
     SalesType,
     Unit,
@@ -386,6 +387,33 @@ def sample_sales_type(session: Session) -> SalesType:
     session.commit()
     session.refresh(sales_type)
     return sales_type
+
+
+@pytest.fixture
+def sample_payment_type(session: Session) -> PaymentType:
+    """
+    Create a sample PaymentType for testing.
+
+    Args:
+        session: Database session
+
+    Returns:
+        PaymentType instance
+
+    Example:
+        >>> def test_with_payment_type(sample_payment_type):
+        ...     assert sample_payment_type.code == "NET30"
+    """
+    payment_type = PaymentType(
+        code="NET30",
+        name="Net 30 Days",
+        days=30,
+        is_active=True,
+    )
+    session.add(payment_type)
+    session.commit()
+    session.refresh(payment_type)
+    return payment_type
 
 
 # ============= CORE MODEL FIXTURES =============
