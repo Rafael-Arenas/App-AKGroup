@@ -4,9 +4,13 @@ __pycache__/
 *$py.class
 
 # Ides
+
 .cursor
 .trae
 .vercel
+.agent
+.backup
+.backups
 # C extensions
 *.so
 # Distribution / packaging
