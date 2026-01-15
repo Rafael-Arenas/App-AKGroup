@@ -250,6 +250,20 @@ class OrderDetailView(ft.Container):
                 self._create_info_row(t("orders.fields.completed_date"), self._order.get("completed_date", "-"))
             )
 
+        # Mostrar información de la cotización de origen (si existe)
+        quote_data = self._order.get("quote") or {}
+        if quote_data:
+            quote_info = f"{quote_data.get('quote_number', '-')} (Rev. {quote_data.get('revision', '-')})"
+            if quote_data.get("quote_date"):
+                quote_info += f" - {quote_data.get('quote_date')}"
+            general_info_controls.append(
+                self._create_info_row(t("orders.fields.source_quote"), quote_info)
+            )
+        elif self._order.get("quote_id"):
+            general_info_controls.append(
+                self._create_info_row(t("orders.fields.source_quote"), f"ID: {self._order.get('quote_id')}")
+            )
+
         general_info = ft.Column(
             controls=general_info_controls,
             spacing=LayoutConstants.SPACING_SM,
