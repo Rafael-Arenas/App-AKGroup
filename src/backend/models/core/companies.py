@@ -20,6 +20,7 @@ from ..base import (
     Base,
     PhoneValidator,
     RutValidator,
+    SoftDeleteMixin,
     TimestampMixin,
     UrlValidator,
 )
@@ -75,7 +76,7 @@ class CompanyTypeEnum(str, enum.Enum):
         return descriptions[self]
 
 
-class Company(Base, TimestampMixin, AuditMixin, ActiveMixin):
+class Company(Base, TimestampMixin, AuditMixin, ActiveMixin, SoftDeleteMixin):
     """
     Empresa (cliente, proveedor, partner, etc.)
 
