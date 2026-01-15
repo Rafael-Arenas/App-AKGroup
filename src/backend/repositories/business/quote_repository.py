@@ -84,7 +84,14 @@ class QuoteRepository(BaseRepository[Quote]):
         logger.debug(f"Getting quote id={quote_id} with products (eager loading)")
         quote = (
             self.session.query(Quote)
-            .options(selectinload(Quote.products))
+            .options(
+                selectinload(Quote.products).selectinload(QuoteProduct.product),
+                selectinload(Quote.contact),
+                selectinload(Quote.company_rut),
+                selectinload(Quote.plant),
+                selectinload(Quote.staff),
+                selectinload(Quote.incoterm)
+            )
             .filter(Quote.id == quote_id)
             .first()
         )

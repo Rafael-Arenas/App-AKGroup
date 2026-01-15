@@ -11,7 +11,7 @@ from loguru import logger
 from src.frontend.app_state import app_state
 from src.frontend.layout_constants import LayoutConstants
 from src.frontend.i18n.translation_manager import t
-from src.frontend.components.common import BaseCard, LoadingSpinner, ErrorDisplay, ConfirmDialog, DataTable
+from src.frontend.components.common import BaseCard, LoadingSpinner, ErrorDisplay, ConfirmDialog, DataTable, EmptyState
 
 
 class QuoteDetailView(ft.Container):
@@ -38,6 +38,9 @@ class QuoteDetailView(ft.Container):
         company_type: str,
         on_edit: Callable[[int], None] | None = None,
         on_delete: Callable[[int], None] | None = None,
+        on_create_order: Callable[[int], None] | None = None,
+        on_create_document: Callable[[int], None] | None = None,
+        on_add_products: Callable[[int], None] | None = None,
         on_back: Callable[[], None] | None = None,
     ):
         """Inicializa la vista de detalle de cotización."""
@@ -47,6 +50,9 @@ class QuoteDetailView(ft.Container):
         self.company_type = company_type
         self.on_edit = on_edit
         self.on_delete = on_delete
+        self.on_create_order = on_create_order
+        self.on_create_document = on_create_document
+        self.on_add_products = on_add_products
         self.on_back = on_back
 
         self._is_loading: bool = True
@@ -64,48 +70,59 @@ class QuoteDetailView(ft.Container):
 
     def build(self) -> ft.Control:
         """Construye el componente de detalle de cotización."""
+        # Contenedor para actualización dinámica
+        self._main_container = ft.Column(expand=True, scroll=ft.ScrollMode.AUTO, spacing=LayoutConstants.SPACING_LG)
+
         if self._is_loading:
-            return ft.Container(
-                content=LoadingSpinner(message=t("common.loading")),
-                expand=True,
-                alignment=ft.Alignment(0, 0),  # center
-            )
+            self._main_container.controls = [
+                ft.Container(
+                    content=LoadingSpinner(message=t("common.loading")),
+                    expand=True,
+                    alignment=ft.Alignment(0, 0),
+                )
+            ]
+            return self._main_container
         elif self._error_message:
-            return ft.Container(
-                content=ErrorDisplay(
-                    message=self._error_message,
-                    on_retry=self.load_quote,
-                ),
-                expand=True,
-                alignment=ft.Alignment(0, 0),  # center
-            )
+            self._main_container.controls = [
+                ft.Container(
+                    content=ErrorDisplay(
+                        message=self._error_message,
+                        on_retry=self.load_quote,
+                    ),
+                    expand=True,
+                    alignment=ft.Alignment(0, 0),
+                )
+            ]
+            return self._main_container
 
         if not self._quote:
-             return ft.Container(
-                content=ErrorDisplay(
-                    message=t("quotes.messages.not_found"),
-                    on_retry=self.load_quote,
-                ),
-                expand=True,
-                alignment=ft.Alignment(0, 0),  # center
-            )
+             self._main_container.controls = [
+                ft.Container(
+                    content=ErrorDisplay(
+                        message=t("quotes.messages.not_found"),
+                        on_retry=self.load_quote,
+                    ),
+                    expand=True,
+                    alignment=ft.Alignment(0, 0),
+                )
+            ]
+             return self._main_container
 
-        # Badge de estado (TODO: Usar colores/labels reales de estado cuando estén disponibles)
+        # Badge de estado
         status_id = self._quote.get("status_id")
-        status_text = t("quotes.status.draft") # Default
+        status_text = t("quotes.status.draft")
         status_color = ft.Colors.GREY
         
-        # Mapeo simple temporal hasta tener los lookups cargados o status name en respuesta
-        if status_id == 1: # Borrador
+        if status_id == 1:
              status_text = t("quotes.status.draft")
              status_color = ft.Colors.GREY
-        elif status_id == 2: # Enviada
+        elif status_id == 2:
              status_text = t("quotes.status.sent")
              status_color = ft.Colors.BLUE
-        elif status_id == 3: # Aceptada
+        elif status_id == 3:
              status_text = t("quotes.status.accepted")
              status_color = ft.Colors.GREEN
-        elif status_id == 4: # Rechazada
+        elif status_id == 4:
              status_text = t("quotes.status.rejected")
              status_color = ft.Colors.RED
         
@@ -164,6 +181,16 @@ class QuoteDetailView(ft.Container):
                 ),
                 ft.Row(
                     controls=[
+                        ft.Button(
+                            content=ft.Text("Crear Documento"),
+                            icon=ft.Icons.PICTURE_AS_PDF,
+                            on_click=self._on_create_document_click,
+                        ),
+                        ft.Button(
+                            content=ft.Text("Generar Orden"),
+                            icon=ft.Icons.SHOPPING_BAG,
+                            on_click=self._on_create_order_click,
+                        ),
                         ft.IconButton(
                             icon=ft.Icons.EDIT,
                             tooltip=t("common.edit"),
@@ -181,14 +208,18 @@ class QuoteDetailView(ft.Container):
             alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
         )
 
-        # Información General
+        # Información General - Datos principales de la cotización
+        # Obtener nombre del incoterm
+        incoterm_data = self._quote.get("incoterm") or {}
+        incoterm_display = incoterm_data.get("code", "-") if incoterm_data else str(self._quote.get("incoterm_id", "-") or "-")
+        
         general_info = ft.Column(
             controls=[
-                self._create_info_row(t("quotes.fields.date"), self._quote.get("quote_date", "-")),
-                self._create_info_row(t("quotes.fields.valid_until"), self._quote.get("valid_until", "-") or "-"),
-                self._create_info_row(t("quotes.fields.shipping_date"), self._quote.get("shipping_date", "-") or "-"),
+                self._create_info_row("Asunto", self._quote.get("subject", "-")),
                 self._create_info_row(t("quotes.fields.revision"), self._quote.get("revision", "-")),
-                self._create_info_row(t("quotes.fields.staff"), str(self._quote.get("staff_id", "-"))), # TODO: Mostrar nombre si viene en la respuesta
+                self._create_info_row(t("quotes.fields.shipping_date"), self._quote.get("shipping_date", "-") or "-"),
+                self._create_info_row("Incoterm", incoterm_display),
+                self._create_info_row("Unidad", self._quote.get("unit", "-") or "-"),
             ],
             spacing=LayoutConstants.SPACING_SM,
         )
@@ -199,64 +230,208 @@ class QuoteDetailView(ft.Container):
             content=general_info,
         )
 
-        # Información Financiera
-        financial_info = ft.Column(
+        # === TARJETA: Contacto ===
+        contact_data = self._quote.get("contact") or {}
+        if contact_data:
+            contact_name = f"{contact_data.get('first_name', '')} {contact_data.get('last_name', '')}".strip()
+            contact_rows = [
+                self._create_info_row("Nombre", contact_name or "-"),
+            ]
+            if contact_data.get("position"):
+                contact_rows.append(self._create_info_row("Cargo", contact_data.get("position")))
+            if contact_data.get("email"):
+                contact_rows.append(self._create_info_row("Email", contact_data.get("email")))
+            if contact_data.get("phone"):
+                contact_rows.append(self._create_info_row("Teléfono", contact_data.get("phone")))
+            if contact_data.get("mobile"):
+                contact_rows.append(self._create_info_row("Móvil", contact_data.get("mobile")))
+            
+            contact_card = BaseCard(
+                title="Contacto",
+                icon=ft.Icons.PERSON_OUTLINED,
+                content=ft.Column(controls=contact_rows, spacing=LayoutConstants.SPACING_SM),
+            )
+        else:
+            contact_card = BaseCard(
+                title="Contacto",
+                icon=ft.Icons.PERSON_OUTLINED,
+                content=ft.Text("No asignado", italic=True, color=ft.Colors.GREY),
+            )
+
+        # === TARJETA: RUT ===
+        rut_data = self._quote.get("company_rut") or {}
+        if rut_data:
+            rut_rows = [
+                self._create_info_row("RUT", rut_data.get("rut", "-")),
+            ]
+            if rut_data.get("is_main"):
+                rut_rows.append(self._create_info_row("Principal", "Sí"))
+            
+            rut_card = BaseCard(
+                title="RUT Empresa",
+                icon=ft.Icons.BADGE_OUTLINED,
+                content=ft.Column(controls=rut_rows, spacing=LayoutConstants.SPACING_SM),
+            )
+        else:
+            rut_card = BaseCard(
+                title="RUT Empresa",
+                icon=ft.Icons.BADGE_OUTLINED,
+                content=ft.Text("No asignado", italic=True, color=ft.Colors.GREY),
+            )
+
+
+        # === TARJETA: Personal Responsable ===
+        staff_data = self._quote.get("staff") or {}
+        if staff_data:
+            staff_name = f"{staff_data.get('first_name', '')} {staff_data.get('last_name', '')}".strip()
+            staff_rows = [
+                self._create_info_row("Nombre", staff_name or "-"),
+            ]
+            if staff_data.get("trigram"):
+                staff_rows.append(self._create_info_row("Trigrama", staff_data.get("trigram")))
+            if staff_data.get("position"):
+                staff_rows.append(self._create_info_row("Cargo", staff_data.get("position")))
+            if staff_data.get("email"):
+                staff_rows.append(self._create_info_row("Email", staff_data.get("email")))
+            if staff_data.get("phone"):
+                staff_rows.append(self._create_info_row("Teléfono", staff_data.get("phone")))
+            
+            staff_card = BaseCard(
+                title="Personal Responsable",
+                icon=ft.Icons.SUPPORT_AGENT_OUTLINED,
+                content=ft.Column(controls=staff_rows, spacing=LayoutConstants.SPACING_SM),
+            )
+        else:
+            staff_card = BaseCard(
+                title="Personal Responsable",
+                icon=ft.Icons.SUPPORT_AGENT_OUTLINED,
+                content=ft.Text(f"ID: {self._quote.get('staff_id', '-')}", italic=True, color=ft.Colors.GREY),
+            )
+
+        # Fechas - Registro y última modificación
+        created_at = self._quote.get("created_at", "-")
+        if created_at and created_at != "-":
+            if isinstance(created_at, str):
+                created_at = created_at[:19].replace("T", " ")  # Formatear datetime string
+        
+        updated_at = self._quote.get("updated_at", "-")
+        if updated_at and updated_at != "-":
+            if isinstance(updated_at, str):
+                updated_at = updated_at[:19].replace("T", " ")
+
+        dates_info = ft.Column(
             controls=[
-                 self._create_info_row(t("quotes.fields.currency"), str(self._quote.get("currency_id", "-"))), # TODO: Map ID to Name
-                 self._create_info_row(t("quotes.fields.exchange_rate"), f"{float(self._quote.get('exchange_rate', 1) or 1):.2f}"),
-                 self._create_info_row(t("quotes.fields.incoterm"), str(self._quote.get("incoterm_id", "-") or "-")),
+                self._create_info_row(t("quotes.fields.date"), self._quote.get("quote_date", "-")),
+                self._create_info_row(t("quotes.fields.valid_until"), self._quote.get("valid_until", "-") or "-"),
+                self._create_info_row("Fecha de Registro", str(created_at)),
+                self._create_info_row("Última Modificación", str(updated_at)),
             ],
             spacing=LayoutConstants.SPACING_SM,
         )
-        
-        financial_card = BaseCard(
-            title=t("quotes.sections.financial_details"),
-            icon=ft.Icons.ATTACH_MONEY,
-            content=financial_info,
+
+        dates_card = BaseCard(
+            title="Fechas",
+            icon=ft.Icons.CALENDAR_TODAY,
+            content=dates_info,
         )
 
         # Productos
         products = self._quote.get("products", [])
-        products_table = DataTable(
-            columns=[
-                {"key": "product_name", "label": t("quotes.products_table.product"), "sortable": True},
-                {"key": "quantity", "label": t("quotes.products_table.quantity"), "numeric": True},
-                {"key": "unit_price", "label": t("quotes.products_table.unit_price"), "numeric": True},
-                {"key": "discount", "label": t("quotes.products_table.discount"), "numeric": True},
-                {"key": "total", "label": t("quotes.products_table.total"), "numeric": True},
-            ],
-            page_size=100, # Show all products usually
-        )
         
-        # Formatear productos para la tabla
-        formatted_products = []
-        for p in products:
-            # TODO: El backend debería mandar el nombre del producto, si no, solo tenemos ID
-            # Asumimos que podría venir 'product_name' o similar si se hace join, 
-            # por ahora mostraremos ID si no hay nombre.
-            product_name = p.get("product_name", f"Producto #{p.get('product_id')}") 
+        if not products:
+            products_content = EmptyState(
+                icon=ft.Icons.SHOPPING_CART_OUTLINED,
+                title="No hay productos",
+                message="Esta cotización aún no tiene productos asociados. Agrega artículos o nomenclaturas para comenzar.",
+                action_text="Agregar Productos",
+                on_action=self._on_add_products_click,
+            )
+        else:
+            products_table = DataTable(
+                columns=[
+                    {"key": "product_name", "label": "quotes.products_table.product", "sortable": True},
+                    {"key": "product_type", "label": "articles.form.type", "sortable": True},
+                    {"key": "quantity", "label": "quotes.products_table.quantity", "numeric": True},
+                    {"key": "unit_price", "label": "quotes.products_table.unit_price", "numeric": True},
+                    {"key": "total", "label": "quotes.products_table.total", "numeric": True},
+                ],
+                page_size=100,
+            )
             
-            qty = float(p.get("quantity", 0))
-            price = float(p.get("unit_price", 0))
-            disc_pct = float(p.get("discount_percentage", 0))
-            subtotal = float(p.get("subtotal", 0))
-
-            formatted_products.append({
-                "id": p.get("id"),
-                "product_name": product_name,
-                "quantity": f"{qty:.2f}",
-                "unit_price": f"${price:,.2f}",
-                "discount": f"{disc_pct}%",
-                "total": f"${subtotal:,.2f}",
-            })
+            # Obtener idioma actual para seleccionar la designación correcta
+            current_lang = app_state.i18n.current_language
             
-        products_table.set_data(formatted_products, total=len(products))
+            formatted_products = []
+            for p in products:
+                product_info = p.get("product", {}) or {}
+                
+                # Seleccionar nombre según idioma
+                if current_lang == "es":
+                    product_name = product_info.get("designation_es") or product_info.get("designation_en") or product_info.get("reference", "")
+                elif current_lang == "fr":
+                    product_name = product_info.get("designation_fr") or product_info.get("designation_es") or product_info.get("reference", "")
+                else:
+                    product_name = product_info.get("designation_en") or product_info.get("designation_es") or product_info.get("reference", "")
+                
+                if not product_name:
+                    product_name = f"Producto #{p.get('product_id')}"
+                
+                # Tipo de producto
+                product_type_raw = product_info.get("product_type", "article")
+                product_type = t(f"articles.types.{product_type_raw}") if product_type_raw else "-"
+                
+                qty = float(p.get("quantity", 0))
+                price = float(p.get("unit_price", 0))
+                subtotal = float(p.get("subtotal", 0))
 
-        products_card = BaseCard(
-            title=f"{t('quotes.sections.products')} ({len(products)})",
-            icon=ft.Icons.SHOPPING_CART_OUTLINED,
-            content=products_table,
-        )
+                formatted_products.append({
+                    "id": p.get("id"),
+                    "product_name": product_name,
+                    "product_type": product_type,
+                    "quantity": f"{qty:.2f}",
+                    "unit_price": f"${price:,.2f}",
+                    "total": f"${subtotal:,.2f}",
+                })
+                
+            products_table.set_data(formatted_products, total=len(products))
+            products_content = products_table
+
+        if products:
+            products_card_content = ft.Column(
+                controls=[
+                    ft.Row(
+                        controls=[
+                            ft.Text(
+                                f"{t('quotes.sections.products')} ({len(products)})",
+                                size=LayoutConstants.FONT_SIZE_LG,
+                                weight=LayoutConstants.FONT_WEIGHT_SEMIBOLD,
+                                expand=True,
+                            ),
+                            ft.IconButton(
+                                icon=ft.Icons.ADD,
+                                tooltip="Agregar más productos",
+                                on_click=lambda e: self._on_add_products_click(),
+                            ),
+                        ],
+                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                    ),
+                    products_content,
+                ],
+                spacing=LayoutConstants.SPACING_SM,
+            )
+            products_card = ft.Card(
+                content=ft.Container(
+                    content=products_card_content,
+                    padding=LayoutConstants.PADDING_LG,
+                ),
+                elevation=2,
+            )
+        else:
+            products_card = BaseCard(
+                title=f"{t('quotes.sections.products')} ({len(products)})",
+                icon=ft.Icons.SHOPPING_CART_OUTLINED,
+                content=products_content,
+            )
 
         # Totales
         tax_percent = float(self._quote.get('tax_percentage', 19))
@@ -299,39 +474,47 @@ class QuoteDetailView(ft.Container):
             content=ft.Column(notes_content),
         )
 
-        # Layout Final
+        # === DISEÑO FINAL: Split Layout (Barra Lateral) ===
         
-        # Columna izquierda (Info General y Financiera)
-        left_col = ft.Column(
-            controls=[general_card, financial_card, notes_card],
-            spacing=LayoutConstants.SPACING_MD,
-            expand=1,
-        )
-        
-        # Columna derecha (Productos y Totales)
-        right_col = ft.Column(
-            controls=[products_card, totals_card],
-            spacing=LayoutConstants.SPACING_MD,
-            expand=2,
-        )
-
-        content = ft.Column(
+        # Columna Principal (Izquierda - 70%): Productos y Notas
+        main_column = ft.Column(
             controls=[
-                header,
-                ft.Row(
-                    controls=[left_col, right_col],
-                    vertical_alignment=ft.CrossAxisAlignment.START,
-                    expand=True,
-                    spacing=LayoutConstants.SPACING_LG,
-                )
+                products_card,
+                ft.Container(
+                    content=totals_card,
+                    alignment=ft.Alignment(1, 0), # Alinear totales a la derecha
+                ),
+                notes_card,
             ],
             spacing=LayoutConstants.SPACING_LG,
-            scroll=ft.ScrollMode.AUTO,
-            expand=True,
+            expand=7,
         )
 
-        return content
+        # Columna Lateral (Derecha - 30%): Información administrativa y de contacto
+        sidebar_column = ft.Column(
+            controls=[
+                general_card,
+                dates_card,
+                contact_card,
+                rut_card,
+                staff_card,
+            ],
+            spacing=LayoutConstants.SPACING_MD,
+            expand=3,
+        )
 
+        # Layout Final
+        self._main_container.controls = [
+            header,
+            ft.Divider(height=LayoutConstants.SPACING_MD, color=ft.Colors.TRANSPARENT),
+            ft.Row(
+                controls=[main_column, sidebar_column],
+                vertical_alignment=ft.CrossAxisAlignment.START,
+                spacing=LayoutConstants.SPACING_LG,
+            ),
+        ]
+
+        return self._main_container
     def _create_info_row(self, label: str, value: str) -> ft.Row:
         """Crea una fila de información."""
         return ft.Row(
@@ -438,6 +621,25 @@ class QuoteDetailView(ft.Container):
         if self.on_edit:
             self.on_edit(self.quote_id)
 
+    def _on_create_order_click(self, e: ft.ControlEvent) -> None:
+        """Callback para crear orden desde la cotización."""
+        if self.on_create_order:
+            self.on_create_order(self.quote_id)
+
+    def _on_create_document_click(self, e: ft.ControlEvent) -> None:
+        """Callback para crear documento PDF de la cotización."""
+        if self.on_create_document:
+            self.on_create_document(self.quote_id)
+        else:
+            # Mostrar mensaje si no hay handler definido
+            if self.page:
+                self.page.snack_bar = ft.SnackBar(
+                    content=ft.Text("Funcionalidad de generación de documento pendiente de implementar"),
+                    bgcolor=ft.Colors.ORANGE_700,
+                )
+                self.page.snack_bar.open = True
+                self.page.update()
+
     def _on_delete_click(self, e: ft.ControlEvent) -> None:
         """Callback para eliminar."""
         if self.page:
@@ -456,6 +658,11 @@ class QuoteDetailView(ft.Container):
         """Callback cuando se confirma la eliminación."""
         if self.on_delete:
             self.on_delete(self.quote_id)
+
+    def _on_add_products_click(self, e=None) -> None:
+        """Callback para agregar productos."""
+        if self.on_add_products:
+            self.on_add_products(self.quote_id)
 
     def _on_back_click(self, e: ft.ControlEvent) -> None:
         """Callback para volver atrás."""

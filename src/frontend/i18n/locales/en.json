@@ -532,7 +532,8 @@
       "additional_notes": "Additional Notes",
       "customer_notes": "Customer Notes",
       "notes": "Notes",
-      "products": "Products"
+      "products": "Products",
+      "no_notes": "No notes"
     },
     "messages": {
       "created": "Quote created successfully",
@@ -559,7 +560,36 @@
     "description": "Work order management",
     "list_title": "Order List",
     "create": "Create Order",
-    "view": "View Order"
+    "edit": "Edit Order",
+    "view": "View Order",
+    "no_orders": "No orders",
+    "no_orders_message": "No orders found for {company_name}",
+    "search_placeholder": "Search orders...",
+    "fields": {
+      "revision": "Revision",
+      "order_number": "Order Number",
+      "customer_po": "Customer PO (OC)",
+      "project_number": "Project Number"
+    },
+    "columns": {
+      "order_number": "Order #",
+      "revision": "Revision",
+      "order_date": "Date",
+      "total_amount": "Total",
+      "status": "Status"
+    },
+    "form": {
+      "edit_title": "Edit Order",
+      "create_title": "Create Order",
+      "generate_fake_data": "Generate fake data",
+      "fake_data_success": "Fake data generated successfully",
+      "fake_data_error": "Failed to generate fake data: {error}"
+    },
+    "messages": {
+      "deleted": "Order deleted successfully",
+      "error_deleting": "Error deleting order: {error}",
+      "delete_confirm": "Are you sure you want to delete order {number}?"
+    }
   },
   "deliveries": {
     "title": "Deliveries",

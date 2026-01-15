@@ -736,6 +736,8 @@ class MainView(ft.Container):
             company_type=company_type,
             on_edit=lambda qid: self.navigate_to_quote_form(company_id, company_type, qid),
             on_delete=lambda qid: self._on_quote_deleted(qid, company_id, company_type),
+            on_create_order=lambda qid: self.navigate_to_order_form(company_id, company_type, qid),
+            on_add_products=lambda qid: self.navigate_to_quote_products(company_id, company_type, qid),
             on_back=lambda: self.navigate_to_company_quotes(company_id, company_type),
         )
 
@@ -755,10 +757,86 @@ class MainView(ft.Container):
             {"label": "quotes.detail", "route": None},
         ])
 
+    def navigate_to_quote_products(self, company_id: int, company_type: str, quote_id: int) -> None:
+        """
+        Navega a la vista de agregar productos a una cotización.
+        
+        Args:
+            company_id: ID de la empresa
+            company_type: Tipo de empresa
+            quote_id: ID de la cotización
+        """
+        from src.frontend.views.quotes.quote_products_view import QuoteProductsView
+
+        logger.info(f"Navigating to quote products: company_id={company_id}, quote_id={quote_id}")
+
+        products_view = QuoteProductsView(
+            quote_id=quote_id,
+            company_id=company_id,
+            company_type=company_type,
+            on_back=lambda: self.navigate_to_quote_detail(company_id, company_type, quote_id),
+            on_product_added=lambda: self.navigate_to_quote_detail(company_id, company_type, quote_id),
+        )
+
+        if self._content_area:
+            self._content_area.content = products_view
+            if self.page:
+                self.update()
+
+        section_key = "clients" if company_type == "CLIENT" else "suppliers"
+        dashboard_route = f"/companies/dashboard/{company_id}/{company_type}"
+        quotes_route = f"{dashboard_route}/quotes"
+        
+        app_state.navigation.set_breadcrumb([
+            {"label": f"{section_key}.title", "route": f"/companies/{company_type.lower()}s"},
+            {"label": "dashboard.title", "route": dashboard_route},
+            {"label": "quotes.title", "route": quotes_route},
+            {"label": "quotes.detail", "route": f"{quotes_route}/{quote_id}"},
+            {"label": "quotes.add_products", "route": None},
+        ])
+
     def _on_quote_deleted(self, quote_id: int, company_id: int, company_type: str) -> None:
         """Callback cuando se elimina una cotización desde el detalle."""
         logger.success(f"Quote deleted: {quote_id}")
         self.navigate_to_company_quotes(company_id, company_type)
+
+    def navigate_to_order_detail(self, company_id: int, company_type: str, order_id: int) -> None:
+        """
+        Navega a la vista de detalle de orden.
+        """
+        from src.frontend.views.orders.order_detail_view import OrderDetailView
+
+        logger.info(f"Navigating to order detail: company_id={company_id}, order_id={order_id}")
+
+        detail_view = OrderDetailView(
+            order_id=order_id,
+            company_id=company_id,
+            company_type=company_type,
+            on_edit=lambda oid: self.navigate_to_order_form(company_id, company_type, order_id=oid),
+            on_delete=lambda oid: self._on_order_deleted(oid, company_id, company_type),
+            on_back=lambda: self.navigate_to_company_orders(company_id, company_type),
+        )
+
+        if self._content_area:
+            self._content_area.content = detail_view
+            if self.page:
+                self.update()
+
+        section_key = "clients" if company_type == "CLIENT" else "suppliers"
+        dashboard_route = f"/companies/dashboard/{company_id}/{company_type}"
+        orders_route = f"{dashboard_route}/orders"
+        
+        app_state.navigation.set_breadcrumb([
+            {"label": f"{section_key}.title", "route": f"/companies/{company_type.lower()}s"},
+            {"label": "dashboard.title", "route": dashboard_route},
+            {"label": "orders.title", "route": orders_route},
+            {"label": "orders.detail", "route": None},
+        ])
+
+    def _on_order_deleted(self, order_id: int, company_id: int, company_type: str) -> None:
+        """Callback cuando se elimina una orden desde el detalle."""
+        logger.success(f"Order deleted: {order_id}")
+        self.navigate_to_company_orders(company_id, company_type)
 
     def navigate_to_quote_form(self, company_id: int, company_type: str, quote_id: int | None = None) -> None:
         """
@@ -800,6 +878,47 @@ class MainView(ft.Container):
             {"label": action_key, "route": None},
         ])
 
+    def navigate_to_order_form(
+        self, 
+        company_id: int, 
+        company_type: str, 
+        quote_id: int | None = None,
+        order_id: int | None = None
+    ) -> None:
+        """
+        Navega a la vista de formulario de orden.
+        """
+        from src.frontend.views.orders.order_form_view import OrderFormView
+
+        logger.info(
+            f"Navigating to order form: company_id={company_id}, quote_id={quote_id}, "
+            f"order_id={order_id}, mode={'edit' if order_id else 'create'}"
+        )
+
+        form_view = OrderFormView(
+            company_id=company_id,
+            quote_id=quote_id,
+            order_id=order_id,
+            on_save=lambda: self.navigate_to_company_orders(company_id, company_type),
+            on_cancel=lambda: self.navigate_to_company_orders(company_id, company_type),
+        )
+
+        if self._content_area:
+            self._content_area.content = form_view
+            if self.page:
+                self.update()
+
+        section_key = "clients" if company_type == "CLIENT" else "suppliers"
+        dashboard_route = f"/companies/dashboard/{company_id}/{company_type}"
+        action_key = "orders.edit" if order_id else "orders.create"
+        
+        app_state.navigation.set_breadcrumb([
+            {"label": f"{section_key}.title", "route": f"/companies/{company_type.lower()}s"},
+            {"label": "dashboard.title", "route": dashboard_route},
+            {"label": "orders.title", "route": f"{dashboard_route}/orders"},
+            {"label": action_key, "route": None},
+        ])
+
     def navigate_to_company_orders(self, company_id: int, company_type: str) -> None:
         """Navega a la vista de órdenes de una empresa."""
         from src.frontend.views.companies.company_related_views import CompanyOrdersView
@@ -809,7 +928,10 @@ class MainView(ft.Container):
         view = CompanyOrdersView(
             company_id=company_id,
             company_type=company_type,
-            on_back=lambda: self.navigate_to_company_dashboard(company_id, company_type)
+            on_back=lambda: self.navigate_to_company_dashboard(company_id, company_type),
+            on_view_order=lambda order_id: self.navigate_to_order_detail(company_id, company_type, order_id),
+            on_create_order=lambda: self.navigate_to_order_form(company_id=company_id, company_type=company_type),
+            on_edit_order=lambda order_id: self.navigate_to_order_form(company_id=company_id, company_type=company_type, order_id=order_id),
         )
         
         if self._content_area:

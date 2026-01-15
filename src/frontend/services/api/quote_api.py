@@ -93,5 +93,43 @@ class QuoteAPIService:
         """Delete a quote."""
         await self._client.delete(f"/quotes/{quote_id}")
 
+    async def add_product(self, quote_id: int, product_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Add a product to a quote.
+        
+        Args:
+            quote_id: ID of the quote
+            product_data: Product data including product_id, quantity, unit_price, etc.
+            
+        Returns:
+            Created quote product
+        """
+        logger.info(f"Adding product to quote {quote_id}")
+        return await self._client.post(f"/quotes/{quote_id}/products", json=product_data)
+
+    async def update_product(self, product_id: int, product_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Update a quote product.
+        
+        Args:
+            product_id: ID of the quote product
+            product_data: Updated product data
+            
+        Returns:
+            Updated quote product
+        """
+        logger.info(f"Updating quote product {product_id}")
+        return await self._client.put(f"/quotes/products/{product_id}", json=product_data)
+
+    async def delete_product(self, product_id: int) -> None:
+        """
+        Remove a product from a quote.
+        
+        Args:
+            product_id: ID of the quote product to remove
+        """
+        logger.info(f"Removing quote product {product_id}")
+        await self._client.delete(f"/quotes/products/{product_id}")
+
     async def close(self):
         await self._client.close()

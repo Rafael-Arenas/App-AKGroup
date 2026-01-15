@@ -44,6 +44,7 @@ class EmptyState(ft.Container):
         on_action: Callable[[], None] | None = None,
     ):
         """Inicializa el componente de empty state."""
+        super().__init__()
         self._icon = icon
         self._title = title
         self._message = message
@@ -54,8 +55,7 @@ class EmptyState(ft.Container):
         # Suscribirse a cambios de tema
         app_state.theme.add_observer(self._on_theme_changed)
 
-        # Construir el contenido inmediatamente
-        super().__init__()
+        # Construir el contenido
         self._build_content()
 
     def _on_theme_changed(self) -> None:

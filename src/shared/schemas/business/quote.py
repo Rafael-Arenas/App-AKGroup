@@ -5,12 +5,76 @@ Defines validation schemas for creating, updating, and returning
 quote data through the API.
 """
 
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
 from typing import Optional, List
 from pydantic import BaseModel, Field, field_validator, ConfigDict
 
 from src.shared.schemas.base import BaseSchema
+
+
+# ============================================================================
+# RELATED ENTITY SUMMARY SCHEMAS
+# ============================================================================
+
+class ContactSummary(BaseModel):
+    """Resumen de contacto para incluir en respuestas de quote."""
+    
+    id: int
+    first_name: str
+    last_name: str
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    mobile: Optional[str] = None
+    position: Optional[str] = None
+    
+    model_config = ConfigDict(from_attributes=True)
+
+
+class CompanyRutSummary(BaseModel):
+    """Resumen de RUT de empresa para incluir en respuestas de quote."""
+    
+    id: int
+    rut: str
+    is_main: bool = False
+    
+    model_config = ConfigDict(from_attributes=True)
+
+
+class PlantSummary(BaseModel):
+    """Resumen de planta para incluir en respuestas de quote."""
+    
+    id: int
+    name: str
+    address: Optional[str] = None
+    phone: Optional[str] = None
+    email: Optional[str] = None
+    
+    model_config = ConfigDict(from_attributes=True)
+
+
+class StaffSummary(BaseModel):
+    """Resumen de personal para incluir en respuestas de quote."""
+    
+    id: int
+    first_name: str
+    last_name: str
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    position: Optional[str] = None
+    trigram: Optional[str] = None
+    
+    model_config = ConfigDict(from_attributes=True)
+
+
+class IncotermSummary(BaseModel):
+    """Resumen de incoterm para incluir en respuestas de quote."""
+    
+    id: int
+    code: str
+    name: Optional[str] = None
+    
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ============================================================================
@@ -73,6 +137,20 @@ class QuoteProductUpdate(BaseModel):
     notes: Optional[str] = Field(None, max_length=1000)
 
 
+
+class ProductSummary(BaseModel):
+    """Resumen de producto para incluir en respuestas de quote product."""
+    
+    id: int
+    reference: str
+    designation_es: Optional[str] = None
+    designation_en: Optional[str] = None
+    designation_fr: Optional[str] = None
+    product_type: str = "article"
+    
+    model_config = ConfigDict(from_attributes=True)
+
+
 class QuoteProductResponse(QuoteProductBase):
     """
     Schema for quote product response.
@@ -89,7 +167,13 @@ class QuoteProductResponse(QuoteProductBase):
             "unit_price": "1500.00",
             "discount_percentage": "10.00",
             "discount_amount": "750.00",
-            "subtotal": "6750.00"
+            "subtotal": "6750.00",
+            "product": {
+                "id": 10,
+                "reference": "PROD-001",
+                "designation_es": "Tornillo M6",
+                "product_type": "article"
+            }
         }
     """
 
@@ -97,6 +181,7 @@ class QuoteProductResponse(QuoteProductBase):
     quote_id: int
     discount_amount: Decimal
     subtotal: Decimal
+    product: Optional[ProductSummary] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -210,6 +295,7 @@ class QuoteUpdate(BaseModel):
 
     subject: Optional[str] = Field(None, min_length=1, max_length=200)
     revision: Optional[str] = Field(None, min_length=1, max_length=10)
+    company_rut_id: Optional[int] = Field(None, gt=0)
     contact_id: Optional[int] = Field(None, gt=0)
     plant_id: Optional[int] = Field(None, gt=0)
     staff_id: Optional[int] = Field(None, gt=0)
@@ -260,7 +346,14 @@ class QuoteResponse(QuoteBase):
             "tax_percentage": "19.00",
             "tax_amount": "1900.00",
             "total": "11900.00",
-            "products": [...]
+            "products": [...],
+            "contact": {...},
+            "company_rut": {...},
+            "plant": {...},
+            "staff": {...},
+            "incoterm": {...},
+            "created_at": "2025-01-15T10:30:00",
+            "updated_at": "2025-01-15T10:30:00"
         }
     """
 
@@ -269,6 +362,17 @@ class QuoteResponse(QuoteBase):
     tax_amount: Decimal
     total: Decimal
     products: List[QuoteProductResponse] = Field(default_factory=list)
+    
+    # Timestamps
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+    
+    # Related entities (expanded)
+    contact: Optional[ContactSummary] = None
+    company_rut: Optional[CompanyRutSummary] = None
+    plant: Optional[PlantSummary] = None
+    staff: Optional[StaffSummary] = None
+    incoterm: Optional[IncotermSummary] = None
 
     model_config = ConfigDict(from_attributes=True)
 

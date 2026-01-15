@@ -43,6 +43,7 @@ class Order(Base, TimestampMixin, AuditMixin, ActiveMixin):
         order_type: Type of order ('sales' or 'purchase')
         quote_id: Foreign key to Quote (if created from quote)
         customer_quote_number: Customer's quote/reference number
+        customer_po_number: Customer's purchase order number
         project_number: Project number/identifier
         company_id: Foreign key to Company (customer/supplier)
         contact_id: Foreign key to Contact
@@ -115,6 +116,12 @@ class Order(Base, TimestampMixin, AuditMixin, ActiveMixin):
         index=True,
         comment="Customer's quote/reference number",
     )
+    customer_po_number = Column(
+        String(100),
+        nullable=True,
+        index=True,
+        comment="Customer's purchase order number",
+    )
     project_number = Column(
         String(100),
         nullable=True,
@@ -142,6 +149,13 @@ class Order(Base, TimestampMixin, AuditMixin, ActiveMixin):
         ForeignKey("plants.id", ondelete="SET NULL"),
         nullable=True,
         comment="Company plant",
+    )
+    company_rut_id = Column(
+        Integer,
+        ForeignKey("company_ruts.id", ondelete="RESTRICT"),
+        nullable=True,
+        index=True,
+        comment="Specific customer RUT for this order",
     )
 
     # Address information
@@ -269,6 +283,7 @@ class Order(Base, TimestampMixin, AuditMixin, ActiveMixin):
     # Relationships
     quote = relationship("Quote", back_populates="order", foreign_keys=[quote_id])
     company = relationship("Company", back_populates="orders", foreign_keys=[company_id])
+    company_rut = relationship("CompanyRut", foreign_keys=[company_rut_id])
     contact = relationship("Contact", foreign_keys=[contact_id])
     plant = relationship("Plant", foreign_keys=[plant_id])
     shipping_address = relationship("Address", foreign_keys=[shipping_address_id])
@@ -284,6 +299,14 @@ class Order(Base, TimestampMixin, AuditMixin, ActiveMixin):
     invoices_export = relationship("InvoiceExport", back_populates="order")
     delivery_orders = relationship(
         "DeliveryOrder", back_populates="order", cascade="all, delete-orphan"
+    )
+
+    # Order products (line items)
+    products = relationship(
+        "OrderProduct",
+        back_populates="order",
+        cascade="all, delete-orphan",
+        order_by="OrderProduct.sequence",
     )
 
     # Table constraints
@@ -333,10 +356,16 @@ class Order(Base, TimestampMixin, AuditMixin, ActiveMixin):
     # Business methods
     def calculate_totals(self) -> None:
         """
-        Calculate tax, and total.
+        Calculate subtotal from products, tax, and total.
 
         Formula: total = subtotal + tax_amount + shipping_cost + other_costs
         """
+        # Calculate subtotal from products if available
+        if self.products:
+            self.subtotal = sum(
+                (item.subtotal or Decimal("0.00")) for item in self.products
+            )
+        
         self.tax_amount = (self.subtotal * self.tax_percentage / Decimal("100")).quantize(
             Decimal("0.01")
         )
@@ -380,6 +409,7 @@ class Order(Base, TimestampMixin, AuditMixin, ActiveMixin):
         """
         self.quote_id = quote.id
         self.company_id = quote.company_id
+        self.company_rut_id = quote.company_rut_id
         self.contact_id = quote.contact_id
         self.plant_id = quote.plant_id
         self.staff_id = quote.staff_id
@@ -395,3 +425,159 @@ class Order(Base, TimestampMixin, AuditMixin, ActiveMixin):
     def __repr__(self) -> str:
         """String representation."""
         return f"<Order(id={self.id}, number='{self.order_number}', type='{self.order_type}', total={self.total})>"
+
+
+class OrderProduct(Base, TimestampMixin):
+    """
+    Products/line items in an order.
+
+    Junction table between Order and Product with quantity, pricing,
+    and discount information.
+
+    Attributes:
+        id: Primary key
+        order_id: Foreign key to Order
+        product_id: Foreign key to Product
+        sequence: Display order (for sorting line items)
+        quantity: Quantity ordered
+        unit_price: Price per unit
+        discount_percentage: Discount applied to this line
+        discount_amount: Calculated discount amount
+        subtotal: Line total (quantity * unit_price - discount)
+        notes: Line item specific notes
+    """
+
+    __tablename__ = "order_products"
+
+    # Primary key
+    id = Column(Integer, primary_key=True)
+
+    # Foreign keys
+    order_id = Column(
+        Integer,
+        ForeignKey("orders.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+        comment="Parent order",
+    )
+    product_id = Column(
+        Integer,
+        ForeignKey("products.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+        comment="Product being ordered",
+    )
+
+    # Line item details
+    sequence = Column(
+        Integer, nullable=False, default=1, comment="Display order of line items"
+    )
+
+    # Quantities and pricing
+    quantity = Column(
+        DECIMAL(10, 3),
+        nullable=False,
+        comment="Quantity being ordered",
+    )
+    unit_price = Column(
+        DECIMAL(15, 2),
+        nullable=False,
+        comment="Price per unit",
+    )
+
+    # Discounts
+    discount_percentage = Column(
+        DECIMAL(5, 2),
+        nullable=False,
+        default=Decimal("0.00"),
+        comment="Discount percentage for this line",
+    )
+    discount_amount = Column(
+        DECIMAL(15, 2),
+        nullable=False,
+        default=Decimal("0.00"),
+        comment="Calculated discount amount",
+    )
+
+    # Calculated total
+    subtotal = Column(
+        DECIMAL(15, 2),
+        nullable=False,
+        comment="Line total (quantity * unit_price - discount)",
+    )
+
+    # Notes
+    notes = Column(Text, nullable=True, comment="Line item specific notes")
+
+    # Relationships
+    order = relationship("Order", back_populates="products")
+    product = relationship("Product")
+
+    # Table constraints
+    __table_args__ = (
+        CheckConstraint("quantity > 0", name="ck_order_product_quantity_positive"),
+        CheckConstraint("unit_price >= 0", name="ck_order_product_price_positive"),
+        CheckConstraint(
+            "discount_percentage >= 0 AND discount_percentage <= 100",
+            name="ck_order_product_discount_percentage_valid",
+        ),
+        CheckConstraint(
+            "discount_amount >= 0", name="ck_order_product_discount_positive"
+        ),
+        CheckConstraint("subtotal >= 0", name="ck_order_product_subtotal_positive"),
+        Index("ix_order_product_order", "order_id", "sequence"),
+    )
+
+    # Validation
+    @validates("quantity")
+    def validate_quantity(self, key: str, value: Decimal) -> Decimal:
+        """Validate quantity is positive."""
+        if value <= 0:
+            raise ValueError(f"Quantity must be positive, got {value}")
+        return value
+
+    @validates("unit_price")
+    def validate_unit_price(self, key: str, value: Decimal) -> Decimal:
+        """Validate unit price is non-negative."""
+        if value < 0:
+            raise ValueError(f"Unit price cannot be negative, got {value}")
+        return value
+
+    @validates("discount_percentage")
+    def validate_discount_percentage(self, key: str, value: Decimal) -> Decimal:
+        """Validate discount percentage is within valid range."""
+        if value < 0 or value > 100:
+            raise ValueError(
+                f"Discount percentage must be between 0 and 100, got {value}"
+            )
+        return value
+
+    # Business methods
+    def calculate_subtotal(self) -> None:
+        """
+        Calculate line item subtotal.
+
+        Formula: (quantity * unit_price) - discount_amount
+        Or: (quantity * unit_price) * (1 - discount_percentage/100)
+        """
+        line_total = self.quantity * self.unit_price
+
+        if self.discount_percentage > 0:
+            self.discount_amount = (
+                line_total * self.discount_percentage / Decimal("100")
+            ).quantize(Decimal("0.01"))
+        else:
+            self.discount_amount = Decimal("0.00")
+
+        self.subtotal = (line_total - self.discount_amount).quantize(Decimal("0.01"))
+
+    @property
+    def effective_unit_price(self) -> Decimal:
+        """Calculate effective unit price after discount."""
+        if self.quantity == 0:
+            return Decimal("0.00")
+        return (self.subtotal / self.quantity).quantize(Decimal("0.01"))
+
+    def __repr__(self) -> str:
+        """String representation."""
+        return f"<OrderProduct(id={self.id}, order_id={self.order_id}, product_id={self.product_id}, qty={self.quantity}, subtotal={self.subtotal})>"

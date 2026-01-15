@@ -7,10 +7,10 @@ order number lookups, company filtering, and status tracking.
 
 from typing import Optional, List
 from datetime import date
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 from sqlalchemy import and_, or_
 
-from src.backend.models.business.orders import Order
+from src.backend.models.business.orders import Order, OrderProduct
 from src.backend.repositories.base import BaseRepository
 from src.backend.utils.logger import logger
 
@@ -57,6 +57,40 @@ class OrderRepository(BaseRepository[Order]):
             logger.debug(f"Order found: {order_number}")
         else:
             logger.debug(f"Order not found: {order_number}")
+        return order
+
+    def get_with_products(self, order_id: int) -> Optional[Order]:
+        """
+        Get order with products eagerly loaded.
+
+        Uses eager loading to fetch order and all related products
+        in a single query, avoiding N+1 query problems.
+
+        Args:
+            order_id: Order ID
+
+        Returns:
+            Order with products loaded, None if not found
+        """
+        logger.debug(f"Getting order id={order_id} with products (eager loading)")
+        order = (
+            self.session.query(Order)
+            .options(
+                selectinload(Order.products).selectinload(OrderProduct.product),
+                selectinload(Order.contact),
+                selectinload(Order.company_rut),
+                selectinload(Order.plant),
+                selectinload(Order.staff),
+                selectinload(Order.incoterm),
+                selectinload(Order.quote)  # Cargar cotización origen
+            )
+            .filter(Order.id == order_id)
+            .first()
+        )
+        if order:
+            logger.debug(f"Order found with {len(order.products)} product(s)")
+        else:
+            logger.debug(f"Order not found: id={order_id}")
         return order
 
     def get_by_company(
@@ -231,3 +265,63 @@ class OrderRepository(BaseRepository[Order]):
         )
         logger.debug(f"Found {len(orders)} order(s) matching project_number")
         return orders
+
+
+class OrderProductRepository(BaseRepository[OrderProduct]):
+    """
+    Repository for OrderProduct (order line items).
+
+    Manages individual line items within orders including quantities,
+    pricing, and discounts.
+    """
+
+    def __init__(self, session: Session):
+        """Initialize OrderProductRepository."""
+        super().__init__(session, OrderProduct)
+
+    def get_by_order(self, order_id: int) -> List[OrderProduct]:
+        """
+        Get all products for a specific order.
+
+        Returns products ordered by sequence number.
+        """
+        logger.debug(f"Getting products for order_id={order_id}")
+        products = (
+            self.session.query(OrderProduct)
+            .filter(OrderProduct.order_id == order_id)
+            .order_by(OrderProduct.sequence)
+            .all()
+        )
+        logger.debug(f"Found {len(products)} product(s) for order_id={order_id}")
+        return products
+
+    def get_by_product(
+        self,
+        product_id: int,
+        skip: int = 0,
+        limit: int = 100
+    ) -> List[OrderProduct]:
+        """Get all order line items containing a specific product."""
+        logger.debug(f"Getting order products for product_id={product_id}")
+        products = (
+            self.session.query(OrderProduct)
+            .filter(OrderProduct.product_id == product_id)
+            .offset(skip)
+            .limit(limit)
+            .all()
+        )
+        logger.debug(f"Found {len(products)} order product(s) for product_id={product_id}")
+        return products
+
+    def delete_by_order(self, order_id: int) -> int:
+        """Delete all products for a specific order."""
+        logger.debug(f"Deleting all products for order_id={order_id}")
+        count = (
+            self.session.query(OrderProduct)
+            .filter(OrderProduct.order_id == order_id)
+            .delete()
+        )
+        self.session.flush()
+        logger.warning(f"Deleted {count} product(s) for order_id={order_id}")
+        return count
+
