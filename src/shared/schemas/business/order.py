@@ -119,6 +119,14 @@ class IncotermSummary(BaseModel):
     name: Optional[str] = None
     model_config = ConfigDict(from_attributes=True)
 
+class QuoteSummary(BaseModel):
+    """Resumen de cotización para incluir en respuestas de orden."""
+    id: int
+    quote_number: str
+    revision: str
+    quote_date: Optional[date] = None
+    model_config = ConfigDict(from_attributes=True)
+
 
 # ============================================================================
 # ORDER SCHEMAS
@@ -283,6 +291,7 @@ class OrderResponse(OrderBase):
     plant: Optional[PlantSummary] = None
     staff: Optional[StaffSummary] = None
     incoterm: Optional[IncotermSummary] = None
+    quote: Optional[QuoteSummary] = None  # Cotización de origen (si aplica)
 
     model_config = ConfigDict(from_attributes=True)
 
