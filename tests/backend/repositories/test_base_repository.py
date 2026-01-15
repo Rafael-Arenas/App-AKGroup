@@ -467,7 +467,7 @@ class TestBaseRepositoryTransactionBehavior:
         for i in range(3):
             company = Company(
                 name=f"Company {i}",
-                trigram=f"C{i:02d}",
+                trigram=f"CA{chr(65+i)}",
                 company_type_id=sample_company_type.id,
             )
             created = base_repository.create(company)
@@ -514,7 +514,7 @@ class TestBaseRepositoryTransactionBehavior:
         for i in range(10):
             company = Company(
                 name=f"Concurrent {i}",
-                trigram=f"CC{i}",
+                trigram=f"CB{chr(65+i)}",
                 company_type_id=sample_company_type.id,
             )
             created = base_repository.create(company)
