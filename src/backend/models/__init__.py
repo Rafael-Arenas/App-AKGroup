@@ -77,6 +77,7 @@ from .core import (
     ProductComponent,
     ProductType,
     Service,
+    Sequence,
     Staff,
 )
 
@@ -87,6 +88,7 @@ from .business import (
     InvoiceExport,
     InvoiceSII,
     Order,
+    OrderProduct,
     PaymentCondition,
     Quote,
     QuoteProduct,
@@ -139,10 +141,12 @@ __all__ = [
     "ProductComponent",
     "ProductType",
     "PriceCalculationMode",
+    "Sequence",
     # Business models (Fase 4 - ✅ Completado)
     "Quote",
     "QuoteProduct",
     "Order",
+    "OrderProduct",
     "InvoiceSII",
     "InvoiceExport",
     "DeliveryOrder",

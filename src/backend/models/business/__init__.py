@@ -12,7 +12,7 @@ Phase 4: Business Models implementation.
 """
 
 from .quotes import Quote, QuoteProduct
-from .orders import Order
+from .orders import Order, OrderProduct
 from .invoices import InvoiceSII, InvoiceExport
 from .delivery import (
     DeliveryOrder,
@@ -27,6 +27,7 @@ __all__ = [
     "QuoteProduct",
     # Orders
     "Order",
+    "OrderProduct",
     # Invoices
     "InvoiceSII",
     "InvoiceExport",
