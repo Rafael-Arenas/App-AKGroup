@@ -585,7 +585,8 @@
       "is_export": "Es Exportación",
       "subtotal": "Subtotal",
       "taxes": "Impuestos ({percent}%)",
-      "total_amount": "Total"
+      "total_amount": "Total",
+      "source_quote": "Cotización Origen"
     },
     "columns": {
       "order_number": "Nº Orden",
