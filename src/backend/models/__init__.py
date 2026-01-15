@@ -34,7 +34,6 @@ from .base import (
     ActiveMixin,
     AuditMixin,
     Base,
-    BaseModel,
     DecimalValidator,
     EmailValidator,
     PhoneValidator,
@@ -99,7 +98,6 @@ __all__ = [
     "Base",
     "metadata",
     "NAMING_CONVENTION",
-    "BaseModel",
     # Mixins
     "TimestampMixin",
     "AuditMixin",

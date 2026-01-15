@@ -7,22 +7,29 @@ Part of Phase 4: Business Models implementation.
 
 from datetime import date
 from decimal import Decimal
-from typing import Optional, List
+from typing import TYPE_CHECKING
 
 from sqlalchemy import (
-    Column,
-    Integer,
-    String,
-    DECIMAL,
-    ForeignKey,
-    Date,
-    Text,
-    Index,
     CheckConstraint,
+    Date,
+    ForeignKey,
+    Index,
+    Numeric,
+    String,
+    Text,
 )
-from sqlalchemy.orm import relationship, validates
+from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 
-from ..base import Base, TimestampMixin, AuditMixin, ActiveMixin
+from ..base import ActiveMixin, AuditMixin, Base, TimestampMixin
+
+if TYPE_CHECKING:
+    from ..core.companies import Company, CompanyRut, Plant
+    from ..core.contacts import Contact
+    from ..core.products import Product
+    from ..core.staff import Staff
+    from ..lookups.business import Currency, Incoterm
+    from ..lookups.status import QuoteStatus
+    from .orders import Order
 
 
 class Quote(Base, TimestampMixin, AuditMixin, ActiveMixin):
@@ -31,171 +38,125 @@ class Quote(Base, TimestampMixin, AuditMixin, ActiveMixin):
 
     Manages customer quotes with products, pricing, and status tracking.
     Supports conversion to orders and maintains complete audit trail.
-
-    Attributes:
-        id: Primary key
-        quote_number: Unique quote identifier (e.g., "Q-2025-001")
-        subject: Quote subject/title
-        unit: Unit of measure (e.g., pcs, kg)
-        revision: Quote revision number (e.g., "A", "B", "C")
-        company_id: Foreign key to Company (customer)
-        company_rut_id: Foreign key to CompanyRut (specific customer RUT)
-        contact_id: Foreign key to Contact (customer contact person)
-        plant_id: Foreign key to Plant (customer plant)
-        staff_id: Foreign key to Staff (sales person)
-        status_id: Foreign key to QuoteStatus
-        quote_date: Date quote was created
-        valid_until: Quote expiration date
-        shipping_date: Estimated shipping date
-        incoterm_id: Foreign key to Incoterm (shipping terms)
-        currency_id: Foreign key to Currency
-        exchange_rate: Exchange rate at time of quote
-        subtotal: Sum of all line items before tax
-        tax_percentage: Tax rate percentage (e.g., 19 for 19%)
-        tax_amount: Calculated tax amount
-        total: Total amount including tax
-        notes: Additional notes/comments
-        internal_notes: Internal notes (not visible to customer)
     """
 
     __tablename__ = "quotes"
 
     # Primary key
-    id = Column(Integer, primary_key=True)
+    id: Mapped[int] = mapped_column(primary_key=True)
 
     # Quote identification
-    quote_number = Column(
+    quote_number: Mapped[str] = mapped_column(
         String(50),
-        nullable=False,
         unique=True,
         index=True,
         comment="Unique quote number (e.g., Q-2025-001)",
     )
-    subject = Column(
-        String(200), nullable=False, comment="Quote subject or description"
+    subject: Mapped[str] = mapped_column(
+        String(200), comment="Quote subject or description"
     )
-    revision = Column(
-        String(10), nullable=False, default="A", comment="Quote revision (A, B, C...)"
+    revision: Mapped[str] = mapped_column(
+        String(10), default="A", comment="Quote revision (A, B, C...)"
     )
-
-    unit = Column(
-        String(20),
-        nullable=True,
-        comment="Unit (Unidad)",
-    )
+    unit: Mapped[str | None] = mapped_column(String(20), comment="Unit (Unidad)")
 
     # Related entities (FK to core models)
-    company_id = Column(
-        Integer,
+    company_id: Mapped[int] = mapped_column(
         ForeignKey("companies.id", ondelete="RESTRICT"),
-        nullable=False,
         index=True,
         comment="Customer company",
     )
-    company_rut_id = Column(
-        Integer,
+    company_rut_id: Mapped[int | None] = mapped_column(
         ForeignKey("company_ruts.id", ondelete="RESTRICT"),
-        nullable=True,
         index=True,
         comment="Specific customer RUT for this quote",
     )
-    contact_id = Column(
-        Integer,
+    contact_id: Mapped[int | None] = mapped_column(
         ForeignKey("contacts.id", ondelete="SET NULL"),
-        nullable=True,
         index=True,
         comment="Customer contact person",
     )
-    plant_id = Column(
-        Integer,
-        ForeignKey("plants.id", ondelete="SET NULL"),
-        nullable=True,
-        comment="Customer plant",
+    plant_id: Mapped[int | None] = mapped_column(
+        ForeignKey("plants.id", ondelete="SET NULL"), comment="Customer plant"
     )
-    staff_id = Column(
-        Integer,
+    staff_id: Mapped[int] = mapped_column(
         ForeignKey("staff.id", ondelete="RESTRICT"),
-        nullable=False,
         index=True,
         comment="Sales person responsible",
     )
 
     # Status (FK to lookup table)
-    status_id = Column(
-        Integer,
+    status_id: Mapped[int] = mapped_column(
         ForeignKey("quote_statuses.id", ondelete="RESTRICT"),
-        nullable=False,
         index=True,
         comment="Quote status (draft, sent, accepted, rejected)",
     )
 
     # Important dates
-    quote_date = Column(Date, nullable=False, index=True, comment="Quote creation date")
-    valid_until = Column(Date, nullable=True, comment="Quote expiration date")
-    shipping_date = Column(Date, nullable=True, comment="Estimated shipping date")
+    quote_date: Mapped[date] = mapped_column(
+        Date, index=True, comment="Quote creation date"
+    )
+    valid_until: Mapped[date | None] = mapped_column(
+        Date, comment="Quote expiration date"
+    )
+    shipping_date: Mapped[date | None] = mapped_column(
+        Date, comment="Estimated shipping date"
+    )
 
     # Shipping and currency
-    incoterm_id = Column(
-        Integer,
+    incoterm_id: Mapped[int | None] = mapped_column(
         ForeignKey("incoterms.id", ondelete="SET NULL"),
-        nullable=True,
         comment="Shipping terms (EXW, FOB, CIF, etc.)",
     )
-    currency_id = Column(
-        Integer,
-        ForeignKey("currencies.id", ondelete="RESTRICT"),
-        nullable=False,
-        comment="Quote currency",
+    currency_id: Mapped[int] = mapped_column(
+        ForeignKey("currencies.id", ondelete="RESTRICT"), comment="Quote currency"
     )
-    exchange_rate = Column(
-        DECIMAL(12, 6),
-        nullable=True,
-        comment="Exchange rate at time of quote",
+    exchange_rate: Mapped[Decimal | None] = mapped_column(
+        Numeric(12, 6), comment="Exchange rate at time of quote"
     )
 
-    # Financial totals (calculated from QuoteProduct items)
-    subtotal = Column(
-        DECIMAL(15, 2),
-        nullable=False,
+    # Financial totals
+    subtotal: Mapped[Decimal] = mapped_column(
+        Numeric(15, 2),
         default=Decimal("0.00"),
         comment="Sum of all line items before tax",
     )
-    tax_percentage = Column(
-        DECIMAL(5, 2),
-        nullable=False,
+    tax_percentage: Mapped[Decimal] = mapped_column(
+        Numeric(5, 2),
         default=Decimal("19.00"),
         comment="Tax percentage (e.g., 19 for IVA in Chile)",
     )
-    tax_amount = Column(
-        DECIMAL(15, 2),
-        nullable=False,
-        default=Decimal("0.00"),
-        comment="Calculated tax amount",
+    tax_amount: Mapped[Decimal] = mapped_column(
+        Numeric(15, 2), default=Decimal("0.00"), comment="Calculated tax amount"
     )
-    total = Column(
-        DECIMAL(15, 2),
-        nullable=False,
-        default=Decimal("0.00"),
-        comment="Total amount including tax",
+    total: Mapped[Decimal] = mapped_column(
+        Numeric(15, 2), default=Decimal("0.00"), comment="Total amount including tax"
     )
 
     # Notes
-    notes = Column(Text, nullable=True, comment="Customer-visible notes")
-    internal_notes = Column(Text, nullable=True, comment="Internal notes only")
+    notes: Mapped[str | None] = mapped_column(Text, comment="Customer-visible notes")
+    internal_notes: Mapped[str | None] = mapped_column(
+        Text, comment="Internal notes only"
+    )
 
     # Relationships
-    # NOTE: These will work once core models are implemented
-    company = relationship("Company", back_populates="quotes", foreign_keys=[company_id])
-    company_rut = relationship("CompanyRut", foreign_keys=[company_rut_id])
-    contact = relationship("Contact", foreign_keys=[contact_id])
-    plant = relationship("Plant", foreign_keys=[plant_id])
-    staff = relationship("Staff", foreign_keys=[staff_id])
-    status = relationship("QuoteStatus")
-    incoterm = relationship("Incoterm")
-    currency = relationship("Currency")
+    company: Mapped["Company"] = relationship(
+        "Company", back_populates="quotes", foreign_keys=[company_id]
+    )
+    company_rut: Mapped["CompanyRut | None"] = relationship(
+        "CompanyRut", foreign_keys=[company_rut_id]
+    )
+    contact: Mapped["Contact | None"] = relationship(
+        "Contact", foreign_keys=[contact_id]
+    )
+    plant: Mapped["Plant | None"] = relationship("Plant", foreign_keys=[plant_id])
+    staff: Mapped["Staff"] = relationship("Staff", foreign_keys=[staff_id])
+    status: Mapped["QuoteStatus"] = relationship("QuoteStatus")
+    incoterm: Mapped["Incoterm | None"] = relationship("Incoterm")
+    currency: Mapped["Currency"] = relationship("Currency")
 
     # Quote products (line items)
-    products = relationship(
+    products: Mapped[list["QuoteProduct"]] = relationship(
         "QuoteProduct",
         back_populates="quote",
         cascade="all, delete-orphan",
@@ -203,14 +164,9 @@ class Quote(Base, TimestampMixin, AuditMixin, ActiveMixin):
     )
 
     # Converted order (if quote was accepted)
-    order = relationship("Order", back_populates="quote", uselist=False)
-
-    # Polymorphic notes
-    # notes_collection = relationship(
-    #     "Note",
-    #     primaryjoin="and_(Note.entity_type=='quote', foreign(Note.entity_id)==Quote.id)",
-    #     viewonly=True
-    # )
+    order: Mapped["Order | None"] = relationship(
+        "Order", back_populates="quote", uselist=False
+    )
 
     # Table constraints
     __table_args__ = (
@@ -249,17 +205,13 @@ class Quote(Base, TimestampMixin, AuditMixin, ActiveMixin):
 
     # Business methods
     def calculate_totals(self) -> None:
-        """
-        Calculate subtotal, tax, and total from quote products.
-
-        This should be called after adding/modifying quote products.
-        """
+        """Calculate subtotal, tax, and total from quote products."""
         self.subtotal = sum(
             (item.subtotal or Decimal("0.00")) for item in self.products
         )
-        self.tax_amount = (self.subtotal * self.tax_percentage / Decimal("100")).quantize(
-            Decimal("0.01")
-        )
+        self.tax_amount = (
+            self.subtotal * self.tax_percentage / Decimal("100")
+        ).quantize(Decimal("0.01"))
         self.total = self.subtotal + self.tax_amount
 
     @property
@@ -270,7 +222,7 @@ class Quote(Base, TimestampMixin, AuditMixin, ActiveMixin):
         return date.today() > self.valid_until
 
     @property
-    def days_until_expiry(self) -> Optional[int]:
+    def days_until_expiry(self) -> int | None:
         """Calculate days until quote expires."""
         if self.valid_until is None:
             return None
@@ -288,85 +240,57 @@ class QuoteProduct(Base, TimestampMixin):
 
     Junction table between Quote and Product with quantity, pricing,
     and discount information.
-
-    Attributes:
-        id: Primary key
-        quote_id: Foreign key to Quote
-        product_id: Foreign key to Product
-        sequence: Display order (for sorting line items)
-        quantity: Quantity ordered
-        unit_price: Price per unit (may differ from product.price)
-        discount_percentage: Discount applied to this line
-        discount_amount: Calculated discount amount
-        subtotal: Line total (quantity * unit_price - discount)
-        notes: Line item specific notes
     """
 
     __tablename__ = "quote_products"
 
     # Primary key
-    id = Column(Integer, primary_key=True)
+    id: Mapped[int] = mapped_column(primary_key=True)
 
     # Foreign keys
-    quote_id = Column(
-        Integer,
+    quote_id: Mapped[int] = mapped_column(
         ForeignKey("quotes.id", ondelete="CASCADE"),
-        nullable=False,
         index=True,
         comment="Parent quote",
     )
-    product_id = Column(
-        Integer,
+    product_id: Mapped[int] = mapped_column(
         ForeignKey("products.id", ondelete="RESTRICT"),
-        nullable=False,
         index=True,
         comment="Product being quoted",
     )
 
     # Line item details
-    sequence = Column(
-        Integer, nullable=False, default=1, comment="Display order of line items"
+    sequence: Mapped[int] = mapped_column(
+        default=1, comment="Display order of line items"
     )
 
     # Quantities and pricing
-    quantity = Column(
-        DECIMAL(10, 3),
-        nullable=False,
-        comment="Quantity being quoted",
+    quantity: Mapped[Decimal] = mapped_column(
+        Numeric(10, 3), comment="Quantity being quoted"
     )
-    unit_price = Column(
-        DECIMAL(15, 2),
-        nullable=False,
-        comment="Price per unit (snapshot at quote time)",
+    unit_price: Mapped[Decimal] = mapped_column(
+        Numeric(15, 2), comment="Price per unit (snapshot at quote time)"
     )
 
     # Discounts
-    discount_percentage = Column(
-        DECIMAL(5, 2),
-        nullable=False,
-        default=Decimal("0.00"),
-        comment="Discount percentage for this line",
+    discount_percentage: Mapped[Decimal] = mapped_column(
+        Numeric(5, 2), default=Decimal("0.00"), comment="Discount percentage for this line"
     )
-    discount_amount = Column(
-        DECIMAL(15, 2),
-        nullable=False,
-        default=Decimal("0.00"),
-        comment="Calculated discount amount",
+    discount_amount: Mapped[Decimal] = mapped_column(
+        Numeric(15, 2), default=Decimal("0.00"), comment="Calculated discount amount"
     )
 
     # Calculated total
-    subtotal = Column(
-        DECIMAL(15, 2),
-        nullable=False,
-        comment="Line total (quantity * unit_price - discount)",
+    subtotal: Mapped[Decimal] = mapped_column(
+        Numeric(15, 2), comment="Line total (quantity * unit_price - discount)"
     )
 
     # Notes
-    notes = Column(Text, nullable=True, comment="Line item specific notes")
+    notes: Mapped[str | None] = mapped_column(Text, comment="Line item specific notes")
 
     # Relationships
-    quote = relationship("Quote", back_populates="products")
-    product = relationship("Product")
+    quote: Mapped["Quote"] = relationship("Quote", back_populates="products")
+    product: Mapped["Product"] = relationship("Product")
 
     # Table constraints
     __table_args__ = (
@@ -409,12 +333,7 @@ class QuoteProduct(Base, TimestampMixin):
 
     # Business methods
     def calculate_subtotal(self) -> None:
-        """
-        Calculate line item subtotal.
-
-        Formula: (quantity * unit_price) - discount_amount
-        Or: (quantity * unit_price) * (1 - discount_percentage/100)
-        """
+        """Calculate line item subtotal."""
         line_total = self.quantity * self.unit_price
 
         if self.discount_percentage > 0:

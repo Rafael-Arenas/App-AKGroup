@@ -8,25 +8,28 @@ Part of Phase 4: Business Models implementation.
 
 from datetime import date, datetime
 from decimal import Decimal
-from typing import Optional
+from typing import TYPE_CHECKING
 
 from sqlalchemy import (
-    Column,
-    Integer,
-    String,
-    DECIMAL,
-    ForeignKey,
+    CheckConstraint,
     Date,
     DateTime,
-    Text,
+    ForeignKey,
     Index,
-    CheckConstraint,
-    Boolean,
+    Numeric,
+    String,
+    Text,
 )
-from sqlalchemy.orm import relationship, validates
+from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 
-# Import base infrastructure (Phases 1-3 are complete)
-from ..base import Base, TimestampMixin, AuditMixin, ActiveMixin
+from ..base import ActiveMixin, AuditMixin, Base, TimestampMixin
+
+if TYPE_CHECKING:
+    from ..core.addresses import Address
+    from ..core.companies import Company
+    from ..core.staff import Staff
+    from ..lookups.business import PaymentType
+    from .orders import Order
 
 
 class DeliveryOrder(Base, TimestampMixin, AuditMixin, ActiveMixin):
@@ -35,127 +38,96 @@ class DeliveryOrder(Base, TimestampMixin, AuditMixin, ActiveMixin):
 
     Manages delivery documentation for shipping goods to customers.
     Links orders to actual deliveries with transport and address details.
-
-    Attributes:
-        id: Primary key
-        delivery_number: Unique delivery order number
-        revision: Delivery order revision number (e.g., "A", "B", "C")
-        order_id: Foreign key to Order
-        company_id: Foreign key to Company (customer)
-        address_id: Foreign key to Address (delivery address)
-        transport_id: Foreign key to Transport
-        staff_id: Foreign key to Staff (responsible)
-        delivery_date: Planned delivery date
-        actual_delivery_date: Actual delivery date
-        status: Delivery status (pending, in_transit, delivered, cancelled)
-        tracking_number: Carrier tracking number
-        delivery_instructions: Special delivery instructions
-        signature_name: Name of person who received delivery
-        signature_id: ID of person who received delivery
-        signature_datetime: Date and time of receipt
-        notes: Additional notes
     """
 
     __tablename__ = "delivery_orders"
 
     # Primary key
-    id = Column(Integer, primary_key=True)
+    id: Mapped[int] = mapped_column(primary_key=True)
 
     # Delivery identification
-    delivery_number = Column(
+    delivery_number: Mapped[str] = mapped_column(
         String(50),
-        nullable=False,
         unique=True,
         index=True,
         comment="Unique delivery order number (e.g., GD-2025-001)",
     )
-    revision = Column(
-        String(10),
-        nullable=False,
-        default="A",
-        comment="Delivery order revision (A, B, C...)",
+    revision: Mapped[str] = mapped_column(
+        String(10), default="A", comment="Delivery order revision (A, B, C...)"
     )
 
     # Related entities
-    order_id = Column(
-        Integer,
+    order_id: Mapped[int] = mapped_column(
         ForeignKey("orders.id", ondelete="RESTRICT"),
-        nullable=False,
         index=True,
         comment="Source order",
     )
-    company_id = Column(
-        Integer,
+    company_id: Mapped[int] = mapped_column(
         ForeignKey("companies.id", ondelete="RESTRICT"),
-        nullable=False,
         index=True,
         comment="Customer company",
     )
-    address_id = Column(
-        Integer,
-        ForeignKey("addresses.id", ondelete="RESTRICT"),
-        nullable=False,
-        comment="Delivery address",
+    address_id: Mapped[int] = mapped_column(
+        ForeignKey("addresses.id", ondelete="RESTRICT"), comment="Delivery address"
     )
-    transport_id = Column(
-        Integer,
+    transport_id: Mapped[int | None] = mapped_column(
         ForeignKey("transports.id", ondelete="SET NULL"),
-        nullable=True,
         comment="Transport/carrier information",
     )
-    staff_id = Column(
-        Integer,
+    staff_id: Mapped[int] = mapped_column(
         ForeignKey("staff.id", ondelete="RESTRICT"),
-        nullable=False,
         comment="Staff member responsible",
     )
 
     # Delivery dates
-    delivery_date = Column(
-        Date, nullable=False, index=True, comment="Planned delivery date"
+    delivery_date: Mapped[date] = mapped_column(
+        Date, index=True, comment="Planned delivery date"
     )
-    actual_delivery_date = Column(
-        Date, nullable=True, comment="Actual delivery date"
+    actual_delivery_date: Mapped[date | None] = mapped_column(
+        Date, comment="Actual delivery date"
     )
 
     # Status and tracking
-    status = Column(
+    status: Mapped[str] = mapped_column(
         String(50),
-        nullable=False,
         default="pending",
         index=True,
         comment="Delivery status (pending, in_transit, delivered, cancelled)",
     )
-    tracking_number = Column(
-        String(100), nullable=True, comment="Carrier tracking number"
+    tracking_number: Mapped[str | None] = mapped_column(
+        String(100), comment="Carrier tracking number"
     )
 
     # Delivery details
-    delivery_instructions = Column(
-        Text, nullable=True, comment="Special delivery instructions"
+    delivery_instructions: Mapped[str | None] = mapped_column(
+        Text, comment="Special delivery instructions"
     )
 
     # Receipt/signature information
-    signature_name = Column(
-        String(200), nullable=True, comment="Name of person who received delivery"
+    signature_name: Mapped[str | None] = mapped_column(
+        String(200), comment="Name of person who received delivery"
     )
-    signature_id = Column(
-        String(50), nullable=True, comment="ID of person who received delivery"
+    signature_id: Mapped[str | None] = mapped_column(
+        String(50), comment="ID of person who received delivery"
     )
-    signature_datetime = Column(
-        DateTime(timezone=True), nullable=True, comment="Date and time of receipt"
+    signature_datetime: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), comment="Date and time of receipt"
     )
 
     # Notes
-    notes = Column(Text, nullable=True, comment="Additional notes")
+    notes: Mapped[str | None] = mapped_column(Text, comment="Additional notes")
 
     # Relationships
-    order = relationship("Order", back_populates="delivery_orders", foreign_keys=[order_id])
-    company = relationship("Company", foreign_keys=[company_id])
-    address = relationship("Address", foreign_keys=[address_id])
-    transport = relationship("Transport", back_populates="delivery_orders", foreign_keys=[transport_id])
-    staff = relationship("Staff", foreign_keys=[staff_id])
-    delivery_dates = relationship(
+    order: Mapped["Order"] = relationship(
+        "Order", back_populates="delivery_orders", foreign_keys=[order_id]
+    )
+    company: Mapped["Company"] = relationship("Company", foreign_keys=[company_id])
+    address: Mapped["Address"] = relationship("Address", foreign_keys=[address_id])
+    transport: Mapped["Transport | None"] = relationship(
+        "Transport", back_populates="delivery_orders", foreign_keys=[transport_id]
+    )
+    staff: Mapped["Staff"] = relationship("Staff", foreign_keys=[staff_id])
+    delivery_dates: Mapped[list["DeliveryDate"]] = relationship(
         "DeliveryDate", back_populates="delivery_order", cascade="all, delete-orphan"
     )
 
@@ -182,9 +154,7 @@ class DeliveryOrder(Base, TimestampMixin, AuditMixin, ActiveMixin):
         """Validate status is valid."""
         valid_statuses = {"pending", "in_transit", "delivered", "cancelled"}
         if value not in valid_statuses:
-            raise ValueError(
-                f"Status must be one of {valid_statuses}, got '{value}'"
-            )
+            raise ValueError(f"Status must be one of {valid_statuses}, got '{value}'")
         return value
 
     # Business methods
@@ -201,7 +171,7 @@ class DeliveryOrder(Base, TimestampMixin, AuditMixin, ActiveMixin):
         return date.today() > self.delivery_date
 
     @property
-    def days_late(self) -> Optional[int]:
+    def days_late(self) -> int | None:
         """Calculate days late for delivery."""
         if not self.is_late:
             return None
@@ -212,16 +182,9 @@ class DeliveryOrder(Base, TimestampMixin, AuditMixin, ActiveMixin):
         return delta.days
 
     def mark_delivered(
-        self, signature_name: str, signature_id: str, notes: Optional[str] = None
+        self, signature_name: str, signature_id: str, notes: str | None = None
     ) -> None:
-        """
-        Mark delivery as completed with signature.
-
-        Args:
-            signature_name: Name of person receiving delivery
-            signature_id: ID of person receiving delivery
-            notes: Optional notes about delivery
-        """
+        """Mark delivery as completed with signature."""
         self.status = "delivered"
         self.actual_delivery_date = date.today()
         self.signature_name = signature_name
@@ -241,55 +204,43 @@ class DeliveryDate(Base, TimestampMixin):
 
     Allows tracking multiple delivery dates for a single delivery order,
     useful when an order is delivered in multiple shipments.
-
-    Attributes:
-        id: Primary key
-        delivery_order_id: Foreign key to DeliveryOrder
-        planned_date: Planned delivery date for this shipment
-        actual_date: Actual delivery date
-        quantity: Quantity delivered in this shipment
-        status: Status of this delivery date
-        notes: Notes specific to this delivery
     """
 
     __tablename__ = "delivery_dates"
 
     # Primary key
-    id = Column(Integer, primary_key=True)
+    id: Mapped[int] = mapped_column(primary_key=True)
 
     # Foreign key
-    delivery_order_id = Column(
-        Integer,
+    delivery_order_id: Mapped[int] = mapped_column(
         ForeignKey("delivery_orders.id", ondelete="CASCADE"),
-        nullable=False,
         index=True,
         comment="Parent delivery order",
     )
 
     # Dates
-    planned_date = Column(
-        Date, nullable=False, index=True, comment="Planned delivery date"
+    planned_date: Mapped[date] = mapped_column(
+        Date, index=True, comment="Planned delivery date"
     )
-    actual_date = Column(Date, nullable=True, comment="Actual delivery date")
+    actual_date: Mapped[date | None] = mapped_column(
+        Date, comment="Actual delivery date"
+    )
 
     # Delivery details
-    quantity = Column(
-        DECIMAL(10, 3),
-        nullable=True,
-        comment="Quantity delivered in this shipment",
+    quantity: Mapped[Decimal | None] = mapped_column(
+        Numeric(10, 3), comment="Quantity delivered in this shipment"
     )
-    status = Column(
-        String(50),
-        nullable=False,
-        default="pending",
-        comment="Status (pending, completed, cancelled)",
+    status: Mapped[str] = mapped_column(
+        String(50), default="pending", comment="Status (pending, completed, cancelled)"
     )
 
     # Notes
-    notes = Column(Text, nullable=True, comment="Notes for this delivery")
+    notes: Mapped[str | None] = mapped_column(Text, comment="Notes for this delivery")
 
     # Relationships
-    delivery_order = relationship("DeliveryOrder", back_populates="delivery_dates")
+    delivery_order: Mapped["DeliveryOrder"] = relationship(
+        "DeliveryOrder", back_populates="delivery_dates"
+    )
 
     # Table constraints
     __table_args__ = (
@@ -307,13 +258,11 @@ class DeliveryDate(Base, TimestampMixin):
         """Validate status is valid."""
         valid_statuses = {"pending", "completed", "cancelled"}
         if value not in valid_statuses:
-            raise ValueError(
-                f"Status must be one of {valid_statuses}, got '{value}'"
-            )
+            raise ValueError(f"Status must be one of {valid_statuses}, got '{value}'")
         return value
 
     @validates("quantity")
-    def validate_quantity(self, key: str, value: Optional[Decimal]) -> Optional[Decimal]:
+    def validate_quantity(self, key: str, value: Decimal | None) -> Decimal | None:
         """Validate quantity is positive if provided."""
         if value is not None and value <= 0:
             raise ValueError(f"Quantity must be positive, got {value}")
@@ -330,56 +279,45 @@ class Transport(Base, TimestampMixin, ActiveMixin):
 
     Manages information about transport companies and methods used
     for deliveries.
-
-    Attributes:
-        id: Primary key
-        name: Transport company name
-        delivery_number: Delivery tracking/reference number
-        transport_type: Type of transport (own, carrier, courier, etc.)
-        contact_name: Contact person at transport company
-        contact_phone: Contact phone number
-        contact_email: Contact email
-        website: Transport company website
-        notes: Additional notes
     """
 
     __tablename__ = "transports"
 
     # Primary key
-    id = Column(Integer, primary_key=True)
+    id: Mapped[int] = mapped_column(primary_key=True)
 
     # Company information
-    name = Column(
-        String(200),
-        nullable=False,
-        unique=True,
-        index=True,
-        comment="Transport company name",
+    name: Mapped[str] = mapped_column(
+        String(200), unique=True, index=True, comment="Transport company name"
     )
-    delivery_number = Column(
-        String(100),
-        nullable=True,
-        index=True,
-        comment="Delivery tracking/reference number",
+    delivery_number: Mapped[str | None] = mapped_column(
+        String(100), index=True, comment="Delivery tracking/reference number"
     )
-    transport_type = Column(
+    transport_type: Mapped[str] = mapped_column(
         String(50),
-        nullable=False,
         default="carrier",
         comment="Type (own, carrier, courier, freight_forwarder)",
     )
 
     # Contact information
-    contact_name = Column(String(200), nullable=True, comment="Contact person name")
-    contact_phone = Column(String(50), nullable=True, comment="Contact phone number")
-    contact_email = Column(String(100), nullable=True, comment="Contact email")
-    website = Column(String(200), nullable=True, comment="Company website")
+    contact_name: Mapped[str | None] = mapped_column(
+        String(200), comment="Contact person name"
+    )
+    contact_phone: Mapped[str | None] = mapped_column(
+        String(50), comment="Contact phone number"
+    )
+    contact_email: Mapped[str | None] = mapped_column(
+        String(100), comment="Contact email"
+    )
+    website: Mapped[str | None] = mapped_column(String(200), comment="Company website")
 
     # Notes
-    notes = Column(Text, nullable=True, comment="Additional notes")
+    notes: Mapped[str | None] = mapped_column(Text, comment="Additional notes")
 
     # Relationships
-    delivery_orders = relationship("DeliveryOrder", back_populates="transport")
+    delivery_orders: Mapped[list["DeliveryOrder"]] = relationship(
+        "DeliveryOrder", back_populates="transport"
+    )
 
     # Table constraints
     __table_args__ = (
@@ -418,99 +356,66 @@ class PaymentCondition(Base, TimestampMixin, ActiveMixin):
 
     Manages standard payment conditions that can be applied to
     quotes, orders, and invoices.
-
-    attributes:
-        id: Primary key
-        payment_condition_number: Short number/code (e.g., "001", "NET30")
-        name: Payment condition name
-        revision: Payment condition revision number (e.g., "A", "B", "C")
-        description: Detailed description
-        days_to_pay: Number of days for payment
-        percentage_advance: Percentage required as advance payment
-        percentage_on_delivery: Percentage due on delivery
-        percentage_after_delivery: Percentage due after delivery (with days)
-        days_after_delivery: Days after delivery for final payment
-        payment_type_id: Foreign key to PaymentType
-        is_default: Whether this is the default payment condition
-        notes: Additional notes
     """
 
     __tablename__ = "payment_conditions"
 
     # Primary key
-    id = Column(Integer, primary_key=True)
+    id: Mapped[int] = mapped_column(primary_key=True)
 
     # Identification
-    payment_condition_number = Column(
+    payment_condition_number: Mapped[str] = mapped_column(
         String(20),
-        nullable=False,
         unique=True,
         index=True,
         comment="Short number/code (e.g., 001, NET30, COD)",
     )
-    name = Column(
-        String(100), nullable=False, comment="Payment condition name"
+    name: Mapped[str] = mapped_column(String(100), comment="Payment condition name")
+    revision: Mapped[str] = mapped_column(
+        String(10), default="A", comment="Payment condition revision (A, B, C...)"
     )
-    revision = Column(
-        String(10),
-        nullable=False,
-        default="A",
-        comment="Payment condition revision (A, B, C...)",
+    description: Mapped[str | None] = mapped_column(
+        Text, comment="Detailed description"
     )
-    description = Column(Text, nullable=True, comment="Detailed description")
 
     # Related entities
-    payment_type_id = Column(
-        Integer,
+    payment_type_id: Mapped[int] = mapped_column(
         ForeignKey("payment_types.id", ondelete="RESTRICT"),
-        nullable=False,
         index=True,
         comment="Payment type (30, 60, 90 days, etc.)",
     )
 
     # Payment terms
-    days_to_pay = Column(
-        Integer,
-        nullable=True,
-        comment="Number of days for payment (for NET terms)",
+    days_to_pay: Mapped[int | None] = mapped_column(
+        comment="Number of days for payment (for NET terms)"
     )
-    percentage_advance = Column(
-        DECIMAL(5, 2),
-        nullable=False,
+    percentage_advance: Mapped[Decimal] = mapped_column(
+        Numeric(5, 2),
         default=Decimal("0.00"),
         comment="Percentage required as advance payment",
     )
-    percentage_on_delivery = Column(
-        DECIMAL(5, 2),
-        nullable=False,
-        default=Decimal("0.00"),
-        comment="Percentage due on delivery",
+    percentage_on_delivery: Mapped[Decimal] = mapped_column(
+        Numeric(5, 2), default=Decimal("0.00"), comment="Percentage due on delivery"
     )
-    percentage_after_delivery = Column(
-        DECIMAL(5, 2),
-        nullable=False,
-        default=Decimal("0.00"),
-        comment="Percentage due after delivery",
+    percentage_after_delivery: Mapped[Decimal] = mapped_column(
+        Numeric(5, 2), default=Decimal("0.00"), comment="Percentage due after delivery"
     )
-    days_after_delivery = Column(
-        Integer,
-        nullable=True,
-        comment="Days after delivery for final payment",
+    days_after_delivery: Mapped[int | None] = mapped_column(
+        comment="Days after delivery for final payment"
     )
 
     # Configuration
-    is_default = Column(
-        Boolean,
-        nullable=False,
-        default=False,
-        comment="Whether this is the default payment condition",
+    is_default: Mapped[bool] = mapped_column(
+        default=False, comment="Whether this is the default payment condition"
     )
 
-    # Relationships
-    payment_type = relationship("PaymentType", back_populates="payment_conditions")
-
     # Notes
-    notes = Column(Text, nullable=True, comment="Additional notes")
+    notes: Mapped[str | None] = mapped_column(Text, comment="Additional notes")
+
+    # Relationships
+    payment_type: Mapped["PaymentType"] = relationship(
+        "PaymentType", back_populates="payment_conditions"
+    )
 
     # Table constraints
     __table_args__ = (
@@ -556,9 +461,7 @@ class PaymentCondition(Base, TimestampMixin, ActiveMixin):
             + self.percentage_after_delivery
         )
         if total != Decimal("100.00"):
-            raise ValueError(
-                f"Payment percentages must sum to 100, got {total}"
-            )
+            raise ValueError(f"Payment percentages must sum to 100, got {total}")
 
     @property
     def summary(self) -> str:

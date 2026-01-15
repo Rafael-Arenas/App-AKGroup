@@ -5,10 +5,11 @@ Este módulo define el modelo de usuarios/staff del sistema.
 Los usuarios pueden crear, modificar y eliminar registros en el sistema.
 """
 
-from typing import Optional
+import re
+from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, Column, Integer, String
-from sqlalchemy.orm import validates
+from sqlalchemy import String
+from sqlalchemy.orm import Mapped, mapped_column, validates
 
 from ..base import AuditMixin, Base, EmailValidator, PhoneValidator, TimestampMixin
 
@@ -48,122 +49,58 @@ class Staff(Base, TimestampMixin, AuditMixin):
         ... )
         >>> print(staff.full_name)
         'John Doe'
-        >>> print(staff.trigram)
-        'JDO'
     """
 
     __tablename__ = "staff"
 
     # Primary Key
-    id = Column(Integer, primary_key=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
 
     # Authentication
-    username = Column(
-        String(50),
-        nullable=False,
-        unique=True,
-        index=True,
-        comment="Unique username for login",
+    username: Mapped[str] = mapped_column(
+        String(50), unique=True, index=True, comment="Unique username for login"
     )
-
-    email = Column(
-        String(100),
-        nullable=False,
-        unique=True,
-        index=True,
-        comment="Unique email address",
+    email: Mapped[str] = mapped_column(
+        String(100), unique=True, index=True, comment="Unique email address"
     )
 
     # Personal Information
-    first_name = Column(
-        String(50),
-        nullable=False,
-        comment="First name(s)",
-    )
-
-    last_name = Column(
-        String(50),
-        nullable=False,
-        comment="Last name(s)",
-    )
-
-    trigram = Column(
+    first_name: Mapped[str] = mapped_column(String(50), comment="First name(s)")
+    last_name: Mapped[str] = mapped_column(String(50), comment="Last name(s)")
+    trigram: Mapped[str | None] = mapped_column(
         String(3),
-        nullable=True,
         unique=True,
         index=True,
         comment="Three-letter unique staff code (optional)",
     )
-
-    phone = Column(
-        String(20),
-        nullable=True,
-        comment="Contact phone number (E.164 format recommended)",
+    phone: Mapped[str | None] = mapped_column(
+        String(20), comment="Contact phone number (E.164 format recommended)"
     )
-
-    position = Column(
-        String(100),
-        nullable=True,
-        comment="Job position/title",
+    position: Mapped[str | None] = mapped_column(
+        String(100), comment="Job position/title"
     )
 
     # Status Flags
-    is_active = Column(
-        Boolean,
-        nullable=False,
-        default=True,
-        index=True,
-        comment="Whether user account is active",
+    is_active: Mapped[bool] = mapped_column(
+        default=True, index=True, comment="Whether user account is active"
     )
-
-    is_admin = Column(
-        Boolean,
-        nullable=False,
-        default=False,
-        comment="Whether user has admin privileges",
+    is_admin: Mapped[bool] = mapped_column(
+        default=False, comment="Whether user has admin privileges"
     )
 
     # Validators
     @validates("email")
     def validate_email(self, key: str, value: str) -> str:
-        """
-        Valida formato de email.
-
-        Args:
-            key: Nombre del campo
-            value: Email a validar
-
-        Returns:
-            Email validado y normalizado (lowercase)
-
-        Raises:
-            ValueError: Si el formato del email es inválido
-        """
+        """Valida formato de email."""
         return EmailValidator.validate(value)
 
     @validates("username")
     def validate_username(self, key: str, value: str) -> str:
-        """
-        Valida username.
-
-        Args:
-            key: Nombre del campo
-            value: Username a validar
-
-        Returns:
-            Username normalizado (lowercase, sin espacios)
-
-        Raises:
-            ValueError: Si el username es muy corto o inválido
-        """
+        """Valida username."""
         if not value or len(value.strip()) < 3:
             raise ValueError("Username must be at least 3 characters")
 
-        # Normalizar a lowercase y sin espacios
         normalized = value.strip().lower()
-
-        # Solo permitir alfanuméricos, guiones y underscores
-        import re
 
         if not re.match(r"^[a-z0-9_-]+$", normalized):
             raise ValueError(
@@ -174,44 +111,14 @@ class Staff(Base, TimestampMixin, AuditMixin):
 
     @validates("first_name", "last_name")
     def validate_name(self, key: str, value: str) -> str:
-        """
-        Valida nombres.
-
-        Args:
-            key: Nombre del campo
-            value: Nombre a validar
-
-        Returns:
-            Nombre normalizado (capitalizado)
-
-        Raises:
-            ValueError: Si el nombre está vacío
-        """
+        """Valida nombres."""
         if not value or len(value.strip()) == 0:
             raise ValueError(f"{key} cannot be empty")
-
         return value.strip()
 
     @validates("trigram")
-    def validate_trigram(self, key: str, value: Optional[str]) -> Optional[str]:
-        """
-        Valida trigrama (3 letras, único).
-
-        Args:
-            key: Nombre del campo
-            value: Trigrama a validar
-
-        Returns:
-            Trigrama normalizado (mayúsculas) o None
-
-        Raises:
-            ValueError: Si el trigrama no tiene 3 letras
-
-        Example:
-            >>> staff.trigram = "jdo"
-            >>> staff.trigram
-            'JDO'
-        """
+    def validate_trigram(self, key: str, value: str | None) -> str | None:
+        """Valida trigrama (3 letras, único)."""
         if value is None or value.strip() == "":
             return None
 
@@ -226,63 +133,21 @@ class Staff(Base, TimestampMixin, AuditMixin):
         return value.upper()
 
     @validates("phone")
-    def validate_phone(self, key: str, value: Optional[str]) -> Optional[str]:
-        """
-        Valida teléfono.
-
-        Args:
-            key: Nombre del campo
-            value: Teléfono a validar
-
-        Returns:
-            Teléfono validado o None
-
-        Raises:
-            ValueError: Si el formato del teléfono es inválido
-
-        Example:
-            >>> staff.phone = "+56 9 1234 5678"
-            >>> staff.phone
-            '+56912345678'
-        """
+    def validate_phone(self, key: str, value: str | None) -> str | None:
+        """Valida teléfono."""
         return PhoneValidator.validate(value)
 
     @validates("position")
-    def validate_position(self, key: str, value: Optional[str]) -> Optional[str]:
-        """
-        Valida cargo/puesto.
-
-        Args:
-            key: Nombre del campo
-            value: Cargo a validar
-
-        Returns:
-            Cargo normalizado o None
-
-        Example:
-            >>> staff.position = "  Gerente de Ventas  "
-            >>> staff.position
-            'Gerente de Ventas'
-        """
+    def validate_position(self, key: str, value: str | None) -> str | None:
+        """Valida cargo/puesto."""
         if value is None or value.strip() == "":
             return None
-
         return value.strip()
 
     # Properties
     @property
     def full_name(self) -> str:
-        """
-        Nombre completo del usuario.
-
-        Returns:
-            Nombre completo en formato "First Last"
-
-        Example:
-            >>> staff = Staff(first_name="John", last_name="Doe")
-            >>> staff.full_name
-            'John Doe'
-        """
+        """Nombre completo del usuario."""
         return f"{self.first_name} {self.last_name}"
 
     def __repr__(self) -> str:

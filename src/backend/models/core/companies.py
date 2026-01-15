@@ -9,11 +9,10 @@ Modelos para gestión de empresas (clientes, proveedores, partners):
 """
 
 import enum
-import re
-from typing import Optional
+from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, Column, ForeignKey, Index, Integer, String, Text
-from sqlalchemy.orm import relationship, validates
+from sqlalchemy import ForeignKey, Index, String, Text
+from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 
 from ..base import (
     ActiveMixin,
@@ -24,6 +23,17 @@ from ..base import (
     TimestampMixin,
     UrlValidator,
 )
+
+if TYPE_CHECKING:
+    from ..business.delivery import DeliveryOrder
+    from ..business.invoices import InvoiceExport, InvoiceSII
+    from ..business.orders import Order
+    from ..business.quotes import Quote
+    from ..lookups.business import CompanyType
+    from ..lookups.geo import City, Country
+    from .addresses import Address
+    from .contacts import Contact
+    from .products import Product
 
 
 class CompanyTypeEnum(str, enum.Enum):
@@ -48,16 +58,7 @@ class CompanyTypeEnum(str, enum.Enum):
 
     @property
     def display_name(self) -> str:
-        """
-        Retorna el nombre para mostrar en español.
-
-        Returns:
-            Nombre en español del tipo de empresa
-
-        Example:
-            >>> CompanyTypeEnum.CLIENT.display_name
-            'Cliente'
-        """
+        """Retorna el nombre para mostrar en español."""
         names = {
             CompanyTypeEnum.CLIENT: "Cliente",
             CompanyTypeEnum.SUPPLIER: "Proveedor",
@@ -66,16 +67,7 @@ class CompanyTypeEnum(str, enum.Enum):
 
     @property
     def description(self) -> str:
-        """
-        Retorna la descripción del tipo de empresa.
-
-        Returns:
-            Descripción detallada
-
-        Example:
-            >>> CompanyTypeEnum.CLIENT.description
-            'Empresa que adquiere productos o servicios'
-        """
+        """Retorna la descripción del tipo de empresa."""
         descriptions = {
             CompanyTypeEnum.CLIENT: "Empresa que adquiere productos o servicios",
             CompanyTypeEnum.SUPPLIER: "Empresa que provee productos o servicios",
@@ -113,185 +105,122 @@ class Company(Base, TimestampMixin, AuditMixin, ActiveMixin):
         products: Productos asociados
         quotes: Cotizaciones
         orders: Órdenes
-
-    Example:
-        >>> company = Company(
-        ...     name="AK Group SpA",
-        ...     trigram="AKG",
-        ...     phone="+56912345678",
-        ...     website="https://akgroup.cl",
-        ...     company_type_id=1,  # Cliente
-        ...     country_id=1  # Chile
-        ... )
     """
 
     __tablename__ = "companies"
 
     # Primary Key
-    id = Column(Integer, primary_key=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
 
     # Company Information
-    name = Column(
-        String(200),
-        nullable=False,
-        index=True,
-        comment="Company legal name",
+    name: Mapped[str] = mapped_column(
+        String(200), index=True, comment="Company legal name"
     )
-
-    trigram = Column(
-        String(3),
-        nullable=False,
-        unique=True,
-        index=True,
-        comment="Three-letter unique company code",
+    trigram: Mapped[str] = mapped_column(
+        String(3), unique=True, index=True, comment="Three-letter unique company code"
     )
-
-    main_address = Column(
-        Text,
-        nullable=True,
-        comment="Primary business address (full text)",
+    main_address: Mapped[str | None] = mapped_column(
+        Text, comment="Primary business address (full text)"
     )
-
-    phone = Column(
-        String(20),
-        nullable=True,
-        comment="Main phone number (E.164 format recommended)",
+    phone: Mapped[str | None] = mapped_column(
+        String(20), comment="Main phone number (E.164 format recommended)"
     )
-
-    website = Column(
-        String(200),
-        nullable=True,
-        comment="Company website URL",
+    website: Mapped[str | None] = mapped_column(
+        String(200), comment="Company website URL"
     )
-
-    intracommunity_number = Column(
-        String(50),
-        nullable=True,
-        comment="EU intracommunity VAT number",
+    intracommunity_number: Mapped[str | None] = mapped_column(
+        String(50), comment="EU intracommunity VAT number"
     )
 
     # Foreign Keys
-    company_type_id = Column(
-        Integer,
+    company_type_id: Mapped[int] = mapped_column(
         ForeignKey("company_types.id", ondelete="RESTRICT"),
-        nullable=False,
         index=True,
         comment="Type of company (client, supplier, etc.)",
     )
-
-    country_id = Column(
-        Integer,
+    country_id: Mapped[int | None] = mapped_column(
         ForeignKey("countries.id", ondelete="RESTRICT"),
-        nullable=True,
         index=True,
         comment="Country of company registration",
     )
-
-    city_id = Column(
-        Integer,
+    city_id: Mapped[int | None] = mapped_column(
         ForeignKey("cities.id", ondelete="RESTRICT"),
-        nullable=True,
         index=True,
         comment="City of main office",
     )
 
-    # Relationships
-    company_type = relationship("CompanyType", back_populates="companies", lazy="joined")
-    country = relationship("Country", back_populates="companies", lazy="joined")
-    city = relationship("City", back_populates="companies", lazy="joined")
+    # Relationships - Lookups
+    company_type: Mapped["CompanyType"] = relationship(
+        "CompanyType", back_populates="companies", lazy="joined"
+    )
+    country: Mapped["Country | None"] = relationship(
+        "Country", back_populates="companies", lazy="joined"
+    )
+    city: Mapped["City | None"] = relationship(
+        "City", back_populates="companies", lazy="joined"
+    )
 
     @property
-    def company_type_enum(self) -> Optional[CompanyTypeEnum]:
-        """
-        Retorna el tipo de empresa como Enum.
-
-        Convierte el nombre de la tabla company_types al Enum correspondiente.
-
-        Returns:
-            CompanyTypeEnum o None si no existe company_type
-
-        Example:
-            >>> company = Company(...)
-            >>> if company.company_type_enum == CompanyTypeEnum.CLIENT:
-            ...     print("Es cliente")
-        """
+    def company_type_enum(self) -> CompanyTypeEnum | None:
+        """Retorna el tipo de empresa como Enum."""
         if not self.company_type:
             return None
-        
-        # El nombre en la tabla puede ser "Cliente" o "Proveedor" (en español)
-        # pero el Enum usa CLIENT o SUPPLIER.
+
         name_upper = self.company_type.name.upper()
         if "CLIENT" in name_upper or "CLIENTE" in name_upper:
             return CompanyTypeEnum.CLIENT
         if "SUPPLIER" in name_upper or "PROVEEDOR" in name_upper:
             return CompanyTypeEnum.SUPPLIER
-            
+
         try:
             return CompanyTypeEnum[name_upper]
         except (KeyError, AttributeError):
             return None
 
-    ruts = relationship(
+    # Relationships - Collections
+    ruts: Mapped[list["CompanyRut"]] = relationship(
         "CompanyRut",
         back_populates="company",
         cascade="all, delete-orphan",
         lazy="select",
     )
-
-    plants = relationship(
+    plants: Mapped[list["Plant"]] = relationship(
         "Plant",
         back_populates="company",
         cascade="all, delete-orphan",
         lazy="select",
     )
-
-    addresses = relationship(
+    addresses: Mapped[list["Address"]] = relationship(
         "Address",
         back_populates="company",
         cascade="all, delete-orphan",
         lazy="select",
     )
-
-    contacts = relationship(
+    contacts: Mapped[list["Contact"]] = relationship(
         "Contact",
         back_populates="company",
         cascade="all, delete-orphan",
         lazy="select",
     )
-
-    products = relationship(
-        "Product",
-        back_populates="company",
-        lazy="select",
+    products: Mapped[list["Product"]] = relationship(
+        "Product", back_populates="company", lazy="select"
     )
-
-    quotes = relationship(
-        "Quote",
-        back_populates="company",
-        lazy="select",
+    quotes: Mapped[list["Quote"]] = relationship(
+        "Quote", back_populates="company", lazy="select"
     )
-
-    orders = relationship(
-        "Order",
-        back_populates="company",
-        lazy="select",
+    orders: Mapped[list["Order"]] = relationship(
+        "Order", back_populates="company", lazy="select"
     )
-
-    invoices_sii = relationship(
-        "InvoiceSII",
-        back_populates="company",
-        lazy="select",
+    invoices_sii: Mapped[list["InvoiceSII"]] = relationship(
+        "InvoiceSII", back_populates="company", lazy="select"
     )
-
-    invoices_export = relationship(
-        "InvoiceExport",
-        back_populates="company",
-        lazy="select",
+    invoices_export: Mapped[list["InvoiceExport"]] = relationship(
+        "InvoiceExport", back_populates="company", lazy="select"
     )
 
     # Indexes
     __table_args__ = (
-        Index("ix_companies_name_trgm", "name"),  # Para búsqueda full-text
+        Index("ix_companies_name_trgm", "name"),
         Index("ix_companies_type_country", "company_type_id", "country_id"),
     )
 
@@ -313,12 +242,12 @@ class Company(Base, TimestampMixin, AuditMixin, ActiveMixin):
         return value.upper()
 
     @validates("phone")
-    def validate_phone(self, key: str, value: Optional[str]) -> Optional[str]:
+    def validate_phone(self, key: str, value: str | None) -> str | None:
         """Valida teléfono."""
         return PhoneValidator.validate(value)
 
     @validates("website")
-    def validate_website(self, key: str, value: Optional[str]) -> Optional[str]:
+    def validate_website(self, key: str, value: str | None) -> str | None:
         """Valida URL del sitio web."""
         return UrlValidator.validate(value)
 
@@ -341,49 +270,33 @@ class CompanyRut(Base, TimestampMixin, AuditMixin):
 
     Relationships:
         company: Empresa a la que pertenece
-
-    Example:
-        >>> rut = CompanyRut(
-        ...     rut="76.123.456-7",
-        ...     is_main=True,
-        ...     company_id=1
-        ... )
-        >>> print(rut.rut)
-        '76123456-7'
     """
 
     __tablename__ = "company_ruts"
 
     # Primary Key
-    id = Column(Integer, primary_key=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
 
     # RUT Information
-    rut = Column(
+    rut: Mapped[str] = mapped_column(
         String(12),
-        nullable=False,
         unique=True,
         index=True,
         comment="Chilean RUT (format: 12345678-9)",
     )
-
-    is_main = Column(
-        Boolean,
-        nullable=False,
-        default=False,
-        comment="Whether this is the main RUT for the company",
+    is_main: Mapped[bool] = mapped_column(
+        default=False, comment="Whether this is the main RUT for the company"
     )
 
     # Foreign Keys
-    company_id = Column(
-        Integer,
+    company_id: Mapped[int] = mapped_column(
         ForeignKey("companies.id", ondelete="CASCADE"),
-        nullable=False,
         index=True,
         comment="Company this RUT belongs to",
     )
 
     # Relationships
-    company = relationship("Company", back_populates="ruts")
+    company: Mapped["Company"] = relationship("Company", back_populates="ruts")
 
     # Indexes
     __table_args__ = (
@@ -393,19 +306,7 @@ class CompanyRut(Base, TimestampMixin, AuditMixin):
     # Validators
     @validates("rut")
     def validate_rut(self, key: str, value: str) -> str:
-        """
-        Valida RUT chileno con dígito verificador.
-
-        Args:
-            key: Nombre del campo
-            value: RUT a validar
-
-        Returns:
-            RUT normalizado (sin puntos, con guión)
-
-        Raises:
-            ValueError: Si el RUT es inválido
-        """
+        """Valida RUT chileno con dígito verificador."""
         return RutValidator.validate(value)
 
     def __repr__(self) -> str:
@@ -430,72 +331,41 @@ class Plant(Base, TimestampMixin, AuditMixin, ActiveMixin):
     Relationships:
         company: Empresa matriz
         city: Ciudad donde está ubicada
-
-    Example:
-        >>> plant = Plant(
-        ...     name="Planta Santiago Centro",
-        ...     address="Av. Providencia 123",
-        ...     phone="+56912345678",
-        ...     company_id=1,
-        ...     city_id=5
-        ... )
     """
 
     __tablename__ = "plants"
 
     # Primary Key
-    id = Column(Integer, primary_key=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
 
     # Plant Information
-    name = Column(
-        String(100),
-        nullable=False,
-        comment="Plant name",
+    name: Mapped[str] = mapped_column(String(100), comment="Plant name")
+    address: Mapped[str | None] = mapped_column(
+        Text, comment="Plant address (full text)"
     )
-
-    address = Column(
-        Text,
-        nullable=True,
-        comment="Plant address (full text)",
-    )
-
-    phone = Column(
-        String(20),
-        nullable=True,
-        comment="Plant phone number",
-    )
-
-    email = Column(
-        String(100),
-        nullable=True,
-        comment="Plant contact email",
-    )
+    phone: Mapped[str | None] = mapped_column(String(20), comment="Plant phone number")
+    email: Mapped[str | None] = mapped_column(String(100), comment="Plant contact email")
 
     # Foreign Keys
-    company_id = Column(
-        Integer,
+    company_id: Mapped[int] = mapped_column(
         ForeignKey("companies.id", ondelete="CASCADE"),
-        nullable=False,
         index=True,
         comment="Company this plant belongs to",
     )
-
-    city_id = Column(
-        Integer,
+    city_id: Mapped[int | None] = mapped_column(
         ForeignKey("cities.id", ondelete="RESTRICT"),
-        nullable=True,
         index=True,
         comment="City where plant is located",
     )
 
     # Relationships
-    company = relationship("Company", back_populates="plants")
-    city = relationship("City", back_populates="plants", lazy="joined")
+    company: Mapped["Company"] = relationship("Company", back_populates="plants")
+    city: Mapped["City | None"] = relationship(
+        "City", back_populates="plants", lazy="joined"
+    )
 
     # Indexes
-    __table_args__ = (
-        Index("ix_plant_company_active", "company_id", "is_active"),
-    )
+    __table_args__ = (Index("ix_plant_company_active", "company_id", "is_active"),)
 
     # Validators
     @validates("name")
@@ -506,7 +376,7 @@ class Plant(Base, TimestampMixin, AuditMixin, ActiveMixin):
         return value.strip()
 
     @validates("phone")
-    def validate_phone(self, key: str, value: Optional[str]) -> Optional[str]:
+    def validate_phone(self, key: str, value: str | None) -> str | None:
         """Valida teléfono."""
         return PhoneValidator.validate(value)
 

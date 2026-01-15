@@ -18,28 +18,26 @@ Características:
 
 import enum
 from decimal import Decimal
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import (
-    Boolean,
     CheckConstraint,
-    Column,
     Enum as SQLEnum,
     ForeignKey,
     Index,
-    Integer,
     Numeric,
     String,
     Text,
     UniqueConstraint,
 )
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import relationship, validates
+from sqlalchemy.orm import Mapped, Session, mapped_column, relationship, validates
 
 from ..base import ActiveMixin, AuditMixin, Base, DecimalValidator, TimestampMixin
 
 if TYPE_CHECKING:
-    from ..lookups import FamilyType, Matter, SalesType
+    from ..lookups.business import SalesType
+    from ..lookups.product import FamilyType, Matter
+    from .companies import Company
 
 
 class ProductType(str, enum.Enum):
@@ -82,7 +80,6 @@ class Product(Base, TimestampMixin, AuditMixin, ActiveMixin):
     - SERVICE: Servicios sin inventario
 
     Attributes:
-        # Identification
         id: Primary key
         product_type: Tipo de producto (ARTICLE, NOMENCLATURE, SERVICE)
         reference: Referencia única del producto
@@ -90,369 +87,185 @@ class Product(Base, TimestampMixin, AuditMixin, ActiveMixin):
         designation_es: Designación en español
         designation_en: Designación en inglés
         short_designation: Designación corta
-        revision: Identificador de revisión/versión del producto
-
-        # Classification
-        family_type_id: FK a family_types
-        matter_id: FK a matters
-        sales_type_id: FK a sales_types
-        company_id: FK a companies (fabricante/proveedor)
-
-        # Pricing
-        purchase_price: Precio de compra
-        cost_price: Precio de costo
-        sale_price: Precio de venta
-        sale_price_eur: Precio en euros
-        price_calculation_mode: Modo de cálculo de precio
-        margin_percentage: Margen esperado (%)
-
-        # Stock (solo ARTICLE)
-        stock_quantity: Cantidad en stock
-        minimum_stock: Stock mínimo
-        stock_location: Ubicación en almacén
-
-        # Physical properties
-        net_weight: Peso neto (kg)
-        gross_weight: Peso bruto (kg)
-        length: Longitud (mm)
-        width: Ancho (mm)
-        height: Altura (mm)
-        volume: Volumen (m³)
-
-        # Additional
-        hs_code: Código arancelario
-        country_of_origin: País de origen
-        image_url: URL de la imagen del producto
-        plan_url: URL del plano/diseño del producto
-        supplier_reference: Referencia del proveedor
-        customs_number: Número de aduana
-        notes: Notas adicionales
-
-    Relationships:
-        family_type: Tipo de familia
-        matter: Materia
-        sales_type: Tipo de venta
-        company: Empresa fabricante
-        components: Componentes del BOM (si es NOMENCLATURE)
-        parent_components: Productos donde este es componente
-        quote_products: Productos en cotizaciones
-
-    Example:
-        >>> # Crear artículo simple
-        >>> article = Product(
-        ...     product_type=ProductType.ARTICLE,
-        ...     reference="ART-001",
-        ...     designation_es="Producto terminado",
-        ...     cost_price=Decimal("100.00"),
-        ...     sale_price=Decimal("150.00"),
-        ...     stock_quantity=50
-        ... )
-        >>>
-        >>> # Crear nomenclatura con BOM
-        >>> nomenclature = Product(
-        ...     product_type=ProductType.NOMENCLATURE,
-        ...     reference="NOM-001",
-        ...     designation_es="Kit completo",
-        ...     price_calculation_mode=PriceCalculationMode.FROM_COMPONENTS
-        ... )
-        >>> # Agregar componentes
-        >>> component = ProductComponent(
-        ...     parent_id=nomenclature.id,
-        ...     component_id=article.id,
-        ...     quantity=2
-        ... )
+        revision: Identificador de revisión/versión
     """
 
     __tablename__ = "products"
 
     # ========== PRIMARY KEY ==========
-    id = Column(Integer, primary_key=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
 
     # ========== PRODUCT TYPE ==========
-    product_type = Column(
+    product_type: Mapped[ProductType] = mapped_column(
         SQLEnum(ProductType),
-        nullable=False,
         index=True,
         comment="Product type: article, nomenclature, or service",
     )
 
     # ========== IDENTIFICATION ==========
-    reference = Column(
-        String(50),
-        nullable=False,
-        unique=True,
-        index=True,
-        comment="Unique product reference code",
+    reference: Mapped[str] = mapped_column(
+        String(50), unique=True, index=True, comment="Unique product reference code"
     )
-
-    designation_fr = Column(
-        String(200),
-        nullable=True,
-        comment="Product designation in French",
+    designation_fr: Mapped[str | None] = mapped_column(
+        String(200), comment="Product designation in French"
     )
-
-    designation_es = Column(
-        String(200),
-        nullable=True,
-        comment="Product designation in Spanish",
+    designation_es: Mapped[str | None] = mapped_column(
+        String(200), comment="Product designation in Spanish"
     )
-
-    designation_en = Column(
-        String(200),
-        nullable=True,
-        comment="Product designation in English",
+    designation_en: Mapped[str | None] = mapped_column(
+        String(200), comment="Product designation in English"
     )
-
-    short_designation = Column(
-        String(100),
-        nullable=True,
-        comment="Short/abbreviated designation",
+    short_designation: Mapped[str | None] = mapped_column(
+        String(100), comment="Short/abbreviated designation"
     )
-
-    revision = Column(
-        String(20),
-        nullable=True,
-        comment="Product revision/version identifier",
+    revision: Mapped[str | None] = mapped_column(
+        String(20), comment="Product revision/version identifier"
     )
 
     # ========== CLASSIFICATION ==========
-    family_type_id = Column(
-        Integer,
+    family_type_id: Mapped[int | None] = mapped_column(
         ForeignKey("family_types.id", ondelete="SET NULL"),
-        nullable=True,
         index=True,
         comment="Product family classification",
     )
-
-    matter_id = Column(
-        Integer,
+    matter_id: Mapped[int | None] = mapped_column(
         ForeignKey("matters.id", ondelete="SET NULL"),
-        nullable=True,
         index=True,
         comment="Material/matter type",
     )
-
-    sales_type_id = Column(
-        Integer,
+    sales_type_id: Mapped[int | None] = mapped_column(
         ForeignKey("sales_types.id", ondelete="SET NULL"),
-        nullable=True,
         index=True,
         comment="Sales type classification",
     )
-
-    company_id = Column(
-        Integer,
+    company_id: Mapped[int | None] = mapped_column(
         ForeignKey("companies.id", ondelete="SET NULL"),
-        nullable=True,
         index=True,
         comment="Manufacturer/supplier company",
     )
 
     # ========== PRICING ==========
-    purchase_price = Column(
-        Numeric(15, 2),
-        nullable=True,
-        comment="Purchase price from supplier",
+    purchase_price: Mapped[Decimal | None] = mapped_column(
+        Numeric(15, 2), comment="Purchase price from supplier"
     )
-
-    cost_price = Column(
-        Numeric(15, 2),
-        nullable=True,
-        comment="Internal cost price",
+    cost_price: Mapped[Decimal | None] = mapped_column(
+        Numeric(15, 2), comment="Internal cost price"
     )
-
-    sale_price = Column(
-        Numeric(15, 2),
-        nullable=True,
-        comment="Sale price (base currency)",
+    sale_price: Mapped[Decimal | None] = mapped_column(
+        Numeric(15, 2), comment="Sale price (base currency)"
     )
-
-    sale_price_eur = Column(
-        Numeric(15, 2),
-        nullable=True,
-        comment="Sale price in EUR",
+    sale_price_eur: Mapped[Decimal | None] = mapped_column(
+        Numeric(15, 2), comment="Sale price in EUR"
     )
-
-    price_calculation_mode = Column(
+    price_calculation_mode: Mapped[PriceCalculationMode] = mapped_column(
         SQLEnum(PriceCalculationMode),
-        nullable=False,
         default=PriceCalculationMode.MANUAL,
         comment="How price is calculated: manual, from_components, from_cost_margin",
     )
-
-    margin_percentage = Column(
-        Numeric(5, 2),
-        nullable=True,
-        comment="Expected profit margin percentage",
+    margin_percentage: Mapped[Decimal | None] = mapped_column(
+        Numeric(5, 2), comment="Expected profit margin percentage"
     )
 
     # ========== STOCK (solo para ARTICLE) ==========
-    stock_quantity = Column(
+    stock_quantity: Mapped[Decimal | None] = mapped_column(
         Numeric(15, 3),
-        nullable=True,
         default=Decimal("0.000"),
         comment="Current stock quantity (null for SERVICE)",
     )
-
-    minimum_stock = Column(
-        Numeric(15, 3),
-        nullable=True,
-        comment="Minimum stock threshold for alerts",
+    minimum_stock: Mapped[Decimal | None] = mapped_column(
+        Numeric(15, 3), comment="Minimum stock threshold for alerts"
     )
-
-    stock_location = Column(
-        String(100),
-        nullable=True,
-        comment="Physical location in warehouse",
+    stock_location: Mapped[str | None] = mapped_column(
+        String(100), comment="Physical location in warehouse"
     )
 
     # ========== PHYSICAL PROPERTIES ==========
-    net_weight = Column(
-        Numeric(10, 3),
-        nullable=True,
-        comment="Net weight in kg",
+    net_weight: Mapped[Decimal | None] = mapped_column(
+        Numeric(10, 3), comment="Net weight in kg"
     )
-
-    gross_weight = Column(
-        Numeric(10, 3),
-        nullable=True,
-        comment="Gross weight in kg (with packaging)",
+    gross_weight: Mapped[Decimal | None] = mapped_column(
+        Numeric(10, 3), comment="Gross weight in kg (with packaging)"
     )
-
-    length = Column(
-        Numeric(10, 2),
-        nullable=True,
-        comment="Length in mm",
+    length: Mapped[Decimal | None] = mapped_column(
+        Numeric(10, 2), comment="Length in mm"
     )
-
-    width = Column(
-        Numeric(10, 2),
-        nullable=True,
-        comment="Width in mm",
+    width: Mapped[Decimal | None] = mapped_column(
+        Numeric(10, 2), comment="Width in mm"
     )
-
-    height = Column(
-        Numeric(10, 2),
-        nullable=True,
-        comment="Height in mm",
+    height: Mapped[Decimal | None] = mapped_column(
+        Numeric(10, 2), comment="Height in mm"
     )
-
-    volume = Column(
-        Numeric(10, 4),
-        nullable=True,
-        comment="Volume in cubic meters",
+    volume: Mapped[Decimal | None] = mapped_column(
+        Numeric(10, 4), comment="Volume in cubic meters"
     )
 
     # ========== INTERNATIONAL ==========
-    hs_code = Column(
-        String(20),
-        nullable=True,
-        comment="Harmonized System code for customs",
+    hs_code: Mapped[str | None] = mapped_column(
+        String(20), comment="Harmonized System code for customs"
     )
-
-    country_of_origin = Column(
-        String(100),
-        nullable=True,
-        comment="Country where product is manufactured",
+    country_of_origin: Mapped[str | None] = mapped_column(
+        String(100), comment="Country where product is manufactured"
     )
 
     # ========== ADDITIONAL ==========
-    image_url = Column(
-        String(500),
-        nullable=True,
-        comment="URL of the product image",
+    image_url: Mapped[str | None] = mapped_column(
+        String(500), comment="URL of the product image"
     )
-
-    plan_url = Column(
-        String(500),
-        nullable=True,
-        comment="URL of the product plan/blueprint",
+    plan_url: Mapped[str | None] = mapped_column(
+        String(500), comment="URL of the product plan/blueprint"
     )
-
-    supplier_reference = Column(
-        String(100),
-        nullable=True,
-        comment="Supplier reference code",
+    supplier_reference: Mapped[str | None] = mapped_column(
+        String(100), comment="Supplier reference code"
     )
-
-    customs_number = Column(
-        String(50),
-        nullable=True,
-        comment="Customs clearance number",
+    customs_number: Mapped[str | None] = mapped_column(
+        String(50), comment="Customs clearance number"
     )
-
-    notes = Column(
-        Text,
-        nullable=True,
-        comment="Additional notes and observations",
+    notes: Mapped[str | None] = mapped_column(
+        Text, comment="Additional notes and observations"
     )
 
     # ========== RELATIONSHIPS ==========
-    family_type = relationship(
-        "FamilyType",
-        back_populates="products",
-        lazy="joined",
+    family_type: Mapped["FamilyType | None"] = relationship(
+        "FamilyType", back_populates="products", lazy="joined"
     )
-
-    matter = relationship(
-        "Matter",
-        back_populates="products",
-        lazy="joined",
+    matter: Mapped["Matter | None"] = relationship(
+        "Matter", back_populates="products", lazy="joined"
     )
-
-    sales_type = relationship(
-        "SalesType",
-        back_populates="products",
-        lazy="joined",
+    sales_type: Mapped["SalesType | None"] = relationship(
+        "SalesType", back_populates="products", lazy="joined"
     )
-
-    company = relationship(
-        "Company",
-        back_populates="products",
-        lazy="select",
+    company: Mapped["Company | None"] = relationship(
+        "Company", back_populates="products", lazy="select"
     )
 
     # BOM relationships
-    components = relationship(
+    components: Mapped[list["ProductComponent"]] = relationship(
         "ProductComponent",
         foreign_keys="ProductComponent.parent_id",
         back_populates="parent",
         cascade="all, delete-orphan",
         lazy="select",
     )
-
-    parent_components = relationship(
+    parent_components: Mapped[list["ProductComponent"]] = relationship(
         "ProductComponent",
         foreign_keys="ProductComponent.component_id",
         back_populates="component",
         lazy="select",
     )
 
-    # Business relationships (Fase 4)
-    # quote_products = relationship("QuoteProduct", back_populates="product", lazy="select")
-
     # ========== TABLE CONSTRAINTS ==========
     __table_args__ = (
-        # Indexes
         Index("ix_products_product_type_active", "product_type", "is_active"),
-        # Note: reference already has index=True in column definition (line 180)
-        # Note: family_type_id already has index=True in column definition (line 219)
-        # Check constraints
-        CheckConstraint(
-            "length(trim(reference)) >= 2",
-            name="reference_min_length",
-        ),
+        CheckConstraint("length(trim(reference)) >= 2", name="reference_min_length"),
         CheckConstraint(
             "purchase_price IS NULL OR purchase_price >= 0",
             name="purchase_price_non_negative",
         ),
         CheckConstraint(
-            "cost_price IS NULL OR cost_price >= 0",
-            name="cost_price_non_negative",
+            "cost_price IS NULL OR cost_price >= 0", name="cost_price_non_negative"
         ),
         CheckConstraint(
-            "sale_price IS NULL OR sale_price >= 0",
-            name="sale_price_non_negative",
+            "sale_price IS NULL OR sale_price >= 0", name="sale_price_non_negative"
         ),
         CheckConstraint(
             "stock_quantity IS NULL OR stock_quantity >= 0",
@@ -463,12 +276,10 @@ class Product(Base, TimestampMixin, AuditMixin, ActiveMixin):
             name="margin_percentage_range",
         ),
         CheckConstraint(
-            "net_weight IS NULL OR net_weight >= 0",
-            name="net_weight_non_negative",
+            "net_weight IS NULL OR net_weight >= 0", name="net_weight_non_negative"
         ),
         CheckConstraint(
-            "gross_weight IS NULL OR gross_weight >= 0",
-            name="gross_weight_non_negative",
+            "gross_weight IS NULL OR gross_weight >= 0", name="gross_weight_non_negative"
         ),
     )
 
@@ -481,24 +292,24 @@ class Product(Base, TimestampMixin, AuditMixin, ActiveMixin):
         return value.strip().upper()
 
     @validates("purchase_price", "cost_price", "sale_price", "sale_price_eur")
-    def validate_prices(self, key: str, value: Optional[Decimal]) -> Optional[Decimal]:
+    def validate_prices(self, key: str, value: Decimal | None) -> Decimal | None:
         """Valida que los precios sean no negativos."""
         return DecimalValidator.validate_non_negative(value, field_name=key)
 
     @validates("stock_quantity", "minimum_stock")
-    def validate_stock(self, key: str, value: Optional[Decimal]) -> Optional[Decimal]:
+    def validate_stock(self, key: str, value: Decimal | None) -> Decimal | None:
         """Valida stock (solo para ARTICLE)."""
         if value is not None and self.product_type == ProductType.SERVICE:
             raise ValueError(f"{key} should be NULL for SERVICE products")
         return DecimalValidator.validate_non_negative(value, field_name=key)
 
     @validates("net_weight", "gross_weight")
-    def validate_weights(self, key: str, value: Optional[Decimal]) -> Optional[Decimal]:
+    def validate_weights(self, key: str, value: Decimal | None) -> Decimal | None:
         """Valida pesos."""
         return DecimalValidator.validate_non_negative(value, field_name=key)
 
     @validates("margin_percentage")
-    def validate_margin(self, key: str, value: Optional[Decimal]) -> Optional[Decimal]:
+    def validate_margin(self, key: str, value: Decimal | None) -> Decimal | None:
         """Valida margen de ganancia."""
         if value is not None and (value < -100 or value > 1000):
             raise ValueError("Margin percentage must be between -100% and 1000%")
@@ -506,16 +317,8 @@ class Product(Base, TimestampMixin, AuditMixin, ActiveMixin):
 
     # ========== COMPUTED PROPERTIES ==========
     @property
-    def effective_cost(self) -> Optional[Decimal]:
-        """
-        Retorna el costo efectivo del producto.
-
-        Para NOMENCLATURE con FROM_COMPONENTS: suma costos de componentes.
-        Para otros: retorna cost_price.
-
-        Returns:
-            Costo efectivo o None
-        """
+    def effective_cost(self) -> Decimal | None:
+        """Retorna el costo efectivo del producto."""
         if (
             self.product_type == ProductType.NOMENCLATURE
             and self.price_calculation_mode == PriceCalculationMode.FROM_COMPONENTS
@@ -524,42 +327,23 @@ class Product(Base, TimestampMixin, AuditMixin, ActiveMixin):
         return self.cost_price
 
     @property
-    def effective_price(self) -> Optional[Decimal]:
-        """
-        Retorna el precio de venta efectivo.
-
-        Según price_calculation_mode:
-        - MANUAL: sale_price
-        - FROM_COMPONENTS: suma precios de componentes
-        - FROM_COST_MARGIN: cost_price + margin
-
-        Returns:
-            Precio efectivo o None
-        """
+    def effective_price(self) -> Decimal | None:
+        """Retorna el precio de venta efectivo."""
         if self.price_calculation_mode == PriceCalculationMode.MANUAL:
             return self.sale_price
-
         elif self.price_calculation_mode == PriceCalculationMode.FROM_COMPONENTS:
             return self.calculated_price
-
         elif self.price_calculation_mode == PriceCalculationMode.FROM_COST_MARGIN:
             if self.cost_price and self.margin_percentage:
                 return self.cost_price * (1 + self.margin_percentage / 100)
             return self.sale_price
-
         return self.sale_price
 
     @property
-    def calculated_cost(self) -> Optional[Decimal]:
-        """
-        Calcula el costo sumando los costos de todos los componentes.
-
-        Returns:
-            Costo total calculado o None si no hay componentes
-        """
+    def calculated_cost(self) -> Decimal | None:
+        """Calcula el costo sumando los costos de todos los componentes."""
         if not self.components:
             return None
-
         total = Decimal("0.00")
         for comp in self.components:
             if comp.component and comp.component.effective_cost:
@@ -567,16 +351,10 @@ class Product(Base, TimestampMixin, AuditMixin, ActiveMixin):
         return total if total > 0 else None
 
     @property
-    def calculated_price(self) -> Optional[Decimal]:
-        """
-        Calcula el precio sumando los precios de todos los componentes.
-
-        Returns:
-            Precio total calculado o None si no hay componentes
-        """
+    def calculated_price(self) -> Decimal | None:
+        """Calcula el precio sumando los precios de todos los componentes."""
         if not self.components:
             return None
-
         total = Decimal("0.00")
         for comp in self.components:
             if comp.component and comp.component.effective_price:
@@ -584,32 +362,22 @@ class Product(Base, TimestampMixin, AuditMixin, ActiveMixin):
         return total if total > 0 else None
 
     @property
-    def margin(self) -> Optional[Decimal]:
-        """
-        Calcula el margen absoluto (sale_price - cost_price).
-
-        Returns:
-            Margen en unidades monetarias o None
-        """
+    def margin(self) -> Decimal | None:
+        """Calcula el margen absoluto (sale_price - cost_price)."""
         if self.effective_price and self.effective_cost:
             return self.effective_price - self.effective_cost
         return None
 
     @property
-    def margin_percent(self) -> Optional[Decimal]:
-        """
-        Calcula el margen porcentual ((sale_price - cost_price) / cost_price * 100).
-
-        Returns:
-            Margen en porcentaje o None
-        """
+    def margin_percent(self) -> Decimal | None:
+        """Calcula el margen porcentual."""
         if self.margin and self.effective_cost and self.effective_cost > 0:
             return (self.margin / self.effective_cost) * 100
         return None
 
     # ========== BOM METHODS ==========
     def get_bom_tree(
-        self, level: int = 0, visited: Optional[set] = None
+        self, level: int = 0, visited: set[int] | None = None
     ) -> dict[str, Any]:
         """
         Retorna el árbol jerárquico completo del BOM.
@@ -623,24 +391,6 @@ class Product(Base, TimestampMixin, AuditMixin, ActiveMixin):
 
         Raises:
             ValueError: Si se detecta un ciclo en el BOM
-
-        Example:
-            >>> product.get_bom_tree()
-            {
-                'id': 1,
-                'reference': 'NOM-001',
-                'designation': 'Kit',
-                'level': 0,
-                'components': [
-                    {
-                        'id': 2,
-                        'reference': 'ART-001',
-                        'quantity': 2,
-                        'level': 1,
-                        'components': []
-                    }
-                ]
-            }
         """
         if visited is None:
             visited = set()
@@ -652,7 +402,7 @@ class Product(Base, TimestampMixin, AuditMixin, ActiveMixin):
 
         visited.add(self.id)
 
-        tree = {
+        tree: dict[str, Any] = {
             "id": self.id,
             "reference": self.reference,
             "designation": self.designation_es
@@ -670,30 +420,13 @@ class Product(Base, TimestampMixin, AuditMixin, ActiveMixin):
                 comp_tree["unit_cost"] = float(comp.component.effective_cost or 0)
                 comp_tree["unit_price"] = float(comp.component.effective_price or 0)
                 comp_tree["total_cost"] = comp_tree["unit_cost"] * comp_tree["quantity"]
-                comp_tree["total_price"] = (
-                    comp_tree["unit_price"] * comp_tree["quantity"]
-                )
+                comp_tree["total_price"] = comp_tree["unit_price"] * comp_tree["quantity"]
                 tree["components"].append(comp_tree)
 
         return tree
 
-    def get_flat_bom(self, visited: Optional[set] = None) -> list[dict[str, Any]]:
-        """
-        Retorna una lista plana de todos los componentes (todos los niveles).
-
-        Args:
-            visited: Set de IDs visitados para prevenir ciclos
-
-        Returns:
-            Lista de componentes con cantidades consolidadas
-
-        Example:
-            >>> product.get_flat_bom()
-            [
-                {'product_id': 2, 'reference': 'ART-001', 'quantity': 2},
-                {'product_id': 3, 'reference': 'ART-002', 'quantity': 4}
-            ]
-        """
+    def get_flat_bom(self, visited: set[int] | None = None) -> list[dict[str, Any]]:
+        """Retorna una lista plana de todos los componentes (todos los niveles)."""
         if visited is None:
             visited = set()
 
@@ -711,7 +444,6 @@ class Product(Base, TimestampMixin, AuditMixin, ActiveMixin):
             component_id = comp.component.id
             quantity = comp.quantity
 
-            # Agregar componente directo
             if component_id in flat_list:
                 flat_list[component_id]["quantity"] += quantity
             else:
@@ -728,7 +460,6 @@ class Product(Base, TimestampMixin, AuditMixin, ActiveMixin):
                     "unit_price": comp.component.effective_price,
                 }
 
-            # Agregar sub-componentes recursivamente
             sub_components = comp.component.get_flat_bom(visited.copy())
             for sub_comp in sub_components:
                 sub_id = sub_comp["product_id"]
@@ -742,20 +473,14 @@ class Product(Base, TimestampMixin, AuditMixin, ActiveMixin):
 
         return list(flat_list.values())
 
-    def get_total_weight(self) -> Optional[Decimal]:
-        """
-        Calcula el peso total incluyendo todos los componentes.
-
-        Returns:
-            Peso total neto en kg o None
-        """
+    def get_total_weight(self) -> Decimal | None:
+        """Calcula el peso total incluyendo todos los componentes."""
         if self.product_type == ProductType.SERVICE:
             return None
 
         if self.product_type == ProductType.ARTICLE:
             return self.net_weight
 
-        # NOMENCLATURE: sumar pesos de componentes
         if not self.components:
             return self.net_weight
 
@@ -769,7 +494,7 @@ class Product(Base, TimestampMixin, AuditMixin, ActiveMixin):
         return total if total > 0 else self.net_weight
 
     def validate_no_cycles(
-        self, component_id: int, visited: Optional[set] = None
+        self, component_id: int, visited: set[int] | None = None
     ) -> None:
         """
         Valida que agregar un componente no cree ciclos en el BOM.
@@ -791,9 +516,6 @@ class Product(Base, TimestampMixin, AuditMixin, ActiveMixin):
 
         visited.add(self.id)
 
-        # Verificar si el componente a agregar contiene este producto en su BOM
-        from sqlalchemy.orm import Session
-
         session = Session.object_session(self)
         if session:
             component = session.get(Product, component_id)
@@ -803,7 +525,7 @@ class Product(Base, TimestampMixin, AuditMixin, ActiveMixin):
                 except ValueError as e:
                     raise ValueError(
                         f"Adding component {component.reference} would create a cycle: {str(e)}"
-                    )
+                    ) from e
 
     def __repr__(self) -> str:
         return (
@@ -829,61 +551,42 @@ class ProductComponent(Base, TimestampMixin, AuditMixin):
     Relationships:
         parent: Producto padre (NOMENCLATURE)
         component: Producto componente
-
-    Example:
-        >>> # Kit que contiene 2 unidades de ART-001
-        >>> bom = ProductComponent(
-        ...     parent_id=1,  # NOM-001 (Kit)
-        ...     component_id=2,  # ART-001
-        ...     quantity=Decimal("2.000")
-        ... )
     """
 
     __tablename__ = "product_components"
 
     # ========== PRIMARY KEY ==========
-    id = Column(Integer, primary_key=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
 
     # ========== FOREIGN KEYS ==========
-    parent_id = Column(
-        Integer,
+    parent_id: Mapped[int] = mapped_column(
         ForeignKey("products.id", ondelete="CASCADE"),
-        nullable=False,
         index=True,
         comment="Parent product (NOMENCLATURE) containing this component",
     )
-
-    component_id = Column(
-        Integer,
+    component_id: Mapped[int] = mapped_column(
         ForeignKey("products.id", ondelete="CASCADE"),
-        nullable=False,
         index=True,
         comment="Component product (any type)",
     )
 
     # ========== QUANTITY ==========
-    quantity = Column(
+    quantity: Mapped[Decimal] = mapped_column(
         Numeric(15, 3),
-        nullable=False,
         default=Decimal("1.000"),
         comment="Quantity of component required",
     )
 
     # ========== ADDITIONAL ==========
-    notes = Column(
-        Text,
-        nullable=True,
-        comment="Notes about this component usage",
+    notes: Mapped[str | None] = mapped_column(
+        Text, comment="Notes about this component usage"
     )
 
     # ========== RELATIONSHIPS ==========
-    parent = relationship(
-        "Product",
-        foreign_keys=[parent_id],
-        back_populates="components",
+    parent: Mapped["Product"] = relationship(
+        "Product", foreign_keys=[parent_id], back_populates="components"
     )
-
-    component = relationship(
+    component: Mapped["Product"] = relationship(
         "Product",
         foreign_keys=[component_id],
         back_populates="parent_components",
@@ -892,21 +595,9 @@ class ProductComponent(Base, TimestampMixin, AuditMixin):
 
     # ========== TABLE CONSTRAINTS ==========
     __table_args__ = (
-        # Un producto no puede tener el mismo componente dos veces
         UniqueConstraint("parent_id", "component_id", name="uq_parent_component"),
-        # Índices
-        # Note: parent_id and component_id already have index=True in column definitions (lines 824, 832)
-        # Index("ix_product_components_parent_id", "parent_id"),
-        # Index("ix_product_components_component_id", "component_id"),
-        # Constraints
-        CheckConstraint(
-            "quantity > 0",
-            name="quantity_positive",
-        ),
-        CheckConstraint(
-            "parent_id != component_id",
-            name="no_self_reference",
-        ),
+        CheckConstraint("quantity > 0", name="quantity_positive"),
+        CheckConstraint("parent_id != component_id", name="no_self_reference"),
     )
 
     # ========== VALIDATORS ==========

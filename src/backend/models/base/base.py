@@ -1,14 +1,15 @@
 """
-Base declarativa y naming conventions para SQLAlchemy.
+Base declarativa y naming conventions para SQLAlchemy 2.0.
 
 Este módulo proporciona la clase base para todos los modelos ORM del sistema,
 incluyendo naming conventions para constraints y métodos utilitarios comunes.
+Usa el patrón moderno DeclarativeBase de SQLAlchemy 2.0.
 """
 
 from typing import Any
 
 from sqlalchemy import MetaData
-from sqlalchemy.orm import declarative_base
+from sqlalchemy.orm import DeclarativeBase
 
 
 # Naming convention para constraints automáticos
@@ -21,13 +22,13 @@ NAMING_CONVENTION = {
     "pk": "pk_%(table_name)s",
 }
 
-# MetaData compartido por todos los modelos
-metadata = MetaData(naming_convention=NAMING_CONVENTION)
 
-
-class BaseModel:
+class Base(DeclarativeBase):
     """
-    Clase base para todos los modelos ORM.
+    Clase base para todos los modelos ORM (SQLAlchemy 2.0).
+
+    Usa el patrón moderno DeclarativeBase con metadata compartido
+    y naming conventions para constraints.
 
     Proporciona métodos utilitarios comunes que todos los modelos heredarán:
     - __repr__: Representación string del modelo
@@ -35,9 +36,18 @@ class BaseModel:
 
     Attributes:
         id: Primary key (debe definirse en cada modelo hijo)
+        metadata: MetaData compartido con naming conventions
+
+    Usage:
+        from ..base import Base
+
+        class Product(Base):
+            __tablename__ = "products"
+            id: Mapped[int] = mapped_column(primary_key=True)
+            name: Mapped[str] = mapped_column(String(200))
     """
 
-    id: int  # Type hint para soporte de IDE
+    metadata = MetaData(naming_convention=NAMING_CONVENTION)
 
     def __repr__(self) -> str:
         """
@@ -51,7 +61,8 @@ class BaseModel:
             >>> repr(product)
             '<Product(id=1)>'
         """
-        return f"<{self.__class__.__name__}(id={self.id})>"
+        pk = getattr(self, "id", None)
+        return f"<{self.__class__.__name__}(id={pk})>"
 
     def to_dict(self, exclude: set[str] | None = None) -> dict[str, Any]:
         """
@@ -77,5 +88,5 @@ class BaseModel:
         }
 
 
-# Base declarativa con BaseModel y metadata
-Base = declarative_base(cls=BaseModel, metadata=metadata)
+# Referencia al metadata para uso en Alembic
+metadata = Base.metadata

@@ -4,23 +4,17 @@ Address model - Company addresses.
 Modelo para gestionar direcciones de empresas (entregas, facturación, etc.)
 """
 
-from typing import Optional
+from typing import TYPE_CHECKING
 
-from sqlalchemy import (
-    Boolean,
-    CheckConstraint,
-    Column,
-    Enum as SQLEnum,
-    ForeignKey,
-    Index,
-    Integer,
-    String,
-    Text,
-)
-from sqlalchemy.orm import relationship, validates
+from sqlalchemy import CheckConstraint, Enum as SQLEnum, ForeignKey, Index, String, Text
+from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 
 from src.shared.enums import AddressType
+
 from ..base import AuditMixin, Base, TimestampMixin
+
+if TYPE_CHECKING:
+    from .companies import Company
 
 
 class Address(Base, TimestampMixin, AuditMixin):
@@ -58,90 +52,51 @@ class Address(Base, TimestampMixin, AuditMixin):
     __tablename__ = "addresses"
 
     # Primary Key
-    id = Column(Integer, primary_key=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
 
     # Address Fields
-    address = Column(
-        Text,
-        nullable=False,
-        comment="Full address text including street, number, and details",
+    address: Mapped[str] = mapped_column(
+        Text, comment="Full address text including street, number, and details"
     )
-
-    city = Column(
-        String(100),
-        nullable=True,
-        comment="City name",
+    city: Mapped[str | None] = mapped_column(String(100), comment="City name")
+    postal_code: Mapped[str | None] = mapped_column(
+        String(20), comment="Postal or ZIP code"
     )
-
-    postal_code = Column(
-        String(20),
-        nullable=True,
-        comment="Postal or ZIP code",
-    )
-
-    country = Column(
-        String(100),
-        nullable=True,
-        comment="Country name",
-    )
+    country: Mapped[str | None] = mapped_column(String(100), comment="Country name")
 
     # Metadata
-    is_default = Column(
-        Boolean,
-        nullable=False,
-        default=False,
-        comment="Whether this is the default address for the company",
+    is_default: Mapped[bool] = mapped_column(
+        default=False, comment="Whether this is the default address for the company"
     )
-
-    address_type = Column(
+    address_type: Mapped[AddressType] = mapped_column(
         SQLEnum(AddressType),
-        nullable=False,
         default=AddressType.DELIVERY,
         index=True,
         comment="Type: delivery, billing, headquarters, plant",
     )
 
     # Foreign Keys
-    company_id = Column(
-        Integer,
+    company_id: Mapped[int] = mapped_column(
         ForeignKey("companies.id", ondelete="CASCADE"),
-        nullable=False,
         index=True,
         comment="Company owning this address",
     )
 
     # Relationships
-    company = relationship(
-        "Company",
-        back_populates="addresses",
-        lazy="joined",
+    company: Mapped["Company"] = relationship(
+        "Company", back_populates="addresses", lazy="joined"
     )
 
-    # Indexes for performance
+    # Indexes
     __table_args__ = (
         Index("ix_addresses_company_id_is_default", "company_id", "is_default"),
-        # Note: address_type already has index=True in column definition
-        CheckConstraint(
-            "length(trim(address)) >= 5", name="address_min_length"
-        ),
+        CheckConstraint("length(trim(address)) >= 5", name="address_min_length"),
     )
 
     # Validators
     @validates("address")
     def validate_address(self, key: str, value: str) -> str:
-        """
-        Valida campo de dirección.
-
-        Args:
-            key: Nombre del campo
-            value: Dirección a validar
-
-        Returns:
-            Dirección validada y normalizada
-
-        Raises:
-            ValueError: Si la dirección es muy corta o vacía
-        """
+        """Valida campo de dirección."""
         if not value or len(value.strip()) < 5:
             raise ValueError("Address must be at least 5 characters long")
         return value.strip()

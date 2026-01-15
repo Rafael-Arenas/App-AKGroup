@@ -8,24 +8,32 @@ Part of Phase 4: Business Models implementation.
 
 from datetime import date
 from decimal import Decimal
-from typing import Optional
+from typing import TYPE_CHECKING
 
 from sqlalchemy import (
-    Column,
-    Integer,
-    String,
-    DECIMAL,
-    ForeignKey,
-    Date,
-    Text,
-    Index,
     CheckConstraint,
-    Boolean,
+    Date,
+    ForeignKey,
+    Index,
+    Numeric,
+    String,
+    Text,
 )
-from sqlalchemy.orm import relationship, validates
+from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 
-# Import base infrastructure (Phases 1-3 are complete)
-from ..base import Base, TimestampMixin, AuditMixin, ActiveMixin
+from ..base import ActiveMixin, AuditMixin, Base, TimestampMixin
+
+if TYPE_CHECKING:
+    from ..core.addresses import Address
+    from ..core.companies import Company, CompanyRut, Plant
+    from ..core.contacts import Contact
+    from ..core.products import Product
+    from ..core.staff import Staff
+    from ..lookups.business import Currency, Incoterm
+    from ..lookups.status import OrderStatus, PaymentStatus
+    from .delivery import DeliveryOrder
+    from .invoices import InvoiceExport, InvoiceSII
+    from .quotes import Quote
 
 
 class Order(Base, TimestampMixin, AuditMixin, ActiveMixin):
@@ -35,274 +43,198 @@ class Order(Base, TimestampMixin, AuditMixin, ActiveMixin):
     Manages customer orders (purchase orders from customer perspective,
     sales orders from company perspective). Can be created from an
     accepted quote or created standalone.
-
-    Attributes:
-        id: Primary key
-        order_number: Unique order identifier (e.g., "O-2025-001")
-        revision: Order revision number (e.g., "A", "B", "C")
-        order_type: Type of order ('sales' or 'purchase')
-        quote_id: Foreign key to Quote (if created from quote)
-        customer_quote_number: Customer's quote/reference number
-        customer_po_number: Customer's purchase order number
-        project_number: Project number/identifier
-        company_id: Foreign key to Company (customer/supplier)
-        contact_id: Foreign key to Contact
-        plant_id: Foreign key to Plant
-        shipping_address_id: Foreign key to Address (shipping address)
-        billing_address_id: Foreign key to Address (billing address)
-        staff_id: Foreign key to Staff (order manager)
-        status_id: Foreign key to OrderStatus
-        payment_status_id: Foreign key to PaymentStatus
-        order_date: Date order was placed
-        required_date: Date customer needs the order
-        promised_date: Date we promised delivery
-        shipped_date: Actual shipping date
-        completed_date: Date order was completed
-        incoterm_id: Foreign key to Incoterm
-        currency_id: Foreign key to Currency
-        exchange_rate: Exchange rate at time of order
-        subtotal: Total before tax
-        tax_percentage: Tax rate percentage
-        tax_amount: Calculated tax amount
-        shipping_cost: Shipping/freight cost
-        other_costs: Other additional costs
-        total: Grand total
-        payment_terms: Payment terms description
-        is_export: Whether this is an export order
-        notes: Customer-visible notes
-        internal_notes: Internal notes only
     """
 
     __tablename__ = "orders"
 
     # Primary key
-    id = Column(Integer, primary_key=True)
+    id: Mapped[int] = mapped_column(primary_key=True)
 
     # Order identification
-    order_number = Column(
+    order_number: Mapped[str] = mapped_column(
         String(50),
-        nullable=False,
         unique=True,
         index=True,
         comment="Unique order number (e.g., O-2025-001)",
     )
-    revision = Column(
-        String(10),
-        nullable=False,
-        default="A",
-        comment="Order revision (A, B, C...)",
+    revision: Mapped[str] = mapped_column(
+        String(10), default="A", comment="Order revision (A, B, C...)"
     )
-    order_type = Column(
-        String(20),
-        nullable=False,
-        default="sales",
-        comment="Order type: 'sales' or 'purchase'",
+    order_type: Mapped[str] = mapped_column(
+        String(20), default="sales", comment="Order type: 'sales' or 'purchase'"
     )
 
     # Reference to quote (if order created from quote)
-    quote_id = Column(
-        Integer,
+    quote_id: Mapped[int | None] = mapped_column(
         ForeignKey("quotes.id", ondelete="SET NULL"),
-        nullable=True,
         unique=True,
         index=True,
         comment="Source quote if order created from accepted quote",
     )
 
     # Customer reference numbers
-    customer_quote_number = Column(
-        String(100),
-        nullable=True,
-        index=True,
-        comment="Customer's quote/reference number",
+    customer_quote_number: Mapped[str | None] = mapped_column(
+        String(100), index=True, comment="Customer's quote/reference number"
     )
-    customer_po_number = Column(
-        String(100),
-        nullable=True,
-        index=True,
-        comment="Customer's purchase order number",
+    customer_po_number: Mapped[str | None] = mapped_column(
+        String(100), index=True, comment="Customer's purchase order number"
     )
-    project_number = Column(
-        String(100),
-        nullable=True,
-        index=True,
-        comment="Project number/identifier",
+    project_number: Mapped[str | None] = mapped_column(
+        String(100), index=True, comment="Project number/identifier"
     )
 
     # Related entities (FK to core models)
-    company_id = Column(
-        Integer,
+    company_id: Mapped[int] = mapped_column(
         ForeignKey("companies.id", ondelete="RESTRICT"),
-        nullable=False,
         index=True,
         comment="Customer or supplier company",
     )
-    contact_id = Column(
-        Integer,
+    contact_id: Mapped[int | None] = mapped_column(
         ForeignKey("contacts.id", ondelete="SET NULL"),
-        nullable=True,
         index=True,
         comment="Contact person",
     )
-    plant_id = Column(
-        Integer,
-        ForeignKey("plants.id", ondelete="SET NULL"),
-        nullable=True,
-        comment="Company plant",
+    plant_id: Mapped[int | None] = mapped_column(
+        ForeignKey("plants.id", ondelete="SET NULL"), comment="Company plant"
     )
-    company_rut_id = Column(
-        Integer,
+    company_rut_id: Mapped[int | None] = mapped_column(
         ForeignKey("company_ruts.id", ondelete="RESTRICT"),
-        nullable=True,
         index=True,
         comment="Specific customer RUT for this order",
     )
 
     # Address information
-    shipping_address_id = Column(
-        Integer,
+    shipping_address_id: Mapped[int | None] = mapped_column(
         ForeignKey("addresses.id", ondelete="SET NULL"),
-        nullable=True,
         index=True,
         comment="Shipping/delivery address",
     )
-    billing_address_id = Column(
-        Integer,
+    billing_address_id: Mapped[int | None] = mapped_column(
         ForeignKey("addresses.id", ondelete="SET NULL"),
-        nullable=True,
         index=True,
         comment="Billing/invoice address",
     )
 
-    staff_id = Column(
-        Integer,
+    staff_id: Mapped[int] = mapped_column(
         ForeignKey("staff.id", ondelete="RESTRICT"),
-        nullable=False,
         index=True,
         comment="Staff member managing this order",
     )
 
     # Status (FK to lookup tables)
-    status_id = Column(
-        Integer,
+    status_id: Mapped[int] = mapped_column(
         ForeignKey("order_statuses.id", ondelete="RESTRICT"),
-        nullable=False,
         index=True,
-        comment="Order status (pending, confirmed, processing, shipped, completed, cancelled)",
+        comment="Order status",
     )
-    payment_status_id = Column(
-        Integer,
+    payment_status_id: Mapped[int] = mapped_column(
         ForeignKey("payment_statuses.id", ondelete="RESTRICT"),
-        nullable=False,
         index=True,
-        comment="Payment status (unpaid, partial, paid, overdue)",
+        comment="Payment status",
     )
 
     # Important dates
-    order_date = Column(
-        Date, nullable=False, index=True, comment="Date order was placed"
+    order_date: Mapped[date] = mapped_column(
+        Date, index=True, comment="Date order was placed"
     )
-    required_date = Column(
-        Date, nullable=True, comment="Date customer requires delivery"
+    required_date: Mapped[date | None] = mapped_column(
+        Date, comment="Date customer requires delivery"
     )
-    promised_date = Column(
-        Date, nullable=True, comment="Date we promised to deliver"
+    promised_date: Mapped[date | None] = mapped_column(
+        Date, comment="Date we promised to deliver"
     )
-    shipped_date = Column(Date, nullable=True, comment="Actual shipping date")
-    completed_date = Column(Date, nullable=True, comment="Date order was completed")
+    shipped_date: Mapped[date | None] = mapped_column(
+        Date, comment="Actual shipping date"
+    )
+    completed_date: Mapped[date | None] = mapped_column(
+        Date, comment="Date order was completed"
+    )
 
     # Shipping and currency
-    incoterm_id = Column(
-        Integer,
+    incoterm_id: Mapped[int | None] = mapped_column(
         ForeignKey("incoterms.id", ondelete="SET NULL"),
-        nullable=True,
         comment="Shipping terms (EXW, FOB, CIF, etc.)",
     )
-    currency_id = Column(
-        Integer,
-        ForeignKey("currencies.id", ondelete="RESTRICT"),
-        nullable=False,
-        comment="Order currency",
+    currency_id: Mapped[int] = mapped_column(
+        ForeignKey("currencies.id", ondelete="RESTRICT"), comment="Order currency"
     )
-    exchange_rate = Column(
-        DECIMAL(12, 6),
-        nullable=True,
-        comment="Exchange rate at time of order",
+    exchange_rate: Mapped[Decimal | None] = mapped_column(
+        Numeric(12, 6), comment="Exchange rate at time of order"
     )
 
     # Financial information
-    subtotal = Column(
-        DECIMAL(15, 2),
-        nullable=False,
-        default=Decimal("0.00"),
-        comment="Total before tax",
+    subtotal: Mapped[Decimal] = mapped_column(
+        Numeric(15, 2), default=Decimal("0.00"), comment="Total before tax"
     )
-    tax_percentage = Column(
-        DECIMAL(5, 2),
-        nullable=False,
-        default=Decimal("19.00"),
-        comment="Tax percentage",
+    tax_percentage: Mapped[Decimal] = mapped_column(
+        Numeric(5, 2), default=Decimal("19.00"), comment="Tax percentage"
     )
-    tax_amount = Column(
-        DECIMAL(15, 2),
-        nullable=False,
-        default=Decimal("0.00"),
-        comment="Calculated tax amount",
+    tax_amount: Mapped[Decimal] = mapped_column(
+        Numeric(15, 2), default=Decimal("0.00"), comment="Calculated tax amount"
     )
-    shipping_cost = Column(
-        DECIMAL(15, 2),
-        nullable=False,
-        default=Decimal("0.00"),
-        comment="Shipping/freight cost",
+    shipping_cost: Mapped[Decimal] = mapped_column(
+        Numeric(15, 2), default=Decimal("0.00"), comment="Shipping/freight cost"
     )
-    other_costs = Column(
-        DECIMAL(15, 2),
-        nullable=False,
-        default=Decimal("0.00"),
-        comment="Other additional costs",
+    other_costs: Mapped[Decimal] = mapped_column(
+        Numeric(15, 2), default=Decimal("0.00"), comment="Other additional costs"
     )
-    total = Column(
-        DECIMAL(15, 2),
-        nullable=False,
-        default=Decimal("0.00"),
-        comment="Grand total",
+    total: Mapped[Decimal] = mapped_column(
+        Numeric(15, 2), default=Decimal("0.00"), comment="Grand total"
     )
 
     # Payment and export info
-    payment_terms = Column(
-        String(200), nullable=True, comment="Payment terms description"
+    payment_terms: Mapped[str | None] = mapped_column(
+        String(200), comment="Payment terms description"
     )
-    is_export = Column(
-        Boolean, nullable=False, default=False, index=True, comment="Is export order"
+    is_export: Mapped[bool] = mapped_column(
+        default=False, index=True, comment="Is export order"
     )
 
     # Notes
-    notes = Column(Text, nullable=True, comment="Customer-visible notes")
-    internal_notes = Column(Text, nullable=True, comment="Internal notes only")
+    notes: Mapped[str | None] = mapped_column(Text, comment="Customer-visible notes")
+    internal_notes: Mapped[str | None] = mapped_column(
+        Text, comment="Internal notes only"
+    )
 
     # Relationships
-    quote = relationship("Quote", back_populates="order", foreign_keys=[quote_id])
-    company = relationship("Company", back_populates="orders", foreign_keys=[company_id])
-    company_rut = relationship("CompanyRut", foreign_keys=[company_rut_id])
-    contact = relationship("Contact", foreign_keys=[contact_id])
-    plant = relationship("Plant", foreign_keys=[plant_id])
-    shipping_address = relationship("Address", foreign_keys=[shipping_address_id])
-    billing_address = relationship("Address", foreign_keys=[billing_address_id])
-    staff = relationship("Staff", foreign_keys=[staff_id])
-    status = relationship("OrderStatus")
-    payment_status = relationship("PaymentStatus")
-    incoterm = relationship("Incoterm")
-    currency = relationship("Currency")
+    quote: Mapped["Quote | None"] = relationship(
+        "Quote", back_populates="order", foreign_keys=[quote_id]
+    )
+    company: Mapped["Company"] = relationship(
+        "Company", back_populates="orders", foreign_keys=[company_id]
+    )
+    company_rut: Mapped["CompanyRut | None"] = relationship(
+        "CompanyRut", foreign_keys=[company_rut_id]
+    )
+    contact: Mapped["Contact | None"] = relationship(
+        "Contact", foreign_keys=[contact_id]
+    )
+    plant: Mapped["Plant | None"] = relationship("Plant", foreign_keys=[plant_id])
+    shipping_address: Mapped["Address | None"] = relationship(
+        "Address", foreign_keys=[shipping_address_id]
+    )
+    billing_address: Mapped["Address | None"] = relationship(
+        "Address", foreign_keys=[billing_address_id]
+    )
+    staff: Mapped["Staff"] = relationship("Staff", foreign_keys=[staff_id])
+    status: Mapped["OrderStatus"] = relationship("OrderStatus")
+    payment_status: Mapped["PaymentStatus"] = relationship("PaymentStatus")
+    incoterm: Mapped["Incoterm | None"] = relationship("Incoterm")
+    currency: Mapped["Currency"] = relationship("Currency")
 
     # Related documents
-    invoices_sii = relationship("InvoiceSII", back_populates="order")
-    invoices_export = relationship("InvoiceExport", back_populates="order")
-    delivery_orders = relationship(
+    invoices_sii: Mapped[list["InvoiceSII"]] = relationship(
+        "InvoiceSII", back_populates="order"
+    )
+    invoices_export: Mapped[list["InvoiceExport"]] = relationship(
+        "InvoiceExport", back_populates="order"
+    )
+    delivery_orders: Mapped[list["DeliveryOrder"]] = relationship(
         "DeliveryOrder", back_populates="order", cascade="all, delete-orphan"
     )
 
     # Order products (line items)
-    products = relationship(
+    products: Mapped[list["OrderProduct"]] = relationship(
         "OrderProduct",
         back_populates="order",
         cascade="all, delete-orphan",
@@ -341,9 +273,7 @@ class Order(Base, TimestampMixin, AuditMixin, ActiveMixin):
         """Validate order type is valid."""
         valid_types = {"sales", "purchase"}
         if value not in valid_types:
-            raise ValueError(
-                f"Order type must be one of {valid_types}, got '{value}'"
-            )
+            raise ValueError(f"Order type must be one of {valid_types}, got '{value}'")
         return value
 
     @validates("tax_percentage")
@@ -355,20 +285,15 @@ class Order(Base, TimestampMixin, AuditMixin, ActiveMixin):
 
     # Business methods
     def calculate_totals(self) -> None:
-        """
-        Calculate subtotal from products, tax, and total.
-
-        Formula: total = subtotal + tax_amount + shipping_cost + other_costs
-        """
-        # Calculate subtotal from products if available
+        """Calculate subtotal from products, tax, and total."""
         if self.products:
             self.subtotal = sum(
                 (item.subtotal or Decimal("0.00")) for item in self.products
             )
-        
-        self.tax_amount = (self.subtotal * self.tax_percentage / Decimal("100")).quantize(
-            Decimal("0.01")
-        )
+
+        self.tax_amount = (
+            self.subtotal * self.tax_percentage / Decimal("100")
+        ).quantize(Decimal("0.01"))
         self.total = (
             self.subtotal + self.tax_amount + self.shipping_cost + self.other_costs
         ).quantize(Decimal("0.01"))
@@ -381,7 +306,7 @@ class Order(Base, TimestampMixin, AuditMixin, ActiveMixin):
         return date.today() > self.promised_date
 
     @property
-    def days_until_required(self) -> Optional[int]:
+    def days_until_required(self) -> int | None:
         """Calculate days until required date."""
         if self.required_date is None or self.completed_date is not None:
             return None
@@ -389,7 +314,7 @@ class Order(Base, TimestampMixin, AuditMixin, ActiveMixin):
         return delta.days
 
     @property
-    def processing_days(self) -> Optional[int]:
+    def processing_days(self) -> int | None:
         """Calculate days from order to completion."""
         if self.completed_date is None:
             return None
@@ -397,16 +322,7 @@ class Order(Base, TimestampMixin, AuditMixin, ActiveMixin):
         return delta.days
 
     def create_from_quote(self, quote: "Quote") -> None:
-        """
-        Populate order from an accepted quote.
-
-        Args:
-            quote: Source quote to copy data from
-
-        Note:
-            This copies core information but doesn't copy line items.
-            Line items should be handled separately.
-        """
+        """Populate order from an accepted quote."""
         self.quote_id = quote.id
         self.company_id = quote.company_id
         self.company_rut_id = quote.company_rut_id
@@ -433,85 +349,57 @@ class OrderProduct(Base, TimestampMixin):
 
     Junction table between Order and Product with quantity, pricing,
     and discount information.
-
-    Attributes:
-        id: Primary key
-        order_id: Foreign key to Order
-        product_id: Foreign key to Product
-        sequence: Display order (for sorting line items)
-        quantity: Quantity ordered
-        unit_price: Price per unit
-        discount_percentage: Discount applied to this line
-        discount_amount: Calculated discount amount
-        subtotal: Line total (quantity * unit_price - discount)
-        notes: Line item specific notes
     """
 
     __tablename__ = "order_products"
 
     # Primary key
-    id = Column(Integer, primary_key=True)
+    id: Mapped[int] = mapped_column(primary_key=True)
 
     # Foreign keys
-    order_id = Column(
-        Integer,
+    order_id: Mapped[int] = mapped_column(
         ForeignKey("orders.id", ondelete="CASCADE"),
-        nullable=False,
         index=True,
         comment="Parent order",
     )
-    product_id = Column(
-        Integer,
+    product_id: Mapped[int] = mapped_column(
         ForeignKey("products.id", ondelete="RESTRICT"),
-        nullable=False,
         index=True,
         comment="Product being ordered",
     )
 
     # Line item details
-    sequence = Column(
-        Integer, nullable=False, default=1, comment="Display order of line items"
+    sequence: Mapped[int] = mapped_column(
+        default=1, comment="Display order of line items"
     )
 
     # Quantities and pricing
-    quantity = Column(
-        DECIMAL(10, 3),
-        nullable=False,
-        comment="Quantity being ordered",
+    quantity: Mapped[Decimal] = mapped_column(
+        Numeric(10, 3), comment="Quantity being ordered"
     )
-    unit_price = Column(
-        DECIMAL(15, 2),
-        nullable=False,
-        comment="Price per unit",
+    unit_price: Mapped[Decimal] = mapped_column(
+        Numeric(15, 2), comment="Price per unit"
     )
 
     # Discounts
-    discount_percentage = Column(
-        DECIMAL(5, 2),
-        nullable=False,
-        default=Decimal("0.00"),
-        comment="Discount percentage for this line",
+    discount_percentage: Mapped[Decimal] = mapped_column(
+        Numeric(5, 2), default=Decimal("0.00"), comment="Discount percentage for this line"
     )
-    discount_amount = Column(
-        DECIMAL(15, 2),
-        nullable=False,
-        default=Decimal("0.00"),
-        comment="Calculated discount amount",
+    discount_amount: Mapped[Decimal] = mapped_column(
+        Numeric(15, 2), default=Decimal("0.00"), comment="Calculated discount amount"
     )
 
     # Calculated total
-    subtotal = Column(
-        DECIMAL(15, 2),
-        nullable=False,
-        comment="Line total (quantity * unit_price - discount)",
+    subtotal: Mapped[Decimal] = mapped_column(
+        Numeric(15, 2), comment="Line total (quantity * unit_price - discount)"
     )
 
     # Notes
-    notes = Column(Text, nullable=True, comment="Line item specific notes")
+    notes: Mapped[str | None] = mapped_column(Text, comment="Line item specific notes")
 
     # Relationships
-    order = relationship("Order", back_populates="products")
-    product = relationship("Product")
+    order: Mapped["Order"] = relationship("Order", back_populates="products")
+    product: Mapped["Product"] = relationship("Product")
 
     # Table constraints
     __table_args__ = (
@@ -554,12 +442,7 @@ class OrderProduct(Base, TimestampMixin):
 
     # Business methods
     def calculate_subtotal(self) -> None:
-        """
-        Calculate line item subtotal.
-
-        Formula: (quantity * unit_price) - discount_amount
-        Or: (quantity * unit_price) * (1 - discount_percentage/100)
-        """
+        """Calculate line item subtotal."""
         line_total = self.quantity * self.unit_price
 
         if self.discount_percentage > 0:

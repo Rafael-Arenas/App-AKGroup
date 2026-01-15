@@ -6,10 +6,10 @@ Modelos para gestionar contactos y servicios/departamentos de empresas:
 - Service: Servicio o departamento (ventas, compras, soporte, etc.)
 """
 
-from typing import Optional
+from typing import TYPE_CHECKING
 
-from sqlalchemy import Column, ForeignKey, Index, Integer, String
-from sqlalchemy.orm import relationship, validates
+from sqlalchemy import ForeignKey, Index, String
+from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 
 from ..base import (
     ActiveMixin,
@@ -19,6 +19,9 @@ from ..base import (
     PhoneValidator,
     TimestampMixin,
 )
+
+if TYPE_CHECKING:
+    from .companies import Company
 
 
 class Contact(Base, TimestampMixin, AuditMixin, ActiveMixin):
@@ -60,75 +63,44 @@ class Contact(Base, TimestampMixin, AuditMixin, ActiveMixin):
     __tablename__ = "contacts"
 
     # Primary Key
-    id = Column(Integer, primary_key=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
 
     # Personal Information
-    first_name = Column(
-        String(50),
-        nullable=False,
-        comment="First name(s)",
-    )
-
-    last_name = Column(
-        String(50),
-        nullable=False,
-        comment="Last name(s)",
-    )
+    first_name: Mapped[str] = mapped_column(String(50), comment="First name(s)")
+    last_name: Mapped[str] = mapped_column(String(50), comment="Last name(s)")
 
     # Contact Information
-    email = Column(
-        String(100),
-        nullable=True,
-        index=True,
-        comment="Email address",
+    email: Mapped[str | None] = mapped_column(
+        String(100), index=True, comment="Email address"
     )
-
-    phone = Column(
-        String(20),
-        nullable=True,
-        comment="Phone number",
-    )
-
-    mobile = Column(
-        String(20),
-        nullable=True,
-        comment="Mobile phone number",
-    )
+    phone: Mapped[str | None] = mapped_column(String(20), comment="Phone number")
+    mobile: Mapped[str | None] = mapped_column(String(20), comment="Mobile phone number")
 
     # Professional Information
-    position = Column(
-        String(100),
-        nullable=True,
-        comment="Job position/title",
+    position: Mapped[str | None] = mapped_column(
+        String(100), comment="Job position/title"
     )
 
     # Foreign Keys
-    company_id = Column(
-        Integer,
+    company_id: Mapped[int] = mapped_column(
         ForeignKey("companies.id", ondelete="CASCADE"),
-        nullable=False,
         index=True,
         comment="Company this contact belongs to",
     )
-
-    service_id = Column(
-        Integer,
+    service_id: Mapped[int | None] = mapped_column(
         ForeignKey("services.id", ondelete="SET NULL"),
-        nullable=True,
         index=True,
         comment="Service/department this contact belongs to",
     )
 
     # Relationships
-    company = relationship("Company", back_populates="contacts")
-    service = relationship("Service", back_populates="contacts", lazy="joined")
+    company: Mapped["Company"] = relationship("Company", back_populates="contacts")
+    service: Mapped["Service | None"] = relationship(
+        "Service", back_populates="contacts", lazy="joined"
+    )
 
     # Indexes
-    __table_args__ = (
-        Index("ix_contact_company_active", "company_id", "is_active"),
-        # Note: email already has index=True in column definition (line 82)
-        # Index("ix_contact_email", "email"),
-    )
+    __table_args__ = (Index("ix_contact_company_active", "company_id", "is_active"),)
 
     # Validators
     @validates("first_name", "last_name")
@@ -139,12 +111,12 @@ class Contact(Base, TimestampMixin, AuditMixin, ActiveMixin):
         return value.strip()
 
     @validates("email")
-    def validate_email(self, key: str, value: Optional[str]) -> Optional[str]:
+    def validate_email(self, key: str, value: str | None) -> str | None:
         """Valida email."""
         return EmailValidator.validate(value)
 
     @validates("phone", "mobile")
-    def validate_phone(self, key: str, value: Optional[str]) -> Optional[str]:
+    def validate_phone(self, key: str, value: str | None) -> str | None:
         """Valida teléfonos."""
         return PhoneValidator.validate(value)
 
@@ -183,28 +155,19 @@ class Service(Base, TimestampMixin, ActiveMixin):
     __tablename__ = "services"
 
     # Primary Key
-    id = Column(Integer, primary_key=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
 
     # Service Information
-    name = Column(
-        String(100),
-        nullable=False,
-        unique=True,
-        index=True,
-        comment="Service/department name",
+    name: Mapped[str] = mapped_column(
+        String(100), unique=True, index=True, comment="Service/department name"
     )
-
-    description = Column(
-        String(200),
-        nullable=True,
-        comment="Service description",
+    description: Mapped[str | None] = mapped_column(
+        String(200), comment="Service description"
     )
 
     # Relationships
-    contacts = relationship(
-        "Contact",
-        back_populates="service",
-        lazy="select",
+    contacts: Mapped[list["Contact"]] = relationship(
+        "Contact", back_populates="service", lazy="select"
     )
 
     # Validators

@@ -1,5 +1,5 @@
 """
-Mixins reutilizables para modelos SQLAlchemy.
+Mixins reutilizables para modelos SQLAlchemy 2.0.
 
 Este módulo proporciona mixins que añaden funcionalidad común a los modelos:
 - TimestampMixin: Campos created_at y updated_at automáticos
@@ -7,17 +7,20 @@ Este módulo proporciona mixins que añaden funcionalidad común a los modelos:
 - SoftDeleteMixin: Soft delete (marcado lógico, no físico)
 - ActiveMixin: Flag is_active para habilitar/deshabilitar registros
 
-Todos los mixins usan @declarative_mixin y @declared_attr para compatibilidad
-con la herencia múltiple de SQLAlchemy.
+Todos los mixins usan el patrón moderno de SQLAlchemy 2.0 con Mapped[] types
+y @declared_attr para compatibilidad con herencia múltiple.
 """
 
 from datetime import datetime, timezone
+from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, Column, DateTime, Integer, event
-from sqlalchemy.orm import Session, declarative_mixin, declared_attr
+from sqlalchemy import DateTime, event
+from sqlalchemy.orm import Mapped, Session, declared_attr, mapped_column
+
+if TYPE_CHECKING:
+    pass
 
 
-@declarative_mixin
 class TimestampMixin:
     """
     Añade timestamps automáticos a los modelos.
@@ -32,32 +35,29 @@ class TimestampMixin:
     Usage:
         class MyModel(Base, TimestampMixin):
             __tablename__ = 'my_table'
-            id = Column(Integer, primary_key=True)
+            id: Mapped[int] = mapped_column(primary_key=True)
     """
 
     @declared_attr
-    def created_at(cls):
+    def created_at(cls) -> Mapped[datetime]:
         """Timestamp UTC cuando el registro fue creado."""
-        return Column(
+        return mapped_column(
             DateTime(timezone=True),
-            nullable=False,
             default=lambda: datetime.now(timezone.utc),
             comment="UTC timestamp of record creation",
         )
 
     @declared_attr
-    def updated_at(cls):
+    def updated_at(cls) -> Mapped[datetime]:
         """Timestamp UTC de la última actualización del registro."""
-        return Column(
+        return mapped_column(
             DateTime(timezone=True),
-            nullable=False,
             default=lambda: datetime.now(timezone.utc),
             onupdate=lambda: datetime.now(timezone.utc),
             comment="UTC timestamp of last update",
         )
 
 
-@declarative_mixin
 class AuditMixin:
     """
     Añade campos de auditoría para rastrear quién creó/modificó registros.
@@ -74,7 +74,7 @@ class AuditMixin:
     Usage:
         class MyModel(Base, AuditMixin):
             __tablename__ = 'my_table'
-            id = Column(Integer, primary_key=True)
+            id: Mapped[int] = mapped_column(primary_key=True)
 
         # En tu repository/service:
         session.info["user_id"] = 123
@@ -82,25 +82,18 @@ class AuditMixin:
     """
 
     @declared_attr
-    def created_by_id(cls):
+    def created_by_id(cls) -> Mapped[int | None]:
         """ID del usuario que creó este registro."""
-        return Column(
-            Integer,
-            nullable=True,  # Nullable para registros del sistema sin user
-            comment="User ID who created this record",
-        )
+        return mapped_column(comment="User ID who created this record", default=None)
 
     @declared_attr
-    def updated_by_id(cls):
+    def updated_by_id(cls) -> Mapped[int | None]:
         """ID del usuario que actualizó este registro por última vez."""
-        return Column(
-            Integer,
-            nullable=True,
-            comment="User ID who last updated this record",
+        return mapped_column(
+            comment="User ID who last updated this record", default=None
         )
 
 
-@declarative_mixin
 class SoftDeleteMixin:
     """
     Añade funcionalidad de soft delete (eliminación lógica, no física).
@@ -116,51 +109,46 @@ class SoftDeleteMixin:
     Usage:
         class MyModel(Base, SoftDeleteMixin):
             __tablename__ = 'my_table'
-            id = Column(Integer, primary_key=True)
+            id: Mapped[int] = mapped_column(primary_key=True)
 
         # En tu repository:
         def soft_delete(self, model_id: int, user_id: int):
-            obj = session.query(MyModel).get(model_id)
+            obj = session.get(MyModel, model_id)
             obj.is_deleted = True
             obj.deleted_at = datetime.now(timezone.utc)
             obj.deleted_by_id = user_id
             session.commit()
 
         # Para queries, filtrar por is_deleted=False
-        active_records = session.query(MyModel).filter_by(is_deleted=False)
+        stmt = select(MyModel).where(MyModel.is_deleted == False)
     """
 
     @declared_attr
-    def is_deleted(cls):
+    def is_deleted(cls) -> Mapped[bool]:
         """Flag de eliminación lógica (False = activo, True = eliminado)."""
-        return Column(
-            Boolean,
-            nullable=False,
+        return mapped_column(
             default=False,
-            index=True,  # Índice para queries eficientes
+            index=True,
             comment="Soft delete flag (False=active, True=deleted)",
         )
 
     @declared_attr
-    def deleted_at(cls):
+    def deleted_at(cls) -> Mapped[datetime | None]:
         """Timestamp UTC de cuando fue eliminado (NULL si activo)."""
-        return Column(
+        return mapped_column(
             DateTime(timezone=True),
-            nullable=True,
+            default=None,
             comment="UTC timestamp of deletion (NULL if active)",
         )
 
     @declared_attr
-    def deleted_by_id(cls):
+    def deleted_by_id(cls) -> Mapped[int | None]:
         """ID del usuario que eliminó este registro."""
-        return Column(
-            Integer,
-            nullable=True,
-            comment="User ID who deleted this record",
+        return mapped_column(
+            comment="User ID who deleted this record", default=None
         )
 
 
-@declarative_mixin
 class ActiveMixin:
     """
     Añade flag is_active para habilitar/deshabilitar registros.
@@ -174,21 +162,19 @@ class ActiveMixin:
     Usage:
         class Currency(Base, ActiveMixin):
             __tablename__ = 'currencies'
-            id = Column(Integer, primary_key=True)
-            code = Column(String(3))
+            id: Mapped[int] = mapped_column(primary_key=True)
+            code: Mapped[str] = mapped_column(String(3))
 
         # Queries solo de activos
-        active_currencies = session.query(Currency).filter_by(is_active=True)
+        stmt = select(Currency).where(Currency.is_active == True)
     """
 
     @declared_attr
-    def is_active(cls):
+    def is_active(cls) -> Mapped[bool]:
         """Flag de estado activo/inactivo."""
-        return Column(
-            Boolean,
-            nullable=False,
+        return mapped_column(
             default=True,
-            index=True,  # Índice para filtros eficientes
+            index=True,
             comment="Active status flag (True=active, False=inactive)",
         )
 
@@ -196,8 +182,11 @@ class ActiveMixin:
 # ========== EVENT LISTENERS ==========
 # Automatizan el seteo de campos de auditoría
 
+
 @event.listens_for(Session, "before_flush")
-def receive_before_flush(session: Session, flush_context, instances):
+def receive_before_flush(
+    session: Session, flush_context: object, instances: object
+) -> None:
     """
     Event listener que se ejecuta antes de flush.
 
@@ -234,7 +223,7 @@ def receive_before_flush(session: Session, flush_context, instances):
 
 
 @event.listens_for(Session, "before_update", propagate=True)
-def receive_before_update(mapper, connection, target):
+def receive_before_update(mapper: object, connection: object, target: object) -> None:
     """
     Event listener alternativo para actualizar updated_at.
 
