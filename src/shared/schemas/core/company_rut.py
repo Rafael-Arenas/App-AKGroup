@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 Schemas de Pydantic para CompanyRut.
 
@@ -5,7 +7,6 @@ Define los schemas de validación para operaciones CRUD sobre RUTs de empresas.
 """
 
 import re
-from typing import Optional
 
 from pydantic import Field, field_validator
 
@@ -85,7 +86,7 @@ class CompanyRutCreate(BaseSchema):
         max_length=12,  # Maximum for input format with dots
         description="RUT chileno (formato: 12345678-9 o 76.123.456-7)"
     )
-    is_main: Optional[bool] = Field(
+    is_main: bool | None = Field(
         False,
         description="Si es el RUT principal de la empresa"
     )
@@ -112,12 +113,12 @@ class CompanyRutUpdate(BaseSchema):
         )
     """
 
-    rut: Optional[str] = Field(None, min_length=8, max_length=12)
-    is_main: Optional[bool] = None
+    rut: str | None = Field(None, min_length=8, max_length=12)
+    is_main: bool | None = None
 
     @field_validator('rut')
     @classmethod
-    def validate_rut_field(cls, v: Optional[str]) -> Optional[str]:
+    def validate_rut_field(cls, v: str | None) -> str | None:
         """Valida y normaliza el RUT chileno si se proporciona."""
         if v is not None:
             return validate_rut(v)

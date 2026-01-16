@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 Pydantic schemas for lookup/reference tables.
 
@@ -16,7 +18,6 @@ Provides validation schemas for all 12 lookup tables:
 - PaymentStatus
 """
 
-from typing import Optional
 from pydantic import BaseModel, Field, field_validator, ConfigDict
 
 
@@ -25,10 +26,10 @@ class CountryBase(BaseModel):
     """Base schema for Country."""
 
     name: str = Field(..., min_length=2, max_length=100, description="Country name")
-    iso_code_alpha2: Optional[str] = Field(
+    iso_code_alpha2: str | None = Field(
         None, min_length=2, max_length=2, description="ISO 3166-1 alpha-2 code"
     )
-    iso_code_alpha3: Optional[str] = Field(
+    iso_code_alpha3: str | None = Field(
         None, min_length=3, max_length=3, description="ISO 3166-1 alpha-3 code"
     )
 
@@ -38,7 +39,7 @@ class CountryCreate(CountryBase):
 
     @field_validator("iso_code_alpha2", "iso_code_alpha3")
     @classmethod
-    def uppercase_codes(cls, v: Optional[str]) -> Optional[str]:
+    def uppercase_codes(cls, v: str | None) -> str | None:
         """Convert ISO codes to uppercase."""
         return v.upper() if v else None
 
@@ -46,13 +47,13 @@ class CountryCreate(CountryBase):
 class CountryUpdate(BaseModel):
     """Schema for updating Country."""
 
-    name: Optional[str] = Field(None, min_length=2, max_length=100)
-    iso_code_alpha2: Optional[str] = Field(None, min_length=2, max_length=2)
-    iso_code_alpha3: Optional[str] = Field(None, min_length=3, max_length=3)
+    name: str | None = Field(None, min_length=2, max_length=100)
+    iso_code_alpha2: str | None = Field(None, min_length=2, max_length=2)
+    iso_code_alpha3: str | None = Field(None, min_length=3, max_length=3)
 
     @field_validator("iso_code_alpha2", "iso_code_alpha3")
     @classmethod
-    def uppercase_codes(cls, v: Optional[str]) -> Optional[str]:
+    def uppercase_codes(cls, v: str | None) -> str | None:
         """Convert ISO codes to uppercase."""
         return v.upper() if v else None
 
@@ -82,8 +83,8 @@ class CityCreate(CityBase):
 class CityUpdate(BaseModel):
     """Schema for updating City."""
 
-    name: Optional[str] = Field(None, min_length=2, max_length=100)
-    country_id: Optional[int] = None
+    name: str | None = Field(None, min_length=2, max_length=100)
+    country_id: int | None = None
 
 
 class CityResponse(CityBase):
@@ -99,7 +100,7 @@ class CompanyTypeBase(BaseModel):
     """Base schema for CompanyType."""
 
     name: str = Field(..., min_length=2, max_length=100, description="Company type name")
-    description: Optional[str] = Field(None, max_length=200, description="Description")
+    description: str | None = Field(None, max_length=200, description="Description")
 
 
 class CompanyTypeCreate(CompanyTypeBase):
@@ -111,8 +112,8 @@ class CompanyTypeCreate(CompanyTypeBase):
 class CompanyTypeUpdate(BaseModel):
     """Schema for updating CompanyType."""
 
-    name: Optional[str] = Field(None, min_length=2, max_length=100)
-    description: Optional[str] = Field(None, max_length=200)
+    name: str | None = Field(None, min_length=2, max_length=100)
+    description: str | None = Field(None, max_length=200)
 
 
 class CompanyTypeResponse(CompanyTypeBase):
@@ -129,7 +130,7 @@ class IncotermBase(BaseModel):
 
     code: str = Field(..., min_length=3, max_length=3, description="3-letter Incoterm code")
     name: str = Field(..., min_length=2, max_length=100, description="Full name")
-    description: Optional[str] = Field(None, max_length=500, description="Description")
+    description: str | None = Field(None, max_length=500, description="Description")
 
 
 class IncotermCreate(IncotermBase):
@@ -145,13 +146,13 @@ class IncotermCreate(IncotermBase):
 class IncotermUpdate(BaseModel):
     """Schema for updating Incoterm."""
 
-    code: Optional[str] = Field(None, min_length=3, max_length=3)
-    name: Optional[str] = Field(None, min_length=2, max_length=100)
-    description: Optional[str] = Field(None, max_length=500)
+    code: str | None = Field(None, min_length=3, max_length=3)
+    name: str | None = Field(None, min_length=2, max_length=100)
+    description: str | None = Field(None, max_length=500)
 
     @field_validator("code")
     @classmethod
-    def uppercase_code(cls, v: Optional[str]) -> Optional[str]:
+    def uppercase_code(cls, v: str | None) -> str | None:
         """Convert Incoterm code to uppercase."""
         return v.upper() if v else None
 
@@ -170,7 +171,7 @@ class CurrencyBase(BaseModel):
 
     code: str = Field(..., min_length=3, max_length=3, description="ISO 4217 currency code")
     name: str = Field(..., min_length=2, max_length=100, description="Currency name")
-    symbol: Optional[str] = Field(None, max_length=10, description="Currency symbol")
+    symbol: str | None = Field(None, max_length=10, description="Currency symbol")
 
 
 class CurrencyCreate(CurrencyBase):
@@ -186,13 +187,13 @@ class CurrencyCreate(CurrencyBase):
 class CurrencyUpdate(BaseModel):
     """Schema for updating Currency."""
 
-    code: Optional[str] = Field(None, min_length=3, max_length=3)
-    name: Optional[str] = Field(None, min_length=2, max_length=100)
-    symbol: Optional[str] = Field(None, max_length=10)
+    code: str | None = Field(None, min_length=3, max_length=3)
+    name: str | None = Field(None, min_length=2, max_length=100)
+    symbol: str | None = Field(None, max_length=10)
 
     @field_validator("code")
     @classmethod
-    def uppercase_code(cls, v: Optional[str]) -> Optional[str]:
+    def uppercase_code(cls, v: str | None) -> str | None:
         """Convert currency code to uppercase."""
         return v.upper() if v else None
 
@@ -211,7 +212,7 @@ class UnitBase(BaseModel):
 
     code: str = Field(..., min_length=1, max_length=10, description="Unit code/abbreviation")
     name: str = Field(..., min_length=2, max_length=100, description="Unit name")
-    description: Optional[str] = Field(None, max_length=200, description="Description")
+    description: str | None = Field(None, max_length=200, description="Description")
 
 
 class UnitCreate(UnitBase):
@@ -223,9 +224,9 @@ class UnitCreate(UnitBase):
 class UnitUpdate(BaseModel):
     """Schema for updating Unit."""
 
-    code: Optional[str] = Field(None, min_length=1, max_length=10)
-    name: Optional[str] = Field(None, min_length=2, max_length=100)
-    description: Optional[str] = Field(None, max_length=200)
+    code: str | None = Field(None, min_length=1, max_length=10)
+    name: str | None = Field(None, min_length=2, max_length=100)
+    description: str | None = Field(None, max_length=200)
 
 
 class UnitResponse(UnitBase):
@@ -241,7 +242,7 @@ class FamilyTypeBase(BaseModel):
     """Base schema for FamilyType."""
 
     name: str = Field(..., min_length=2, max_length=100, description="Family type name")
-    description: Optional[str] = Field(None, max_length=200, description="Description")
+    description: str | None = Field(None, max_length=200, description="Description")
 
 
 class FamilyTypeCreate(FamilyTypeBase):
@@ -253,8 +254,8 @@ class FamilyTypeCreate(FamilyTypeBase):
 class FamilyTypeUpdate(BaseModel):
     """Schema for updating FamilyType."""
 
-    name: Optional[str] = Field(None, min_length=2, max_length=100)
-    description: Optional[str] = Field(None, max_length=200)
+    name: str | None = Field(None, min_length=2, max_length=100)
+    description: str | None = Field(None, max_length=200)
 
 
 class FamilyTypeResponse(FamilyTypeBase):
@@ -270,7 +271,7 @@ class MatterBase(BaseModel):
     """Base schema for Matter."""
 
     name: str = Field(..., min_length=2, max_length=100, description="Matter/material name")
-    description: Optional[str] = Field(None, max_length=200, description="Description")
+    description: str | None = Field(None, max_length=200, description="Description")
 
 
 class MatterCreate(MatterBase):
@@ -282,8 +283,8 @@ class MatterCreate(MatterBase):
 class MatterUpdate(BaseModel):
     """Schema for updating Matter."""
 
-    name: Optional[str] = Field(None, min_length=2, max_length=100)
-    description: Optional[str] = Field(None, max_length=200)
+    name: str | None = Field(None, min_length=2, max_length=100)
+    description: str | None = Field(None, max_length=200)
 
 
 class MatterResponse(MatterBase):
@@ -299,7 +300,7 @@ class SalesTypeBase(BaseModel):
     """Base schema for SalesType."""
 
     name: str = Field(..., min_length=2, max_length=100, description="Sales type name")
-    description: Optional[str] = Field(None, max_length=200, description="Description")
+    description: str | None = Field(None, max_length=200, description="Description")
 
 
 class SalesTypeCreate(SalesTypeBase):
@@ -311,8 +312,8 @@ class SalesTypeCreate(SalesTypeBase):
 class SalesTypeUpdate(BaseModel):
     """Schema for updating SalesType."""
 
-    name: Optional[str] = Field(None, min_length=2, max_length=100)
-    description: Optional[str] = Field(None, max_length=200)
+    name: str | None = Field(None, min_length=2, max_length=100)
+    description: str | None = Field(None, max_length=200)
 
 
 class SalesTypeResponse(SalesTypeBase):
@@ -328,7 +329,7 @@ class QuoteStatusBase(BaseModel):
     """Base schema for QuoteStatus."""
 
     name: str = Field(..., min_length=2, max_length=50, description="Quote status name")
-    description: Optional[str] = Field(None, max_length=200, description="Description")
+    description: str | None = Field(None, max_length=200, description="Description")
 
 
 class QuoteStatusCreate(QuoteStatusBase):
@@ -340,8 +341,8 @@ class QuoteStatusCreate(QuoteStatusBase):
 class QuoteStatusUpdate(BaseModel):
     """Schema for updating QuoteStatus."""
 
-    name: Optional[str] = Field(None, min_length=2, max_length=50)
-    description: Optional[str] = Field(None, max_length=200)
+    name: str | None = Field(None, min_length=2, max_length=50)
+    description: str | None = Field(None, max_length=200)
 
 
 class QuoteStatusResponse(QuoteStatusBase):
@@ -357,7 +358,7 @@ class OrderStatusBase(BaseModel):
     """Base schema for OrderStatus."""
 
     name: str = Field(..., min_length=2, max_length=50, description="Order status name")
-    description: Optional[str] = Field(None, max_length=200, description="Description")
+    description: str | None = Field(None, max_length=200, description="Description")
 
 
 class OrderStatusCreate(OrderStatusBase):
@@ -369,8 +370,8 @@ class OrderStatusCreate(OrderStatusBase):
 class OrderStatusUpdate(BaseModel):
     """Schema for updating OrderStatus."""
 
-    name: Optional[str] = Field(None, min_length=2, max_length=50)
-    description: Optional[str] = Field(None, max_length=200)
+    name: str | None = Field(None, min_length=2, max_length=50)
+    description: str | None = Field(None, max_length=200)
 
 
 class OrderStatusResponse(OrderStatusBase):
@@ -386,7 +387,7 @@ class PaymentStatusBase(BaseModel):
     """Base schema for PaymentStatus."""
 
     name: str = Field(..., min_length=2, max_length=50, description="Payment status name")
-    description: Optional[str] = Field(None, max_length=200, description="Description")
+    description: str | None = Field(None, max_length=200, description="Description")
 
 
 class PaymentStatusCreate(PaymentStatusBase):
@@ -398,8 +399,8 @@ class PaymentStatusCreate(PaymentStatusBase):
 class PaymentStatusUpdate(BaseModel):
     """Schema for updating PaymentStatus."""
 
-    name: Optional[str] = Field(None, min_length=2, max_length=50)
-    description: Optional[str] = Field(None, max_length=200)
+    name: str | None = Field(None, min_length=2, max_length=50)
+    description: str | None = Field(None, max_length=200)
 
 
 class PaymentStatusResponse(PaymentStatusBase):

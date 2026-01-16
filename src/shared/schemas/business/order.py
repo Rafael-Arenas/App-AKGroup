@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 Pydantic schemas for Order model.
 
@@ -7,7 +9,6 @@ order data through the API.
 
 from datetime import date
 from decimal import Decimal
-from typing import Optional, List
 from pydantic import BaseModel, Field, field_validator, ConfigDict
 
 
@@ -22,13 +23,13 @@ class OrderProductBase(BaseModel):
     sequence: int = Field(default=1, ge=1, description="Display order")
     quantity: Decimal = Field(..., gt=0, description="Quantity ordered")
     unit_price: Decimal = Field(..., ge=0, description="Price per unit")
-    discount_percentage: Optional[Decimal] = Field(
+    discount_percentage: Decimal | None = Field(
         default=Decimal("0.00"),
         ge=0,
         le=100,
         description="Discount percentage"
     )
-    notes: Optional[str] = Field(None, max_length=1000, description="Line item notes")
+    notes: str | None = Field(None, max_length=1000, description="Line item notes")
 
 
 class OrderProductCreate(OrderProductBase):
@@ -39,12 +40,12 @@ class OrderProductCreate(OrderProductBase):
 class OrderProductUpdate(BaseModel):
     """Schema for updating an order product."""
 
-    product_id: Optional[int] = Field(None, gt=0)
-    sequence: Optional[int] = Field(None, ge=1)
-    quantity: Optional[Decimal] = Field(None, gt=0)
-    unit_price: Optional[Decimal] = Field(None, ge=0)
-    discount_percentage: Optional[Decimal] = Field(None, ge=0, le=100)
-    notes: Optional[str] = Field(None, max_length=1000)
+    product_id: int | None = Field(None, gt=0)
+    sequence: int | None = Field(None, ge=1)
+    quantity: Decimal | None = Field(None, gt=0)
+    unit_price: Decimal | None = Field(None, ge=0)
+    discount_percentage: Decimal | None = Field(None, ge=0, le=100)
+    notes: str | None = Field(None, max_length=1000)
 
 
 class ProductSummary(BaseModel):
@@ -52,9 +53,9 @@ class ProductSummary(BaseModel):
     
     id: int
     reference: str
-    designation_es: Optional[str] = None
-    designation_en: Optional[str] = None
-    designation_fr: Optional[str] = None
+    designation_es: str | None = None
+    designation_en: str | None = None
+    designation_fr: str | None = None
     product_type: str = "article"
     
     model_config = ConfigDict(from_attributes=True)
@@ -67,7 +68,7 @@ class OrderProductResponse(OrderProductBase):
     order_id: int
     discount_amount: Decimal
     subtotal: Decimal
-    product: Optional[ProductSummary] = None
+    product: ProductSummary | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -79,10 +80,10 @@ class ContactSummary(BaseModel):
     id: int
     first_name: str
     last_name: str
-    email: Optional[str] = None
-    phone: Optional[str] = None
-    mobile: Optional[str] = None
-    position: Optional[str] = None
+    email: str | None = None
+    phone: str | None = None
+    mobile: str | None = None
+    position: str | None = None
     model_config = ConfigDict(from_attributes=True)
 
 class CompanyRutSummary(BaseModel):
@@ -96,9 +97,9 @@ class PlantSummary(BaseModel):
     """Resumen de planta para incluir en respuestas de orden."""
     id: int
     name: str
-    address: Optional[str] = None
-    phone: Optional[str] = None
-    email: Optional[str] = None
+    address: str | None = None
+    phone: str | None = None
+    email: str | None = None
     model_config = ConfigDict(from_attributes=True)
 
 class StaffSummary(BaseModel):
@@ -106,17 +107,17 @@ class StaffSummary(BaseModel):
     id: int
     first_name: str
     last_name: str
-    email: Optional[str] = None
-    phone: Optional[str] = None
-    position: Optional[str] = None
-    trigram: Optional[str] = None
+    email: str | None = None
+    phone: str | None = None
+    position: str | None = None
+    trigram: str | None = None
     model_config = ConfigDict(from_attributes=True)
 
 class IncotermSummary(BaseModel):
     """Resumen de incoterm para incluir en respuestas de orden."""
     id: int
     code: str
-    name: Optional[str] = None
+    name: str | None = None
     model_config = ConfigDict(from_attributes=True)
 
 class QuoteSummary(BaseModel):
@@ -124,7 +125,7 @@ class QuoteSummary(BaseModel):
     id: int
     quote_number: str
     revision: str
-    quote_date: Optional[date] = None
+    quote_date: date | None = None
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -151,32 +152,32 @@ class OrderBase(BaseModel):
         default="sales",
         description="Order type: sales or purchase"
     )
-    quote_id: Optional[int] = Field(None, gt=0, description="Source quote ID")
+    quote_id: int | None = Field(None, gt=0, description="Source quote ID")
     company_id: int = Field(..., gt=0, description="Company ID (customer/supplier)")
-    company_rut_id: Optional[int] = Field(None, gt=0, description="Company RUT ID")
-    contact_id: Optional[int] = Field(None, gt=0, description="Contact person ID")
-    plant_id: Optional[int] = Field(None, gt=0, description="Plant ID")
+    company_rut_id: int | None = Field(None, gt=0, description="Company RUT ID")
+    contact_id: int | None = Field(None, gt=0, description="Contact person ID")
+    plant_id: int | None = Field(None, gt=0, description="Plant ID")
     staff_id: int = Field(..., gt=0, description="Staff member ID")
     status_id: int = Field(..., gt=0, description="Order status ID")
     payment_status_id: int = Field(..., gt=0, description="Payment status ID")
     order_date: date = Field(..., description="Order creation date")
-    promised_date: Optional[date] = Field(None, description="Promised delivery date")
-    completed_date: Optional[date] = Field(None, description="Completion date")
-    project_number: Optional[str] = Field(None, max_length=100, description="Project number")
-    customer_po_number: Optional[str] = Field(None, max_length=100, description="Customer's purchase order number")
-    incoterm_id: Optional[int] = Field(None, gt=0, description="Incoterm ID")
+    promised_date: date | None = Field(None, description="Promised delivery date")
+    completed_date: date | None = Field(None, description="Completion date")
+    project_number: str | None = Field(None, max_length=100, description="Project number")
+    customer_po_number: str | None = Field(None, max_length=100, description="Customer's purchase order number")
+    incoterm_id: int | None = Field(None, gt=0, description="Incoterm ID")
     currency_id: int = Field(..., gt=0, description="Currency ID")
-    exchange_rate: Optional[Decimal] = Field(None, gt=0, description="Exchange rate")
+    exchange_rate: Decimal | None = Field(None, gt=0, description="Exchange rate")
     tax_percentage: Decimal = Field(
         default=Decimal("19.00"),
         ge=0,
         le=100,
         description="Tax percentage"
     )
-    payment_terms: Optional[str] = Field(None, max_length=200, description="Payment terms")
+    payment_terms: str | None = Field(None, max_length=200, description="Payment terms")
     is_export: bool = Field(default=False, description="Is export order")
-    notes: Optional[str] = Field(None, description="Customer-visible notes")
-    internal_notes: Optional[str] = Field(None, description="Internal notes only")
+    notes: str | None = Field(None, description="Customer-visible notes")
+    internal_notes: str | None = Field(None, description="Internal notes only")
 
     @field_validator("order_number", "revision")
     @classmethod
@@ -213,7 +214,7 @@ class OrderCreate(OrderBase):
         )
     """
 
-    products: Optional[List[OrderProductCreate]] = Field(
+    products: list[OrderProductCreate] | None = Field(
         default_factory=list,
         description="List of order products (line items)"
     )
@@ -233,36 +234,36 @@ class OrderUpdate(BaseModel):
         )
     """
 
-    revision: Optional[str] = Field(None, min_length=1, max_length=10)
-    order_type: Optional[str] = None
-    company_rut_id: Optional[int] = Field(None, gt=0)
-    contact_id: Optional[int] = Field(None, gt=0)
-    plant_id: Optional[int] = Field(None, gt=0)
-    staff_id: Optional[int] = Field(None, gt=0)
-    status_id: Optional[int] = Field(None, gt=0)
-    payment_status_id: Optional[int] = Field(None, gt=0)
-    promised_date: Optional[date] = None
-    completed_date: Optional[date] = None
-    project_number: Optional[str] = Field(None, max_length=100)
-    customer_po_number: Optional[str] = Field(None, max_length=100)
-    incoterm_id: Optional[int] = Field(None, gt=0)
-    currency_id: Optional[int] = Field(None, gt=0)
-    exchange_rate: Optional[Decimal] = Field(None, gt=0)
-    tax_percentage: Optional[Decimal] = Field(None, ge=0, le=100)
-    payment_terms: Optional[str] = Field(None, max_length=200)
-    is_export: Optional[bool] = None
-    notes: Optional[str] = None
-    internal_notes: Optional[str] = None
+    revision: str | None = Field(None, min_length=1, max_length=10)
+    order_type: str | None = None
+    company_rut_id: int | None = Field(None, gt=0)
+    contact_id: int | None = Field(None, gt=0)
+    plant_id: int | None = Field(None, gt=0)
+    staff_id: int | None = Field(None, gt=0)
+    status_id: int | None = Field(None, gt=0)
+    payment_status_id: int | None = Field(None, gt=0)
+    promised_date: date | None = None
+    completed_date: date | None = None
+    project_number: str | None = Field(None, max_length=100)
+    customer_po_number: str | None = Field(None, max_length=100)
+    incoterm_id: int | None = Field(None, gt=0)
+    currency_id: int | None = Field(None, gt=0)
+    exchange_rate: Decimal | None = Field(None, gt=0)
+    tax_percentage: Decimal | None = Field(None, ge=0, le=100)
+    payment_terms: str | None = Field(None, max_length=200)
+    is_export: bool | None = None
+    notes: str | None = None
+    internal_notes: str | None = None
 
     @field_validator("revision")
     @classmethod
-    def uppercase_revision(cls, v: Optional[str]) -> Optional[str]:
+    def uppercase_revision(cls, v: str | None) -> str | None:
         """Convert revision to uppercase."""
         return v.strip().upper() if v else None
 
     @field_validator("order_type")
     @classmethod
-    def validate_order_type(cls, v: Optional[str]) -> Optional[str]:
+    def validate_order_type(cls, v: str | None) -> str | None:
         """Validate order type is valid."""
         if v:
             valid_types = {"sales", "purchase"}
@@ -283,15 +284,15 @@ class OrderResponse(OrderBase):
     subtotal: Decimal
     tax_amount: Decimal
     total: Decimal
-    products: List[OrderProductResponse] = Field(default_factory=list)
+    products: list[OrderProductResponse] = Field(default_factory=list)
 
     # Related entities (expanded)
-    contact: Optional[ContactSummary] = None
-    company_rut: Optional[CompanyRutSummary] = None
-    plant: Optional[PlantSummary] = None
-    staff: Optional[StaffSummary] = None
-    incoterm: Optional[IncotermSummary] = None
-    quote: Optional[QuoteSummary] = None  # Cotización de origen (si aplica)
+    contact: ContactSummary | None = None
+    company_rut: CompanyRutSummary | None = None
+    plant: PlantSummary | None = None
+    staff: StaffSummary | None = None
+    incoterm: IncotermSummary | None = None
+    quote: QuoteSummary | None = None  # Cotización de origen (si aplica)
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -312,7 +313,7 @@ class OrderListResponse(BaseModel):
     status_id: int
     payment_status_id: int
     order_date: date
-    promised_date: Optional[date] = None
+    promised_date: date | None = None
     total: Decimal
 
     model_config = ConfigDict(from_attributes=True)

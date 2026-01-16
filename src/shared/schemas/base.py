@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 Schemas base de Pydantic para la aplicación.
 
@@ -6,7 +8,6 @@ para mantener consistencia en validación y serialización.
 """
 
 from datetime import datetime
-from typing import Optional
 
 from pydantic import BaseModel, ConfigDict
 
@@ -71,8 +72,8 @@ class BaseResponse(TimestampResponse):
     """
 
     id: int
-    created_by: Optional[int] = None
-    updated_by: Optional[int] = None
+    created_by: int | None = None
+    updated_by: int | None = None
 
 
 class PaginatedResponse(BaseSchema):
@@ -117,4 +118,4 @@ class MessageResponse(BaseSchema):
     """
 
     message: str
-    details: Optional[dict] = None
+    details: dict | None = None

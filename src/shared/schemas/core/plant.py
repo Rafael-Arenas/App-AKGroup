@@ -1,10 +1,11 @@
+from __future__ import annotations
+
 """
 Schemas de Pydantic para Plant (Plantas/Sucursales).
 
 Define los schemas de validación para operaciones CRUD sobre plantas.
 """
 
-from typing import Optional
 
 from pydantic import Field, field_validator
 
@@ -23,16 +24,16 @@ class PlantCreate(BaseSchema):
         max_length=100,
         description="Nombre de la planta"
     )
-    address: Optional[str] = Field(
+    address: str | None = Field(
         None,
         description="Dirección de la planta"
     )
-    phone: Optional[str] = Field(
+    phone: str | None = Field(
         None,
         max_length=20,
         description="Teléfono de la planta"
     )
-    email: Optional[str] = Field(
+    email: str | None = Field(
         None,
         max_length=100,
         description="Email de contacto"
@@ -42,7 +43,7 @@ class PlantCreate(BaseSchema):
         gt=0,
         description="ID de la empresa"
     )
-    city_id: Optional[int] = Field(
+    city_id: int | None = Field(
         None,
         gt=0,
         description="ID de la ciudad"
@@ -65,16 +66,16 @@ class PlantUpdate(BaseSchema):
     Schema para actualizar una planta.
     """
 
-    name: Optional[str] = Field(None, min_length=2, max_length=100)
-    address: Optional[str] = None
-    phone: Optional[str] = Field(None, max_length=20)
-    email: Optional[str] = Field(None, max_length=100)
-    city_id: Optional[int] = Field(None, gt=0)
-    is_active: Optional[bool] = None
+    name: str | None = Field(None, min_length=2, max_length=100)
+    address: str | None = None
+    phone: str | None = Field(None, max_length=20)
+    email: str | None = Field(None, max_length=100)
+    city_id: int | None = Field(None, gt=0)
+    is_active: bool | None = None
 
     @field_validator('name')
     @classmethod
-    def name_not_empty(cls, v: Optional[str]) -> Optional[str]:
+    def name_not_empty(cls, v: str | None) -> str | None:
         if v is not None:
             if not v.strip():
                 raise ValueError("El nombre no puede estar vacío")
@@ -88,10 +89,10 @@ class PlantResponse(BaseResponse):
     """
 
     name: str
-    address: Optional[str] = None
-    phone: Optional[str] = None
-    email: Optional[str] = None
+    address: str | None = None
+    phone: str | None = None
+    email: str | None = None
     company_id: int
-    city_id: Optional[int] = None
-    city_name: Optional[str] = None  # Helper field si se une con city
+    city_id: int | None = None
+    city_name: str | None = None  # Helper field si se une con city
     is_active: bool

@@ -1,10 +1,11 @@
+from __future__ import annotations
+
 """
 Schemas de Pydantic para Staff (usuarios del sistema).
 
 Define los schemas de validación para operaciones CRUD sobre usuarios/staff.
 """
 
-from typing import Optional
 
 from pydantic import Field, field_validator, EmailStr
 
@@ -57,20 +58,20 @@ class StaffCreate(BaseSchema):
         max_length=50,
         description="Apellido(s)"
     )
-    trigram: Optional[str] = Field(
+    trigram: str | None = Field(
         None,
         min_length=3,
         max_length=3,
         pattern=r'^[A-Z]{3}$',
         description="Código de 3 letras (opcional, debe ser único)"
     )
-    phone: Optional[str] = Field(
+    phone: str | None = Field(
         None,
         max_length=20,
         pattern=r'^\+?[1-9]\d{1,14}$',
         description="Teléfono en formato E.164"
     )
-    position: Optional[str] = Field(
+    position: str | None = Field(
         None,
         max_length=100,
         description="Cargo/posición"
@@ -102,7 +103,7 @@ class StaffCreate(BaseSchema):
 
     @field_validator('trigram')
     @classmethod
-    def trigram_uppercase(cls, v: Optional[str]) -> Optional[str]:
+    def trigram_uppercase(cls, v: str | None) -> str | None:
         """Convierte el trigram a mayúsculas."""
         if v:
             v = v.strip()
@@ -115,7 +116,7 @@ class StaffCreate(BaseSchema):
 
     @field_validator('position')
     @classmethod
-    def normalize_position(cls, v: Optional[str]) -> Optional[str]:
+    def normalize_position(cls, v: str | None) -> str | None:
         """Normaliza el cargo."""
         if v:
             return v.strip()
@@ -135,47 +136,47 @@ class StaffUpdate(BaseSchema):
         )
     """
 
-    username: Optional[str] = Field(
+    username: str | None = Field(
         None,
         min_length=3,
         max_length=50,
         pattern=r'^[a-z0-9_-]+$'
     )
-    email: Optional[EmailStr] = None
-    first_name: Optional[str] = Field(None, min_length=1, max_length=50)
-    last_name: Optional[str] = Field(None, min_length=1, max_length=50)
-    trigram: Optional[str] = Field(
+    email: EmailStr | None = None
+    first_name: str | None = Field(None, min_length=1, max_length=50)
+    last_name: str | None = Field(None, min_length=1, max_length=50)
+    trigram: str | None = Field(
         None,
         min_length=3,
         max_length=3,
         pattern=r'^[A-Z]{3}$'
     )
-    phone: Optional[str] = Field(
+    phone: str | None = Field(
         None,
         max_length=20,
         pattern=r'^\+?[1-9]\d{1,14}$'
     )
-    position: Optional[str] = Field(None, max_length=100)
-    is_active: Optional[bool] = None
-    is_admin: Optional[bool] = None
+    position: str | None = Field(None, max_length=100)
+    is_active: bool | None = None
+    is_admin: bool | None = None
 
     @field_validator('username')
     @classmethod
-    def username_lowercase(cls, v: Optional[str]) -> Optional[str]:
+    def username_lowercase(cls, v: str | None) -> str | None:
         if v:
             return v.lower().strip()
         return v
 
     @field_validator('email')
     @classmethod
-    def email_lowercase(cls, v: Optional[EmailStr]) -> Optional[str]:
+    def email_lowercase(cls, v: EmailStr | None) -> str | None:
         if v:
             return str(v).lower().strip()
         return v
 
     @field_validator('first_name', 'last_name')
     @classmethod
-    def name_not_empty(cls, v: Optional[str]) -> Optional[str]:
+    def name_not_empty(cls, v: str | None) -> str | None:
         if v is not None:
             if not v.strip():
                 raise ValueError("El nombre no puede estar vacío")
@@ -184,7 +185,7 @@ class StaffUpdate(BaseSchema):
 
     @field_validator('trigram')
     @classmethod
-    def trigram_uppercase(cls, v: Optional[str]) -> Optional[str]:
+    def trigram_uppercase(cls, v: str | None) -> str | None:
         if v:
             v = v.strip()
             if len(v) != 3:
@@ -196,7 +197,7 @@ class StaffUpdate(BaseSchema):
 
     @field_validator('position')
     @classmethod
-    def normalize_position(cls, v: Optional[str]) -> Optional[str]:
+    def normalize_position(cls, v: str | None) -> str | None:
         if v:
             return v.strip()
         return v
@@ -218,9 +219,9 @@ class StaffResponse(BaseResponse):
     email: str
     first_name: str
     last_name: str
-    trigram: Optional[str] = None
-    phone: Optional[str] = None
-    position: Optional[str] = None
+    trigram: str | None = None
+    phone: str | None = None
+    position: str | None = None
     is_active: bool
     is_admin: bool
 

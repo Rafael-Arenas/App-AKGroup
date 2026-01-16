@@ -1,10 +1,11 @@
+from __future__ import annotations
+
 """
 Schemas de Pydantic para Contact.
 
 Define los schemas de validación para operaciones CRUD sobre contactos.
 """
 
-from typing import Optional
 
 from pydantic import Field, field_validator, EmailStr
 
@@ -45,23 +46,23 @@ class ContactCreate(BaseSchema):
         max_length=50,
         description="Apellido(s)"
     )
-    email: Optional[EmailStr] = Field(
+    email: EmailStr | None = Field(
         None,
         description="Email de contacto"
     )
-    phone: Optional[str] = Field(
+    phone: str | None = Field(
         None,
         max_length=20,
         pattern=r'^\+?[1-9]\d{1,14}$',
         description="Teléfono en formato E.164"
     )
-    mobile: Optional[str] = Field(
+    mobile: str | None = Field(
         None,
         max_length=20,
         pattern=r'^\+?[1-9]\d{1,14}$',
         description="Teléfono móvil en formato E.164"
     )
-    position: Optional[str] = Field(
+    position: str | None = Field(
         None,
         max_length=100,
         description="Cargo/posición"
@@ -71,7 +72,7 @@ class ContactCreate(BaseSchema):
         gt=0,
         description="ID de la empresa"
     )
-    service_id: Optional[int] = Field(
+    service_id: int | None = Field(
         None,
         gt=0,
         description="ID del servicio/departamento"
@@ -87,7 +88,7 @@ class ContactCreate(BaseSchema):
 
     @field_validator('email')
     @classmethod
-    def email_lowercase(cls, v: Optional[EmailStr]) -> Optional[str]:
+    def email_lowercase(cls, v: EmailStr | None) -> str | None:
         """Convierte el email a minúsculas."""
         if v:
             return str(v).lower().strip()
@@ -95,7 +96,7 @@ class ContactCreate(BaseSchema):
 
     @field_validator('position')
     @classmethod
-    def normalize_position(cls, v: Optional[str]) -> Optional[str]:
+    def normalize_position(cls, v: str | None) -> str | None:
         """Normaliza el cargo."""
         if v:
             return v.strip()
@@ -115,18 +116,18 @@ class ContactUpdate(BaseSchema):
         )
     """
 
-    first_name: Optional[str] = Field(None, min_length=1, max_length=50)
-    last_name: Optional[str] = Field(None, min_length=1, max_length=50)
-    email: Optional[EmailStr] = None
-    phone: Optional[str] = Field(None, max_length=20, pattern=r'^\+?[1-9]\d{1,14}$')
-    mobile: Optional[str] = Field(None, max_length=20, pattern=r'^\+?[1-9]\d{1,14}$')
-    position: Optional[str] = Field(None, max_length=100)
-    service_id: Optional[int] = Field(None, gt=0)
-    is_active: Optional[bool] = None
+    first_name: str | None = Field(None, min_length=1, max_length=50)
+    last_name: str | None = Field(None, min_length=1, max_length=50)
+    email: EmailStr | None = None
+    phone: str | None = Field(None, max_length=20, pattern=r'^\+?[1-9]\d{1,14}$')
+    mobile: str | None = Field(None, max_length=20, pattern=r'^\+?[1-9]\d{1,14}$')
+    position: str | None = Field(None, max_length=100)
+    service_id: int | None = Field(None, gt=0)
+    is_active: bool | None = None
 
     @field_validator('first_name', 'last_name')
     @classmethod
-    def name_not_empty(cls, v: Optional[str]) -> Optional[str]:
+    def name_not_empty(cls, v: str | None) -> str | None:
         if v is not None:
             if not v.strip():
                 raise ValueError("El nombre no puede estar vacío")
@@ -135,14 +136,14 @@ class ContactUpdate(BaseSchema):
 
     @field_validator('email')
     @classmethod
-    def email_lowercase(cls, v: Optional[EmailStr]) -> Optional[str]:
+    def email_lowercase(cls, v: EmailStr | None) -> str | None:
         if v:
             return str(v).lower().strip()
         return v
 
     @field_validator('position')
     @classmethod
-    def normalize_position(cls, v: Optional[str]) -> Optional[str]:
+    def normalize_position(cls, v: str | None) -> str | None:
         if v:
             return v.strip()
         return v
@@ -162,12 +163,12 @@ class ContactResponse(BaseResponse):
 
     first_name: str
     last_name: str
-    email: Optional[str] = None
-    phone: Optional[str] = None
-    mobile: Optional[str] = None
-    position: Optional[str] = None
+    email: str | None = None
+    phone: str | None = None
+    mobile: str | None = None
+    position: str | None = None
     company_id: int
-    service_id: Optional[int] = None
+    service_id: int | None = None
     is_active: bool
 
     # Computed field - full name

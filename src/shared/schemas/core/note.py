@@ -1,10 +1,11 @@
+from __future__ import annotations
+
 """
 Schemas de Pydantic para Note (sistema polimórfico de notas).
 
 Define los schemas de validación para operaciones CRUD sobre notas.
 """
 
-from typing import Optional
 
 from pydantic import Field, field_validator
 
@@ -51,7 +52,7 @@ class NoteCreate(BaseSchema):
         gt=0,
         description="ID de la entidad"
     )
-    title: Optional[str] = Field(
+    title: str | None = Field(
         None,
         max_length=200,
         description="Título opcional de la nota"
@@ -65,7 +66,7 @@ class NoteCreate(BaseSchema):
         default=NotePriority.NORMAL,
         description="Prioridad (low, normal, high, urgent)"
     )
-    category: Optional[str] = Field(
+    category: str | None = Field(
         None,
         max_length=50,
         description="Categoría opcional (Technical, Commercial, etc.)"
@@ -89,7 +90,7 @@ class NoteCreate(BaseSchema):
 
     @field_validator('title', 'category')
     @classmethod
-    def normalize_text(cls, v: Optional[str]) -> Optional[str]:
+    def normalize_text(cls, v: str | None) -> str | None:
         """Normaliza texto opcional."""
         if v:
             return v.strip()
@@ -109,14 +110,14 @@ class NoteUpdate(BaseSchema):
         )
     """
 
-    title: Optional[str] = Field(None, max_length=200)
-    content: Optional[str] = Field(None, min_length=1)
-    priority: Optional[NotePriority] = None
-    category: Optional[str] = Field(None, max_length=50)
+    title: str | None = Field(None, max_length=200)
+    content: str | None = Field(None, min_length=1)
+    priority: NotePriority | None = None
+    category: str | None = Field(None, max_length=50)
 
     @field_validator('content')
     @classmethod
-    def content_not_empty(cls, v: Optional[str]) -> Optional[str]:
+    def content_not_empty(cls, v: str | None) -> str | None:
         if v is not None:
             if not v.strip():
                 raise ValueError("El contenido de la nota no puede estar vacío")
@@ -125,7 +126,7 @@ class NoteUpdate(BaseSchema):
 
     @field_validator('title', 'category')
     @classmethod
-    def normalize_text(cls, v: Optional[str]) -> Optional[str]:
+    def normalize_text(cls, v: str | None) -> str | None:
         if v:
             return v.strip()
         return v
@@ -145,7 +146,7 @@ class NoteResponse(BaseResponse):
 
     entity_type: str
     entity_id: int
-    title: Optional[str] = None
+    title: str | None = None
     content: str
     priority: NotePriority
-    category: Optional[str] = None
+    category: str | None = None

@@ -1,10 +1,11 @@
+from __future__ import annotations
+
 """
 Schemas de Pydantic para Service (departamentos/servicios).
 
 Define los schemas de validación para operaciones CRUD sobre servicios.
 """
 
-from typing import Optional
 
 from pydantic import Field, field_validator
 
@@ -32,7 +33,7 @@ class ServiceCreate(BaseSchema):
         max_length=100,
         description="Nombre del servicio/departamento"
     )
-    description: Optional[str] = Field(
+    description: str | None = Field(
         None,
         max_length=200,
         description="Descripción del servicio"
@@ -48,7 +49,7 @@ class ServiceCreate(BaseSchema):
 
     @field_validator('description')
     @classmethod
-    def normalize_description(cls, v: Optional[str]) -> Optional[str]:
+    def normalize_description(cls, v: str | None) -> str | None:
         """Normaliza la descripción."""
         if v:
             return v.strip()
@@ -67,13 +68,13 @@ class ServiceUpdate(BaseSchema):
         )
     """
 
-    name: Optional[str] = Field(None, min_length=1, max_length=100)
-    description: Optional[str] = Field(None, max_length=200)
-    is_active: Optional[bool] = None
+    name: str | None = Field(None, min_length=1, max_length=100)
+    description: str | None = Field(None, max_length=200)
+    is_active: bool | None = None
 
     @field_validator('name')
     @classmethod
-    def name_not_empty(cls, v: Optional[str]) -> Optional[str]:
+    def name_not_empty(cls, v: str | None) -> str | None:
         if v is not None:
             if not v.strip():
                 raise ValueError("El nombre del servicio no puede estar vacío")
@@ -82,7 +83,7 @@ class ServiceUpdate(BaseSchema):
 
     @field_validator('description')
     @classmethod
-    def normalize_description(cls, v: Optional[str]) -> Optional[str]:
+    def normalize_description(cls, v: str | None) -> str | None:
         if v:
             return v.strip()
         return v
@@ -101,5 +102,5 @@ class ServiceResponse(BaseResponse):
     """
 
     name: str
-    description: Optional[str] = None
+    description: str | None = None
     is_active: bool

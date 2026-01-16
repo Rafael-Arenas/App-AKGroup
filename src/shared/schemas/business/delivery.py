@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 Pydantic schemas for Delivery models.
 
@@ -6,7 +8,6 @@ Defines validation schemas for DeliveryOrder, Transport, and PaymentCondition.
 
 from datetime import date, datetime
 from decimal import Decimal
-from typing import Optional
 from pydantic import BaseModel, Field, field_validator, ConfigDict
 
 
@@ -32,20 +33,20 @@ class DeliveryOrderBase(BaseModel):
     order_id: int = Field(..., gt=0, description="Source order ID")
     company_id: int = Field(..., gt=0, description="Customer company ID")
     address_id: int = Field(..., gt=0, description="Delivery address ID")
-    transport_id: Optional[int] = Field(None, gt=0, description="Transport/carrier ID")
+    transport_id: int | None = Field(None, gt=0, description="Transport/carrier ID")
     staff_id: int = Field(..., gt=0, description="Staff responsible ID")
     delivery_date: date = Field(..., description="Planned delivery date")
-    actual_delivery_date: Optional[date] = Field(None, description="Actual delivery date")
+    actual_delivery_date: date | None = Field(None, description="Actual delivery date")
     status: str = Field(
         default="pending",
         description="Delivery status (pending, in_transit, delivered, cancelled)"
     )
-    tracking_number: Optional[str] = Field(None, max_length=100, description="Carrier tracking number")
-    delivery_instructions: Optional[str] = Field(None, description="Special delivery instructions")
-    signature_name: Optional[str] = Field(None, max_length=200, description="Recipient name")
-    signature_id: Optional[str] = Field(None, max_length=50, description="Recipient ID")
-    signature_datetime: Optional[datetime] = Field(None, description="Receipt datetime")
-    notes: Optional[str] = Field(None, description="Additional notes")
+    tracking_number: str | None = Field(None, max_length=100, description="Carrier tracking number")
+    delivery_instructions: str | None = Field(None, description="Special delivery instructions")
+    signature_name: str | None = Field(None, max_length=200, description="Recipient name")
+    signature_id: str | None = Field(None, max_length=50, description="Recipient ID")
+    signature_datetime: datetime | None = Field(None, description="Receipt datetime")
+    notes: str | None = Field(None, description="Additional notes")
 
     @field_validator("delivery_number", "revision")
     @classmethod
@@ -88,29 +89,29 @@ class DeliveryOrderUpdate(BaseModel):
     All fields are optional.
     """
 
-    revision: Optional[str] = Field(None, min_length=1, max_length=10)
-    address_id: Optional[int] = Field(None, gt=0)
-    transport_id: Optional[int] = Field(None, gt=0)
-    staff_id: Optional[int] = Field(None, gt=0)
-    delivery_date: Optional[date] = None
-    actual_delivery_date: Optional[date] = None
-    status: Optional[str] = None
-    tracking_number: Optional[str] = Field(None, max_length=100)
-    delivery_instructions: Optional[str] = None
-    signature_name: Optional[str] = Field(None, max_length=200)
-    signature_id: Optional[str] = Field(None, max_length=50)
-    signature_datetime: Optional[datetime] = None
-    notes: Optional[str] = None
+    revision: str | None = Field(None, min_length=1, max_length=10)
+    address_id: int | None = Field(None, gt=0)
+    transport_id: int | None = Field(None, gt=0)
+    staff_id: int | None = Field(None, gt=0)
+    delivery_date: date | None = None
+    actual_delivery_date: date | None = None
+    status: str | None = None
+    tracking_number: str | None = Field(None, max_length=100)
+    delivery_instructions: str | None = None
+    signature_name: str | None = Field(None, max_length=200)
+    signature_id: str | None = Field(None, max_length=50)
+    signature_datetime: datetime | None = None
+    notes: str | None = None
 
     @field_validator("revision")
     @classmethod
-    def uppercase_revision(cls, v: Optional[str]) -> Optional[str]:
+    def uppercase_revision(cls, v: str | None) -> str | None:
         """Convert to uppercase."""
         return v.strip().upper() if v else None
 
     @field_validator("status")
     @classmethod
-    def validate_status(cls, v: Optional[str]) -> Optional[str]:
+    def validate_status(cls, v: str | None) -> str | None:
         """Validate status is valid."""
         if v:
             valid_statuses = {"pending", "in_transit", "delivered", "cancelled"}
@@ -137,7 +138,7 @@ class DeliveryOrderListResponse(BaseModel):
     order_id: int
     company_id: int
     delivery_date: date
-    actual_delivery_date: Optional[date] = None
+    actual_delivery_date: date | None = None
     status: str
 
     model_config = ConfigDict(from_attributes=True)
@@ -151,16 +152,16 @@ class TransportBase(BaseModel):
     """Base schema for Transport."""
 
     name: str = Field(..., min_length=1, max_length=200, description="Transport company name")
-    delivery_number: Optional[str] = Field(None, max_length=100, description="Delivery reference number")
+    delivery_number: str | None = Field(None, max_length=100, description="Delivery reference number")
     transport_type: str = Field(
         default="carrier",
         description="Type: own, carrier, courier, freight_forwarder"
     )
-    contact_name: Optional[str] = Field(None, max_length=200, description="Contact person")
-    contact_phone: Optional[str] = Field(None, max_length=50, description="Contact phone")
-    contact_email: Optional[str] = Field(None, max_length=100, description="Contact email")
-    website: Optional[str] = Field(None, max_length=200, description="Company website")
-    notes: Optional[str] = Field(None, description="Additional notes")
+    contact_name: str | None = Field(None, max_length=200, description="Contact person")
+    contact_phone: str | None = Field(None, max_length=50, description="Contact phone")
+    contact_email: str | None = Field(None, max_length=100, description="Contact email")
+    website: str | None = Field(None, max_length=200, description="Company website")
+    notes: str | None = Field(None, description="Additional notes")
 
     @field_validator("name")
     @classmethod
@@ -189,18 +190,18 @@ class TransportCreate(TransportBase):
 class TransportUpdate(BaseModel):
     """Schema for updating a transport."""
 
-    name: Optional[str] = Field(None, min_length=1, max_length=200)
-    delivery_number: Optional[str] = Field(None, max_length=100)
-    transport_type: Optional[str] = None
-    contact_name: Optional[str] = Field(None, max_length=200)
-    contact_phone: Optional[str] = Field(None, max_length=50)
-    contact_email: Optional[str] = Field(None, max_length=100)
-    website: Optional[str] = Field(None, max_length=200)
-    notes: Optional[str] = None
+    name: str | None = Field(None, min_length=1, max_length=200)
+    delivery_number: str | None = Field(None, max_length=100)
+    transport_type: str | None = None
+    contact_name: str | None = Field(None, max_length=200)
+    contact_phone: str | None = Field(None, max_length=50)
+    contact_email: str | None = Field(None, max_length=100)
+    website: str | None = Field(None, max_length=200)
+    notes: str | None = None
 
     @field_validator("name")
     @classmethod
-    def name_not_empty(cls, v: Optional[str]) -> Optional[str]:
+    def name_not_empty(cls, v: str | None) -> str | None:
         """Ensure name is not empty if provided."""
         if v and not v.strip():
             raise ValueError("Name cannot be empty")
@@ -208,7 +209,7 @@ class TransportUpdate(BaseModel):
 
     @field_validator("transport_type")
     @classmethod
-    def validate_transport_type(cls, v: Optional[str]) -> Optional[str]:
+    def validate_transport_type(cls, v: str | None) -> str | None:
         """Validate transport type."""
         if v:
             valid_types = {"own", "carrier", "courier", "freight_forwarder"}
@@ -236,7 +237,7 @@ class PaymentTypeBase(BaseModel):
     code: str = Field(..., min_length=1, max_length=20, description="Payment type code (e.g., 30D, 60D, CASH)")
     name: str = Field(..., min_length=1, max_length=50, description="Display name")
     days: int = Field(default=0, ge=0, description="Number of days for this payment type")
-    description: Optional[str] = Field(None, description="Detailed description")
+    description: str | None = Field(None, description="Detailed description")
 
     @field_validator("code")
     @classmethod
@@ -254,14 +255,14 @@ class PaymentTypeCreate(PaymentTypeBase):
 class PaymentTypeUpdate(BaseModel):
     """Schema for updating a payment type."""
 
-    code: Optional[str] = Field(None, min_length=1, max_length=20)
-    name: Optional[str] = Field(None, min_length=1, max_length=50)
-    days: Optional[int] = Field(None, ge=0)
-    description: Optional[str] = None
+    code: str | None = Field(None, min_length=1, max_length=20)
+    name: str | None = Field(None, min_length=1, max_length=50)
+    days: int | None = Field(None, ge=0)
+    description: str | None = None
 
     @field_validator("code")
     @classmethod
-    def uppercase_code(cls, v: Optional[str]) -> Optional[str]:
+    def uppercase_code(cls, v: str | None) -> str | None:
         """Convert code to uppercase if provided."""
         return v.strip().upper() if v else None
 
@@ -284,9 +285,9 @@ class PaymentConditionBase(BaseModel):
     payment_condition_number: str = Field(..., min_length=1, max_length=20, description="Short number/code (e.g., 001, NET30, COD)")
     name: str = Field(..., min_length=1, max_length=100, description="Payment condition name")
     revision: str = Field(default="A", min_length=1, max_length=10, description="Revision")
-    description: Optional[str] = Field(None, description="Detailed description")
+    description: str | None = Field(None, description="Detailed description")
     payment_type_id: int = Field(..., gt=0, description="Payment type ID")
-    days_to_pay: Optional[int] = Field(None, ge=0, description="Days for payment")
+    days_to_pay: int | None = Field(None, ge=0, description="Days for payment")
     percentage_advance: Decimal = Field(
         default=Decimal("0.00"),
         ge=0,
@@ -305,9 +306,9 @@ class PaymentConditionBase(BaseModel):
         le=100,
         description="After delivery %"
     )
-    days_after_delivery: Optional[int] = Field(None, ge=0, description="Days after delivery")
+    days_after_delivery: int | None = Field(None, ge=0, description="Days after delivery")
     is_default: bool = Field(default=False, description="Is default condition")
-    notes: Optional[str] = Field(None, description="Additional notes")
+    notes: str | None = Field(None, description="Additional notes")
 
     @field_validator("payment_condition_number", "revision")
     @classmethod
@@ -333,27 +334,27 @@ class PaymentConditionCreate(PaymentConditionBase):
 class PaymentConditionUpdate(BaseModel):
     """Schema for updating a payment condition."""
 
-    name: Optional[str] = Field(None, min_length=1, max_length=100)
-    revision: Optional[str] = Field(None, min_length=1, max_length=10)
-    description: Optional[str] = None
-    payment_type_id: Optional[int] = Field(None, gt=0)
-    days_to_pay: Optional[int] = Field(None, ge=0)
-    percentage_advance: Optional[Decimal] = Field(None, ge=0, le=100)
-    percentage_on_delivery: Optional[Decimal] = Field(None, ge=0, le=100)
-    percentage_after_delivery: Optional[Decimal] = Field(None, ge=0, le=100)
-    days_after_delivery: Optional[int] = Field(None, ge=0)
-    is_default: Optional[bool] = None
-    notes: Optional[str] = None
+    name: str | None = Field(None, min_length=1, max_length=100)
+    revision: str | None = Field(None, min_length=1, max_length=10)
+    description: str | None = None
+    payment_type_id: int | None = Field(None, gt=0)
+    days_to_pay: int | None = Field(None, ge=0)
+    percentage_advance: Decimal | None = Field(None, ge=0, le=100)
+    percentage_on_delivery: Decimal | None = Field(None, ge=0, le=100)
+    percentage_after_delivery: Decimal | None = Field(None, ge=0, le=100)
+    days_after_delivery: int | None = Field(None, ge=0)
+    is_default: bool | None = None
+    notes: str | None = None
 
     @field_validator("revision")
     @classmethod
-    def uppercase_revision(cls, v: Optional[str]) -> Optional[str]:
+    def uppercase_revision(cls, v: str | None) -> str | None:
         """Convert to uppercase."""
         return v.strip().upper() if v else None
 
     @field_validator("name")
     @classmethod
-    def name_not_empty(cls, v: Optional[str]) -> Optional[str]:
+    def name_not_empty(cls, v: str | None) -> str | None:
         """Ensure name is not empty if provided."""
         if v and not v.strip():
             raise ValueError("Name cannot be empty")
@@ -364,6 +365,6 @@ class PaymentConditionResponse(PaymentConditionBase):
     """Schema for payment condition response."""
 
     id: int
-    payment_type: Optional[PaymentTypeResponse] = None
+    payment_type: PaymentTypeResponse | None = None
 
     model_config = ConfigDict(from_attributes=True)

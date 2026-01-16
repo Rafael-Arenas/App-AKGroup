@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 Schemas de Pydantic para Company, CompanyRut y Plant.
 
@@ -5,7 +7,7 @@ Define los schemas de validación para operaciones CRUD sobre empresas,
 sus RUTs y plantas.
 """
 
-from typing import Optional, List, Any
+from typing import Any
 from pydantic import Field, field_validator, field_serializer, model_validator, HttpUrl
 from sqlalchemy import inspect
 
@@ -43,12 +45,12 @@ class CompanyCreate(BaseSchema):
         max_length=3,
         description="Código de 3 letras de la empresa"
     )
-    phone: Optional[str] = Field(
+    phone: str | None = Field(
         None,
         pattern=r'^\+?[1-9]\d{1,14}$',
         description="Teléfono en formato E.164"
     )
-    website: Optional[str] = Field(
+    website: str | None = Field(
         None,
         max_length=200,
         description="Sitio web de la empresa"
@@ -58,17 +60,17 @@ class CompanyCreate(BaseSchema):
         gt=0,
         description="ID del tipo de empresa (customer, supplier, both)"
     )
-    country_id: Optional[int] = Field(
+    country_id: int | None = Field(
         None,
         gt=0,
         description="ID del país"
     )
-    city_id: Optional[int] = Field(
+    city_id: int | None = Field(
         None,
         gt=0,
         description="ID de la ciudad"
     )
-    intracommunity_number: Optional[str] = Field(
+    intracommunity_number: str | None = Field(
         None,
         max_length=50,
         description="Número intracomunitario (UE)"
@@ -99,26 +101,26 @@ class CompanyUpdate(BaseSchema):
         data = CompanyUpdate(name="Nuevo Nombre", phone="+56912345678")
     """
 
-    name: Optional[str] = Field(None, min_length=2, max_length=200)
-    trigram: Optional[str] = Field(None, min_length=3, max_length=3)
-    phone: Optional[str] = Field(None, pattern=r'^\+?[1-9]\d{1,14}$')
-    website: Optional[str] = Field(None, max_length=200)
-    company_type_id: Optional[int] = Field(None, gt=0)
-    country_id: Optional[int] = Field(None, gt=0)
-    city_id: Optional[int] = Field(None, gt=0)
-    is_active: Optional[bool] = None
-    intracommunity_number: Optional[str] = Field(None, max_length=50)
+    name: str | None = Field(None, min_length=2, max_length=200)
+    trigram: str | None = Field(None, min_length=3, max_length=3)
+    phone: str | None = Field(None, pattern=r'^\+?[1-9]\d{1,14}$')
+    website: str | None = Field(None, max_length=200)
+    company_type_id: int | None = Field(None, gt=0)
+    country_id: int | None = Field(None, gt=0)
+    city_id: int | None = Field(None, gt=0)
+    is_active: bool | None = None
+    intracommunity_number: str | None = Field(None, max_length=50)
 
     @field_validator('trigram')
     @classmethod
-    def trigram_uppercase(cls, v: Optional[str]) -> Optional[str]:
+    def trigram_uppercase(cls, v: str | None) -> str | None:
         if v:
             return v.upper().strip()
         return v
 
     @field_validator('name')
     @classmethod
-    def name_not_empty(cls, v: Optional[str]) -> Optional[str]:
+    def name_not_empty(cls, v: str | None) -> str | None:
         if v and not v.strip():
             raise ValueError("El nombre de la empresa no puede estar vacío")
         return v.strip() if v else v
@@ -138,23 +140,23 @@ class CompanyResponse(BaseResponse):
 
     name: str
     trigram: str
-    main_address: Optional[str] = None
-    phone: Optional[str] = None
-    website: Optional[str] = None
-    intracommunity_number: Optional[str] = None
+    main_address: str | None = None
+    phone: str | None = None
+    website: str | None = None
+    intracommunity_number: str | None = None
     company_type_id: int
-    country_id: Optional[int] = None
-    city_id: Optional[int] = None
+    country_id: int | None = None
+    city_id: int | None = None
     is_active: bool
 
     # Campos calculados para nombres de relaciones
-    company_type: Optional[str] = None
-    country_name: Optional[str] = None
-    city_name: Optional[str] = None
+    company_type: str | None = None
+    country_name: str | None = None
+    city_name: str | None = None
 
     # Relaciones opcionales (eager loading)
-    ruts: Optional[List['CompanyRutResponse']] = []
-    plants: Optional[List['PlantResponse']] = []
+    ruts: list[CompanyRutResponse] | None = []
+    plants: list[PlantResponse] | None = []
 
     @model_validator(mode='before')
     @classmethod
@@ -289,10 +291,10 @@ class PlantCreate(BaseSchema):
 
     company_id: int = Field(..., gt=0, description="ID de la empresa")
     name: str = Field(..., min_length=2, max_length=200, description="Nombre de la planta")
-    address: Optional[str] = Field(None, max_length=500, description="Dirección de la planta")
-    phone: Optional[str] = Field(None, pattern=r'^\+?[1-9]\d{1,14}$', description="Teléfono")
-    email: Optional[str] = Field(None, max_length=100, description="Email")
-    city_id: Optional[int] = Field(None, gt=0, description="ID de la ciudad")
+    address: str | None = Field(None, max_length=500, description="Dirección de la planta")
+    phone: str | None = Field(None, pattern=r'^\+?[1-9]\d{1,14}$', description="Teléfono")
+    email: str | None = Field(None, max_length=100, description="Email")
+    city_id: int | None = Field(None, gt=0, description="ID de la ciudad")
 
     @field_validator('name')
     @classmethod
@@ -304,7 +306,7 @@ class PlantCreate(BaseSchema):
 
     @field_validator('email')
     @classmethod
-    def email_lowercase(cls, v: Optional[str]) -> Optional[str]:
+    def email_lowercase(cls, v: str | None) -> str | None:
         """Normaliza email a minúsculas."""
         if v:
             return v.lower().strip()
@@ -321,23 +323,23 @@ class PlantUpdate(BaseSchema):
         data = PlantUpdate(name="Nuevo Nombre", phone="+56912345678")
     """
 
-    name: Optional[str] = Field(None, min_length=2, max_length=200)
-    address: Optional[str] = Field(None, max_length=500)
-    phone: Optional[str] = Field(None, pattern=r'^\+?[1-9]\d{1,14}$')
-    email: Optional[str] = Field(None, max_length=100)
-    city_id: Optional[int] = Field(None, gt=0)
-    is_active: Optional[bool] = None
+    name: str | None = Field(None, min_length=2, max_length=200)
+    address: str | None = Field(None, max_length=500)
+    phone: str | None = Field(None, pattern=r'^\+?[1-9]\d{1,14}$')
+    email: str | None = Field(None, max_length=100)
+    city_id: int | None = Field(None, gt=0)
+    is_active: bool | None = None
 
     @field_validator('name')
     @classmethod
-    def name_not_empty(cls, v: Optional[str]) -> Optional[str]:
+    def name_not_empty(cls, v: str | None) -> str | None:
         if v and not v.strip():
             raise ValueError("El nombre de la planta no puede estar vacío")
         return v.strip() if v else v
 
     @field_validator('email')
     @classmethod
-    def email_lowercase(cls, v: Optional[str]) -> Optional[str]:
+    def email_lowercase(cls, v: str | None) -> str | None:
         if v:
             return v.lower().strip()
         return v
@@ -354,8 +356,8 @@ class PlantResponse(BaseResponse):
 
     company_id: int
     name: str
-    address: Optional[str] = None
-    phone: Optional[str] = None
-    email: Optional[str] = None
-    city_id: Optional[int] = None
+    address: str | None = None
+    phone: str | None = None
+    email: str | None = None
+    city_id: int | None = None
     is_active: bool

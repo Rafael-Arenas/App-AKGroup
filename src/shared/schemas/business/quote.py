@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 Pydantic schemas for Quote and QuoteProduct models.
 
@@ -7,7 +9,6 @@ quote data through the API.
 
 from datetime import date, datetime
 from decimal import Decimal
-from typing import Optional, List
 from pydantic import BaseModel, Field, field_validator, ConfigDict
 
 from src.shared.schemas.base import BaseSchema
@@ -23,10 +24,10 @@ class ContactSummary(BaseModel):
     id: int
     first_name: str
     last_name: str
-    email: Optional[str] = None
-    phone: Optional[str] = None
-    mobile: Optional[str] = None
-    position: Optional[str] = None
+    email: str | None = None
+    phone: str | None = None
+    mobile: str | None = None
+    position: str | None = None
     
     model_config = ConfigDict(from_attributes=True)
 
@@ -46,9 +47,9 @@ class PlantSummary(BaseModel):
     
     id: int
     name: str
-    address: Optional[str] = None
-    phone: Optional[str] = None
-    email: Optional[str] = None
+    address: str | None = None
+    phone: str | None = None
+    email: str | None = None
     
     model_config = ConfigDict(from_attributes=True)
 
@@ -59,10 +60,10 @@ class StaffSummary(BaseModel):
     id: int
     first_name: str
     last_name: str
-    email: Optional[str] = None
-    phone: Optional[str] = None
-    position: Optional[str] = None
-    trigram: Optional[str] = None
+    email: str | None = None
+    phone: str | None = None
+    position: str | None = None
+    trigram: str | None = None
     
     model_config = ConfigDict(from_attributes=True)
 
@@ -72,7 +73,7 @@ class IncotermSummary(BaseModel):
     
     id: int
     code: str
-    name: Optional[str] = None
+    name: str | None = None
     
     model_config = ConfigDict(from_attributes=True)
 
@@ -88,13 +89,13 @@ class QuoteProductBase(BaseModel):
     sequence: int = Field(default=1, ge=1, description="Display order")
     quantity: Decimal = Field(..., gt=0, description="Quantity ordered")
     unit_price: Decimal = Field(..., ge=0, description="Price per unit")
-    discount_percentage: Optional[Decimal] = Field(
+    discount_percentage: Decimal | None = Field(
         default=Decimal("0.00"),
         ge=0,
         le=100,
         description="Discount percentage"
     )
-    notes: Optional[str] = Field(None, max_length=1000, description="Line item notes")
+    notes: str | None = Field(None, max_length=1000, description="Line item notes")
 
 
 class QuoteProductCreate(QuoteProductBase):
@@ -129,12 +130,12 @@ class QuoteProductUpdate(BaseModel):
         )
     """
 
-    product_id: Optional[int] = Field(None, gt=0)
-    sequence: Optional[int] = Field(None, ge=1)
-    quantity: Optional[Decimal] = Field(None, gt=0)
-    unit_price: Optional[Decimal] = Field(None, ge=0)
-    discount_percentage: Optional[Decimal] = Field(None, ge=0, le=100)
-    notes: Optional[str] = Field(None, max_length=1000)
+    product_id: int | None = Field(None, gt=0)
+    sequence: int | None = Field(None, ge=1)
+    quantity: Decimal | None = Field(None, gt=0)
+    unit_price: Decimal | None = Field(None, ge=0)
+    discount_percentage: Decimal | None = Field(None, ge=0, le=100)
+    notes: str | None = Field(None, max_length=1000)
 
 
 
@@ -143,9 +144,9 @@ class ProductSummary(BaseModel):
     
     id: int
     reference: str
-    designation_es: Optional[str] = None
-    designation_en: Optional[str] = None
-    designation_fr: Optional[str] = None
+    designation_es: str | None = None
+    designation_en: str | None = None
+    designation_fr: str | None = None
     product_type: str = "article"
     
     model_config = ConfigDict(from_attributes=True)
@@ -181,7 +182,7 @@ class QuoteProductResponse(QuoteProductBase):
     quote_id: int
     discount_amount: Decimal
     subtotal: Decimal
-    product: Optional[ProductSummary] = None
+    product: ProductSummary | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -211,27 +212,27 @@ class QuoteBase(BaseModel):
         max_length=10,
         description="Quote revision (A, B, C...)"
     )
-    unit: Optional[str] = Field(None, max_length=20, description="Unit (Unidad)")
+    unit: str | None = Field(None, max_length=20, description="Unit (Unidad)")
     company_id: int = Field(..., gt=0, description="Customer company ID")
-    company_rut_id: Optional[int] = Field(None, gt=0, description="Company RUT ID")
-    contact_id: Optional[int] = Field(None, gt=0, description="Contact person ID")
-    plant_id: Optional[int] = Field(None, gt=0, description="Plant ID")
+    company_rut_id: int | None = Field(None, gt=0, description="Company RUT ID")
+    contact_id: int | None = Field(None, gt=0, description="Contact person ID")
+    plant_id: int | None = Field(None, gt=0, description="Plant ID")
     staff_id: int = Field(..., gt=0, description="Sales person ID")
     status_id: int = Field(..., gt=0, description="Quote status ID")
     quote_date: date = Field(..., description="Quote creation date")
-    valid_until: Optional[date] = Field(None, description="Quote expiration date")
-    shipping_date: Optional[date] = Field(None, description="Estimated shipping date")
-    incoterm_id: Optional[int] = Field(None, gt=0, description="Incoterm ID")
+    valid_until: date | None = Field(None, description="Quote expiration date")
+    shipping_date: date | None = Field(None, description="Estimated shipping date")
+    incoterm_id: int | None = Field(None, gt=0, description="Incoterm ID")
     currency_id: int = Field(..., gt=0, description="Currency ID")
-    exchange_rate: Optional[Decimal] = Field(None, gt=0, description="Exchange rate")
+    exchange_rate: Decimal | None = Field(None, gt=0, description="Exchange rate")
     tax_percentage: Decimal = Field(
         default=Decimal("19.00"),
         ge=0,
         le=100,
         description="Tax percentage"
     )
-    notes: Optional[str] = Field(None, description="Customer-visible notes")
-    internal_notes: Optional[str] = Field(None, description="Internal notes only")
+    notes: str | None = Field(None, description="Customer-visible notes")
+    internal_notes: str | None = Field(None, description="Internal notes only")
 
     @field_validator("quote_number", "revision")
     @classmethod
@@ -269,7 +270,7 @@ class QuoteCreate(QuoteBase):
         )
     """
 
-    products: Optional[List[QuoteProductCreate]] = Field(
+    products: list[QuoteProductCreate] | None = Field(
         default_factory=list,
         description="List of quote products (line items)"
     )
@@ -293,31 +294,31 @@ class QuoteUpdate(BaseModel):
         )
     """
 
-    subject: Optional[str] = Field(None, min_length=1, max_length=200)
-    revision: Optional[str] = Field(None, min_length=1, max_length=10)
-    company_rut_id: Optional[int] = Field(None, gt=0)
-    contact_id: Optional[int] = Field(None, gt=0)
-    plant_id: Optional[int] = Field(None, gt=0)
-    staff_id: Optional[int] = Field(None, gt=0)
-    status_id: Optional[int] = Field(None, gt=0)
-    valid_until: Optional[date] = None
-    shipping_date: Optional[date] = None
-    incoterm_id: Optional[int] = Field(None, gt=0)
-    currency_id: Optional[int] = Field(None, gt=0)
-    exchange_rate: Optional[Decimal] = Field(None, gt=0)
-    tax_percentage: Optional[Decimal] = Field(None, ge=0, le=100)
-    notes: Optional[str] = None
-    internal_notes: Optional[str] = None
+    subject: str | None = Field(None, min_length=1, max_length=200)
+    revision: str | None = Field(None, min_length=1, max_length=10)
+    company_rut_id: int | None = Field(None, gt=0)
+    contact_id: int | None = Field(None, gt=0)
+    plant_id: int | None = Field(None, gt=0)
+    staff_id: int | None = Field(None, gt=0)
+    status_id: int | None = Field(None, gt=0)
+    valid_until: date | None = None
+    shipping_date: date | None = None
+    incoterm_id: int | None = Field(None, gt=0)
+    currency_id: int | None = Field(None, gt=0)
+    exchange_rate: Decimal | None = Field(None, gt=0)
+    tax_percentage: Decimal | None = Field(None, ge=0, le=100)
+    notes: str | None = None
+    internal_notes: str | None = None
 
     @field_validator("revision")
     @classmethod
-    def uppercase_revision(cls, v: Optional[str]) -> Optional[str]:
+    def uppercase_revision(cls, v: str | None) -> str | None:
         """Convert revision to uppercase."""
         return v.strip().upper() if v else None
 
     @field_validator("subject")
     @classmethod
-    def subject_not_empty(cls, v: Optional[str]) -> Optional[str]:
+    def subject_not_empty(cls, v: str | None) -> str | None:
         """Ensure subject is not just whitespace if provided."""
         if v and not v.strip():
             raise ValueError("Subject cannot be empty")
@@ -361,18 +362,18 @@ class QuoteResponse(QuoteBase):
     subtotal: Decimal
     tax_amount: Decimal
     total: Decimal
-    products: List[QuoteProductResponse] = Field(default_factory=list)
+    products: list[QuoteProductResponse] = Field(default_factory=list)
     
     # Timestamps
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
     
     # Related entities (expanded)
-    contact: Optional[ContactSummary] = None
-    company_rut: Optional[CompanyRutSummary] = None
-    plant: Optional[PlantSummary] = None
-    staff: Optional[StaffSummary] = None
-    incoterm: Optional[IncotermSummary] = None
+    contact: ContactSummary | None = None
+    company_rut: CompanyRutSummary | None = None
+    plant: PlantSummary | None = None
+    staff: StaffSummary | None = None
+    incoterm: IncotermSummary | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -403,7 +404,7 @@ class QuoteListResponse(BaseModel):
     staff_id: int
     status_id: int
     quote_date: date
-    valid_until: Optional[date] = None
+    valid_until: date | None = None
     total: Decimal
 
     model_config = ConfigDict(from_attributes=True)

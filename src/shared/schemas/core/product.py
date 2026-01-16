@@ -7,7 +7,6 @@ y sus componentes (BOM - Bill of Materials).
 
 from __future__ import annotations
 
-from typing import Optional, List
 from decimal import Decimal
 from pydantic import Field, field_validator
 
@@ -55,7 +54,7 @@ class ProductCreate(BaseSchema):
         max_length=200,
         description="Nombre del producto en español"
     )
-    short_designation: Optional[str] = Field(
+    short_designation: str | None = Field(
         None,
         max_length=100,
         description="Descripción corta"
@@ -64,149 +63,149 @@ class ProductCreate(BaseSchema):
         ...,
         description="Tipo: ARTICLE (simple) o NOMENCLATURE (con BOM)"
     )
-    cost_price: Optional[Decimal] = Field(
+    cost_price: Decimal | None = Field(
         None,
         ge=0,
         decimal_places=2,
         description="Precio de costo"
     )
-    sale_price: Optional[Decimal] = Field(
+    sale_price: Decimal | None = Field(
         None,
         ge=0,
         decimal_places=2,
         description="Precio de venta"
     )
-    stock_quantity: Optional[Decimal] = Field(
+    stock_quantity: Decimal | None = Field(
         default=Decimal("0.000"),
         ge=0,
         decimal_places=3,
         description="Cantidad en stock"
     )
-    minimum_stock: Optional[Decimal] = Field(
+    minimum_stock: Decimal | None = Field(
         None,
         ge=0,
         decimal_places=3,
         description="Stock mínimo"
     )
-    family_type_id: Optional[int] = Field(
+    family_type_id: int | None = Field(
         None,
         gt=0,
         description="ID de la familia de producto"
     )
-    matter_id: Optional[int] = Field(
+    matter_id: int | None = Field(
         None,
         gt=0,
         description="ID del material/materia"
     )
-    image_url: Optional[str] = Field(
+    image_url: str | None = Field(
         None,
         max_length=500,
         description="URL de la imagen del producto"
     )
-    plan_url: Optional[str] = Field(
+    plan_url: str | None = Field(
         None,
         max_length=500,
         description="URL del plano/diseño del producto"
     )
-    supplier_reference: Optional[str] = Field(
+    supplier_reference: str | None = Field(
         None,
         max_length=100,
         description="Referencia del proveedor"
     )
-    customs_number: Optional[str] = Field(
+    customs_number: str | None = Field(
         None,
         max_length=50,
         description="Número de aduana"
     )
-    purchase_price: Optional[Decimal] = Field(
+    purchase_price: Decimal | None = Field(
         None,
         ge=0,
         decimal_places=2,
         description="Precio de compra"
     )
-    sale_price_eur: Optional[Decimal] = Field(
+    sale_price_eur: Decimal | None = Field(
         None,
         ge=0,
         decimal_places=2,
         description="Precio en euros"
     )
-    stock_location: Optional[str] = Field(
+    stock_location: str | None = Field(
         None,
         max_length=100,
         description="Ubicación en almacén"
     )
-    net_weight: Optional[Decimal] = Field(
+    net_weight: Decimal | None = Field(
         None,
         ge=0,
         decimal_places=3,
         description="Peso neto (kg)"
     )
-    gross_weight: Optional[Decimal] = Field(
+    gross_weight: Decimal | None = Field(
         None,
         ge=0,
         decimal_places=3,
         description="Peso bruto (kg)"
     )
-    length: Optional[Decimal] = Field(
+    length: Decimal | None = Field(
         None,
         ge=0,
         decimal_places=3,
         description="Longitud (mm)"
     )
-    width: Optional[Decimal] = Field(
+    width: Decimal | None = Field(
         None,
         ge=0,
         decimal_places=3,
         description="Ancho (mm)"
     )
-    height: Optional[Decimal] = Field(
+    height: Decimal | None = Field(
         None,
         ge=0,
         decimal_places=3,
         description="Altura (mm)"
     )
-    volume: Optional[Decimal] = Field(
+    volume: Decimal | None = Field(
         None,
         ge=0,
         decimal_places=6,
         description="Volumen (m³)"
     )
-    hs_code: Optional[str] = Field(
+    hs_code: str | None = Field(
         None,
         max_length=20,
         description="Código arancelario"
     )
-    country_of_origin: Optional[str] = Field(
+    country_of_origin: str | None = Field(
         None,
         max_length=2,
         description="País de origen (ISO-2)"
     )
-    notes: Optional[str] = Field(
+    notes: str | None = Field(
         None,
         max_length=2000,
         description="Notas adicionales"
     )
-    sales_type_id: Optional[int] = Field(
+    sales_type_id: int | None = Field(
         None,
         gt=0,
         description="ID del tipo de venta"
     )
-    company_id: Optional[int] = Field(
+    company_id: int | None = Field(
         None,
         gt=0,
         description="ID de la empresa fabricante"
     )
-    designation_fr: Optional[str] = Field(
+    designation_fr: str | None = Field(
         None,
         max_length=200,
         description="Nombre del producto en francés"
     )
-    designation_en: Optional[str] = Field(
+    designation_en: str | None = Field(
         None,
         max_length=200,
         description="Nombre del producto en inglés"
     )
-    revision: Optional[str] = Field(
+    revision: str | None = Field(
         None,
         max_length=20,
         description="Revisión"
@@ -251,56 +250,56 @@ class ProductUpdate(BaseSchema):
         )
     """
 
-    reference: Optional[str] = Field(None, min_length=1, max_length=50)
-    designation_es: Optional[str] = Field(None, min_length=2, max_length=200)
-    short_designation: Optional[str] = Field(None, max_length=100)
-    product_type: Optional[str] = None
-    cost_price: Optional[Decimal] = Field(None, ge=0, decimal_places=2)
-    sale_price: Optional[Decimal] = Field(None, ge=0, decimal_places=2)
-    stock_quantity: Optional[Decimal] = Field(None, ge=0, decimal_places=3)
-    minimum_stock: Optional[Decimal] = Field(None, ge=0, decimal_places=3)
-    family_type_id: Optional[int] = Field(None, gt=0)
-    matter_id: Optional[int] = Field(None, gt=0)
-    image_url: Optional[str] = Field(None, max_length=500)
-    plan_url: Optional[str] = Field(None, max_length=500)
-    supplier_reference: Optional[str] = Field(None, max_length=100)
-    customs_number: Optional[str] = Field(None, max_length=50)
-    purchase_price: Optional[Decimal] = Field(None, ge=0, decimal_places=2)
-    sale_price_eur: Optional[Decimal] = Field(None, ge=0, decimal_places=2)
-    stock_location: Optional[str] = Field(None, max_length=100)
-    net_weight: Optional[Decimal] = Field(None, ge=0, decimal_places=3)
-    gross_weight: Optional[Decimal] = Field(None, ge=0, decimal_places=3)
-    length: Optional[Decimal] = Field(None, ge=0, decimal_places=3)
-    width: Optional[Decimal] = Field(None, ge=0, decimal_places=3)
-    height: Optional[Decimal] = Field(None, ge=0, decimal_places=3)
-    volume: Optional[Decimal] = Field(None, ge=0, decimal_places=6)
-    hs_code: Optional[str] = Field(None, max_length=20)
-    country_of_origin: Optional[str] = Field(None, max_length=2)
-    notes: Optional[str] = Field(None, max_length=2000)
-    sales_type_id: Optional[int] = Field(None, gt=0)
-    company_id: Optional[int] = Field(None, gt=0)
-    designation_fr: Optional[str] = Field(None, max_length=200)
-    designation_en: Optional[str] = Field(None, max_length=200)
-    revision: Optional[str] = Field(None, max_length=20)
-    is_active: Optional[bool] = None
+    reference: str | None = Field(None, min_length=1, max_length=50)
+    designation_es: str | None = Field(None, min_length=2, max_length=200)
+    short_designation: str | None = Field(None, max_length=100)
+    product_type: str | None = None
+    cost_price: Decimal | None = Field(None, ge=0, decimal_places=2)
+    sale_price: Decimal | None = Field(None, ge=0, decimal_places=2)
+    stock_quantity: Decimal | None = Field(None, ge=0, decimal_places=3)
+    minimum_stock: Decimal | None = Field(None, ge=0, decimal_places=3)
+    family_type_id: int | None = Field(None, gt=0)
+    matter_id: int | None = Field(None, gt=0)
+    image_url: str | None = Field(None, max_length=500)
+    plan_url: str | None = Field(None, max_length=500)
+    supplier_reference: str | None = Field(None, max_length=100)
+    customs_number: str | None = Field(None, max_length=50)
+    purchase_price: Decimal | None = Field(None, ge=0, decimal_places=2)
+    sale_price_eur: Decimal | None = Field(None, ge=0, decimal_places=2)
+    stock_location: str | None = Field(None, max_length=100)
+    net_weight: Decimal | None = Field(None, ge=0, decimal_places=3)
+    gross_weight: Decimal | None = Field(None, ge=0, decimal_places=3)
+    length: Decimal | None = Field(None, ge=0, decimal_places=3)
+    width: Decimal | None = Field(None, ge=0, decimal_places=3)
+    height: Decimal | None = Field(None, ge=0, decimal_places=3)
+    volume: Decimal | None = Field(None, ge=0, decimal_places=6)
+    hs_code: str | None = Field(None, max_length=20)
+    country_of_origin: str | None = Field(None, max_length=2)
+    notes: str | None = Field(None, max_length=2000)
+    sales_type_id: int | None = Field(None, gt=0)
+    company_id: int | None = Field(None, gt=0)
+    designation_fr: str | None = Field(None, max_length=200)
+    designation_en: str | None = Field(None, max_length=200)
+    revision: str | None = Field(None, max_length=20)
+    is_active: bool | None = None
 
     @field_validator('reference')
     @classmethod
-    def reference_uppercase(cls, v: Optional[str]) -> Optional[str]:
+    def reference_uppercase(cls, v: str | None) -> str | None:
         if v:
             return v.upper().strip()
         return v
 
     @field_validator('designation_es')
     @classmethod
-    def designation_not_empty(cls, v: Optional[str]) -> Optional[str]:
+    def designation_not_empty(cls, v: str | None) -> str | None:
         if v and not v.strip():
             raise ValueError("El nombre del producto no puede estar vacío")
         return v.strip() if v else v
 
     @field_validator('product_type')
     @classmethod
-    def validate_product_type(cls, v: Optional[str]) -> Optional[str]:
+    def validate_product_type(cls, v: str | None) -> str | None:
         if v:
             valid_types = {PRODUCT_TYPE_ARTICLE, PRODUCT_TYPE_NOMENCLATURE}
             if v not in valid_types:
@@ -321,51 +320,51 @@ class ProductResponse(BaseResponse):
     """
 
     reference: str
-    designation_fr: Optional[str] = None
-    designation_es: Optional[str] = None
-    designation_en: Optional[str] = None
-    short_designation: Optional[str] = None
-    revision: Optional[str] = None
+    designation_fr: str | None = None
+    designation_es: str | None = None
+    designation_en: str | None = None
+    short_designation: str | None = None
+    revision: str | None = None
     product_type: str
-    purchase_price: Optional[Decimal] = None
-    cost_price: Optional[Decimal] = None
-    sale_price: Optional[Decimal] = None
-    sale_price_eur: Optional[Decimal] = None
-    price_calculation_mode: Optional[str] = None
-    margin_percentage: Optional[Decimal] = None
-    stock_quantity: Optional[Decimal] = None
-    minimum_stock: Optional[Decimal] = None
-    stock_location: Optional[str] = None
-    family_type_id: Optional[int] = None
-    matter_id: Optional[int] = None
-    sales_type_id: Optional[int] = None
-    company_id: Optional[int] = None
-    image_url: Optional[str] = None
-    plan_url: Optional[str] = None
-    supplier_reference: Optional[str] = None
-    customs_number: Optional[str] = None
-    country_of_origin: Optional[str] = None
+    purchase_price: Decimal | None = None
+    cost_price: Decimal | None = None
+    sale_price: Decimal | None = None
+    sale_price_eur: Decimal | None = None
+    price_calculation_mode: str | None = None
+    margin_percentage: Decimal | None = None
+    stock_quantity: Decimal | None = None
+    minimum_stock: Decimal | None = None
+    stock_location: str | None = None
+    family_type_id: int | None = None
+    matter_id: int | None = None
+    sales_type_id: int | None = None
+    company_id: int | None = None
+    image_url: str | None = None
+    plan_url: str | None = None
+    supplier_reference: str | None = None
+    customs_number: str | None = None
+    country_of_origin: str | None = None
     is_active: bool
 
     # Dimensiones y peso
-    net_weight: Optional[Decimal] = None
-    gross_weight: Optional[Decimal] = None
-    length: Optional[Decimal] = None
-    width: Optional[Decimal] = None
-    height: Optional[Decimal] = None
-    volume: Optional[Decimal] = None
+    net_weight: Decimal | None = None
+    gross_weight: Decimal | None = None
+    length: Decimal | None = None
+    width: Decimal | None = None
+    height: Decimal | None = None
+    volume: Decimal | None = None
     
     # Otros
-    hs_code: Optional[str] = None
-    notes: Optional[str] = None
+    hs_code: str | None = None
+    notes: str | None = None
 
     # Relaciones opcionales
-    company: Optional['CompanyResponse'] = None
-    sales_type: Optional['SalesTypeResponse'] = None
-    family_type: Optional['FamilyTypeResponse'] = None
-    matter: Optional['MatterResponse'] = None
-    components: Optional[List['ProductComponentResponse']] = []
-    parent_components: Optional[List['ProductComponentResponse']] = []
+    company: CompanyResponse | None = None
+    sales_type: SalesTypeResponse | None = None
+    family_type: FamilyTypeResponse | None = None
+    matter: MatterResponse | None = None
+    components: list[ProductComponentResponse] | None = []
+    parent_components: list[ProductComponentResponse] | None = []
 
 
 # ============================================================================
@@ -450,8 +449,8 @@ class ProductComponentResponse(BaseResponse):
     quantity: Decimal
 
     # Información del componente (eager loading opcional)
-    component_name: Optional[str] = None
-    component_code: Optional[str] = None
+    component_name: str | None = None
+    component_code: str | None = None
 
 
 # ============================================================================

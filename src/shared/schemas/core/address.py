@@ -1,10 +1,11 @@
+from __future__ import annotations
+
 """
 Schemas de Pydantic para Address.
 
 Define los schemas de validación para operaciones CRUD sobre direcciones.
 """
 
-from typing import Optional
 
 from pydantic import Field, field_validator
 
@@ -39,17 +40,17 @@ class AddressCreate(BaseSchema):
         min_length=5,
         description="Dirección completa (calle, número, detalles)"
     )
-    city: Optional[str] = Field(
+    city: str | None = Field(
         None,
         max_length=100,
         description="Ciudad"
     )
-    postal_code: Optional[str] = Field(
+    postal_code: str | None = Field(
         None,
         max_length=20,
         description="Código postal"
     )
-    country: Optional[str] = Field(
+    country: str | None = Field(
         None,
         max_length=100,
         description="País"
@@ -80,7 +81,7 @@ class AddressCreate(BaseSchema):
 
     @field_validator('city', 'country')
     @classmethod
-    def normalize_text(cls, v: Optional[str]) -> Optional[str]:
+    def normalize_text(cls, v: str | None) -> str | None:
         """Normaliza texto (trim)."""
         if v:
             return v.strip()
@@ -88,7 +89,7 @@ class AddressCreate(BaseSchema):
 
     @field_validator('postal_code')
     @classmethod
-    def normalize_postal_code(cls, v: Optional[str]) -> Optional[str]:
+    def normalize_postal_code(cls, v: str | None) -> str | None:
         """Normaliza código postal (trim, uppercase)."""
         if v:
             return v.strip().upper()
@@ -108,16 +109,16 @@ class AddressUpdate(BaseSchema):
         )
     """
 
-    address: Optional[str] = Field(None, min_length=5)
-    city: Optional[str] = Field(None, max_length=100)
-    postal_code: Optional[str] = Field(None, max_length=20)
-    country: Optional[str] = Field(None, max_length=100)
-    is_default: Optional[bool] = None
-    address_type: Optional[AddressType] = None
+    address: str | None = Field(None, min_length=5)
+    city: str | None = Field(None, max_length=100)
+    postal_code: str | None = Field(None, max_length=20)
+    country: str | None = Field(None, max_length=100)
+    is_default: bool | None = None
+    address_type: AddressType | None = None
 
     @field_validator('address')
     @classmethod
-    def address_not_empty(cls, v: Optional[str]) -> Optional[str]:
+    def address_not_empty(cls, v: str | None) -> str | None:
         if v is not None:
             if not v.strip():
                 raise ValueError("La dirección no puede estar vacía")
@@ -128,14 +129,14 @@ class AddressUpdate(BaseSchema):
 
     @field_validator('city', 'country')
     @classmethod
-    def normalize_text(cls, v: Optional[str]) -> Optional[str]:
+    def normalize_text(cls, v: str | None) -> str | None:
         if v:
             return v.strip()
         return v
 
     @field_validator('postal_code')
     @classmethod
-    def normalize_postal_code(cls, v: Optional[str]) -> Optional[str]:
+    def normalize_postal_code(cls, v: str | None) -> str | None:
         if v:
             return v.strip().upper()
         return v
@@ -154,9 +155,9 @@ class AddressResponse(BaseResponse):
     """
 
     address: str
-    city: Optional[str] = None
-    postal_code: Optional[str] = None
-    country: Optional[str] = None
+    city: str | None = None
+    postal_code: str | None = None
+    country: str | None = None
     is_default: bool
     address_type: AddressType
     company_id: int
