@@ -8,7 +8,7 @@ schemas de prueba, y utilidades comunes para tests de la capa de lógica de nego
 import pytest
 from decimal import Decimal
 from unittest.mock import Mock, MagicMock
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from sqlalchemy.orm import Session
 
 from src.backend.services.base import BaseService
@@ -37,14 +37,12 @@ class MockUpdateSchema(BaseModel):
 
 class MockResponseSchema(BaseModel):
     """Schema mock para response."""
+    model_config = ConfigDict(from_attributes=True)
 
     id: int
     name: str
     trigram: str
     company_type_id: int
-
-    class Config:
-        from_attributes = True
 
 
 class MockProductCreateSchema(BaseModel):
@@ -69,6 +67,7 @@ class MockProductUpdateSchema(BaseModel):
 
 class MockProductResponseSchema(BaseModel):
     """Schema mock para Product response."""
+    model_config = ConfigDict(from_attributes=True)
 
     id: int
     product_type: str
@@ -77,9 +76,6 @@ class MockProductResponseSchema(BaseModel):
     family_type_id: int
     cost_price: Decimal | None = None
     sale_price: Decimal | None = None
-
-    class Config:
-        from_attributes = True
 
 
 # ===================== BASE SERVICE FIXTURES =====================
