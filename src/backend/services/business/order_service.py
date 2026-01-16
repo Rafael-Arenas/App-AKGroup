@@ -5,7 +5,7 @@ Handles order operations including validation, calculations,
 conversions from quotes, and status management.
 """
 
-from typing import List, Optional
+
 from decimal import Decimal
 from datetime import date
 from sqlalchemy.orm import Session
@@ -214,7 +214,7 @@ class OrderService(BaseService[Order, OrderCreate, OrderUpdate, OrderResponse]):
         company_id: int,
         skip: int = 0,
         limit: int = 100
-    ) -> List[OrderListResponse]:
+    ) -> list[OrderListResponse]:
         """
         Get all orders for a company.
 
@@ -238,7 +238,7 @@ class OrderService(BaseService[Order, OrderCreate, OrderUpdate, OrderResponse]):
         status_id: int,
         skip: int = 0,
         limit: int = 100
-    ) -> List[OrderListResponse]:
+    ) -> list[OrderListResponse]:
         """
         Get orders by status.
 
@@ -259,7 +259,7 @@ class OrderService(BaseService[Order, OrderCreate, OrderUpdate, OrderResponse]):
         staff_id: int,
         skip: int = 0,
         limit: int = 100
-    ) -> List[OrderListResponse]:
+    ) -> list[OrderListResponse]:
         """
         Get orders assigned to staff member.
 
@@ -494,9 +494,9 @@ class OrderService(BaseService[Order, OrderCreate, OrderUpdate, OrderResponse]):
         self,
         quote_id: int,
         user_id: int,
-        order_number: Optional[str] = None,
-        status_id: Optional[int] = None,
-        payment_status_id: Optional[int] = None,
+        order_number: str | None = None,
+        status_id: int | None = None,
+        payment_status_id: int | None = None,
     ) -> OrderResponse:
         """
         Create order from an accepted quote.

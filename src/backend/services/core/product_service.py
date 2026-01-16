@@ -6,7 +6,7 @@ incluyendo gestión de BOM (Bill of Materials) con detección de ciclos.
 """
 
 from decimal import Decimal
-from typing import List, Set
+
 
 from sqlalchemy.orm import Session
 
@@ -149,7 +149,7 @@ class ProductService(BaseService[Product, ProductCreate, ProductUpdate, ProductR
 
         return self.response_schema.model_validate(product)
 
-    def search(self, query: str) -> List[ProductResponse]:
+    def search(self, query: str) -> list[ProductResponse]:
         """
         Busca productos por código o nombre.
 
@@ -197,7 +197,7 @@ class ProductService(BaseService[Product, ProductCreate, ProductUpdate, ProductR
 
         return self.response_schema.model_validate(product)
 
-    def get_by_type(self, product_type: str, skip: int = 0, limit: int = 100) -> List[ProductResponse]:
+    def get_by_type(self, product_type: str, skip: int = 0, limit: int = 100) -> list[ProductResponse]:
         """
         Obtiene productos por tipo.
 
@@ -405,7 +405,7 @@ class ProductService(BaseService[Product, ProductCreate, ProductUpdate, ProductR
             return True
 
         # Caso 2: Buscar ciclos recursivamente
-        visited: Set[int] = set()
+        visited: set[int] = set()
 
         def has_cycle_recursive(current_id: int) -> bool:
             """Búsqueda recursiva de ciclos."""

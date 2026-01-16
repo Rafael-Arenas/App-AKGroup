@@ -4,7 +4,7 @@ Service layer for Invoice business logic.
 Handles InvoiceSII and InvoiceExport operations.
 """
 
-from typing import List
+
 from sqlalchemy.orm import Session
 
 from src.backend.models.business.invoices import InvoiceSII, InvoiceExport
@@ -50,7 +50,7 @@ class InvoiceSIIService(BaseService[InvoiceSII, InvoiceSIICreate, InvoiceSIIUpda
             raise NotFoundException(f"Invoice not found: {invoice_number}")
         return self.response_schema.model_validate(invoice)
 
-    def get_by_company(self, company_id: int, skip: int = 0, limit: int = 100) -> List[InvoiceSIIListResponse]:
+    def get_by_company(self, company_id: int, skip: int = 0, limit: int = 100) -> list[InvoiceSIIListResponse]:
         """Get invoices by company."""
         logger.info(f"Getting SII invoices for company_id={company_id}")
         invoices = self.invoice_repo.get_by_company(company_id, skip, limit)
@@ -90,7 +90,7 @@ class InvoiceExportService(BaseService[InvoiceExport, InvoiceExportCreate, Invoi
             raise NotFoundException(f"Invoice not found: {invoice_number}")
         return self.response_schema.model_validate(invoice)
 
-    def get_by_company(self, company_id: int, skip: int = 0, limit: int = 100) -> List[InvoiceExportListResponse]:
+    def get_by_company(self, company_id: int, skip: int = 0, limit: int = 100) -> list[InvoiceExportListResponse]:
         """Get invoices by company."""
         logger.info(f"Getting export invoices for company_id={company_id}")
         invoices = self.invoice_repo.get_by_company(company_id, skip, limit)

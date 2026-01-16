@@ -2,7 +2,7 @@
 Servicio para Plant.
 """
 
-from typing import List, Optional
+
 
 from sqlalchemy.orm import Session
 
@@ -21,7 +21,7 @@ class PlantService(BaseService[Plant, PlantCreate, PlantUpdate, PlantResponse]):
         super().__init__(repository, session, Plant, PlantResponse)
         self.repository = repository
 
-    def get_by_company(self, company_id: int, skip: int = 0, limit: int = 100) -> List[Plant]:
+    def get_by_company(self, company_id: int, skip: int = 0, limit: int = 100) -> list[Plant]:
         """
         Obtiene plantas de una empresa.
         """

@@ -17,7 +17,7 @@ Provides business logic for all 12 lookup tables:
 """
 
 from sqlalchemy.orm import Session
-from typing import List, Optional
+
 
 from src.backend.models.lookups import (
     Country,
@@ -208,7 +208,7 @@ class CityService(BaseService[City, CityCreate, CityUpdate, CityResponse]):
         """
         pass
 
-    def get_by_country(self, country_id: int) -> List[CityResponse]:
+    def get_by_country(self, country_id: int) -> list[CityResponse]:
         """
         Get all cities in a country.
 

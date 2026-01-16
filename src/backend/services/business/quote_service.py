@@ -5,7 +5,7 @@ Handles quote operations including validation, calculations,
 and complex business rules.
 """
 
-from typing import List
+
 from decimal import Decimal
 from sqlalchemy.orm import Session
 
@@ -237,7 +237,7 @@ class QuoteService(BaseService[Quote, QuoteCreate, QuoteUpdate, QuoteResponse]):
         company_id: int,
         skip: int = 0,
         limit: int = 100
-    ) -> List[QuoteListResponse]:
+    ) -> list[QuoteListResponse]:
         """
         Get all quotes for a company.
 
@@ -261,7 +261,7 @@ class QuoteService(BaseService[Quote, QuoteCreate, QuoteUpdate, QuoteResponse]):
         status_id: int,
         skip: int = 0,
         limit: int = 100
-    ) -> List[QuoteListResponse]:
+    ) -> list[QuoteListResponse]:
         """
         Get quotes by status.
 
@@ -282,7 +282,7 @@ class QuoteService(BaseService[Quote, QuoteCreate, QuoteUpdate, QuoteResponse]):
         staff_id: int,
         skip: int = 0,
         limit: int = 100
-    ) -> List[QuoteListResponse]:
+    ) -> list[QuoteListResponse]:
         """
         Get quotes assigned to staff member.
 
@@ -303,7 +303,7 @@ class QuoteService(BaseService[Quote, QuoteCreate, QuoteUpdate, QuoteResponse]):
         subject: str,
         skip: int = 0,
         limit: int = 100
-    ) -> List[QuoteListResponse]:
+    ) -> list[QuoteListResponse]:
         """
         Search quotes by subject.
 

@@ -5,7 +5,7 @@ Proporciona operaciones de negocio genéricas que son heredadas por
 todos los servicios específicos de la aplicación.
 """
 
-from typing import Generic, TypeVar, Optional, List
+from typing import Generic, TypeVar
 
 from sqlalchemy.orm import Session
 
@@ -91,7 +91,7 @@ class BaseService(Generic[T, CreateSchema, UpdateSchema, ResponseSchema]):
 
         return self.response_schema.model_validate(entity)
 
-    def get_all(self, skip: int = 0, limit: int = 100) -> List[ResponseSchema]:
+    def get_all(self, skip: int = 0, limit: int = 100) -> list[ResponseSchema]:
         """
         Obtiene todas las entidades con paginación.
 

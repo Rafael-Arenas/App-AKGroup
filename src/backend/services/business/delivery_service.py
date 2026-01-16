@@ -4,7 +4,7 @@ Service layer for Delivery business logic.
 Handles delivery orders, transport, and payment conditions.
 """
 
-from typing import List
+
 from sqlalchemy.orm import Session
 from datetime import date, datetime
 
@@ -180,7 +180,7 @@ class DeliveryOrderService(BaseService[DeliveryOrder, DeliveryOrderCreate, Deliv
         company_id: int,
         skip: int = 0,
         limit: int = 100
-    ) -> List[DeliveryOrderListResponse]:
+    ) -> list[DeliveryOrderListResponse]:
         """Get delivery orders by company."""
         logger.info(f"Getting delivery orders for company_id={company_id}")
         deliveries = self.delivery_repo.get_by_company(company_id, skip, limit)
@@ -191,7 +191,7 @@ class DeliveryOrderService(BaseService[DeliveryOrder, DeliveryOrderCreate, Deliv
         status: str,
         skip: int = 0,
         limit: int = 100
-    ) -> List[DeliveryOrderListResponse]:
+    ) -> list[DeliveryOrderListResponse]:
         """Get delivery orders by status."""
         logger.info(f"Getting delivery orders with status={status}")
         deliveries = self.delivery_repo.get_by_status(status, skip, limit)
@@ -299,7 +299,7 @@ class TransportService(BaseService[Transport, TransportCreate, TransportUpdate, 
         transport_type: str,
         skip: int = 0,
         limit: int = 100
-    ) -> List[TransportResponse]:
+    ) -> list[TransportResponse]:
         """Get transports by type."""
         logger.info(f"Getting transports with type={transport_type}")
         transports = self.transport_repo.get_by_type(transport_type, skip, limit)
