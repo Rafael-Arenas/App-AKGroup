@@ -218,7 +218,7 @@ class PaymentConditionRepository(BaseRepository[PaymentCondition]):
     def get_default(self) -> PaymentCondition | None:
         """Get default payment condition."""
         logger.debug("Getting default payment condition")
-        stmt = select(PaymentCondition).filter(PaymentCondition.is_default == True)
+        stmt = select(PaymentCondition).filter(PaymentCondition.is_default.is_(True))
         condition = self.session.execute(stmt).scalar_one_or_none()
         if condition:
             logger.debug(f"Default payment condition found: {condition.payment_condition_number}")

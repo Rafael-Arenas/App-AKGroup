@@ -9,7 +9,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Sequence
 from typing import Generic, TypeVar
 
-from sqlalchemy import select, func, exists, literal
+from sqlalchemy import select, func, exists, literal, update, delete
 from sqlalchemy.orm import DeclarativeBase, Session
 
 from src.backend.exceptions.repository import NotFoundException
@@ -74,6 +74,8 @@ class BaseRepository(IRepository[T], Generic[T]):
             def get_by_trigram(self, trigram: str) -> Company | None:
                 return self.session.query(self.model).filter_by(trigram=trigram).first()
     """
+
+    __slots__ = ("session", "model")
 
     def __init__(self, session: Session, model: type[T]):
         """
@@ -474,8 +476,6 @@ class BaseRepository(IRepository[T], Generic[T]):
         if not ids or not values:
             return 0
 
-        from sqlalchemy import update
-
         logger.debug(f"Actualizando {len(ids)} {self.model.__name__}(s) en bulk")
         stmt = update(self.model).where(self.model.id.in_(ids)).values(**values)
         result = self.session.execute(stmt)
@@ -508,8 +508,6 @@ class BaseRepository(IRepository[T], Generic[T]):
         """
         if not ids:
             return 0
-
-        from sqlalchemy import delete
 
         logger.debug(f"Eliminando {len(ids)} {self.model.__name__}(s) en bulk")
         stmt = delete(self.model).where(self.model.id.in_(ids))
@@ -639,7 +637,7 @@ class GenericLookupRepository(BaseRepository[T]):
         # Determinar columna de ordenamiento
         order_col = getattr(self.model, self.name_column, None) or getattr(self.model, self.code_column, None)
 
-        stmt = select(self.model).filter(is_active_col == True)
+        stmt = select(self.model).filter(is_active_col.is_(True))
 
         if order_col is not None:
             stmt = stmt.order_by(order_col)

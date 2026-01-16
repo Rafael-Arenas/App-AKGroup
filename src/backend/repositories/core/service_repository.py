@@ -86,7 +86,7 @@ class ServiceRepository(BaseRepository[Service]):
 
         stmt = (
             select(Service)
-            .filter(Service.is_active == True)
+            .filter(Service.is_active.is_(True))
             .order_by(Service.name)
             .offset(skip)
             .limit(limit)

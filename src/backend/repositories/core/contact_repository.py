@@ -82,7 +82,7 @@ class ContactRepository(BaseRepository[Contact]):
             select(Contact)
             .filter(
                 Contact.company_id == company_id,
-                Contact.is_active == True
+                Contact.is_active.is_(True)
             )
             .order_by(Contact.last_name, Contact.first_name)
         )

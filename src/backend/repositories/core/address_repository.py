@@ -82,7 +82,7 @@ class AddressRepository(BaseRepository[Address]):
 
         stmt = select(Address).filter(
             Address.company_id == company_id,
-            Address.is_default == True
+            Address.is_default.is_(True)
         )
         address = self.session.execute(stmt).scalar_one_or_none()
 

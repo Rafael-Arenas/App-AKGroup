@@ -81,7 +81,7 @@ class CompanyRutRepository(BaseRepository[CompanyRut]):
 
         stmt = select(CompanyRut).filter(
             CompanyRut.company_id == company_id,
-            CompanyRut.is_main == True
+            CompanyRut.is_main.is_(True)
         )
         rut = self.session.execute(stmt).scalar_one_or_none()
 
@@ -144,7 +144,7 @@ class CompanyRutRepository(BaseRepository[CompanyRut]):
             update(CompanyRut)
             .filter(
                 CompanyRut.company_id == rut.company_id,
-                CompanyRut.is_main == True
+                CompanyRut.is_main.is_(True)
             )
             .values(is_main=False)
         )

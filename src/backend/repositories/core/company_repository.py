@@ -118,7 +118,7 @@ class CompanyRepository(BaseRepository[Company]):
 
         # Aplicar filtro de estado si se especifica
         if is_active is not None:
-            stmt = stmt.filter(Company.is_active == is_active)
+            stmt = stmt.filter(Company.is_active.is_(is_active))
 
         companies = self.session.execute(stmt.offset(skip).limit(limit)).scalars().all()
 
@@ -230,7 +230,7 @@ class CompanyRepository(BaseRepository[Company]):
         logger.debug(f"Obteniendo empresas activas - skip={skip}, limit={limit}")
         stmt = (
             select(Company)
-            .filter(Company.is_active == True)
+            .filter(Company.is_active.is_(True))
             .offset(skip)
             .limit(limit)
         )
@@ -300,7 +300,7 @@ class CompanyRutRepository(BaseRepository[CompanyRut]):
         logger.debug(f"Obteniendo RUT principal de empresa id={company_id}")
         stmt = select(CompanyRut).filter(
             CompanyRut.company_id == company_id,
-            CompanyRut.is_main == True
+            CompanyRut.is_main.is_(True)
         )
         primary_rut = self.session.execute(stmt).scalar_one_or_none()
 
@@ -351,7 +351,7 @@ class PlantRepository(BaseRepository[Plant]):
         logger.debug(f"Obteniendo plantas activas de empresa id={company_id}")
         stmt = select(Plant).filter(
             Plant.company_id == company_id,
-            Plant.is_active == True
+            Plant.is_active.is_(True)
         ).order_by(Plant.name)
         plants = self.session.execute(stmt).scalars().all()
 

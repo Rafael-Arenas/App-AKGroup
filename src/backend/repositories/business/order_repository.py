@@ -232,7 +232,7 @@ class OrderRepository(BaseRepository[Order]):
         logger.debug("Getting export orders")
         stmt = (
             select(Order)
-            .filter(Order.is_export == True)
+            .filter(Order.is_export.is_(True))
             .order_by(Order.order_date.desc())
             .offset(skip)
             .limit(limit)

@@ -134,7 +134,7 @@ class StaffRepository(BaseRepository[Staff]):
 
         stmt = (
             select(Staff)
-            .filter(Staff.is_active == True)
+            .filter(Staff.is_active.is_(True))
             .order_by(Staff.last_name, Staff.first_name)
             .offset(skip)
             .limit(limit)
@@ -162,7 +162,7 @@ class StaffRepository(BaseRepository[Staff]):
 
         stmt = (
             select(Staff)
-            .filter(Staff.is_admin == True)
+            .filter(Staff.is_admin.is_(True))
             .order_by(Staff.last_name, Staff.first_name)
             .offset(skip)
             .limit(limit)
@@ -187,8 +187,8 @@ class StaffRepository(BaseRepository[Staff]):
         stmt = (
             select(Staff)
             .filter(
-                Staff.is_admin == True,
-                Staff.is_active == True
+                Staff.is_admin.is_(True),
+                Staff.is_active.is_(True)
             )
             .order_by(Staff.last_name, Staff.first_name)
         )

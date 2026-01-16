@@ -141,7 +141,7 @@ class ProductRepository(BaseRepository[Product]):
         logger.debug(f"Obteniendo productos activos - skip={skip}, limit={limit}")
         stmt = (
             select(Product)
-            .filter(Product.is_active == True)
+            .filter(Product.is_active.is_(True))
             .order_by(Product.reference)
             .offset(skip)
             .limit(limit)
@@ -202,7 +202,7 @@ class ProductRepository(BaseRepository[Product]):
             .filter(
                 Product.stock_quantity < Product.minimum_stock,
                 Product.minimum_stock.isnot(None),
-                Product.is_active == True
+                Product.is_active.is_(True)
             )
             .order_by(Product.reference)
             .offset(skip)
