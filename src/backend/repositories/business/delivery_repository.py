@@ -5,9 +5,8 @@ Handles data access for DeliveryOrder, DeliveryDate, Transport, and PaymentCondi
 """
 
 from collections.abc import Sequence
-from datetime import date
 
-from sqlalchemy import select, and_
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from src.backend.models.business.delivery import DeliveryOrder, DeliveryDate, Transport, PaymentCondition

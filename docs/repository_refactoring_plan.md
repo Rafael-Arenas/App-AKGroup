@@ -108,10 +108,12 @@ return merged
 ```
 
 ### Checklist Fase 2:
-- [ ] Eliminar `list()` redundantes en todos los archivos
-- [ ] Eliminar imports no usados
-- [ ] Optimizar `update()` en `base.py`
-- [ ] Revisar y eliminar código duplicado
+- [x] Eliminar `list()` redundantes en todos los archivos ✅ (ya hecho en Fase 1)
+- [x] Eliminar imports no usados (8 corregidos con ruff --fix) ✅
+- [x] Optimizar `update()` en `base.py` - Ahora usa `exists()` + retorna merged ✅
+- [x] Agregar método `exists()` eficiente a BaseRepository ✅
+
+**Estado: ✅ COMPLETADA** (2026-01-15)
 
 ---
 
@@ -153,10 +155,12 @@ def delete_many(self, ids: list[int]) -> int:
 ```
 
 ### Checklist Fase 3:
-- [ ] Implementar `create_many()` en BaseRepository
-- [ ] Implementar `update_many()` en BaseRepository
-- [ ] Implementar `delete_many()` en BaseRepository
-- [ ] Agregar tests para operaciones bulk
+- [x] Implementar `create_many()` en BaseRepository ✅
+- [x] Implementar `update_many()` en BaseRepository ✅
+- [x] Implementar `delete_many()` en BaseRepository ✅
+- [x] Agregar tests para operaciones bulk (12 tests nuevos) ✅
+
+**Estado: ✅ COMPLETADA** (2026-01-15)
 
 ---
 

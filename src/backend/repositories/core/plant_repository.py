@@ -4,12 +4,11 @@ Repositorio para Plant.
 
 from typing import List, Optional
 
-from sqlalchemy import select, or_
+from sqlalchemy import select
 from sqlalchemy.orm import Session, joinedload
 
 from src.backend.models.core.companies import Plant
 from src.backend.repositories.base import BaseRepository
-from src.shared.schemas.core.plant import PlantCreate, PlantUpdate
 
 
 class PlantRepository(BaseRepository[Plant]):

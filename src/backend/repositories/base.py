@@ -9,7 +9,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Sequence
 from typing import Generic, TypeVar
 
-from sqlalchemy import select, func, exists
+from sqlalchemy import select, func, exists, literal
 from sqlalchemy.orm import DeclarativeBase, Session
 
 from src.backend.exceptions.repository import NotFoundException
@@ -136,6 +136,26 @@ class BaseRepository(IRepository[T], Generic[T]):
         logger.debug(f"Encontrados {len(entities)} {self.model.__name__}(s)")
         return entities
 
+    def exists(self, id: int) -> bool:
+        """
+        Verifica si existe una entidad por su ID.
+
+        Más eficiente que get_by_id() ya que solo hace SELECT 1.
+
+        Args:
+            id: ID de la entidad
+
+        Returns:
+            True si existe, False en caso contrario
+
+        Example:
+            if repository.exists(123):
+                print("La entidad existe")
+        """
+        stmt = select(literal(1)).select_from(self.model).filter(self.model.id == id)
+        result = self.session.execute(stmt).scalar()
+        return result is not None
+
     def create(self, entity: T) -> T:
         """
         Crea una nueva entidad.
@@ -169,13 +189,14 @@ class BaseRepository(IRepository[T], Generic[T]):
             entity: Entidad a actualizar (debe tener ID)
 
         Returns:
-            Entidad actualizada
+            Entidad actualizada (merged)
 
         Raises:
             NotFoundException: Si la entidad no existe
 
         Note:
             Esta operación hace flush() pero NO commit().
+            Usa merge() que es más eficiente que get_by_id() + modificación.
 
         Example:
             company = repository.get_by_id(123)
@@ -185,18 +206,18 @@ class BaseRepository(IRepository[T], Generic[T]):
         """
         logger.debug(f"Actualizando {self.model.__name__} con id={entity.id}")
 
-        # Verificar que existe
-        existing = self.get_by_id(entity.id)
-        if not existing:
+        # Verificar existencia con exists() que es más eficiente que get_by_id()
+        if not self.exists(entity.id):
             raise NotFoundException(
                 f"{self.model.__name__} no encontrado",
                 details={"id": entity.id}
             )
 
-        self.session.merge(entity)
+        # merge() sincroniza el estado de la entidad con la sesión
+        merged = self.session.merge(entity)
         self.session.flush()
         logger.info(f"{self.model.__name__} actualizado: id={entity.id}")
-        return entity
+        return merged
 
     def delete(self, id: int) -> None:
         """
@@ -289,21 +310,109 @@ class BaseRepository(IRepository[T], Generic[T]):
         logger.debug(f"Total {self.model.__name__}: {count}")
         return count
 
-    def exists(self, id: int) -> bool:
+    # =========================================================================
+    # Bulk Operations
+    # =========================================================================
+
+    def create_many(self, entities: list[T]) -> list[T]:
         """
-        Verifica si existe una entidad con el ID dado.
+        Crea múltiples entidades en una operación.
 
         Args:
-            id: ID a verificar
+            entities: Lista de entidades a crear
 
         Returns:
-            True si existe, False en caso contrario
+            Lista de entidades creadas con IDs asignados
+
+        Note:
+            Esta operación hace flush() pero NO commit().
+            Más eficiente que llamar create() múltiples veces.
 
         Example:
-            if repository.exists(123):
-                print("La empresa existe")
+            companies = [
+                Company(name="Empresa 1", trigram="EM1"),
+                Company(name="Empresa 2", trigram="EM2"),
+            ]
+            created = repository.create_many(companies)
+            session.commit()
         """
-        stmt = select(exists().where(self.model.id == id))
-        exists_result = self.session.execute(stmt).scalar() or False
-        logger.debug(f"{self.model.__name__} id={id} existe: {exists_result}")
-        return exists_result
+        if not entities:
+            return []
+
+        logger.debug(f"Creando {len(entities)} {self.model.__name__}(s) en bulk")
+        self.session.add_all(entities)
+        self.session.flush()
+        logger.info(f"{len(entities)} {self.model.__name__}(s) creados en bulk")
+        return entities
+
+    def update_many(self, ids: list[int], values: dict) -> int:
+        """
+        Actualiza múltiples registros por IDs.
+
+        Args:
+            ids: Lista de IDs a actualizar
+            values: Diccionario con columnas y valores a actualizar
+
+        Returns:
+            Número de filas actualizadas
+
+        Note:
+            Esta operación hace flush() pero NO commit().
+            Usa UPDATE masivo, muy eficiente para actualizaciones simples.
+
+        Example:
+            # Desactivar múltiples empresas
+            count = repository.update_many(
+                ids=[1, 2, 3],
+                values={"is_active": False}
+            )
+            print(f"{count} empresas desactivadas")
+            session.commit()
+        """
+        if not ids or not values:
+            return 0
+
+        from sqlalchemy import update
+
+        logger.debug(f"Actualizando {len(ids)} {self.model.__name__}(s) en bulk")
+        stmt = update(self.model).where(self.model.id.in_(ids)).values(**values)
+        result = self.session.execute(stmt)
+        self.session.flush()
+        rowcount = result.rowcount
+        logger.info(f"{rowcount} {self.model.__name__}(s) actualizados en bulk")
+        return rowcount
+
+    def delete_many(self, ids: list[int]) -> int:
+        """
+        Elimina múltiples registros por IDs.
+
+        Args:
+            ids: Lista de IDs a eliminar
+
+        Returns:
+            Número de filas eliminadas
+
+        Warning:
+            Esta operación es PERMANENTE. Considera usar soft delete.
+
+        Note:
+            Esta operación hace flush() pero NO commit().
+            Usa DELETE masivo, muy eficiente.
+
+        Example:
+            count = repository.delete_many([1, 2, 3])
+            print(f"{count} empresas eliminadas")
+            session.commit()
+        """
+        if not ids:
+            return 0
+
+        from sqlalchemy import delete
+
+        logger.debug(f"Eliminando {len(ids)} {self.model.__name__}(s) en bulk")
+        stmt = delete(self.model).where(self.model.id.in_(ids))
+        result = self.session.execute(stmt)
+        self.session.flush()
+        rowcount = result.rowcount
+        logger.warning(f"{rowcount} {self.model.__name__}(s) eliminados permanentemente en bulk")
+        return rowcount

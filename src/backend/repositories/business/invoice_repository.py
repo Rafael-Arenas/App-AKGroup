@@ -5,7 +5,6 @@ Handles data access for InvoiceSII and InvoiceExport.
 """
 
 from collections.abc import Sequence
-from datetime import date
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 

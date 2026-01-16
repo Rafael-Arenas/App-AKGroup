@@ -5,7 +5,6 @@ Maneja el acceso a datos para productos y sus componentes (BOM).
 """
 
 from collections.abc import Sequence
-from decimal import Decimal
 
 from sqlalchemy import or_, select
 from sqlalchemy.orm import Session, selectinload

@@ -15,7 +15,6 @@ from src.backend.models.lookups import (
     FamilyType, Matter, SalesType, QuoteStatus, OrderStatus, PaymentStatus
 )
 from src.backend.repositories.base import BaseRepository
-from src.backend.utils.logger import logger
 
 
 class CountryRepository(BaseRepository[Country]):

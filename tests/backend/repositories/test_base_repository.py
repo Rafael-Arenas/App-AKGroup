@@ -596,3 +596,199 @@ class TestBaseRepositoryEdgeCases:
         page1_ids = {c.id for c in page1}
         page2_ids = {c.id for c in page2}
         assert len(page1_ids & page2_ids) == 0  # Sin intersección
+
+
+# ============= BULK OPERATIONS TESTS =============
+
+
+class TestBaseRepositoryBulkOperations:
+    """Tests para operaciones bulk (create_many, update_many, delete_many)."""
+
+    def test_create_many_creates_multiple_entities(
+        self, base_repository, sample_company_type, session
+    ):
+        """Test que create_many crea múltiples entidades."""
+        # Arrange
+        companies = [
+            Company(name=f"Bulk Company {i}", trigram=f"BK{chr(65+i)}", company_type_id=sample_company_type.id)
+            for i in range(5)
+        ]
+
+        # Act
+        result = base_repository.create_many(companies)
+        session.commit()
+
+        # Assert
+        assert len(result) == 5
+        assert all(c.id is not None for c in result)
+        assert base_repository.count() == 5
+
+    def test_create_many_with_empty_list_returns_empty(self, base_repository):
+        """Test que create_many con lista vacía retorna lista vacía."""
+        # Act
+        result = base_repository.create_many([])
+
+        # Assert
+        assert result == []
+
+    def test_create_many_flushes_without_commit(
+        self, base_repository, sample_company_type, session
+    ):
+        """Test que create_many hace flush pero NO commit."""
+        # Arrange
+        companies = [
+            Company(name=f"NoCommit {i}", trigram=f"NC{chr(65+i)}", company_type_id=sample_company_type.id)
+            for i in range(3)
+        ]
+
+        # Act
+        result = base_repository.create_many(companies)
+        # NO commit
+
+        # Assert - tienen IDs (flush hizo su trabajo)
+        assert all(c.id is not None for c in result)
+
+        # Rollback
+        session.rollback()
+
+        # Assert - no se guardaron
+        assert base_repository.count() == 0
+
+    def test_update_many_updates_multiple_entities(
+        self, base_repository, create_test_companies, session
+    ):
+        """Test que update_many actualiza múltiples entidades."""
+        # Arrange
+        companies = create_test_companies(5)
+        ids = [c.id for c in companies]
+
+        # Act
+        rowcount = base_repository.update_many(ids[:3], {"is_active": False})
+        session.commit()
+
+        # Assert
+        assert rowcount == 3
+        for company_id in ids[:3]:
+            company = base_repository.get_by_id(company_id)
+            assert company.is_active is False
+        # Los otros 2 deben seguir activos
+        for company_id in ids[3:]:
+            company = base_repository.get_by_id(company_id)
+            assert company.is_active is True
+
+    def test_update_many_with_empty_ids_returns_zero(self, base_repository):
+        """Test que update_many con IDs vacíos retorna 0."""
+        # Act
+        rowcount = base_repository.update_many([], {"is_active": False})
+
+        # Assert
+        assert rowcount == 0
+
+    def test_update_many_with_empty_values_returns_zero(
+        self, base_repository, create_test_companies, session
+    ):
+        """Test que update_many con valores vacíos retorna 0."""
+        # Arrange
+        companies = create_test_companies(3)
+        ids = [c.id for c in companies]
+
+        # Act
+        rowcount = base_repository.update_many(ids, {})
+
+        # Assert
+        assert rowcount == 0
+
+    def test_update_many_with_non_existing_ids_returns_zero(self, base_repository):
+        """Test que update_many con IDs inexistentes retorna 0."""
+        # Act
+        rowcount = base_repository.update_many([99998, 99999], {"is_active": False})
+
+        # Assert
+        assert rowcount == 0
+
+    def test_delete_many_deletes_multiple_entities(
+        self, base_repository, create_test_companies, session
+    ):
+        """Test que delete_many elimina múltiples entidades."""
+        # Arrange
+        companies = create_test_companies(5)
+        ids_to_delete = [companies[0].id, companies[2].id, companies[4].id]
+
+        # Act
+        rowcount = base_repository.delete_many(ids_to_delete)
+        session.commit()
+
+        # Assert
+        assert rowcount == 3
+        assert base_repository.count() == 2
+        # Verificar que los eliminados ya no existen
+        for deleted_id in ids_to_delete:
+            assert base_repository.get_by_id(deleted_id) is None
+
+    def test_delete_many_with_empty_ids_returns_zero(self, base_repository):
+        """Test que delete_many con IDs vacíos retorna 0."""
+        # Act
+        rowcount = base_repository.delete_many([])
+
+        # Assert
+        assert rowcount == 0
+
+    def test_delete_many_with_non_existing_ids_returns_zero(self, base_repository):
+        """Test que delete_many con IDs inexistentes retorna 0."""
+        # Act
+        rowcount = base_repository.delete_many([99998, 99999])
+
+        # Assert
+        assert rowcount == 0
+
+    def test_delete_many_flushes_without_commit(
+        self, base_repository, create_test_companies, session
+    ):
+        """Test que delete_many hace flush pero NO commit."""
+        # Arrange
+        companies = create_test_companies(3)
+        ids = [c.id for c in companies]
+
+        # Act
+        rowcount = base_repository.delete_many(ids)
+        # NO commit
+
+        # Assert
+        assert rowcount == 3
+
+        # Rollback
+        session.rollback()
+
+        # Assert - entidades siguen existiendo
+        assert base_repository.count() == 3
+
+    def test_bulk_operations_combined(
+        self, base_repository, sample_company_type, session
+    ):
+        """Test combinando múltiples operaciones bulk."""
+        # Create many
+        companies = [
+            Company(name=f"Combined {i}", trigram=f"C{chr(65+i//26)}{chr(65+i%26)}", company_type_id=sample_company_type.id)
+            for i in range(10)
+        ]
+        created = base_repository.create_many(companies)
+        session.commit()
+        assert base_repository.count() == 10
+
+        # Update many (desactivar 5)
+        ids_to_update = [c.id for c in created[:5]]
+        base_repository.update_many(ids_to_update, {"is_active": False})
+        session.commit()
+
+        # Delete many (eliminar 3)
+        ids_to_delete = [c.id for c in created[7:]]
+        base_repository.delete_many(ids_to_delete)
+        session.commit()
+
+        # Assert final state
+        assert base_repository.count() == 7
+        inactive_count = sum(
+            1 for c in base_repository.get_all()
+            if not c.is_active
+        )
+        assert inactive_count == 5
