@@ -111,13 +111,21 @@ class BaseRepository(IRepository[T], Generic[T]):
 
         return entity
 
-    def get_all(self, skip: int = 0, limit: int = 100) -> Sequence[T]:
+    def get_all(
+        self,
+        skip: int = 0,
+        limit: int = 100,
+        order_by: str | None = None,
+        descending: bool = False,
+    ) -> Sequence[T]:
         """
-        Obtiene todas las entidades con paginación.
+        Obtiene todas las entidades con paginación y ordenamiento.
 
         Args:
             skip: Número de registros a saltar (offset)
             limit: Número máximo de registros a retornar
+            order_by: Nombre de columna para ordenar (default: id)
+            descending: Si True, orden descendente
 
         Returns:
             Lista de entidades
@@ -126,15 +134,109 @@ class BaseRepository(IRepository[T], Generic[T]):
             # Obtener primera página (registros 0-99)
             companies = repository.get_all(skip=0, limit=100)
 
-            # Obtener segunda página (registros 100-199)
-            companies = repository.get_all(skip=100, limit=100)
+            # Obtener segunda página ordenada por nombre descendente
+            companies = repository.get_all(skip=100, limit=100, order_by="name", descending=True)
         """
         logger.debug(f"Obteniendo {self.model.__name__} - skip={skip}, limit={limit}")
-        stmt = select(self.model).offset(skip).limit(limit)
+        stmt = self._build_query(order_by=order_by, descending=descending, skip=skip, limit=limit)
         result = self.session.execute(stmt)
         entities = result.scalars().all()
         logger.debug(f"Encontrados {len(entities)} {self.model.__name__}(s)")
         return entities
+
+    def find_by(
+        self,
+        filters: dict | None = None,
+        skip: int = 0,
+        limit: int = 100,
+        order_by: str | None = None,
+        descending: bool = False,
+    ) -> Sequence[T]:
+        """
+        Búsqueda genérica con filtros dinámicos.
+
+        Args:
+            filters: Diccionario de filtros {columna: valor}
+            skip: Número de registros a saltar
+            limit: Número máximo de registros
+            order_by: Columna para ordenar
+            descending: Orden descendente
+
+        Returns:
+            Lista de entidades que coinciden
+
+        Example:
+            # Buscar empresas activas
+            active = repository.find_by(filters={"is_active": True})
+
+            # Buscar por tipo, ordenado por nombre
+            by_type = repository.find_by(
+                filters={"company_type_id": 1},
+                order_by="name",
+                limit=50
+            )
+        """
+        logger.debug(f"Buscando {self.model.__name__} con filtros={filters}")
+        stmt = self._build_query(
+            filters=filters,
+            order_by=order_by,
+            descending=descending,
+            skip=skip,
+            limit=limit,
+        )
+        result = self.session.execute(stmt)
+        entities = result.scalars().all()
+        logger.debug(f"Encontrados {len(entities)} {self.model.__name__}(s) con filtros")
+        return entities
+
+    def _build_query(
+        self,
+        filters: dict | None = None,
+        order_by: str | None = None,
+        descending: bool = False,
+        skip: int = 0,
+        limit: int = 100,
+    ):
+        """
+        Construye query dinámicamente con filtros, ordenamiento y paginación.
+
+        Este es un método helper interno para construir queries de forma consistente.
+
+        Args:
+            filters: Diccionario de filtros {columna: valor}
+            order_by: Nombre de columna para ordenar
+            descending: Si True, orden descendente
+            skip: Offset para paginación
+            limit: Límite de resultados
+
+        Returns:
+            Select statement configurado
+
+        Note:
+            Los filtros None son ignorados automáticamente.
+            Las columnas inexistentes en filters son ignoradas silenciosamente.
+        """
+        stmt = select(self.model)
+
+        # Aplicar filtros
+        if filters:
+            for column_name, value in filters.items():
+                if value is not None:
+                    column = getattr(self.model, column_name, None)
+                    if column is not None:
+                        stmt = stmt.filter(column == value)
+
+        # Aplicar ordenamiento
+        if order_by:
+            column = getattr(self.model, order_by, None)
+            if column is not None:
+                order = column.desc() if descending else column.asc()
+                stmt = stmt.order_by(order)
+
+        # Aplicar paginación
+        stmt = stmt.offset(skip).limit(limit)
+
+        return stmt
 
     def exists(self, id: int) -> bool:
         """

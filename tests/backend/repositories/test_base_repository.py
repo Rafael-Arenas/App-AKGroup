@@ -792,3 +792,191 @@ class TestBaseRepositoryBulkOperations:
             if not c.is_active
         )
         assert inactive_count == 5
+
+
+# ============= QUERY BUILDER TESTS =============
+
+
+class TestBaseRepositoryQueryBuilder:
+    """Tests para Query Builder Pattern (get_all con order, find_by)."""
+
+    def test_get_all_with_order_by_ascending(
+        self, base_repository, create_test_companies, session
+    ):
+        """Test que get_all ordena ascendentemente por columna."""
+        # Arrange
+        create_test_companies(5)
+
+        # Act
+        result = base_repository.get_all(order_by="name", descending=False)
+
+        # Assert
+        names = [c.name for c in result]
+        assert names == sorted(names)
+
+    def test_get_all_with_order_by_descending(
+        self, base_repository, create_test_companies, session
+    ):
+        """Test que get_all ordena descendentemente."""
+        # Arrange
+        create_test_companies(5)
+
+        # Act
+        result = base_repository.get_all(order_by="name", descending=True)
+
+        # Assert
+        names = [c.name for c in result]
+        assert names == sorted(names, reverse=True)
+
+    def test_get_all_with_invalid_order_by_column(
+        self, base_repository, create_test_companies, session
+    ):
+        """Test que order_by inválido es ignorado silenciosamente."""
+        # Arrange
+        create_test_companies(3)
+
+        # Act - columna inexistente
+        result = base_repository.get_all(order_by="nonexistent_column")
+
+        # Assert - no falla, retorna resultados
+        assert len(result) == 3
+
+    def test_find_by_with_single_filter(
+        self, base_repository, create_test_companies, session
+    ):
+        """Test que find_by filtra por una columna."""
+        # Arrange
+        companies = create_test_companies(5)
+        # Desactivar algunas
+        for c in companies[:2]:
+            c.is_active = False
+        session.commit()
+
+        # Act
+        active = base_repository.find_by(filters={"is_active": True})
+
+        # Assert
+        assert len(active) == 3
+        assert all(c.is_active for c in active)
+
+    def test_find_by_with_multiple_filters(
+        self, base_repository, create_test_companies, session
+    ):
+        """Test que find_by filtra por múltiples columnas."""
+        # Arrange
+        companies = create_test_companies(5)
+        target_type_id = companies[0].company_type_id
+        companies[0].is_active = False
+        companies[1].is_active = False
+        session.commit()
+
+        # Act - buscar activas del mismo tipo
+        result = base_repository.find_by(
+            filters={"company_type_id": target_type_id, "is_active": True}
+        )
+
+        # Assert
+        assert len(result) == 3
+        assert all(c.is_active and c.company_type_id == target_type_id for c in result)
+
+    def test_find_by_with_none_filter_value_is_ignored(
+        self, base_repository, create_test_companies, session
+    ):
+        """Test que valores None en filtros son ignorados."""
+        # Arrange
+        create_test_companies(5)
+
+        # Act - filtro con None (debe buscar todos)
+        result = base_repository.find_by(filters={"is_active": None})
+
+        # Assert - retorna todos (filtro ignorado)
+        assert len(result) == 5
+
+    def test_find_by_with_invalid_filter_column_is_ignored(
+        self, base_repository, create_test_companies, session
+    ):
+        """Test que columnas inválidas en filtros son ignoradas."""
+        # Arrange
+        create_test_companies(3)
+
+        # Act - columna inexistente
+        result = base_repository.find_by(filters={"nonexistent": "value"})
+
+        # Assert - no falla, retorna todos
+        assert len(result) == 3
+
+    def test_find_by_with_no_matches_returns_empty(
+        self, base_repository, create_test_companies, session
+    ):
+        """Test que find_by sin coincidencias retorna lista vacía."""
+        # Arrange
+        create_test_companies(5)
+
+        # Act - buscar con ID inexistente
+        result = base_repository.find_by(filters={"company_type_id": 99999})
+
+        # Assert
+        assert result == []
+
+    def test_find_by_with_ordering(
+        self, base_repository, create_test_companies, session
+    ):
+        """Test que find_by soporta ordenamiento."""
+        # Arrange
+        create_test_companies(5)
+
+        # Act
+        result = base_repository.find_by(
+            filters={"is_active": True},
+            order_by="name",
+            descending=True
+        )
+
+        # Assert
+        names = [c.name for c in result]
+        assert names == sorted(names, reverse=True)
+
+    def test_find_by_with_pagination(
+        self, base_repository, create_test_companies, session
+    ):
+        """Test que find_by soporta paginación."""
+        # Arrange
+        create_test_companies(10)
+
+        # Act - segunda página
+        page1 = base_repository.find_by(filters={}, skip=0, limit=5)
+        page2 = base_repository.find_by(filters={}, skip=5, limit=5)
+
+        # Assert
+        assert len(page1) == 5
+        assert len(page2) == 5
+        # Sin overlap
+        page1_ids = {c.id for c in page1}
+        page2_ids = {c.id for c in page2}
+        assert len(page1_ids & page2_ids) == 0
+
+    def test_find_by_empty_filters_returns_all(
+        self, base_repository, create_test_companies, session
+    ):
+        """Test que find_by con filtros vacíos retorna todos."""
+        # Arrange
+        create_test_companies(5)
+
+        # Act
+        result = base_repository.find_by(filters={})
+
+        # Assert
+        assert len(result) == 5
+
+    def test_find_by_none_filters_returns_all(
+        self, base_repository, create_test_companies, session
+    ):
+        """Test que find_by con filters=None retorna todos."""
+        # Arrange
+        create_test_companies(5)
+
+        # Act
+        result = base_repository.find_by(filters=None)
+
+        # Assert
+        assert len(result) == 5

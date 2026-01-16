@@ -218,10 +218,12 @@ def get_all(
 ```
 
 ### Checklist Fase 4:
-- [ ] Implementar `_build_query()` en BaseRepository
-- [ ] Refactorizar `get_all()` para usar query builder
-- [ ] Crear método `find_by()` genérico con filtros
-- [ ] Actualizar repositorios específicos para usar query builder
+- [x] Implementar `_build_query()` en BaseRepository ✅
+- [x] Refactorizar `get_all()` para usar query builder (añadió order_by, descending) ✅
+- [x] Crear método `find_by()` genérico con filtros ✅
+- [x] Agregar tests para query builder (12 tests nuevos) ✅
+
+**Estado: ✅ COMPLETADA** (2026-01-15)
 
 ---
 
