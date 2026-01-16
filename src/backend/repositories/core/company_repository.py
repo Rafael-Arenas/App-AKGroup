@@ -4,9 +4,9 @@ Repositorio para Company, CompanyRut y Plant.
 Maneja el acceso a datos para empresas, sus RUTs y plantas.
 """
 
-from typing import Optional, List
+from collections.abc import Sequence
 
-from sqlalchemy import or_, select
+from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
 from src.backend.models.core.companies import Company, CompanyRut, Plant
@@ -36,7 +36,7 @@ class CompanyRepository(BaseRepository[Company]):
         """
         super().__init__(session, Company)
 
-    def get_by_trigram(self, trigram: str) -> Optional[Company]:
+    def get_by_trigram(self, trigram: str) -> Company | None:
         """
         Busca una empresa por su trigram.
 
@@ -62,7 +62,7 @@ class CompanyRepository(BaseRepository[Company]):
 
         return company
 
-    def search_by_name(self, name: str) -> List[Company]:
+    def search_by_name(self, name: str) -> Sequence[Company]:
         """
         Busca empresas por nombre (búsqueda parcial).
 
@@ -84,7 +84,7 @@ class CompanyRepository(BaseRepository[Company]):
             .filter(Company.name.ilike(search_pattern))
             .order_by(Company.name)
         )
-        companies = list(self.session.execute(stmt).scalars().all())
+        companies = self.session.execute(stmt).scalars().all()
 
         logger.debug(f"Encontradas {len(companies)} empresa(s) con nombre '{name}'")
         return companies
@@ -94,8 +94,8 @@ class CompanyRepository(BaseRepository[Company]):
         company_type_id: int,
         skip: int = 0,
         limit: int = 100,
-        is_active: Optional[bool] = None
-    ) -> List[Company]:
+        is_active: bool | None = None
+    ) -> Sequence[Company]:
         """
         Obtiene empresas filtradas por tipo y opcionalmente por estado.
 
@@ -120,12 +120,12 @@ class CompanyRepository(BaseRepository[Company]):
         if is_active is not None:
             stmt = stmt.filter(Company.is_active == is_active)
 
-        companies = list(self.session.execute(stmt.offset(skip).limit(limit)).scalars().all())
+        companies = self.session.execute(stmt.offset(skip).limit(limit)).scalars().all()
 
         logger.debug(f"Encontradas {len(companies)} empresa(s) del tipo {company_type_id}")
         return companies
 
-    def get_with_plants(self, company_id: int) -> Optional[Company]:
+    def get_with_plants(self, company_id: int) -> Company | None:
         """
         Obtiene una empresa con sus plantas cargadas (eager loading).
 
@@ -155,7 +155,7 @@ class CompanyRepository(BaseRepository[Company]):
 
         return company
 
-    def get_with_ruts(self, company_id: int) -> Optional[Company]:
+    def get_with_ruts(self, company_id: int) -> Company | None:
         """
         Obtiene una empresa con sus RUTs cargados (eager loading).
 
@@ -184,7 +184,7 @@ class CompanyRepository(BaseRepository[Company]):
 
         return company
 
-    def get_with_relations(self, company_id: int) -> Optional[Company]:
+    def get_with_relations(self, company_id: int) -> Company | None:
         """
         Obtiene una empresa con todas sus relaciones cargadas.
 
@@ -213,7 +213,7 @@ class CompanyRepository(BaseRepository[Company]):
 
         return company
 
-    def get_active_companies(self, skip: int = 0, limit: int = 100) -> List[Company]:
+    def get_active_companies(self, skip: int = 0, limit: int = 100) -> Sequence[Company]:
         """
         Obtiene solo las empresas activas.
 
@@ -234,7 +234,7 @@ class CompanyRepository(BaseRepository[Company]):
             .offset(skip)
             .limit(limit)
         )
-        companies = list(self.session.execute(stmt).scalars().all())
+        companies = self.session.execute(stmt).scalars().all()
 
         logger.debug(f"Encontradas {len(companies)} empresa(s) activa(s)")
         return companies
@@ -254,7 +254,7 @@ class CompanyRutRepository(BaseRepository[CompanyRut]):
     def __init__(self, session: Session):
         super().__init__(session, CompanyRut)
 
-    def get_by_rut(self, rut: str) -> Optional[CompanyRut]:
+    def get_by_rut(self, rut: str) -> CompanyRut | None:
         """
         Busca un RUT específico.
 
@@ -270,7 +270,7 @@ class CompanyRutRepository(BaseRepository[CompanyRut]):
 
         return company_rut
 
-    def get_by_company(self, company_id: int) -> List[CompanyRut]:
+    def get_by_company(self, company_id: int) -> Sequence[CompanyRut]:
         """
         Obtiene todos los RUTs de una empresa.
 
@@ -282,12 +282,12 @@ class CompanyRutRepository(BaseRepository[CompanyRut]):
         """
         logger.debug(f"Obteniendo RUTs de empresa id={company_id}")
         stmt = select(CompanyRut).filter(CompanyRut.company_id == company_id)
-        ruts = list(self.session.execute(stmt).scalars().all())
+        ruts = self.session.execute(stmt).scalars().all()
 
         logger.debug(f"Encontrados {len(ruts)} RUT(s)")
         return ruts
 
-    def get_primary_rut(self, company_id: int) -> Optional[CompanyRut]:
+    def get_primary_rut(self, company_id: int) -> CompanyRut | None:
         """
         Obtiene el RUT principal de una empresa.
 
@@ -321,7 +321,7 @@ class PlantRepository(BaseRepository[Plant]):
     def __init__(self, session: Session):
         super().__init__(session, Plant)
 
-    def get_by_company(self, company_id: int) -> List[Plant]:
+    def get_by_company(self, company_id: int) -> Sequence[Plant]:
         """
         Obtiene todas las plantas de una empresa.
 
@@ -333,12 +333,12 @@ class PlantRepository(BaseRepository[Plant]):
         """
         logger.debug(f"Obteniendo plantas de empresa id={company_id}")
         stmt = select(Plant).filter(Plant.company_id == company_id).order_by(Plant.name)
-        plants = list(self.session.execute(stmt).scalars().all())
+        plants = self.session.execute(stmt).scalars().all()
 
         logger.debug(f"Encontradas {len(plants)} planta(s)")
         return plants
 
-    def get_active_plants(self, company_id: int) -> List[Plant]:
+    def get_active_plants(self, company_id: int) -> Sequence[Plant]:
         """
         Obtiene solo las plantas activas de una empresa.
 
@@ -353,12 +353,12 @@ class PlantRepository(BaseRepository[Plant]):
             Plant.company_id == company_id,
             Plant.is_active == True
         ).order_by(Plant.name)
-        plants = list(self.session.execute(stmt).scalars().all())
+        plants = self.session.execute(stmt).scalars().all()
 
         logger.debug(f"Encontradas {len(plants)} planta(s) activa(s)")
         return plants
 
-    def search_by_name(self, company_id: int, name: str) -> List[Plant]:
+    def search_by_name(self, company_id: int, name: str) -> Sequence[Plant]:
         """
         Busca plantas por nombre dentro de una empresa.
 
@@ -375,7 +375,7 @@ class PlantRepository(BaseRepository[Plant]):
             Plant.company_id == company_id,
             Plant.name.ilike(search_pattern)
         ).order_by(Plant.name)
-        plants = list(self.session.execute(stmt).scalars().all())
+        plants = self.session.execute(stmt).scalars().all()
 
         logger.debug(f"Encontradas {len(plants)} planta(s)")
         return plants

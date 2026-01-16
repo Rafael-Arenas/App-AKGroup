@@ -5,9 +5,11 @@ Handles data access for quotes with custom query methods including
 quote number lookups, company filtering, and status tracking.
 """
 
-from typing import Optional, List
+from collections.abc import Sequence
+from datetime import date
+
+from sqlalchemy import select, and_, delete
 from sqlalchemy.orm import Session, selectinload
-from sqlalchemy import select, and_, or_, delete
 
 from src.backend.models.business.quotes import Quote, QuoteProduct
 from src.backend.repositories.base import BaseRepository
@@ -36,7 +38,7 @@ class QuoteRepository(BaseRepository[Quote]):
         """
         super().__init__(session, Quote)
 
-    def get_by_quote_number(self, quote_number: str) -> Optional[Quote]:
+    def get_by_quote_number(self, quote_number: str) -> Quote | None:
         """
         Get quote by unique quote number.
 
@@ -60,7 +62,7 @@ class QuoteRepository(BaseRepository[Quote]):
             logger.debug(f"Quote not found: {quote_number}")
         return quote
 
-    def get_with_products(self, quote_id: int) -> Optional[Quote]:
+    def get_with_products(self, quote_id: int) -> Quote | None:
         """
         Get quote with products eagerly loaded.
 
@@ -103,7 +105,7 @@ class QuoteRepository(BaseRepository[Quote]):
         company_id: int,
         skip: int = 0,
         limit: int = 100
-    ) -> List[Quote]:
+    ) -> Sequence[Quote]:
         """
         Get all quotes for a specific company.
 
@@ -129,7 +131,7 @@ class QuoteRepository(BaseRepository[Quote]):
             .offset(skip)
             .limit(limit)
         )
-        quotes = list(self.session.execute(stmt).scalars().all())
+        quotes = self.session.execute(stmt).scalars().all()
         logger.debug(f"Found {len(quotes)} quote(s) for company_id={company_id}")
         return quotes
 
@@ -138,7 +140,7 @@ class QuoteRepository(BaseRepository[Quote]):
         status_id: int,
         skip: int = 0,
         limit: int = 100
-    ) -> List[Quote]:
+    ) -> Sequence[Quote]:
         """
         Get quotes by status.
 
@@ -161,7 +163,7 @@ class QuoteRepository(BaseRepository[Quote]):
             .offset(skip)
             .limit(limit)
         )
-        quotes = list(self.session.execute(stmt).scalars().all())
+        quotes = self.session.execute(stmt).scalars().all()
         logger.debug(f"Found {len(quotes)} quote(s) with status_id={status_id}")
         return quotes
 
@@ -170,7 +172,7 @@ class QuoteRepository(BaseRepository[Quote]):
         staff_id: int,
         skip: int = 0,
         limit: int = 100
-    ) -> List[Quote]:
+    ) -> Sequence[Quote]:
         """
         Get quotes assigned to a specific staff member.
 
@@ -190,11 +192,11 @@ class QuoteRepository(BaseRepository[Quote]):
             .offset(skip)
             .limit(limit)
         )
-        quotes = list(self.session.execute(stmt).scalars().all())
+        quotes = self.session.execute(stmt).scalars().all()
         logger.debug(f"Found {len(quotes)} quote(s) for staff_id={staff_id}")
         return quotes
 
-    def get_expired_quotes(self, skip: int = 0, limit: int = 100) -> List[Quote]:
+    def get_expired_quotes(self, skip: int = 0, limit: int = 100) -> Sequence[Quote]:
         """
         Get quotes that have expired (valid_until date has passed).
 
@@ -205,8 +207,6 @@ class QuoteRepository(BaseRepository[Quote]):
         Returns:
             List of expired quotes
         """
-        from datetime import date
-
         logger.debug("Getting expired quotes")
         stmt = (
             select(Quote)
@@ -220,7 +220,7 @@ class QuoteRepository(BaseRepository[Quote]):
             .offset(skip)
             .limit(limit)
         )
-        quotes = list(self.session.execute(stmt).scalars().all())
+        quotes = self.session.execute(stmt).scalars().all()
         logger.debug(f"Found {len(quotes)} expired quote(s)")
         return quotes
 
@@ -229,7 +229,7 @@ class QuoteRepository(BaseRepository[Quote]):
         subject: str,
         skip: int = 0,
         limit: int = 100
-    ) -> List[Quote]:
+    ) -> Sequence[Quote]:
         """
         Search quotes by subject (partial match, case-insensitive).
 
@@ -250,7 +250,7 @@ class QuoteRepository(BaseRepository[Quote]):
             .offset(skip)
             .limit(limit)
         )
-        quotes = list(self.session.execute(stmt).scalars().all())
+        quotes = self.session.execute(stmt).scalars().all()
         logger.debug(f"Found {len(quotes)} quote(s) matching subject")
         return quotes
 
@@ -276,7 +276,7 @@ class QuoteProductRepository(BaseRepository[QuoteProduct]):
         """
         super().__init__(session, QuoteProduct)
 
-    def get_by_quote(self, quote_id: int) -> List[QuoteProduct]:
+    def get_by_quote(self, quote_id: int) -> Sequence[QuoteProduct]:
         """
         Get all products for a specific quote.
 
@@ -298,7 +298,7 @@ class QuoteProductRepository(BaseRepository[QuoteProduct]):
             .filter(QuoteProduct.quote_id == quote_id)
             .order_by(QuoteProduct.sequence)
         )
-        products = list(self.session.execute(stmt).scalars().all())
+        products = self.session.execute(stmt).scalars().all()
         logger.debug(f"Found {len(products)} product(s) for quote_id={quote_id}")
         return products
 
@@ -307,7 +307,7 @@ class QuoteProductRepository(BaseRepository[QuoteProduct]):
         product_id: int,
         skip: int = 0,
         limit: int = 100
-    ) -> List[QuoteProduct]:
+    ) -> Sequence[QuoteProduct]:
         """
         Get all quote line items containing a specific product.
 
@@ -328,7 +328,7 @@ class QuoteProductRepository(BaseRepository[QuoteProduct]):
             .offset(skip)
             .limit(limit)
         )
-        products = list(self.session.execute(stmt).scalars().all())
+        products = self.session.execute(stmt).scalars().all()
         logger.debug(f"Found {len(products)} quote product(s) for product_id={product_id}")
         return products
 

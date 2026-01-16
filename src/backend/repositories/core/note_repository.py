@@ -4,7 +4,7 @@ Repositorio para Note (sistema polimórfico de notas).
 Maneja el acceso a datos para notas asociadas a cualquier entidad del sistema.
 """
 
-from typing import Optional, List
+from collections.abc import Sequence
 from sqlalchemy import select, or_, func
 from sqlalchemy.orm import Session
 
@@ -41,7 +41,7 @@ class NoteRepository(BaseRepository[Note]):
         entity_id: int,
         skip: int = 0,
         limit: int = 100
-    ) -> List[Note]:
+    ) -> Sequence[Note]:
         """
         Obtiene todas las notas de una entidad específica.
 
@@ -74,7 +74,7 @@ class NoteRepository(BaseRepository[Note]):
             .offset(skip)
             .limit(limit)
         )
-        notes = list(self.session.execute(stmt).scalars().all())
+        notes = self.session.execute(stmt).scalars().all()
 
         logger.debug(f"Encontradas {len(notes)} nota(s)")
         return notes
@@ -84,7 +84,7 @@ class NoteRepository(BaseRepository[Note]):
         entity_type: str,
         entity_id: int,
         priority: NotePriority
-    ) -> List[Note]:
+    ) -> Sequence[Note]:
         """
         Obtiene notas de una entidad filtradas por prioridad.
 
@@ -115,7 +115,7 @@ class NoteRepository(BaseRepository[Note]):
             )
             .order_by(Note.created_at.desc())
         )
-        notes = list(self.session.execute(stmt).scalars().all())
+        notes = self.session.execute(stmt).scalars().all()
 
         logger.debug(f"Encontradas {len(notes)} nota(s) con prioridad {priority.name}")
         return notes
@@ -124,7 +124,7 @@ class NoteRepository(BaseRepository[Note]):
         self,
         entity_type: str,
         entity_id: int
-    ) -> List[Note]:
+    ) -> Sequence[Note]:
         """
         Obtiene solo las notas urgentes de una entidad.
 
@@ -144,7 +144,7 @@ class NoteRepository(BaseRepository[Note]):
         self,
         entity_type: str,
         entity_id: int
-    ) -> List[Note]:
+    ) -> Sequence[Note]:
         """
         Obtiene notas de alta prioridad y urgentes de una entidad.
 
@@ -172,7 +172,7 @@ class NoteRepository(BaseRepository[Note]):
             )
             .order_by(Note.priority.desc(), Note.created_at.desc())
         )
-        notes = list(self.session.execute(stmt).scalars().all())
+        notes = self.session.execute(stmt).scalars().all()
 
         logger.debug(f"Encontradas {len(notes)} nota(s) importantes")
         return notes
@@ -182,7 +182,7 @@ class NoteRepository(BaseRepository[Note]):
         entity_type: str,
         entity_id: int,
         category: str
-    ) -> List[Note]:
+    ) -> Sequence[Note]:
         """
         Obtiene notas de una entidad filtradas por categoría.
 
@@ -213,7 +213,7 @@ class NoteRepository(BaseRepository[Note]):
             )
             .order_by(Note.created_at.desc())
         )
-        notes = list(self.session.execute(stmt).scalars().all())
+        notes = self.session.execute(stmt).scalars().all()
 
         logger.debug(f"Encontradas {len(notes)} nota(s) de categoría '{category}'")
         return notes
@@ -223,7 +223,7 @@ class NoteRepository(BaseRepository[Note]):
         entity_type: str,
         entity_id: int,
         search_term: str
-    ) -> List[Note]:
+    ) -> Sequence[Note]:
         """
         Busca notas por contenido o título.
 
@@ -255,7 +255,7 @@ class NoteRepository(BaseRepository[Note]):
             )
             .order_by(Note.created_at.desc())
         )
-        notes = list(self.session.execute(stmt).scalars().all())
+        notes = self.session.execute(stmt).scalars().all()
 
         logger.debug(f"Encontradas {len(notes)} nota(s)")
         return notes
@@ -265,7 +265,7 @@ class NoteRepository(BaseRepository[Note]):
         entity_type: str,
         skip: int = 0,
         limit: int = 100
-    ) -> List[Note]:
+    ) -> Sequence[Note]:
         """
         Obtiene todas las notas de un tipo de entidad específico.
 
@@ -294,7 +294,7 @@ class NoteRepository(BaseRepository[Note]):
             .offset(skip)
             .limit(limit)
         )
-        notes = list(self.session.execute(stmt).scalars().all())
+        notes = self.session.execute(stmt).scalars().all()
 
         logger.debug(f"Encontradas {len(notes)} nota(s) de tipo {entity_type}")
         return notes
@@ -333,7 +333,7 @@ class NoteRepository(BaseRepository[Note]):
         entity_type: str,
         entity_id: int,
         days: int = 7
-    ) -> List[Note]:
+    ) -> Sequence[Note]:
         """
         Obtiene las notas recientes de una entidad.
 
@@ -366,7 +366,7 @@ class NoteRepository(BaseRepository[Note]):
             )
             .order_by(Note.created_at.desc())
         )
-        notes = list(self.session.execute(stmt).scalars().all())
+        notes = self.session.execute(stmt).scalars().all()
 
         logger.debug(f"Encontradas {len(notes)} nota(s) recientes")
         return notes

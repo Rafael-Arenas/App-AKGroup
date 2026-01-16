@@ -4,7 +4,7 @@ Repositorio para Service (departamentos/servicios).
 Maneja el acceso a datos para servicios/departamentos.
 """
 
-from typing import Optional, List
+from collections.abc import Sequence
 from sqlalchemy import select, func
 from sqlalchemy.orm import Session
 
@@ -35,7 +35,7 @@ class ServiceRepository(BaseRepository[Service]):
         """
         super().__init__(session, Service)
 
-    def get_by_name(self, name: str) -> Optional[Service]:
+    def get_by_name(self, name: str) -> Service | None:
         """
         Busca un servicio por nombre.
 
@@ -62,7 +62,7 @@ class ServiceRepository(BaseRepository[Service]):
 
         return service
 
-    def search_by_name(self, name: str) -> List[Service]:
+    def search_by_name(self, name: str) -> Sequence[Service]:
         """
         Busca servicios por nombre (búsqueda parcial).
 
@@ -73,12 +73,12 @@ class ServiceRepository(BaseRepository[Service]):
 
         search_pattern = f"%{name}%"
         stmt = select(Service).filter(Service.name.ilike(search_pattern)).order_by(Service.name)
-        services = list(self.session.execute(stmt).scalars().all())
+        services = self.session.execute(stmt).scalars().all()
 
         logger.debug(f"Encontrados {len(services)} servicio(s) con nombre '{name}'")
         return services
 
-    def get_active_services(self, skip: int = 0, limit: int = 100) -> List[Service]:
+    def get_active_services(self, skip: int = 0, limit: int = 100) -> Sequence[Service]:
         """
         Obtiene solo los servicios activos.
         """
@@ -91,12 +91,12 @@ class ServiceRepository(BaseRepository[Service]):
             .offset(skip)
             .limit(limit)
         )
-        services = list(self.session.execute(stmt).scalars().all())
+        services = self.session.execute(stmt).scalars().all()
 
         logger.debug(f"Encontrados {len(services)} servicio(s) activo(s)")
         return services
 
-    def get_all_ordered(self, skip: int = 0, limit: int = 100) -> List[Service]:
+    def get_all_ordered(self, skip: int = 0, limit: int = 100) -> Sequence[Service]:
         """
         Obtiene todos los servicios ordenados alfabéticamente.
         """
@@ -108,7 +108,7 @@ class ServiceRepository(BaseRepository[Service]):
             .offset(skip)
             .limit(limit)
         )
-        services = list(self.session.execute(stmt).scalars().all())
+        services = self.session.execute(stmt).scalars().all()
 
         logger.debug(f"Encontrados {len(services)} servicio(s)")
         return services

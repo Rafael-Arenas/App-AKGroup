@@ -5,8 +5,9 @@ Handles data access for Country, City, CompanyType, Incoterm, Currency, Unit,
 FamilyType, Matter, SalesType, QuoteStatus, OrderStatus, PaymentStatus.
 """
 
-from typing import Optional, List
-from sqlalchemy import select, or_
+from collections.abc import Sequence
+
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from src.backend.models.lookups import (
@@ -23,12 +24,12 @@ class CountryRepository(BaseRepository[Country]):
     def __init__(self, session: Session):
         super().__init__(session, Country)
 
-    def get_by_name(self, name: str) -> Optional[Country]:
+    def get_by_name(self, name: str) -> Country | None:
         """Get country by name."""
         stmt = select(Country).filter(Country.name == name)
         return self.session.execute(stmt).scalar_one_or_none()
 
-    def get_by_iso_code(self, iso_code: str) -> Optional[Country]:
+    def get_by_iso_code(self, iso_code: str) -> Country | None:
         """Get country by ISO code (alpha-2 or alpha-3)."""
         stmt = select(Country).filter(
             (Country.iso_code_alpha2 == iso_code.upper()) |
@@ -43,12 +44,12 @@ class CityRepository(BaseRepository[City]):
     def __init__(self, session: Session):
         super().__init__(session, City)
 
-    def get_by_country(self, country_id: int) -> List[City]:
+    def get_by_country(self, country_id: int) -> Sequence[City]:
         """Get all cities for a country."""
         stmt = select(City).filter(City.country_id == country_id).order_by(City.name)
-        return list(self.session.execute(stmt).scalars().all())
+        return self.session.execute(stmt).scalars().all()
 
-    def get_by_name_and_country(self, name: str, country_id: int) -> Optional[City]:
+    def get_by_name_and_country(self, name: str, country_id: int) -> City | None:
         """Get city by name and country."""
         stmt = select(City).filter(City.name == name, City.country_id == country_id)
         return self.session.execute(stmt).scalar_one_or_none()
@@ -60,7 +61,7 @@ class CompanyTypeRepository(BaseRepository[CompanyType]):
     def __init__(self, session: Session):
         super().__init__(session, CompanyType)
 
-    def get_by_name(self, name: str) -> Optional[CompanyType]:
+    def get_by_name(self, name: str) -> CompanyType | None:
         """Get company type by name."""
         stmt = select(CompanyType).filter(CompanyType.name == name)
         return self.session.execute(stmt).scalar_one_or_none()
@@ -72,12 +73,12 @@ class IncotermRepository(BaseRepository[Incoterm]):
     def __init__(self, session: Session):
         super().__init__(session, Incoterm)
 
-    def get_by_code(self, code: str) -> Optional[Incoterm]:
+    def get_by_code(self, code: str) -> Incoterm | None:
         """Get incoterm by code."""
         stmt = select(Incoterm).filter(Incoterm.code == code.upper())
         return self.session.execute(stmt).scalar_one_or_none()
 
-    def get_active(self, skip: int = 0, limit: int = 100) -> List[Incoterm]:
+    def get_active(self, skip: int = 0, limit: int = 100) -> Sequence[Incoterm]:
         """Get active incoterms."""
         stmt = (
             select(Incoterm)
@@ -86,7 +87,7 @@ class IncotermRepository(BaseRepository[Incoterm]):
             .offset(skip)
             .limit(limit)
         )
-        return list(self.session.execute(stmt).scalars().all())
+        return self.session.execute(stmt).scalars().all()
 
 
 class CurrencyRepository(BaseRepository[Currency]):
@@ -95,12 +96,12 @@ class CurrencyRepository(BaseRepository[Currency]):
     def __init__(self, session: Session):
         super().__init__(session, Currency)
 
-    def get_by_code(self, code: str) -> Optional[Currency]:
+    def get_by_code(self, code: str) -> Currency | None:
         """Get currency by code."""
         stmt = select(Currency).filter(Currency.code == code.upper())
         return self.session.execute(stmt).scalar_one_or_none()
 
-    def get_active(self, skip: int = 0, limit: int = 100) -> List[Currency]:
+    def get_active(self, skip: int = 0, limit: int = 100) -> Sequence[Currency]:
         """Get active currencies."""
         stmt = (
             select(Currency)
@@ -109,7 +110,7 @@ class CurrencyRepository(BaseRepository[Currency]):
             .offset(skip)
             .limit(limit)
         )
-        return list(self.session.execute(stmt).scalars().all())
+        return self.session.execute(stmt).scalars().all()
 
 
 class UnitRepository(BaseRepository[Unit]):
@@ -118,12 +119,12 @@ class UnitRepository(BaseRepository[Unit]):
     def __init__(self, session: Session):
         super().__init__(session, Unit)
 
-    def get_by_code(self, code: str) -> Optional[Unit]:
+    def get_by_code(self, code: str) -> Unit | None:
         """Get unit by code."""
         stmt = select(Unit).filter(Unit.code == code.lower())
         return self.session.execute(stmt).scalar_one_or_none()
 
-    def get_active(self, skip: int = 0, limit: int = 100) -> List[Unit]:
+    def get_active(self, skip: int = 0, limit: int = 100) -> Sequence[Unit]:
         """Get active units."""
         stmt = (
             select(Unit)
@@ -132,7 +133,7 @@ class UnitRepository(BaseRepository[Unit]):
             .offset(skip)
             .limit(limit)
         )
-        return list(self.session.execute(stmt).scalars().all())
+        return self.session.execute(stmt).scalars().all()
 
 
 class FamilyTypeRepository(BaseRepository[FamilyType]):
@@ -141,7 +142,7 @@ class FamilyTypeRepository(BaseRepository[FamilyType]):
     def __init__(self, session: Session):
         super().__init__(session, FamilyType)
 
-    def get_by_name(self, name: str) -> Optional[FamilyType]:
+    def get_by_name(self, name: str) -> FamilyType | None:
         """Get family type by name."""
         stmt = select(FamilyType).filter(FamilyType.name == name)
         return self.session.execute(stmt).scalar_one_or_none()
@@ -153,7 +154,7 @@ class MatterRepository(BaseRepository[Matter]):
     def __init__(self, session: Session):
         super().__init__(session, Matter)
 
-    def get_by_name(self, name: str) -> Optional[Matter]:
+    def get_by_name(self, name: str) -> Matter | None:
         """Get matter by name."""
         stmt = select(Matter).filter(Matter.name == name)
         return self.session.execute(stmt).scalar_one_or_none()
@@ -165,7 +166,7 @@ class SalesTypeRepository(BaseRepository[SalesType]):
     def __init__(self, session: Session):
         super().__init__(session, SalesType)
 
-    def get_by_name(self, name: str) -> Optional[SalesType]:
+    def get_by_name(self, name: str) -> SalesType | None:
         """Get sales type by name."""
         stmt = select(SalesType).filter(SalesType.name == name)
         return self.session.execute(stmt).scalar_one_or_none()
@@ -177,7 +178,7 @@ class QuoteStatusRepository(BaseRepository[QuoteStatus]):
     def __init__(self, session: Session):
         super().__init__(session, QuoteStatus)
 
-    def get_by_code(self, code: str) -> Optional[QuoteStatus]:
+    def get_by_code(self, code: str) -> QuoteStatus | None:
         """Get quote status by code."""
         stmt = select(QuoteStatus).filter(QuoteStatus.code == code.lower())
         return self.session.execute(stmt).scalar_one_or_none()
@@ -189,7 +190,7 @@ class OrderStatusRepository(BaseRepository[OrderStatus]):
     def __init__(self, session: Session):
         super().__init__(session, OrderStatus)
 
-    def get_by_code(self, code: str) -> Optional[OrderStatus]:
+    def get_by_code(self, code: str) -> OrderStatus | None:
         """Get order status by code."""
         stmt = select(OrderStatus).filter(OrderStatus.code == code.lower())
         return self.session.execute(stmt).scalar_one_or_none()
@@ -201,7 +202,7 @@ class PaymentStatusRepository(BaseRepository[PaymentStatus]):
     def __init__(self, session: Session):
         super().__init__(session, PaymentStatus)
 
-    def get_by_code(self, code: str) -> Optional[PaymentStatus]:
+    def get_by_code(self, code: str) -> PaymentStatus | None:
         """Get payment status by code."""
         stmt = select(PaymentStatus).filter(PaymentStatus.code == code.lower())
         return self.session.execute(stmt).scalar_one_or_none()

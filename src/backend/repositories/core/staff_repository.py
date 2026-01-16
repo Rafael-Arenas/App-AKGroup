@@ -4,7 +4,7 @@ Repositorio para Staff (usuarios del sistema).
 Maneja el acceso a datos para usuarios/staff del sistema.
 """
 
-from typing import Optional, List
+from collections.abc import Sequence
 from sqlalchemy import select, or_
 from sqlalchemy.orm import Session
 
@@ -35,7 +35,7 @@ class StaffRepository(BaseRepository[Staff]):
         """
         super().__init__(session, Staff)
 
-    def get_by_username(self, username: str) -> Optional[Staff]:
+    def get_by_username(self, username: str) -> Staff | None:
         """
         Busca un usuario por username.
 
@@ -62,7 +62,7 @@ class StaffRepository(BaseRepository[Staff]):
 
         return staff
 
-    def get_by_email(self, email: str) -> Optional[Staff]:
+    def get_by_email(self, email: str) -> Staff | None:
         """
         Busca un usuario por email.
 
@@ -89,7 +89,7 @@ class StaffRepository(BaseRepository[Staff]):
 
         return staff
 
-    def get_by_trigram(self, trigram: str) -> Optional[Staff]:
+    def get_by_trigram(self, trigram: str) -> Staff | None:
         """
         Busca un usuario por trigram.
 
@@ -116,7 +116,7 @@ class StaffRepository(BaseRepository[Staff]):
 
         return staff
 
-    def get_active_staff(self, skip: int = 0, limit: int = 100) -> List[Staff]:
+    def get_active_staff(self, skip: int = 0, limit: int = 100) -> Sequence[Staff]:
         """
         Obtiene solo los usuarios activos.
 
@@ -139,12 +139,12 @@ class StaffRepository(BaseRepository[Staff]):
             .offset(skip)
             .limit(limit)
         )
-        staff_list = list(self.session.execute(stmt).scalars().all())
+        staff_list = self.session.execute(stmt).scalars().all()
 
         logger.debug(f"Encontrados {len(staff_list)} usuario(s) activo(s)")
         return staff_list
 
-    def get_admins(self, skip: int = 0, limit: int = 100) -> List[Staff]:
+    def get_admins(self, skip: int = 0, limit: int = 100) -> Sequence[Staff]:
         """
         Obtiene solo los usuarios administradores.
 
@@ -167,12 +167,12 @@ class StaffRepository(BaseRepository[Staff]):
             .offset(skip)
             .limit(limit)
         )
-        admins = list(self.session.execute(stmt).scalars().all())
+        admins = self.session.execute(stmt).scalars().all()
 
         logger.debug(f"Encontrados {len(admins)} administrador(es)")
         return admins
 
-    def get_active_admins(self) -> List[Staff]:
+    def get_active_admins(self) -> Sequence[Staff]:
         """
         Obtiene solo los administradores activos.
 
@@ -192,12 +192,12 @@ class StaffRepository(BaseRepository[Staff]):
             )
             .order_by(Staff.last_name, Staff.first_name)
         )
-        admins = list(self.session.execute(stmt).scalars().all())
+        admins = self.session.execute(stmt).scalars().all()
 
         logger.debug(f"Encontrados {len(admins)} administrador(es) activo(s)")
         return admins
 
-    def search_by_name(self, name: str) -> List[Staff]:
+    def search_by_name(self, name: str) -> Sequence[Staff]:
         """
         Busca usuarios por nombre.
 
@@ -225,12 +225,12 @@ class StaffRepository(BaseRepository[Staff]):
             )
             .order_by(Staff.last_name, Staff.first_name)
         )
-        staff_list = list(self.session.execute(stmt).scalars().all())
+        staff_list = self.session.execute(stmt).scalars().all()
 
         logger.debug(f"Encontrados {len(staff_list)} usuario(s)")
         return staff_list
 
-    def get_by_position(self, position: str) -> List[Staff]:
+    def get_by_position(self, position: str) -> Sequence[Staff]:
         """
         Busca usuarios por posición/cargo.
 
@@ -251,7 +251,7 @@ class StaffRepository(BaseRepository[Staff]):
             .filter(Staff.position.ilike(search_pattern))
             .order_by(Staff.last_name, Staff.first_name)
         )
-        staff_list = list(self.session.execute(stmt).scalars().all())
+        staff_list = self.session.execute(stmt).scalars().all()
 
         logger.debug(f"Encontrados {len(staff_list)} usuario(s)")
         return staff_list

@@ -5,10 +5,11 @@ Handles data access for orders with custom query methods including
 order number lookups, company filtering, and status tracking.
 """
 
-from typing import Optional, List
+from collections.abc import Sequence
 from datetime import date
+
+from sqlalchemy import select, and_, delete
 from sqlalchemy.orm import Session, selectinload
-from sqlalchemy import select, and_, or_, delete
 
 from src.backend.models.business.orders import Order, OrderProduct
 from src.backend.repositories.base import BaseRepository
@@ -37,7 +38,7 @@ class OrderRepository(BaseRepository[Order]):
         """
         super().__init__(session, Order)
 
-    def get_by_order_number(self, order_number: str) -> Optional[Order]:
+    def get_by_order_number(self, order_number: str) -> Order | None:
         """
         Get order by unique order number.
 
@@ -56,7 +57,7 @@ class OrderRepository(BaseRepository[Order]):
             logger.debug(f"Order not found: {order_number}")
         return order
 
-    def get_with_products(self, order_id: int) -> Optional[Order]:
+    def get_with_products(self, order_id: int) -> Order | None:
         """
         Get order with products eagerly loaded.
 
@@ -95,7 +96,7 @@ class OrderRepository(BaseRepository[Order]):
         company_id: int,
         skip: int = 0,
         limit: int = 100
-    ) -> List[Order]:
+    ) -> Sequence[Order]:
         """
         Get all orders for a specific company.
 
@@ -115,7 +116,7 @@ class OrderRepository(BaseRepository[Order]):
             .offset(skip)
             .limit(limit)
         )
-        orders = list(self.session.execute(stmt).scalars().all())
+        orders = self.session.execute(stmt).scalars().all()
         logger.debug(f"Found {len(orders)} order(s) for company_id={company_id}")
         return orders
 
@@ -124,7 +125,7 @@ class OrderRepository(BaseRepository[Order]):
         status_id: int,
         skip: int = 0,
         limit: int = 100
-    ) -> List[Order]:
+    ) -> Sequence[Order]:
         """Get orders by status."""
         logger.debug(f"Getting orders with status_id={status_id}")
         stmt = (
@@ -134,7 +135,7 @@ class OrderRepository(BaseRepository[Order]):
             .offset(skip)
             .limit(limit)
         )
-        orders = list(self.session.execute(stmt).scalars().all())
+        orders = self.session.execute(stmt).scalars().all()
         logger.debug(f"Found {len(orders)} order(s) with status_id={status_id}")
         return orders
 
@@ -143,7 +144,7 @@ class OrderRepository(BaseRepository[Order]):
         payment_status_id: int,
         skip: int = 0,
         limit: int = 100
-    ) -> List[Order]:
+    ) -> Sequence[Order]:
         """Get orders by payment status."""
         logger.debug(f"Getting orders with payment_status_id={payment_status_id}")
         stmt = (
@@ -153,7 +154,7 @@ class OrderRepository(BaseRepository[Order]):
             .offset(skip)
             .limit(limit)
         )
-        orders = list(self.session.execute(stmt).scalars().all())
+        orders = self.session.execute(stmt).scalars().all()
         logger.debug(f"Found {len(orders)} order(s) with payment_status_id={payment_status_id}")
         return orders
 
@@ -162,7 +163,7 @@ class OrderRepository(BaseRepository[Order]):
         staff_id: int,
         skip: int = 0,
         limit: int = 100
-    ) -> List[Order]:
+    ) -> Sequence[Order]:
         """Get orders assigned to staff member."""
         logger.debug(f"Getting orders for staff_id={staff_id}")
         stmt = (
@@ -172,11 +173,11 @@ class OrderRepository(BaseRepository[Order]):
             .offset(skip)
             .limit(limit)
         )
-        orders = list(self.session.execute(stmt).scalars().all())
+        orders = self.session.execute(stmt).scalars().all()
         logger.debug(f"Found {len(orders)} order(s) for staff_id={staff_id}")
         return orders
 
-    def get_by_quote(self, quote_id: int) -> Optional[Order]:
+    def get_by_quote(self, quote_id: int) -> Order | None:
         """Get order created from a specific quote."""
         logger.debug(f"Getting order for quote_id={quote_id}")
         stmt = select(Order).filter(Order.quote_id == quote_id)
@@ -187,7 +188,7 @@ class OrderRepository(BaseRepository[Order]):
             logger.debug(f"No order found for quote_id={quote_id}")
         return order
 
-    def get_overdue_orders(self, skip: int = 0, limit: int = 100) -> List[Order]:
+    def get_overdue_orders(self, skip: int = 0, limit: int = 100) -> Sequence[Order]:
         """Get orders that are overdue (promised date passed, not completed)."""
         logger.debug("Getting overdue orders")
         stmt = (
@@ -203,7 +204,7 @@ class OrderRepository(BaseRepository[Order]):
             .offset(skip)
             .limit(limit)
         )
-        orders = list(self.session.execute(stmt).scalars().all())
+        orders = self.session.execute(stmt).scalars().all()
         logger.debug(f"Found {len(orders)} overdue order(s)")
         return orders
 
@@ -212,7 +213,7 @@ class OrderRepository(BaseRepository[Order]):
         order_type: str,
         skip: int = 0,
         limit: int = 100
-    ) -> List[Order]:
+    ) -> Sequence[Order]:
         """Get orders by type (sales or purchase)."""
         logger.debug(f"Getting orders with order_type={order_type}")
         stmt = (
@@ -222,11 +223,11 @@ class OrderRepository(BaseRepository[Order]):
             .offset(skip)
             .limit(limit)
         )
-        orders = list(self.session.execute(stmt).scalars().all())
+        orders = self.session.execute(stmt).scalars().all()
         logger.debug(f"Found {len(orders)} {order_type} order(s)")
         return orders
 
-    def get_export_orders(self, skip: int = 0, limit: int = 100) -> List[Order]:
+    def get_export_orders(self, skip: int = 0, limit: int = 100) -> Sequence[Order]:
         """Get export orders only."""
         logger.debug("Getting export orders")
         stmt = (
@@ -236,7 +237,7 @@ class OrderRepository(BaseRepository[Order]):
             .offset(skip)
             .limit(limit)
         )
-        orders = list(self.session.execute(stmt).scalars().all())
+        orders = self.session.execute(stmt).scalars().all()
         logger.debug(f"Found {len(orders)} export order(s)")
         return orders
 
@@ -245,7 +246,7 @@ class OrderRepository(BaseRepository[Order]):
         project_number: str,
         skip: int = 0,
         limit: int = 100
-    ) -> List[Order]:
+    ) -> Sequence[Order]:
         """Search orders by project number."""
         logger.debug(f"Searching orders by project_number: '{project_number}'")
         search_pattern = f"%{project_number}%"
@@ -256,7 +257,7 @@ class OrderRepository(BaseRepository[Order]):
             .offset(skip)
             .limit(limit)
         )
-        orders = list(self.session.execute(stmt).scalars().all())
+        orders = self.session.execute(stmt).scalars().all()
         logger.debug(f"Found {len(orders)} order(s) matching project_number")
         return orders
 
@@ -273,7 +274,7 @@ class OrderProductRepository(BaseRepository[OrderProduct]):
         """Initialize OrderProductRepository."""
         super().__init__(session, OrderProduct)
 
-    def get_by_order(self, order_id: int) -> List[OrderProduct]:
+    def get_by_order(self, order_id: int) -> Sequence[OrderProduct]:
         """
         Get all products for a specific order.
 
@@ -285,7 +286,7 @@ class OrderProductRepository(BaseRepository[OrderProduct]):
             .filter(OrderProduct.order_id == order_id)
             .order_by(OrderProduct.sequence)
         )
-        products = list(self.session.execute(stmt).scalars().all())
+        products = self.session.execute(stmt).scalars().all()
         logger.debug(f"Found {len(products)} product(s) for order_id={order_id}")
         return products
 
@@ -294,7 +295,7 @@ class OrderProductRepository(BaseRepository[OrderProduct]):
         product_id: int,
         skip: int = 0,
         limit: int = 100
-    ) -> List[OrderProduct]:
+    ) -> Sequence[OrderProduct]:
         """Get all order line items containing a specific product."""
         logger.debug(f"Getting order products for product_id={product_id}")
         stmt = (
@@ -303,7 +304,7 @@ class OrderProductRepository(BaseRepository[OrderProduct]):
             .offset(skip)
             .limit(limit)
         )
-        products = list(self.session.execute(stmt).scalars().all())
+        products = self.session.execute(stmt).scalars().all()
         logger.debug(f"Found {len(products)} order product(s) for product_id={product_id}")
         return products
 

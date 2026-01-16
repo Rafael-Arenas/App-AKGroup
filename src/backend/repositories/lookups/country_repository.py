@@ -4,7 +4,7 @@ Repositorio para Country (tabla lookup de países).
 Maneja el acceso a datos para países.
 """
 
-from typing import Optional, List
+from collections.abc import Sequence
 from sqlalchemy import select, or_
 from sqlalchemy.orm import Session
 
@@ -34,7 +34,7 @@ class CountryRepository(BaseRepository[Country]):
         """
         super().__init__(session, Country)
 
-    def get_by_name(self, name: str) -> Optional[Country]:
+    def get_by_name(self, name: str) -> Country | None:
         """
         Busca un país por nombre.
 
@@ -61,7 +61,7 @@ class CountryRepository(BaseRepository[Country]):
 
         return country
 
-    def get_by_iso_code(self, iso_code: str) -> Optional[Country]:
+    def get_by_iso_code(self, iso_code: str) -> Country | None:
         """
         Busca un país por código ISO (alpha-2 o alpha-3).
 
@@ -94,7 +94,7 @@ class CountryRepository(BaseRepository[Country]):
 
         return country
 
-    def search_by_name(self, name: str) -> List[Country]:
+    def search_by_name(self, name: str) -> Sequence[Country]:
         """
         Busca países por nombre (búsqueda parcial).
 
@@ -117,12 +117,12 @@ class CountryRepository(BaseRepository[Country]):
             .filter(Country.name.ilike(search_pattern))
             .order_by(Country.name)
         )
-        countries = list(self.session.execute(stmt).scalars().all())
+        countries = self.session.execute(stmt).scalars().all()
 
         logger.debug(f"Encontrados {len(countries)} país(es)")
         return countries
 
-    def get_all_ordered(self, skip: int = 0, limit: int = 300) -> List[Country]:
+    def get_all_ordered(self, skip: int = 0, limit: int = 300) -> Sequence[Country]:
         """
         Obtiene todos los países ordenados alfabéticamente.
 
@@ -144,7 +144,7 @@ class CountryRepository(BaseRepository[Country]):
             .offset(skip)
             .limit(limit)
         )
-        countries = list(self.session.execute(stmt).scalars().all())
+        countries = self.session.execute(stmt).scalars().all()
 
         logger.debug(f"Encontrados {len(countries)} país(es)")
         return countries

@@ -4,7 +4,8 @@ Repositorio para Address.
 Maneja el acceso a datos para direcciones de empresas.
 """
 
-from typing import Optional, List
+from collections.abc import Sequence
+
 from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
@@ -35,7 +36,7 @@ class AddressRepository(BaseRepository[Address]):
         """
         super().__init__(session, Address)
 
-    def get_by_company(self, company_id: int) -> List[Address]:
+    def get_by_company(self, company_id: int) -> Sequence[Address]:
         """
         Obtiene todas las direcciones de una empresa.
 
@@ -57,12 +58,12 @@ class AddressRepository(BaseRepository[Address]):
             .filter(Address.company_id == company_id)
             .order_by(Address.is_default.desc(), Address.created_at.desc())
         )
-        addresses = list(self.session.execute(stmt).scalars().all())
+        addresses = self.session.execute(stmt).scalars().all()
 
         logger.debug(f"Encontradas {len(addresses)} dirección(es)")
         return addresses
 
-    def get_default_address(self, company_id: int) -> Optional[Address]:
+    def get_default_address(self, company_id: int) -> Address | None:
         """
         Obtiene la dirección por defecto de una empresa.
 
@@ -96,7 +97,7 @@ class AddressRepository(BaseRepository[Address]):
         self,
         company_id: int,
         address_type: AddressType
-    ) -> List[Address]:
+    ) -> Sequence[Address]:
         """
         Obtiene direcciones de una empresa por tipo.
 
@@ -126,12 +127,12 @@ class AddressRepository(BaseRepository[Address]):
             )
             .order_by(Address.is_default.desc(), Address.created_at.desc())
         )
-        addresses = list(self.session.execute(stmt).scalars().all())
+        addresses = self.session.execute(stmt).scalars().all()
 
         logger.debug(f"Encontradas {len(addresses)} dirección(es) tipo {address_type.value}")
         return addresses
 
-    def get_delivery_addresses(self, company_id: int) -> List[Address]:
+    def get_delivery_addresses(self, company_id: int) -> Sequence[Address]:
         """
         Obtiene solo las direcciones de entrega de una empresa.
 
@@ -146,7 +147,7 @@ class AddressRepository(BaseRepository[Address]):
         """
         return self.get_by_type(company_id, AddressType.DELIVERY)
 
-    def get_billing_addresses(self, company_id: int) -> List[Address]:
+    def get_billing_addresses(self, company_id: int) -> Sequence[Address]:
         """
         Obtiene solo las direcciones de facturación de una empresa.
 
@@ -161,7 +162,7 @@ class AddressRepository(BaseRepository[Address]):
         """
         return self.get_by_type(company_id, AddressType.BILLING)
 
-    def search_by_city(self, company_id: int, city: str) -> List[Address]:
+    def search_by_city(self, company_id: int, city: str) -> Sequence[Address]:
         """
         Busca direcciones por ciudad dentro de una empresa.
 
@@ -186,7 +187,7 @@ class AddressRepository(BaseRepository[Address]):
             )
             .order_by(Address.is_default.desc())
         )
-        addresses = list(self.session.execute(stmt).scalars().all())
+        addresses = self.session.execute(stmt).scalars().all()
 
         logger.debug(f"Encontradas {len(addresses)} dirección(es) en '{city}'")
         return addresses
@@ -233,7 +234,7 @@ class AddressRepository(BaseRepository[Address]):
         self,
         company_id: int,
         postal_code: str
-    ) -> List[Address]:
+    ) -> Sequence[Address]:
         """
         Busca direcciones por código postal.
 
@@ -259,7 +260,7 @@ class AddressRepository(BaseRepository[Address]):
                 Address.postal_code == postal_code
             )
         )
-        addresses = list(self.session.execute(stmt).scalars().all())
+        addresses = self.session.execute(stmt).scalars().all()
 
         logger.debug(f"Encontradas {len(addresses)} dirección(es)")
         return addresses

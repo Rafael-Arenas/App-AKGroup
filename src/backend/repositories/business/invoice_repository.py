@@ -4,7 +4,7 @@ Repositories for Invoice models.
 Handles data access for InvoiceSII and InvoiceExport.
 """
 
-from typing import Optional, List
+from collections.abc import Sequence
 from datetime import date
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -20,14 +20,14 @@ class InvoiceSIIRepository(BaseRepository[InvoiceSII]):
     def __init__(self, session: Session):
         super().__init__(session, InvoiceSII)
 
-    def get_by_invoice_number(self, invoice_number: str) -> Optional[InvoiceSII]:
+    def get_by_invoice_number(self, invoice_number: str) -> InvoiceSII | None:
         """Get invoice by unique invoice number."""
         logger.debug(f"Searching SII invoice by number: {invoice_number}")
         stmt = select(InvoiceSII).filter(InvoiceSII.invoice_number == invoice_number)
         invoice = self.session.execute(stmt).scalar_one_or_none()
         return invoice
 
-    def get_by_company(self, company_id: int, skip: int = 0, limit: int = 100) -> List[InvoiceSII]:
+    def get_by_company(self, company_id: int, skip: int = 0, limit: int = 100) -> Sequence[InvoiceSII]:
         """Get invoices by company."""
         stmt = (
             select(InvoiceSII)
@@ -36,9 +36,9 @@ class InvoiceSIIRepository(BaseRepository[InvoiceSII]):
             .offset(skip)
             .limit(limit)
         )
-        return list(self.session.execute(stmt).scalars().all())
+        return self.session.execute(stmt).scalars().all()
 
-    def get_by_payment_status(self, payment_status_id: int, skip: int = 0, limit: int = 100) -> List[InvoiceSII]:
+    def get_by_payment_status(self, payment_status_id: int, skip: int = 0, limit: int = 100) -> Sequence[InvoiceSII]:
         """Get invoices by payment status."""
         stmt = (
             select(InvoiceSII)
@@ -47,7 +47,7 @@ class InvoiceSIIRepository(BaseRepository[InvoiceSII]):
             .offset(skip)
             .limit(limit)
         )
-        return list(self.session.execute(stmt).scalars().all())
+        return self.session.execute(stmt).scalars().all()
 
 
 class InvoiceExportRepository(BaseRepository[InvoiceExport]):
@@ -56,14 +56,14 @@ class InvoiceExportRepository(BaseRepository[InvoiceExport]):
     def __init__(self, session: Session):
         super().__init__(session, InvoiceExport)
 
-    def get_by_invoice_number(self, invoice_number: str) -> Optional[InvoiceExport]:
+    def get_by_invoice_number(self, invoice_number: str) -> InvoiceExport | None:
         """Get invoice by unique invoice number."""
         logger.debug(f"Searching export invoice by number: {invoice_number}")
         stmt = select(InvoiceExport).filter(InvoiceExport.invoice_number == invoice_number)
         invoice = self.session.execute(stmt).scalar_one_or_none()
         return invoice
 
-    def get_by_company(self, company_id: int, skip: int = 0, limit: int = 100) -> List[InvoiceExport]:
+    def get_by_company(self, company_id: int, skip: int = 0, limit: int = 100) -> Sequence[InvoiceExport]:
         """Get invoices by company."""
         stmt = (
             select(InvoiceExport)
@@ -72,9 +72,9 @@ class InvoiceExportRepository(BaseRepository[InvoiceExport]):
             .offset(skip)
             .limit(limit)
         )
-        return list(self.session.execute(stmt).scalars().all())
+        return self.session.execute(stmt).scalars().all()
 
-    def get_by_country(self, country_id: int, skip: int = 0, limit: int = 100) -> List[InvoiceExport]:
+    def get_by_country(self, country_id: int, skip: int = 0, limit: int = 100) -> Sequence[InvoiceExport]:
         """Get export invoices by destination country."""
         stmt = (
             select(InvoiceExport)
@@ -83,4 +83,4 @@ class InvoiceExportRepository(BaseRepository[InvoiceExport]):
             .offset(skip)
             .limit(limit)
         )
-        return list(self.session.execute(stmt).scalars().all())
+        return self.session.execute(stmt).scalars().all()

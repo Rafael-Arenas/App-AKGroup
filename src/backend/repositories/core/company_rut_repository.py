@@ -4,7 +4,7 @@ Repositorio para CompanyRut.
 Maneja el acceso a datos para RUTs de empresas.
 """
 
-from typing import Optional, List
+from collections.abc import Sequence
 from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
@@ -35,7 +35,7 @@ class CompanyRutRepository(BaseRepository[CompanyRut]):
         """
         super().__init__(session, CompanyRut)
 
-    def get_by_company(self, company_id: int) -> List[CompanyRut]:
+    def get_by_company(self, company_id: int) -> Sequence[CompanyRut]:
         """
         Obtiene todos los RUTs de una empresa.
 
@@ -57,12 +57,12 @@ class CompanyRutRepository(BaseRepository[CompanyRut]):
             .filter(CompanyRut.company_id == company_id)
             .order_by(CompanyRut.is_main.desc(), CompanyRut.created_at)
         )
-        ruts = list(self.session.execute(stmt).scalars().all())
+        ruts = self.session.execute(stmt).scalars().all()
 
         logger.debug(f"Encontrados {len(ruts)} RUT(s)")
         return ruts
 
-    def get_main_rut(self, company_id: int) -> Optional[CompanyRut]:
+    def get_main_rut(self, company_id: int) -> CompanyRut | None:
         """
         Obtiene el RUT principal de una empresa.
 
@@ -92,7 +92,7 @@ class CompanyRutRepository(BaseRepository[CompanyRut]):
 
         return rut
 
-    def get_by_rut(self, rut: str) -> Optional[CompanyRut]:
+    def get_by_rut(self, rut: str) -> CompanyRut | None:
         """
         Busca un RUT por su valor.
 
@@ -155,7 +155,7 @@ class CompanyRutRepository(BaseRepository[CompanyRut]):
 
         logger.debug(f"RUT {rut.rut} establecido como principal")
 
-    def get_secondary_ruts(self, company_id: int) -> List[CompanyRut]:
+    def get_secondary_ruts(self, company_id: int) -> Sequence[CompanyRut]:
         """
         Obtiene los RUTs secundarios de una empresa.
 
@@ -178,7 +178,7 @@ class CompanyRutRepository(BaseRepository[CompanyRut]):
             )
             .order_by(CompanyRut.created_at)
         )
-        ruts = list(self.session.execute(stmt).scalars().all())
+        ruts = self.session.execute(stmt).scalars().all()
 
         logger.debug(f"Encontrados {len(ruts)} RUT(s) secundario(s)")
         return ruts

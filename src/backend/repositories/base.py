@@ -6,17 +6,17 @@ todos los repositorios específicos de la aplicación.
 """
 
 from abc import ABC, abstractmethod
-from datetime import datetime, timezone
-from typing import Generic, TypeVar, Optional, List
+from collections.abc import Sequence
+from typing import Generic, TypeVar
 
 from sqlalchemy import select, func, exists
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import DeclarativeBase, Session
 
 from src.backend.exceptions.repository import NotFoundException
 from src.backend.utils.logger import logger
 
-# TypeVar genérico para el modelo
-T = TypeVar("T")
+# TypeVar genérico con bound a DeclarativeBase para mejor tipado
+T = TypeVar("T", bound=DeclarativeBase)
 
 
 class IRepository(ABC, Generic[T]):
@@ -28,12 +28,12 @@ class IRepository(ABC, Generic[T]):
     """
 
     @abstractmethod
-    def get_by_id(self, id: int) -> Optional[T]:
+    def get_by_id(self, id: int) -> T | None:
         """Obtener entidad por ID."""
         pass
 
     @abstractmethod
-    def get_all(self, skip: int = 0, limit: int = 100) -> List[T]:
+    def get_all(self, skip: int = 0, limit: int = 100) -> Sequence[T]:
         """Obtener todas las entidades con paginación."""
         pass
 
@@ -71,7 +71,7 @@ class BaseRepository(IRepository[T], Generic[T]):
 
     Example:
         class CompanyRepository(BaseRepository[Company]):
-            def get_by_trigram(self, trigram: str) -> Optional[Company]:
+            def get_by_trigram(self, trigram: str) -> Company | None:
                 return self.session.query(self.model).filter_by(trigram=trigram).first()
     """
 
@@ -86,7 +86,7 @@ class BaseRepository(IRepository[T], Generic[T]):
         self.session = session
         self.model = model
 
-    def get_by_id(self, id: int) -> Optional[T]:
+    def get_by_id(self, id: int) -> T | None:
         """
         Obtiene una entidad por su ID.
 
@@ -111,7 +111,7 @@ class BaseRepository(IRepository[T], Generic[T]):
 
         return entity
 
-    def get_all(self, skip: int = 0, limit: int = 100) -> List[T]:
+    def get_all(self, skip: int = 0, limit: int = 100) -> Sequence[T]:
         """
         Obtiene todas las entidades con paginación.
 
@@ -132,7 +132,7 @@ class BaseRepository(IRepository[T], Generic[T]):
         logger.debug(f"Obteniendo {self.model.__name__} - skip={skip}, limit={limit}")
         stmt = select(self.model).offset(skip).limit(limit)
         result = self.session.execute(stmt)
-        entities = list(result.scalars().all())
+        entities = result.scalars().all()
         logger.debug(f"Encontrados {len(entities)} {self.model.__name__}(s)")
         return entities
 

@@ -4,7 +4,7 @@ Repositorio para Product y ProductComponent.
 Maneja el acceso a datos para productos y sus componentes (BOM).
 """
 
-from typing import Optional, List
+from collections.abc import Sequence
 from decimal import Decimal
 
 from sqlalchemy import or_, select
@@ -36,7 +36,7 @@ class ProductRepository(BaseRepository[Product]):
         """
         super().__init__(session, Product)
 
-    def get_by_reference(self, reference: str) -> Optional[Product]:
+    def get_by_reference(self, reference: str) -> Product | None:
         """
         Busca un producto por su referencia.
 
@@ -60,7 +60,7 @@ class ProductRepository(BaseRepository[Product]):
 
         return product
 
-    def search(self, query: str) -> List[Product]:
+    def search(self, query: str) -> Sequence[Product]:
         """
         Busca productos por referencia o designación en cualquier idioma (búsqueda parcial).
 
@@ -89,12 +89,12 @@ class ProductRepository(BaseRepository[Product]):
             )
             .order_by(Product.reference)
         )
-        products = list(self.session.execute(stmt).scalars().all())
+        products = self.session.execute(stmt).scalars().all()
 
         logger.debug(f"Encontrados {len(products)} producto(s) con '{query}'")
         return products
 
-    def get_with_components(self, product_id: int) -> Optional[Product]:
+    def get_with_components(self, product_id: int) -> Product | None:
         """
         Obtiene un producto con sus componentes (BOM) cargados.
 
@@ -125,7 +125,7 @@ class ProductRepository(BaseRepository[Product]):
 
         return product
 
-    def get_active_products(self, skip: int = 0, limit: int = 100) -> List[Product]:
+    def get_active_products(self, skip: int = 0, limit: int = 100) -> Sequence[Product]:
         """
         Obtiene solo los productos activos.
 
@@ -147,12 +147,12 @@ class ProductRepository(BaseRepository[Product]):
             .offset(skip)
             .limit(limit)
         )
-        products = list(self.session.execute(stmt).scalars().all())
+        products = self.session.execute(stmt).scalars().all()
 
         logger.debug(f"Encontrados {len(products)} producto(s) activo(s)")
         return products
 
-    def get_by_type(self, product_type: str, skip: int = 0, limit: int = 100) -> List[Product]:
+    def get_by_type(self, product_type: str, skip: int = 0, limit: int = 100) -> Sequence[Product]:
         """
         Obtiene productos por tipo (ARTICLE o NOMENCLATURE).
 
@@ -176,12 +176,12 @@ class ProductRepository(BaseRepository[Product]):
             .offset(skip)
             .limit(limit)
         )
-        products = list(self.session.execute(stmt).scalars().all())
+        products = self.session.execute(stmt).scalars().all()
 
         logger.debug(f"Encontrados {len(products)} producto(s) tipo {product_type}")
         return products
 
-    def get_low_stock(self, skip: int = 0, limit: int = 100) -> List[Product]:
+    def get_low_stock(self, skip: int = 0, limit: int = 100) -> Sequence[Product]:
         """
         Obtiene productos con stock bajo (stock_quantity < min_stock).
 
@@ -209,12 +209,12 @@ class ProductRepository(BaseRepository[Product]):
             .offset(skip)
             .limit(limit)
         )
-        products = list(self.session.execute(stmt).scalars().all())
+        products = self.session.execute(stmt).scalars().all()
 
         logger.debug(f"Encontrados {len(products)} producto(s) con stock bajo")
         return products
 
-    def get_by_family(self, family_type_id: int, skip: int = 0, limit: int = 100) -> List[Product]:
+    def get_by_family(self, family_type_id: int, skip: int = 0, limit: int = 100) -> Sequence[Product]:
         """
         Obtiene productos por familia.
 
@@ -237,7 +237,7 @@ class ProductRepository(BaseRepository[Product]):
             .offset(skip)
             .limit(limit)
         )
-        products = list(self.session.execute(stmt).scalars().all())
+        products = self.session.execute(stmt).scalars().all()
 
         logger.debug(f"Encontrados {len(products)} producto(s) familia {family_type_id}")
         return products
@@ -257,7 +257,7 @@ class ProductComponentRepository(BaseRepository[ProductComponent]):
     def __init__(self, session: Session):
         super().__init__(session, ProductComponent)
 
-    def get_by_parent(self, parent_id: int) -> List[ProductComponent]:
+    def get_by_parent(self, parent_id: int) -> Sequence[ProductComponent]:
         """
         Obtiene todos los componentes de un producto padre.
 
@@ -278,12 +278,12 @@ class ProductComponentRepository(BaseRepository[ProductComponent]):
             .options(selectinload(ProductComponent.component))
             .filter(ProductComponent.parent_id == parent_id)
         )
-        components = list(self.session.execute(stmt).scalars().all())
+        components = self.session.execute(stmt).scalars().all()
 
         logger.debug(f"Encontrados {len(components)} componente(s)")
         return components
 
-    def get_by_component(self, component_id: int) -> List[ProductComponent]:
+    def get_by_component(self, component_id: int) -> Sequence[ProductComponent]:
         """
         Obtiene todos los productos que usan este componente.
 
@@ -305,12 +305,12 @@ class ProductComponentRepository(BaseRepository[ProductComponent]):
             .options(selectinload(ProductComponent.parent))
             .filter(ProductComponent.component_id == component_id)
         )
-        uses = list(self.session.execute(stmt).scalars().all())
+        uses = self.session.execute(stmt).scalars().all()
 
         logger.debug(f"Componente usado en {len(uses)} producto(s)")
         return uses
 
-    def get_component(self, parent_id: int, component_id: int) -> Optional[ProductComponent]:
+    def get_component(self, parent_id: int, component_id: int) -> ProductComponent | None:
         """
         Obtiene un componente específico de un producto.
 

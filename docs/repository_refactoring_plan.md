@@ -65,10 +65,12 @@ T = TypeVar("T", bound=DeclarativeBase)
 ```
 
 ### Checklist Fase 1:
-- [ ] `base.py` - Actualizar tipado base
-- [ ] `core/*.py` - Actualizar tipado en core
-- [ ] `business/*.py` - Actualizar tipado en business
-- [ ] `lookups/*.py` - Actualizar tipado en lookups
+- [x] `base.py` - Actualizar tipado base ✅
+- [x] `core/*.py` - Actualizar tipado en core ✅
+- [x] `business/*.py` - Actualizar tipado en business ✅
+- [x] `lookups/*.py` - Actualizar tipado en lookups ✅
+
+**Estado: ✅ COMPLETADA** (2026-01-15)
 
 ---
 

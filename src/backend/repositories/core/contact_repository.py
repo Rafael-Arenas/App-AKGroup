@@ -4,7 +4,8 @@ Repositorio para Contact.
 Maneja el acceso a datos para contactos de empresas.
 """
 
-from typing import Optional, List
+from collections.abc import Sequence
+
 from sqlalchemy import select, or_
 from sqlalchemy.orm import Session
 
@@ -35,7 +36,7 @@ class ContactRepository(BaseRepository[Contact]):
         """
         super().__init__(session, Contact)
 
-    def get_by_company(self, company_id: int) -> List[Contact]:
+    def get_by_company(self, company_id: int) -> Sequence[Contact]:
         """
         Obtiene todos los contactos de una empresa.
 
@@ -57,12 +58,12 @@ class ContactRepository(BaseRepository[Contact]):
             .filter(Contact.company_id == company_id)
             .order_by(Contact.last_name, Contact.first_name)
         )
-        contacts = list(self.session.execute(stmt).scalars().all())
+        contacts = self.session.execute(stmt).scalars().all()
 
         logger.debug(f"Encontrados {len(contacts)} contacto(s)")
         return contacts
 
-    def get_active_contacts(self, company_id: int) -> List[Contact]:
+    def get_active_contacts(self, company_id: int) -> Sequence[Contact]:
         """
         Obtiene solo los contactos activos de una empresa.
 
@@ -85,12 +86,12 @@ class ContactRepository(BaseRepository[Contact]):
             )
             .order_by(Contact.last_name, Contact.first_name)
         )
-        contacts = list(self.session.execute(stmt).scalars().all())
+        contacts = self.session.execute(stmt).scalars().all()
 
         logger.debug(f"Encontrados {len(contacts)} contacto(s) activo(s)")
         return contacts
 
-    def get_by_email(self, email: str) -> Optional[Contact]:
+    def get_by_email(self, email: str) -> Contact | None:
         """
         Busca un contacto por email.
 
@@ -117,7 +118,7 @@ class ContactRepository(BaseRepository[Contact]):
 
         return contact
 
-    def search_by_name(self, company_id: int, name: str) -> List[Contact]:
+    def search_by_name(self, company_id: int, name: str) -> Sequence[Contact]:
         """
         Busca contactos por nombre dentro de una empresa.
 
@@ -149,12 +150,12 @@ class ContactRepository(BaseRepository[Contact]):
             )
             .order_by(Contact.last_name, Contact.first_name)
         )
-        contacts = list(self.session.execute(stmt).scalars().all())
+        contacts = self.session.execute(stmt).scalars().all()
 
         logger.debug(f"Encontrados {len(contacts)} contacto(s)")
         return contacts
 
-    def get_by_service(self, service_id: int) -> List[Contact]:
+    def get_by_service(self, service_id: int) -> Sequence[Contact]:
         """
         Obtiene todos los contactos de un servicio/departamento.
 
@@ -174,12 +175,12 @@ class ContactRepository(BaseRepository[Contact]):
             .filter(Contact.service_id == service_id)
             .order_by(Contact.last_name, Contact.first_name)
         )
-        contacts = list(self.session.execute(stmt).scalars().all())
+        contacts = self.session.execute(stmt).scalars().all()
 
         logger.debug(f"Encontrados {len(contacts)} contacto(s)")
         return contacts
 
-    def get_by_position(self, company_id: int, position: str) -> List[Contact]:
+    def get_by_position(self, company_id: int, position: str) -> Sequence[Contact]:
         """
         Busca contactos por posición/cargo dentro de una empresa.
 
@@ -207,12 +208,12 @@ class ContactRepository(BaseRepository[Contact]):
             )
             .order_by(Contact.last_name, Contact.first_name)
         )
-        contacts = list(self.session.execute(stmt).scalars().all())
+        contacts = self.session.execute(stmt).scalars().all()
 
         logger.debug(f"Encontrados {len(contacts)} contacto(s)")
         return contacts
 
-    def search_by_phone(self, phone: str) -> List[Contact]:
+    def search_by_phone(self, phone: str) -> Sequence[Contact]:
         """
         Busca contactos por número de teléfono.
 
@@ -234,12 +235,12 @@ class ContactRepository(BaseRepository[Contact]):
                 Contact.mobile == phone
             )
         )
-        contacts = list(self.session.execute(stmt).scalars().all())
+        contacts = self.session.execute(stmt).scalars().all()
 
         logger.debug(f"Encontrados {len(contacts)} contacto(s)")
         return contacts
 
-    def get_primary_contacts(self, company_id: int) -> List[Contact]:
+    def get_primary_contacts(self, company_id: int) -> Sequence[Contact]:
         """
         Obtiene los contactos principales de una empresa.
 
