@@ -518,3 +518,202 @@ class BaseRepository(IRepository[T], Generic[T]):
         rowcount = result.rowcount
         logger.warning(f"{rowcount} {self.model.__name__}(s) eliminados permanentemente en bulk")
         return rowcount
+
+
+# =============================================================================
+# Generic Lookup Repository
+# =============================================================================
+
+
+class GenericLookupRepository(BaseRepository[T]):
+    """
+    Repositorio genérico para modelos de lookup/catálogo.
+
+    Proporciona métodos comunes para tablas de lookup como:
+    - get_by_name() - búsqueda por nombre exacto
+    - get_by_code() - búsqueda por código con normalización
+    - get_active() - solo registros activos
+    - get_all_ordered() - todos ordenados alfabéticamente
+
+    La normalización del código (upper/lower) se configura en cada subclase.
+
+    Example:
+        class CompanyTypeRepository(GenericLookupRepository[CompanyType]):
+            def __init__(self, session: Session):
+                super().__init__(session, CompanyType)
+
+        # Automáticamente tiene get_by_name(), get_active(), etc.
+    """
+
+    # Configuración de normalización de código (override en subclases si necesario)
+    code_normalize: str = "upper"  # "upper", "lower", or "none"
+    name_column: str = "name"  # Nombre de la columna de nombre
+    code_column: str = "code"  # Nombre de la columna de código
+
+    def get_by_name(self, name: str) -> T | None:
+        """
+        Busca entidad por nombre exacto.
+
+        Args:
+            name: Nombre a buscar
+
+        Returns:
+            Entidad si existe, None en caso contrario
+
+        Example:
+            company_type = repo.get_by_name("Customer")
+        """
+        name_col = getattr(self.model, self.name_column, None)
+        if name_col is None:
+            logger.warning(f"{self.model.__name__} no tiene columna '{self.name_column}'")
+            return None
+
+        stmt = select(self.model).filter(name_col == name.strip())
+        result = self.session.execute(stmt).scalar_one_or_none()
+
+        if result:
+            logger.debug(f"{self.model.__name__} encontrado por nombre: {name}")
+        else:
+            logger.debug(f"{self.model.__name__} no encontrado por nombre: {name}")
+
+        return result
+
+    def get_by_code(self, code: str) -> T | None:
+        """
+        Busca entidad por código con normalización.
+
+        La normalización (upper/lower) se configura con code_normalize.
+
+        Args:
+            code: Código a buscar
+
+        Returns:
+            Entidad si existe, None en caso contrario
+
+        Example:
+            currency = repo.get_by_code("USD")
+        """
+        code_col = getattr(self.model, self.code_column, None)
+        if code_col is None:
+            logger.warning(f"{self.model.__name__} no tiene columna '{self.code_column}'")
+            return None
+
+        # Normalizar código según configuración
+        normalized_code = code.strip()
+        if self.code_normalize == "upper":
+            normalized_code = normalized_code.upper()
+        elif self.code_normalize == "lower":
+            normalized_code = normalized_code.lower()
+
+        stmt = select(self.model).filter(code_col == normalized_code)
+        result = self.session.execute(stmt).scalar_one_or_none()
+
+        if result:
+            logger.debug(f"{self.model.__name__} encontrado por código: {code}")
+        else:
+            logger.debug(f"{self.model.__name__} no encontrado por código: {code}")
+
+        return result
+
+    def get_active(self, skip: int = 0, limit: int = 100) -> Sequence[T]:
+        """
+        Obtiene solo registros activos.
+
+        Requiere que el modelo tenga columna is_active.
+
+        Args:
+            skip: Registros a saltar
+            limit: Máximo de registros
+
+        Returns:
+            Lista de registros activos
+
+        Example:
+            active_currencies = repo.get_active()
+        """
+        is_active_col = getattr(self.model, "is_active", None)
+        if is_active_col is None:
+            logger.warning(f"{self.model.__name__} no tiene columna 'is_active', retornando todos")
+            return self.get_all(skip=skip, limit=limit)
+
+        # Determinar columna de ordenamiento
+        order_col = getattr(self.model, self.name_column, None) or getattr(self.model, self.code_column, None)
+
+        stmt = select(self.model).filter(is_active_col == True)
+
+        if order_col is not None:
+            stmt = stmt.order_by(order_col)
+
+        stmt = stmt.offset(skip).limit(limit)
+
+        result = self.session.execute(stmt).scalars().all()
+        logger.debug(f"Encontrados {len(result)} {self.model.__name__}(s) activos")
+        return result
+
+    def get_all_ordered(
+        self,
+        skip: int = 0,
+        limit: int = 100,
+        order_column: str | None = None
+    ) -> Sequence[T]:
+        """
+        Obtiene todos los registros ordenados alfabéticamente.
+
+        Args:
+            skip: Registros a saltar
+            limit: Máximo de registros
+            order_column: Columna para ordenar (default: name o code)
+
+        Returns:
+            Lista de registros ordenados
+
+        Example:
+            all_countries = repo.get_all_ordered()
+        """
+        # Determinar columna de ordenamiento
+        if order_column:
+            order_col = getattr(self.model, order_column, None)
+        else:
+            order_col = getattr(self.model, self.name_column, None) or getattr(self.model, self.code_column, None)
+
+        stmt = select(self.model)
+
+        if order_col is not None:
+            stmt = stmt.order_by(order_col)
+
+        stmt = stmt.offset(skip).limit(limit)
+
+        result = self.session.execute(stmt).scalars().all()
+        logger.debug(f"Encontrados {len(result)} {self.model.__name__}(s) ordenados")
+        return result
+
+    def search_by_name(self, name: str, limit: int = 50) -> Sequence[T]:
+        """
+        Busca entidades por nombre parcial (case-insensitive).
+
+        Args:
+            name: Texto a buscar
+            limit: Máximo de resultados
+
+        Returns:
+            Lista de entidades que coinciden
+
+        Example:
+            results = repo.search_by_name("Chi")  # Encuentra "Chile", "China"
+        """
+        name_col = getattr(self.model, self.name_column, None)
+        if name_col is None:
+            logger.warning(f"{self.model.__name__} no tiene columna '{self.name_column}'")
+            return []
+
+        search_pattern = f"%{name}%"
+        stmt = (
+            select(self.model)
+            .filter(name_col.ilike(search_pattern))
+            .order_by(name_col)
+            .limit(limit)
+        )
+
+        result = self.session.execute(stmt).scalars().all()
+        logger.debug(f"Encontrados {len(result)} {self.model.__name__}(s) con nombre '{name}'")
+        return result
