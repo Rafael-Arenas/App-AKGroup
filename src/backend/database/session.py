@@ -6,7 +6,7 @@ for database access throughout the application.
 """
 
 from contextlib import contextmanager
-from typing import Generator
+from collections.abc import Generator
 
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -37,7 +37,8 @@ def get_db() -> Generator[Session, None, None]:
         # Manual usage
         db = next(get_db())
         try:
-            items = db.query(Item).all()
+            stmt = select(Item)
+            items = db.execute(stmt).scalars().all()
         finally:
             db.close()
     """
@@ -86,7 +87,8 @@ def get_session() -> Session:
     Example:
         session = get_session()
         try:
-            users = session.query(User).all()
+            stmt = select(User)
+            users = session.execute(stmt).scalars().all()
         finally:
             session.close()
     """

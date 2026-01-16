@@ -6,7 +6,7 @@ en el contexto de facades y API layer.
 """
 
 from contextlib import contextmanager
-from typing import Generator
+from collections.abc import Generator
 
 from sqlalchemy.orm import Session
 
@@ -58,7 +58,8 @@ def get_db_session() -> Session:
     Example:
         session = get_db_session()
         try:
-            users = session.query(User).all()
+            stmt = select(User)
+            users = session.execute(stmt).scalars().all()
         finally:
             session.close()
     """
