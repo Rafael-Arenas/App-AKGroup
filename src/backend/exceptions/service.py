@@ -23,7 +23,7 @@ class ValidationException(AppException):
             )
     """
 
-    def __init__(self, message: str = "Error de validación", details: dict = None):
+    def __init__(self, message: str = "Error de validación", details: dict | None = None):
         super().__init__(message, details)
 
 
@@ -42,7 +42,7 @@ class BusinessRuleException(AppException):
             )
     """
 
-    def __init__(self, message: str = "Regla de negocio violada", details: dict = None):
+    def __init__(self, message: str = "Regla de negocio violada", details: dict | None = None):
         super().__init__(message, details)
 
 
@@ -61,5 +61,5 @@ class UnauthorizedException(AppException):
             )
     """
 
-    def __init__(self, message: str = "No autorizado", details: dict = None):
+    def __init__(self, message: str = "No autorizado", details: dict | None = None):
         super().__init__(message, details)

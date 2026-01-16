@@ -25,7 +25,7 @@ class AppException(Exception):
             logger.error(f"Error de aplicación: {e.message}")
     """
 
-    def __init__(self, message: str, details: dict = None):
+    def __init__(self, message: str, details: dict | None = None):
         """
         Inicializa la excepción.
 

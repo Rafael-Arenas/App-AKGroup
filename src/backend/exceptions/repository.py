@@ -24,7 +24,7 @@ class NotFoundException(DatabaseException):
             )
     """
 
-    def __init__(self, message: str = "Entidad no encontrada", details: dict = None):
+    def __init__(self, message: str = "Entidad no encontrada", details: dict | None = None):
         super().__init__(message, details)
 
 
@@ -44,7 +44,7 @@ class DuplicateException(DatabaseException):
             )
     """
 
-    def __init__(self, message: str = "Entidad duplicada", details: dict = None):
+    def __init__(self, message: str = "Entidad duplicada", details: dict | None = None):
         super().__init__(message, details)
 
 
@@ -63,5 +63,5 @@ class InvalidStateException(DatabaseException):
             )
     """
 
-    def __init__(self, message: str = "Estado inválido de entidad", details: dict = None):
+    def __init__(self, message: str = "Estado inválido de entidad", details: dict | None = None):
         super().__init__(message, details)
