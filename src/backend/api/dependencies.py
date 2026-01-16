@@ -5,7 +5,7 @@ Proporciona funciones de dependency injection para la API,
 incluyendo sesión de base de datos y autenticación.
 """
 
-from typing import Generator
+from collections.abc import Generator
 
 from fastapi import Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -26,7 +26,8 @@ def get_database() -> Generator[Session, None, None]:
     Example:
         @router.get("/items")
         def get_items(db: Session = Depends(get_database)):
-            return db.query(Item).all()
+            stmt = select(Item)
+            return db.execute(stmt).scalars().all()
     """
     db = next(get_db())
     try:
@@ -84,7 +85,8 @@ def validate_pagination(
             db: Session = Depends(get_database)
         ):
             skip, limit = pagination
-            return db.query(Item).offset(skip).limit(limit).all()
+            stmt = select(Item).offset(skip).limit(limit)
+            return db.execute(stmt).scalars().all()
     """
     if skip < 0:
         raise HTTPException(

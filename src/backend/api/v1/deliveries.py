@@ -4,7 +4,6 @@ FastAPI routes for Delivery endpoints.
 Provides REST API for managing delivery orders, transports, and payment conditions.
 """
 
-from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 
@@ -70,12 +69,12 @@ def get_payment_condition_service(db: Session = Depends(get_db)) -> PaymentCondi
 # DELIVERY ORDER ENDPOINTS
 # ============================================================================
 
-@delivery_orders_router.get("/", response_model=List[DeliveryOrderListResponse])
+@delivery_orders_router.get("/", response_model=list[DeliveryOrderListResponse])
 def get_delivery_orders(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
     service: DeliveryOrderService = Depends(get_delivery_service),
-) -> List[DeliveryOrderListResponse]:
+) -> list[DeliveryOrderListResponse]:
     """Get all delivery orders with pagination."""
     logger.info(f"GET /delivery-orders - skip={skip}, limit={limit}")
     try:
@@ -112,13 +111,13 @@ def get_delivery_by_number(
         )
 
 
-@delivery_orders_router.get("/company/{company_id}", response_model=List[DeliveryOrderListResponse])
+@delivery_orders_router.get("/company/{company_id}", response_model=list[DeliveryOrderListResponse])
 def get_deliveries_by_company(
     company_id: int,
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
     service: DeliveryOrderService = Depends(get_delivery_service),
-) -> List[DeliveryOrderListResponse]:
+) -> list[DeliveryOrderListResponse]:
     """Get delivery orders by company."""
     logger.info(f"GET /delivery-orders/company/{company_id}")
     try:
@@ -133,13 +132,13 @@ def get_deliveries_by_company(
         )
 
 
-@delivery_orders_router.get("/status/{status}", response_model=List[DeliveryOrderListResponse])
+@delivery_orders_router.get("/status/{status}", response_model=list[DeliveryOrderListResponse])
 def get_deliveries_by_status(
     status: str,
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
     service: DeliveryOrderService = Depends(get_delivery_service),
-) -> List[DeliveryOrderListResponse]:
+) -> list[DeliveryOrderListResponse]:
     """Get delivery orders by status."""
     logger.info(f"GET /delivery-orders/status/{status}")
     try:
@@ -284,12 +283,12 @@ def delete_delivery(
 # TRANSPORT ENDPOINTS
 # ============================================================================
 
-@transports_router.get("/", response_model=List[TransportResponse])
+@transports_router.get("/", response_model=list[TransportResponse])
 def get_transports(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
     service: TransportService = Depends(get_transport_service),
-) -> List[TransportResponse]:
+) -> list[TransportResponse]:
     """Get all transports with pagination."""
     logger.info(f"GET /transports - skip={skip}, limit={limit}")
     try:
@@ -304,13 +303,13 @@ def get_transports(
         )
 
 
-@transports_router.get("/type/{transport_type}", response_model=List[TransportResponse])
+@transports_router.get("/type/{transport_type}", response_model=list[TransportResponse])
 def get_transports_by_type(
     transport_type: str,
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
     service: TransportService = Depends(get_transport_service),
-) -> List[TransportResponse]:
+) -> list[TransportResponse]:
     """Get transports by type."""
     logger.info(f"GET /transports/type/{transport_type}")
     try:
@@ -423,12 +422,12 @@ def delete_transport(
 # PAYMENT CONDITION ENDPOINTS
 # ============================================================================
 
-@payment_conditions_router.get("/", response_model=List[PaymentConditionResponse])
+@payment_conditions_router.get("/", response_model=list[PaymentConditionResponse])
 def get_payment_conditions(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
     service: PaymentConditionService = Depends(get_payment_condition_service),
-) -> List[PaymentConditionResponse]:
+) -> list[PaymentConditionResponse]:
     """Get all payment conditions with pagination."""
     logger.info(f"GET /payment-conditions - skip={skip}, limit={limit}")
     try:

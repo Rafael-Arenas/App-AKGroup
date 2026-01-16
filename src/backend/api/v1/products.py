@@ -4,7 +4,6 @@ Endpoints REST para Product.
 Proporciona operaciones CRUD sobre productos y gestión de BOM.
 """
 
-from typing import List
 
 from fastapi import APIRouter, Depends, status, Query
 from sqlalchemy.orm import Session
@@ -48,7 +47,7 @@ def get_product_service(db: Session = Depends(get_database)) -> ProductService:
     )
 
 
-@router.get("/", response_model=List[ProductResponse])
+@router.get("/", response_model=list[ProductResponse])
 def get_products(
     skip: int = 0,
     limit: int = 100,
@@ -77,7 +76,7 @@ def get_products(
     return products
 
 
-@router.get("/search", response_model=List[ProductResponse])
+@router.get("/search", response_model=list[ProductResponse])
 def search_products(
     q: str = Query(..., description="Texto a buscar en código o nombre"),
     service: ProductService = Depends(get_product_service),
@@ -104,7 +103,7 @@ def search_products(
     return products
 
 
-@router.get("/type/{product_type}", response_model=List[ProductResponse])
+@router.get("/type/{product_type}", response_model=list[ProductResponse])
 def get_products_by_type(
     product_type: str,
     skip: int = 0,

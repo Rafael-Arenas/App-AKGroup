@@ -4,7 +4,6 @@ Endpoints REST para CompanyRut.
 Proporciona operaciones CRUD sobre RUTs de empresas.
 """
 
-from typing import List
 
 from fastapi import APIRouter, Depends, status, HTTPException
 from sqlalchemy.orm import Session
@@ -34,7 +33,7 @@ def get_company_rut_service(db: Session = Depends(get_database)) -> CompanyRutSe
     return CompanyRutService(repository=repository, session=db)
 
 
-@router.get("/", response_model=List[CompanyRutResponse])
+@router.get("/", response_model=list[CompanyRutResponse])
 def get_company_ruts(
     skip: int = 0,
     limit: int = 100,
@@ -62,7 +61,7 @@ def get_company_ruts(
     return ruts
 
 
-@router.get("/company/{company_id}", response_model=List[CompanyRutResponse])
+@router.get("/company/{company_id}", response_model=list[CompanyRutResponse])
 def get_ruts_by_company(
     company_id: int,
     service: CompanyRutService = Depends(get_company_rut_service),
@@ -114,7 +113,7 @@ def get_main_rut(
     return rut
 
 
-@router.get("/company/{company_id}/secondary", response_model=List[CompanyRutResponse])
+@router.get("/company/{company_id}/secondary", response_model=list[CompanyRutResponse])
 def get_secondary_ruts(
     company_id: int,
     service: CompanyRutService = Depends(get_company_rut_service),

@@ -5,7 +5,6 @@ Provides REST API for managing orders including CRUD operations,
 filtering by company/status, and creating orders from quotes.
 """
 
-from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 
@@ -42,12 +41,12 @@ def get_order_service(db: Session = Depends(get_db)) -> OrderService:
     return OrderService(repository, db)
 
 
-@router.get("/", response_model=List[OrderListResponse])
+@router.get("/", response_model=list[OrderListResponse])
 def get_orders(
     skip: int = Query(0, ge=0, description="Pagination offset"),
     limit: int = Query(100, ge=1, le=1000, description="Maximum records to return"),
     service: OrderService = Depends(get_order_service),
-) -> List[OrderListResponse]:
+) -> list[OrderListResponse]:
     """
     Get all orders with pagination.
 
@@ -111,13 +110,13 @@ def get_order_by_number(
         )
 
 
-@router.get("/company/{company_id}", response_model=List[OrderListResponse])
+@router.get("/company/{company_id}", response_model=list[OrderListResponse])
 def get_orders_by_company(
     company_id: int,
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
     service: OrderService = Depends(get_order_service),
-) -> List[OrderListResponse]:
+) -> list[OrderListResponse]:
     """
     Get all orders for a specific company.
 
@@ -143,13 +142,13 @@ def get_orders_by_company(
         )
 
 
-@router.get("/status/{status_id}", response_model=List[OrderListResponse])
+@router.get("/status/{status_id}", response_model=list[OrderListResponse])
 def get_orders_by_status(
     status_id: int,
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
     service: OrderService = Depends(get_order_service),
-) -> List[OrderListResponse]:
+) -> list[OrderListResponse]:
     """
     Get orders by status.
 
@@ -175,13 +174,13 @@ def get_orders_by_status(
         )
 
 
-@router.get("/staff/{staff_id}", response_model=List[OrderListResponse])
+@router.get("/staff/{staff_id}", response_model=list[OrderListResponse])
 def get_orders_by_staff(
     staff_id: int,
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
     service: OrderService = Depends(get_order_service),
-) -> List[OrderListResponse]:
+) -> list[OrderListResponse]:
     """
     Get orders assigned to staff member.
 

@@ -4,7 +4,6 @@ Endpoints REST para Service.
 Proporciona operaciones CRUD sobre servicios/departamentos.
 """
 
-from typing import List
 
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
@@ -33,7 +32,7 @@ def get_service_service(db: Session = Depends(get_database)) -> ServiceService:
     return ServiceService(repository=repository, session=db)
 
 
-@router.get("/", response_model=List[ServiceResponse])
+@router.get("/", response_model=list[ServiceResponse])
 def get_services(
     skip: int = 0,
     limit: int = 100,
@@ -61,7 +60,7 @@ def get_services(
     return services
 
 
-@router.get("/active", response_model=List[ServiceResponse])
+@router.get("/active", response_model=list[ServiceResponse])
 def get_active_services(
     skip: int = 0,
     limit: int = 100,

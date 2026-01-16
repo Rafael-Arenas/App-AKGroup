@@ -4,7 +4,6 @@ Endpoints REST para Contact.
 Proporciona operaciones CRUD sobre contactos de empresas.
 """
 
-from typing import List
 
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
@@ -33,7 +32,7 @@ def get_contact_service(db: Session = Depends(get_database)) -> ContactService:
     return ContactService(repository=repository, session=db)
 
 
-@router.get("/", response_model=List[ContactResponse])
+@router.get("/", response_model=list[ContactResponse])
 def get_contacts(
     skip: int = 0,
     limit: int = 100,
@@ -61,7 +60,7 @@ def get_contacts(
     return contacts
 
 
-@router.get("/company/{company_id}", response_model=List[ContactResponse])
+@router.get("/company/{company_id}", response_model=list[ContactResponse])
 def get_contacts_by_company(
     company_id: int,
     service: ContactService = Depends(get_contact_service),
@@ -87,7 +86,7 @@ def get_contacts_by_company(
     return contacts
 
 
-@router.get("/search/name/{name}", response_model=List[ContactResponse])
+@router.get("/search/name/{name}", response_model=list[ContactResponse])
 def search_contacts_by_name(
     company_id: int,
     name: str,
@@ -144,7 +143,7 @@ def get_contact_by_email(
     return contact
 
 
-@router.get("/service/{service_id}", response_model=List[ContactResponse])
+@router.get("/service/{service_id}", response_model=list[ContactResponse])
 def get_contacts_by_service(
     service_id: int,
     service: ContactService = Depends(get_contact_service),

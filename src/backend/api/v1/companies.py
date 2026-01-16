@@ -4,7 +4,7 @@ Endpoints REST para Company.
 Proporciona operaciones CRUD sobre empresas.
 """
 
-from typing import List
+
 
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
@@ -33,7 +33,7 @@ def get_company_service(db: Session = Depends(get_database)) -> CompanyService:
     return CompanyService(repository=repository, session=db)
 
 
-@router.get("/", response_model=List[CompanyResponse])
+@router.get("/", response_model=list[CompanyResponse])
 def get_companies(
     skip: int = 0,
     limit: int = 100,
@@ -89,7 +89,7 @@ def get_companies(
     return companies
 
 
-@router.get("/active", response_model=List[CompanyResponse])
+@router.get("/active", response_model=list[CompanyResponse])
 def get_active_companies(
     skip: int = 0,
     limit: int = 100,
@@ -117,7 +117,7 @@ def get_active_companies(
     return companies
 
 
-@router.get("/search/{name}", response_model=List[CompanyResponse])
+@router.get("/search/{name}", response_model=list[CompanyResponse])
 def search_companies(
     name: str,
     service: CompanyService = Depends(get_company_service),

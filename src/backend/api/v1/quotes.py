@@ -4,7 +4,6 @@ REST API endpoints for Quote and QuoteProduct.
 Provides CRUD operations and custom endpoints for quote management.
 """
 
-from typing import List
 from fastapi import APIRouter, Depends, status, Query
 from sqlalchemy.orm import Session
 
@@ -44,7 +43,7 @@ def get_quote_service(db: Session = Depends(get_database)) -> QuoteService:
 # QUOTE ENDPOINTS
 # ============================================================================
 
-@router.get("/", response_model=List[QuoteListResponse])
+@router.get("/", response_model=list[QuoteListResponse])
 def get_quotes(
     skip: int = Query(0, ge=0, description="Number of records to skip"),
     limit: int = Query(100, ge=1, le=1000, description="Maximum records to return"),
@@ -69,7 +68,7 @@ def get_quotes(
     return quotes
 
 
-@router.get("/company/{company_id}", response_model=List[QuoteListResponse])
+@router.get("/company/{company_id}", response_model=list[QuoteListResponse])
 def get_quotes_by_company(
     company_id: int,
     skip: int = Query(0, ge=0),
@@ -96,7 +95,7 @@ def get_quotes_by_company(
     return quotes
 
 
-@router.get("/status/{status_id}", response_model=List[QuoteListResponse])
+@router.get("/status/{status_id}", response_model=list[QuoteListResponse])
 def get_quotes_by_status(
     status_id: int,
     skip: int = Query(0, ge=0),
@@ -120,7 +119,7 @@ def get_quotes_by_status(
     return quotes
 
 
-@router.get("/staff/{staff_id}", response_model=List[QuoteListResponse])
+@router.get("/staff/{staff_id}", response_model=list[QuoteListResponse])
 def get_quotes_by_staff(
     staff_id: int,
     skip: int = Query(0, ge=0),
@@ -144,7 +143,7 @@ def get_quotes_by_staff(
     return quotes
 
 
-@router.get("/search", response_model=List[QuoteListResponse])
+@router.get("/search", response_model=list[QuoteListResponse])
 def search_quotes(
     subject: str = Query(..., min_length=1, description="Text to search in subject"),
     skip: int = Query(0, ge=0),

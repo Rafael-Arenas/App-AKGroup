@@ -4,7 +4,6 @@ Endpoints REST para Address.
 Proporciona operaciones CRUD sobre direcciones de empresas.
 """
 
-from typing import List
 
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
@@ -34,7 +33,7 @@ def get_address_service(db: Session = Depends(get_database)) -> AddressService:
     return AddressService(repository=repository, session=db)
 
 
-@router.get("/", response_model=List[AddressResponse])
+@router.get("/", response_model=list[AddressResponse])
 def get_addresses(
     skip: int = 0,
     limit: int = 100,
@@ -62,7 +61,7 @@ def get_addresses(
     return addresses
 
 
-@router.get("/company/{company_id}", response_model=List[AddressResponse])
+@router.get("/company/{company_id}", response_model=list[AddressResponse])
 def get_addresses_by_company(
     company_id: int,
     service: AddressService = Depends(get_address_service),
@@ -117,7 +116,7 @@ def get_default_address(
     return address
 
 
-@router.get("/type/{address_type}", response_model=List[AddressResponse])
+@router.get("/type/{address_type}", response_model=list[AddressResponse])
 def get_addresses_by_type(
     company_id: int,
     address_type: AddressType,

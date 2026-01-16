@@ -4,7 +4,6 @@ Endpoints REST para Note.
 Proporciona operaciones CRUD sobre sistema polimórfico de notas.
 """
 
-from typing import List
 
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
@@ -34,7 +33,7 @@ def get_note_service(db: Session = Depends(get_database)) -> NoteService:
     return NoteService(repository=repository, session=db)
 
 
-@router.get("/", response_model=List[NoteResponse])
+@router.get("/", response_model=list[NoteResponse])
 def get_notes(
     skip: int = 0,
     limit: int = 100,
@@ -62,7 +61,7 @@ def get_notes(
     return notes
 
 
-@router.get("/entity/{entity_type}/{entity_id}", response_model=List[NoteResponse])
+@router.get("/entity/{entity_type}/{entity_id}", response_model=list[NoteResponse])
 def get_notes_by_entity(
     entity_type: str,
     entity_id: int,
@@ -95,7 +94,7 @@ def get_notes_by_entity(
     return notes
 
 
-@router.get("/priority/{priority}", response_model=List[NoteResponse])
+@router.get("/priority/{priority}", response_model=list[NoteResponse])
 def get_notes_by_priority(
     entity_type: str,
     entity_id: int,
@@ -131,7 +130,7 @@ def get_notes_by_priority(
     return notes
 
 
-@router.get("/search/{query}", response_model=List[NoteResponse])
+@router.get("/search/{query}", response_model=list[NoteResponse])
 def search_notes(
     entity_type: str,
     entity_id: int,

@@ -4,7 +4,6 @@ FastAPI routes for Invoice endpoints.
 Provides REST API for managing InvoiceSII and InvoiceExport.
 """
 
-from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 
@@ -45,12 +44,12 @@ def get_invoice_export_service(db: Session = Depends(get_db)) -> InvoiceExportSe
 # INVOICE SII ENDPOINTS
 # ============================================================================
 
-@invoices_sii_router.get("/", response_model=List[InvoiceSIIListResponse])
+@invoices_sii_router.get("/", response_model=list[InvoiceSIIListResponse])
 def get_invoices_sii(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
     service: InvoiceSIIService = Depends(get_invoice_sii_service),
-) -> List[InvoiceSIIListResponse]:
+) -> list[InvoiceSIIListResponse]:
     """Get all SII invoices with pagination."""
     logger.info(f"GET /invoices-sii - skip={skip}, limit={limit}")
     try:
@@ -78,13 +77,13 @@ def get_invoice_sii_by_number(
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
-@invoices_sii_router.get("/company/{company_id}", response_model=List[InvoiceSIIListResponse])
+@invoices_sii_router.get("/company/{company_id}", response_model=list[InvoiceSIIListResponse])
 def get_invoices_sii_by_company(
     company_id: int,
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
     service: InvoiceSIIService = Depends(get_invoice_sii_service),
-) -> List[InvoiceSIIListResponse]:
+) -> list[InvoiceSIIListResponse]:
     """Get SII invoices by company."""
     logger.info(f"GET /invoices-sii/company/{company_id}")
     try:
@@ -168,12 +167,12 @@ def delete_invoice_sii(
 # INVOICE EXPORT ENDPOINTS
 # ============================================================================
 
-@invoices_export_router.get("/", response_model=List[InvoiceExportListResponse])
+@invoices_export_router.get("/", response_model=list[InvoiceExportListResponse])
 def get_invoices_export(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
     service: InvoiceExportService = Depends(get_invoice_export_service),
-) -> List[InvoiceExportListResponse]:
+) -> list[InvoiceExportListResponse]:
     """Get all export invoices with pagination."""
     logger.info(f"GET /invoices-export - skip={skip}, limit={limit}")
     try:
@@ -200,13 +199,13 @@ def get_invoice_export_by_number(
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
-@invoices_export_router.get("/company/{company_id}", response_model=List[InvoiceExportListResponse])
+@invoices_export_router.get("/company/{company_id}", response_model=list[InvoiceExportListResponse])
 def get_invoices_export_by_company(
     company_id: int,
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
     service: InvoiceExportService = Depends(get_invoice_export_service),
-) -> List[InvoiceExportListResponse]:
+) -> list[InvoiceExportListResponse]:
     """Get export invoices by company."""
     logger.info(f"GET /invoices-export/company/{company_id}")
     try:

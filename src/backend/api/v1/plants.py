@@ -2,7 +2,6 @@
 Endpoints REST para Plant.
 """
 
-from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -23,7 +22,7 @@ def get_plant_service(db: Session = Depends(get_database)) -> PlantService:
     return PlantService(repository=repository, session=db)
 
 
-@router.get("/company/{company_id}", response_model=List[PlantResponse])
+@router.get("/company/{company_id}", response_model=list[PlantResponse])
 def get_plants_by_company(
     company_id: int,
     skip: int = 0,

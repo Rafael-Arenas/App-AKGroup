@@ -4,7 +4,6 @@ Endpoints REST para Staff.
 Proporciona operaciones CRUD sobre usuarios del sistema.
 """
 
-from typing import List
 
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
@@ -33,7 +32,7 @@ def get_staff_service(db: Session = Depends(get_database)) -> StaffService:
     return StaffService(repository=repository, session=db)
 
 
-@router.get("/", response_model=List[StaffResponse])
+@router.get("/", response_model=list[StaffResponse])
 def get_staff(
     skip: int = 0,
     limit: int = 100,
@@ -61,7 +60,7 @@ def get_staff(
     return staff
 
 
-@router.get("/active", response_model=List[StaffResponse])
+@router.get("/active", response_model=list[StaffResponse])
 def get_active_staff(
     skip: int = 0,
     limit: int = 100,
@@ -89,7 +88,7 @@ def get_active_staff(
     return staff
 
 
-@router.get("/admins", response_model=List[StaffResponse])
+@router.get("/admins", response_model=list[StaffResponse])
 def get_admins(
     skip: int = 0,
     limit: int = 100,
@@ -117,7 +116,7 @@ def get_admins(
     return admins
 
 
-@router.get("/search/{query}", response_model=List[StaffResponse])
+@router.get("/search/{query}", response_model=list[StaffResponse])
 def search_staff(
     query: str,
     service: StaffService = Depends(get_staff_service),

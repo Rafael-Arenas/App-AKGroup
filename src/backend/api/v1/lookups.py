@@ -18,7 +18,6 @@ Provides CRUD operations for all 12 lookup tables:
 Total: 84+ endpoints for comprehensive lookup management.
 """
 
-from typing import List
 from fastapi import APIRouter, Depends, status, Query
 from sqlalchemy.orm import Session
 
@@ -115,7 +114,7 @@ def get_country_service(db: Session = Depends(get_database)) -> CountryService:
     return CountryService(repository=repository, session=db)
 
 
-@countries_router.get("/", response_model=List[CountryResponse])
+@countries_router.get("/", response_model=list[CountryResponse])
 def get_countries(
     skip: int = Query(0, ge=0, description="Number of records to skip"),
     limit: int = Query(100, ge=1, le=1000, description="Maximum number of records to return"),
@@ -249,7 +248,7 @@ def get_city_service(db: Session = Depends(get_database)) -> CityService:
     return CityService(repository=repository, session=db)
 
 
-@cities_router.get("/", response_model=List[CityResponse])
+@cities_router.get("/", response_model=list[CityResponse])
 def get_cities(
     skip: int = Query(0, ge=0, description="Number of records to skip"),
     limit: int = Query(100, ge=1, le=1000, description="Maximum number of records to return"),
@@ -387,7 +386,7 @@ def get_company_type_service(db: Session = Depends(get_database)) -> CompanyType
     return CompanyTypeService(repository=repository, session=db)
 
 
-@company_types_router.get("/", response_model=List[CompanyTypeResponse])
+@company_types_router.get("/", response_model=list[CompanyTypeResponse])
 def get_company_types(
     skip: int = Query(0, ge=0, description="Number of records to skip"),
     limit: int = Query(100, ge=1, le=1000, description="Maximum number of records to return"),
@@ -523,7 +522,7 @@ def get_incoterms_service(db: Session = Depends(get_database)) -> IncotermServic
     return IncotermService(repository=repository, session=db)
 
 
-@incoterms_router.get("/", response_model=List[IncotermResponse])
+@incoterms_router.get("/", response_model=list[IncotermResponse])
 def get_incoterms(
     skip: int = Query(0, ge=0, description="Number of records to skip"),
     limit: int = Query(100, ge=1, le=1000, description="Maximum number of records to return"),
@@ -657,7 +656,7 @@ def get_currency_service(db: Session = Depends(get_database)) -> CurrencyService
     return CurrencyService(repository=repository, session=db)
 
 
-@currencies_router.get("/", response_model=List[CurrencyResponse])
+@currencies_router.get("/", response_model=list[CurrencyResponse])
 def get_currencies(
     skip: int = Query(0, ge=0, description="Number of records to skip"),
     limit: int = Query(100, ge=1, le=1000, description="Maximum number of records to return"),
@@ -791,7 +790,7 @@ def get_unit_service(db: Session = Depends(get_database)) -> UnitService:
     return UnitService(repository=repository, session=db)
 
 
-@units_router.get("/", response_model=List[UnitResponse])
+@units_router.get("/", response_model=list[UnitResponse])
 def get_units(
     skip: int = Query(0, ge=0, description="Number of records to skip"),
     limit: int = Query(100, ge=1, le=1000, description="Maximum number of records to return"),
@@ -923,7 +922,7 @@ def get_family_type_service(db: Session = Depends(get_database)) -> FamilyTypeSe
     return FamilyTypeService(repository=repository, session=db)
 
 
-@family_types_router.get("/", response_model=List[FamilyTypeResponse])
+@family_types_router.get("/", response_model=list[FamilyTypeResponse])
 def get_family_types(
     skip: int = Query(0, ge=0, description="Number of records to skip"),
     limit: int = Query(100, ge=1, le=1000, description="Maximum number of records to return"),
@@ -1059,7 +1058,7 @@ def get_matter_service(db: Session = Depends(get_database)) -> MatterService:
     return MatterService(repository=repository, session=db)
 
 
-@matters_router.get("/", response_model=List[MatterResponse])
+@matters_router.get("/", response_model=list[MatterResponse])
 def get_matters(
     skip: int = Query(0, ge=0, description="Number of records to skip"),
     limit: int = Query(100, ge=1, le=1000, description="Maximum number of records to return"),
@@ -1191,7 +1190,7 @@ def get_sales_type_service(db: Session = Depends(get_database)) -> SalesTypeServ
     return SalesTypeService(repository=repository, session=db)
 
 
-@sales_types_router.get("/", response_model=List[SalesTypeResponse])
+@sales_types_router.get("/", response_model=list[SalesTypeResponse])
 def get_sales_types(
     skip: int = Query(0, ge=0, description="Number of records to skip"),
     limit: int = Query(100, ge=1, le=1000, description="Maximum number of records to return"),
@@ -1325,7 +1324,7 @@ def get_quote_status_service(db: Session = Depends(get_database)) -> QuoteStatus
     return QuoteStatusService(repository=repository, session=db)
 
 
-@quote_statuses_router.get("/", response_model=List[QuoteStatusResponse])
+@quote_statuses_router.get("/", response_model=list[QuoteStatusResponse])
 def get_quote_statuses(
     skip: int = Query(0, ge=0, description="Number of records to skip"),
     limit: int = Query(100, ge=1, le=1000, description="Maximum number of records to return"),
@@ -1461,7 +1460,7 @@ def get_order_status_service(db: Session = Depends(get_database)) -> OrderStatus
     return OrderStatusService(repository=repository, session=db)
 
 
-@order_statuses_router.get("/", response_model=List[OrderStatusResponse])
+@order_statuses_router.get("/", response_model=list[OrderStatusResponse])
 def get_order_statuses(
     skip: int = Query(0, ge=0, description="Number of records to skip"),
     limit: int = Query(100, ge=1, le=1000, description="Maximum number of records to return"),
@@ -1597,7 +1596,7 @@ def get_payment_status_service(db: Session = Depends(get_database)) -> PaymentSt
     return PaymentStatusService(repository=repository, session=db)
 
 
-@payment_statuses_router.get("/", response_model=List[PaymentStatusResponse])
+@payment_statuses_router.get("/", response_model=list[PaymentStatusResponse])
 def get_payment_statuses(
     skip: int = Query(0, ge=0, description="Number of records to skip"),
     limit: int = Query(100, ge=1, le=1000, description="Maximum number of records to return"),
