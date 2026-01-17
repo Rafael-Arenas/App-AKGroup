@@ -6,9 +6,15 @@ from datetime import date, datetime
 from sqlalchemy.orm import Session
 from sqlalchemy import select, and_
 
+from src.shared.providers import TimeProvider
 from src.backend.models.core.sequences import Sequence
 from src.backend.config.settings import settings
 from src.backend.utils.logger import logger
+
+# Time provider para acceso centralizado al tiempo
+_time_provider = TimeProvider()
+
+
 
 class SequenceService:
     """
@@ -54,7 +60,7 @@ class SequenceService:
             self.session.flush()
 
         sequence.last_value += 1
-        sequence.updated_at = datetime.now()
+        sequence.updated_at = _time_provider.now()
         # We don't commit here, we let the calling service handle the transaction
         
         return sequence.last_value
@@ -72,7 +78,7 @@ class SequenceService:
         Returns:
             Formatted document number string
         """
-        year = date.today().year
+        year = _time_provider.today().year
         trigram = (company_trigram or settings.internal_company_trigram).upper()
         
         # We use a shared sequence across all prefixes but per trigram+year

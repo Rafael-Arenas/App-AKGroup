@@ -10,6 +10,11 @@ from decimal import Decimal
 from datetime import date
 from sqlalchemy.orm import Session
 
+from src.shared.providers import TimeProvider
+
+# Time provider para acceso centralizado al tiempo
+_time_provider = TimeProvider()
+
 from src.backend.models.business.orders import Order, OrderProduct
 from src.backend.repositories.business.order_repository import OrderRepository, OrderProductRepository
 from src.backend.repositories.business.quote_repository import QuoteRepository
@@ -571,7 +576,7 @@ class OrderService(BaseService[Order, OrderCreate, OrderUpdate, OrderResponse]):
             staff_id=quote.staff_id,
             status_id=status_id,
             payment_status_id=payment_status_id,
-            order_date=date.today(),
+            order_date=_time_provider.today(),
             promised_date=quote.shipping_date,  # Use quote shipping date as promised date
             incoterm_id=quote.incoterm_id,
             currency_id=quote.currency_id,
