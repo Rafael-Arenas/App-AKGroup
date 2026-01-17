@@ -6,6 +6,7 @@ quote number lookups, company filtering, and status tracking.
 """
 
 from collections.abc import Sequence
+import pendulum
 from datetime import date
 
 from sqlalchemy import select, and_, delete
@@ -213,7 +214,7 @@ class QuoteRepository(BaseRepository[Quote]):
             .filter(
                 and_(
                     Quote.valid_until.isnot(None),
-                    Quote.valid_until < date.today()
+                    Quote.valid_until < pendulum.today("UTC").date()
                 )
             )
             .order_by(Quote.valid_until.desc())

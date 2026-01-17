@@ -6,6 +6,7 @@ order number lookups, company filtering, and status tracking.
 """
 
 from collections.abc import Sequence
+import pendulum
 from datetime import date
 
 from sqlalchemy import select, and_, delete
@@ -196,7 +197,7 @@ class OrderRepository(BaseRepository[Order]):
             .filter(
                 and_(
                     Order.promised_date.isnot(None),
-                    Order.promised_date < date.today(),
+                    Order.promised_date < pendulum.today("UTC").date(),
                     Order.completed_date.is_(None)
                 )
             )
