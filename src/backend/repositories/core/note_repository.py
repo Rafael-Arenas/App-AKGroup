@@ -348,14 +348,15 @@ class NoteRepository(BaseRepository[Note]):
         Example:
             recent = repo.get_recent_notes("company", 123, days=30)
         """
-        import pendulum
+        from src.shared.providers import TimeProvider
+        _time_provider = TimeProvider()
 
         logger.debug(
             f"Obteniendo notas recientes ({days} días) de "
             f"{entity_type} id={entity_id}"
         )
 
-        cutoff_date = pendulum.now("UTC").subtract(days=days)
+        cutoff_date = _time_provider.now().subtract(days=days)
 
         stmt = (
             select(Note)

@@ -6,8 +6,11 @@ order number lookups, company filtering, and status tracking.
 """
 
 from collections.abc import Sequence
-import pendulum
+from src.shared.providers import TimeProvider
 from datetime import date
+
+# Time provider para queries que dependen de la fecha actual
+_time_provider = TimeProvider()
 
 from sqlalchemy import select, and_, delete
 from sqlalchemy.orm import Session, selectinload
@@ -197,7 +200,7 @@ class OrderRepository(BaseRepository[Order]):
             .filter(
                 and_(
                     Order.promised_date.isnot(None),
-                    Order.promised_date < pendulum.today("UTC").date(),
+                    Order.promised_date < _time_provider.today(),
                     Order.completed_date.is_(None)
                 )
             )

@@ -6,8 +6,11 @@ quote number lookups, company filtering, and status tracking.
 """
 
 from collections.abc import Sequence
-import pendulum
+from src.shared.providers import TimeProvider
 from datetime import date
+
+# Time provider para queries que dependen de la fecha actual
+_time_provider = TimeProvider()
 
 from sqlalchemy import select, and_, delete
 from sqlalchemy.orm import Session, selectinload
@@ -214,7 +217,7 @@ class QuoteRepository(BaseRepository[Quote]):
             .filter(
                 and_(
                     Quote.valid_until.isnot(None),
-                    Quote.valid_until < pendulum.today("UTC").date()
+                    Quote.valid_until < _time_provider.today()
                 )
             )
             .order_by(Quote.valid_until.desc())

@@ -6,8 +6,12 @@ and export invoices with their specific requirements.
 Part of Phase 4: Business Models implementation.
 """
 
-import pendulum
 from datetime import date
+
+from src.shared.providers import TimeProvider
+
+# Singleton para uso en propiedades (no inyectable, pero centralizado)
+_time_provider = TimeProvider()
 from decimal import Decimal
 from typing import TYPE_CHECKING
 
@@ -194,14 +198,14 @@ class InvoiceSII(Base, TimestampMixin, AuditMixin, ActiveMixin):
         """Check if invoice payment is overdue."""
         if self.due_date is None or self.paid_date is not None:
             return False
-        return date.today() > self.due_date
+        return _time_provider.today() > self.due_date
 
     @property
     def days_overdue(self) -> int | None:
         """Calculate days overdue."""
         if not self.is_overdue:
             return None
-        delta = date.today() - self.due_date
+        delta = _time_provider.today() - self.due_date
         return delta.days
 
     @property
@@ -411,14 +415,14 @@ class InvoiceExport(Base, TimestampMixin, AuditMixin, ActiveMixin):
         """Check if invoice payment is overdue."""
         if self.due_date is None or self.paid_date is not None:
             return False
-        return date.today() > self.due_date
+        return _time_provider.today() > self.due_date
 
     @property
     def days_overdue(self) -> int | None:
         """Calculate days overdue."""
         if not self.is_overdue:
             return None
-        delta = date.today() - self.due_date
+        delta = _time_provider.today() - self.due_date
         return delta.days
 
     @property
