@@ -6,6 +6,7 @@ Orders can be created from accepted quotes or standalone.
 Part of Phase 4: Business Models implementation.
 """
 
+import pendulum
 from datetime import date
 from decimal import Decimal
 from typing import TYPE_CHECKING
@@ -303,14 +304,14 @@ class Order(Base, TimestampMixin, AuditMixin, ActiveMixin):
         """Check if order delivery is overdue."""
         if self.promised_date is None or self.completed_date is not None:
             return False
-        return date.today() > self.promised_date
+        return pendulum.today("UTC").date() > self.promised_date
 
     @property
     def days_until_required(self) -> int | None:
         """Calculate days until required date."""
         if self.required_date is None or self.completed_date is not None:
             return None
-        delta = self.required_date - date.today()
+        delta = self.required_date - pendulum.today("UTC").date()
         return delta.days
 
     @property

@@ -6,6 +6,7 @@ transport information, and payment conditions.
 Part of Phase 4: Business Models implementation.
 """
 
+import pendulum
 from datetime import date, datetime
 from decimal import Decimal
 from typing import TYPE_CHECKING
@@ -168,7 +169,7 @@ class DeliveryOrder(Base, TimestampMixin, AuditMixin, ActiveMixin):
         """Check if delivery is late."""
         if self.is_delivered:
             return self.actual_delivery_date > self.delivery_date
-        return date.today() > self.delivery_date
+        return pendulum.today("UTC").date() > self.delivery_date
 
     @property
     def days_late(self) -> int | None:
@@ -178,7 +179,7 @@ class DeliveryOrder(Base, TimestampMixin, AuditMixin, ActiveMixin):
         if self.is_delivered:
             delta = self.actual_delivery_date - self.delivery_date
         else:
-            delta = date.today() - self.delivery_date
+            delta = pendulum.today("UTC").date() - self.delivery_date
         return delta.days
 
     def mark_delivered(
@@ -186,10 +187,10 @@ class DeliveryOrder(Base, TimestampMixin, AuditMixin, ActiveMixin):
     ) -> None:
         """Mark delivery as completed with signature."""
         self.status = "delivered"
-        self.actual_delivery_date = date.today()
+        self.actual_delivery_date = pendulum.today("UTC").date()
         self.signature_name = signature_name
         self.signature_id = signature_id
-        self.signature_datetime = datetime.now()
+        self.signature_datetime = pendulum.now("UTC")
         if notes:
             self.notes = notes
 

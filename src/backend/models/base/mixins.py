@@ -11,7 +11,7 @@ Todos los mixins usan el patrón moderno de SQLAlchemy 2.0 con Mapped[] types
 y @declared_attr para compatibilidad con herencia múltiple.
 """
 
-from datetime import datetime, timezone
+import pendulum
 from typing import TYPE_CHECKING
 
 from sqlalchemy import DateTime, event
@@ -39,21 +39,21 @@ class TimestampMixin:
     """
 
     @declared_attr
-    def created_at(cls) -> Mapped[datetime]:
+    def created_at(cls) -> Mapped[pendulum.DateTime]:
         """Timestamp UTC cuando el registro fue creado."""
         return mapped_column(
             DateTime(timezone=True),
-            default=lambda: datetime.now(timezone.utc),
+            default=lambda: pendulum.now("UTC"),
             comment="UTC timestamp of record creation",
         )
 
     @declared_attr
-    def updated_at(cls) -> Mapped[datetime]:
+    def updated_at(cls) -> Mapped[pendulum.DateTime]:
         """Timestamp UTC de la última actualización del registro."""
         return mapped_column(
             DateTime(timezone=True),
-            default=lambda: datetime.now(timezone.utc),
-            onupdate=lambda: datetime.now(timezone.utc),
+            default=lambda: pendulum.now("UTC"),
+            onupdate=lambda: pendulum.now("UTC"),
             comment="UTC timestamp of last update",
         )
 
@@ -133,7 +133,7 @@ class SoftDeleteMixin:
         )
 
     @declared_attr
-    def deleted_at(cls) -> Mapped[datetime | None]:
+    def deleted_at(cls) -> Mapped[pendulum.DateTime | None]:
         """Timestamp UTC de cuando fue eliminado (NULL si activo)."""
         return mapped_column(
             DateTime(timezone=True),
@@ -236,4 +236,4 @@ def receive_before_update(mapper: object, connection: object, target: object) ->
         target: Instancia del modelo siendo actualizada
     """
     if hasattr(target, "updated_at"):
-        target.updated_at = datetime.now(timezone.utc)
+        target.updated_at = pendulum.now("UTC")

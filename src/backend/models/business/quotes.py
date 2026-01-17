@@ -5,6 +5,7 @@ This module contains the Quote and QuoteProduct models for managing sales quotes
 Part of Phase 4: Business Models implementation.
 """
 
+import pendulum
 from datetime import date
 from decimal import Decimal
 from typing import TYPE_CHECKING
@@ -219,14 +220,14 @@ class Quote(Base, TimestampMixin, AuditMixin, ActiveMixin):
         """Check if quote has expired."""
         if self.valid_until is None:
             return False
-        return date.today() > self.valid_until
+        return pendulum.today("UTC").date() > self.valid_until
 
     @property
     def days_until_expiry(self) -> int | None:
         """Calculate days until quote expires."""
         if self.valid_until is None:
             return None
-        delta = self.valid_until - date.today()
+        delta = self.valid_until - pendulum.today("UTC").date()
         return delta.days
 
     def __repr__(self) -> str:

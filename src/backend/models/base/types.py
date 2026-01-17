@@ -13,6 +13,7 @@ Usage:
         price: Mapped[decimal_price | None]
 """
 
+import pendulum
 from datetime import datetime
 from decimal import Decimal
 from typing import Annotated
@@ -81,7 +82,7 @@ decimal_exchange = Annotated[Decimal, mapped_column(Numeric(*DecimalPrecision.EX
 
 # ============ DATETIME TYPES ============
 
-datetime_tz = Annotated[datetime, mapped_column(DateTime(timezone=True))]
+datetime_tz = Annotated[pendulum.DateTime, mapped_column(DateTime(timezone=True))]
 """DateTime with timezone support."""
 
 # ============ BOOLEAN TYPES ============
