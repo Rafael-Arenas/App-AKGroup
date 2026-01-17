@@ -6,7 +6,7 @@ Proporciona un campo de texto con selector de fecha integrado.
 from datetime import datetime
 import flet as ft
 from loguru import logger
-import pendulum
+import pendulum  # Para formateo de fechas (no para time provider)
 
 from src.frontend.layout_constants import LayoutConstants
 from src.frontend.i18n.translation_manager import t

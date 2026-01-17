@@ -10,6 +10,11 @@ from datetime import date, timedelta
 from typing import Dict, Any, List
 from loguru import logger
 
+from src.shared.providers import TimeProvider
+
+# Time provider para acceso centralizado al tiempo
+_time_provider = TimeProvider()
+
 
 class FakeDataGenerator:
     """Generador de datos ficticios para formularios."""
@@ -120,7 +125,7 @@ class FakeDataGenerator:
         """
         logger.debug("Generating fake quote data")
 
-        today = date.today()
+        today = _time_provider.today()
         valid_until = today + timedelta(days=random.randint(15, 45))
         shipping_date = today + timedelta(days=random.randint(20, 60))
 

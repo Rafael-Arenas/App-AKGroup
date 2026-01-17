@@ -5,6 +5,11 @@ from typing import Optional, Callable, Any, Dict
 from loguru import logger
 from decimal import Decimal
 
+from src.shared.providers import TimeProvider
+
+# Time provider para acceso centralizado al tiempo
+_time_provider = TimeProvider()
+
 from src.frontend.app_state import app_state
 from src.frontend.layout_constants import LayoutConstants
 from src.frontend.components.common import BaseCard, LoadingSpinner, ErrorDisplay
@@ -98,7 +103,7 @@ class QuoteFormView(ft.Column):
 
         # Date Fields (Native Flet implementation)
         # Must specify first_date and last_date to avoid serialization issues
-        today = datetime.now()
+        today = _time_provider.now()
         first_date = datetime(year=today.year - 5, month=1, day=1)
         last_date = datetime(year=today.year + 5, month=12, day=31)
         
@@ -481,7 +486,7 @@ class QuoteFormView(ft.Column):
                 # Date fields
                 self._populate_date_field("quote_date", self._quote.get("quote_date"))
                 if not self.quote_date.value:
-                    self._populate_date_field("quote_date", date.today())
+                    self._populate_date_field("quote_date", _time_provider.today())
 
                 self._populate_date_field("valid_until", self._quote.get("valid_until"))
                 self._populate_date_field("shipping_date", self._quote.get("shipping_date"))
@@ -510,7 +515,7 @@ class QuoteFormView(ft.Column):
                 self.quote_number.set_value("[ ASIGNACIÓN AUTOMÁTICA ]")
                 self.revision.set_value("A")
 
-                self._populate_date_field("quote_date", date.today())
+                self._populate_date_field("quote_date", _time_provider.today())
                 
                 if statuses:
                     self.status.set_value(str(statuses[0]["id"]))

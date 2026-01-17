@@ -4,6 +4,11 @@ from datetime import date
 from typing import Optional, Callable, Dict, Any
 from loguru import logger
 
+from src.shared.providers import TimeProvider
+
+# Time provider para acceso centralizado al tiempo
+_time_provider = TimeProvider()
+
 from src.frontend.app_state import app_state
 from src.frontend.layout_constants import LayoutConstants
 from src.frontend.components.common import BaseCard, LoadingSpinner, ErrorDisplay
@@ -245,7 +250,7 @@ class OrderFormView(ft.Column):
                 "quote_id": self.quote_id,
                 "staff_id": staff_id,
                 "currency_id": currency_id,
-                "order_date": date.today().isoformat(),
+                "order_date": _time_provider.today().isoformat(),
                 "status_id": 1, # Default status (e.g. Draft/Pending)
                 "payment_status_id": 1, # Default payment status (e.g. Pending)
             }
