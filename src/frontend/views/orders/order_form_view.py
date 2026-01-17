@@ -232,36 +232,64 @@ class OrderFormView(ft.Column):
         if self.page: self.update()
 
         try:
-            # Prepare data
-            on_value = self.order_number.get_value()
-            if on_value == "[ ASIGNACIÓN AUTOMÁTICA ]":
-                on_value = "STRING"
-                
-            # Default values from quote if available, else standard defaults
-            staff_id = self._quote.get("staff_id", 1) if self._quote else 1
-            currency_id = self._quote.get("currency_id", 1) if self._quote else 1
-            
-            data = {
-                "order_number": on_value,
-                "revision": self.revision.get_value(),
-                "customer_po_number": self.customer_po_number.get_value(),
-                "project_number": self.project_number.get_value(),
-                "company_id": self.company_id,
-                "quote_id": self.quote_id,
-                "staff_id": staff_id,
-                "currency_id": currency_id,
-                "order_date": _time_provider.today().isoformat(),
-                "status_id": 1, # Default status (e.g. Draft/Pending)
-                "payment_status_id": 1, # Default payment status (e.g. Pending)
-            }
-
             # Use current user ID from state (mocked as 1 if not available)
             user_id = 1 
 
             if self.is_editing:
+                # Prepare data for update
+                on_value = self.order_number.get_value()
+                if on_value == "[ ASIGNACIÓN AUTOMÁTICA ]":
+                    on_value = "STRING"
+                    
+                data = {
+                    "order_number": on_value,
+                    "revision": self.revision.get_value(),
+                    "customer_po_number": self.customer_po_number.get_value(),
+                    "project_number": self.project_number.get_value(),
+                    "company_id": self.company_id,
+                    "quote_id": self.quote_id,
+                    "staff_id": self._quote.get("staff_id", 1) if self._quote else 1,
+                    "currency_id": self._quote.get("currency_id", 1) if self._quote else 1,
+                    "order_date": _time_provider.today().isoformat(),
+                    "status_id": 1,
+                    "payment_status_id": 1,
+                }
                 result = await order_api.update(self.order_id, data, user_id=user_id)
                 success_msg = "Orden actualizada exitosamente"
+            elif self.quote_id:
+                # Creating order from quote - use specialized endpoint that copies products
+                order_number = self.order_number.get_value()
+                if order_number == "[ ASIGNACIÓN AUTOMÁTICA ]":
+                    order_number = None  # Let backend auto-generate
+                    
+                result = await order_api.create_from_quote(
+                    quote_id=self.quote_id,
+                    user_id=user_id,
+                    status_id=1,  # Default: Pending
+                    payment_status_id=1,  # Default: Pending
+                    order_number=order_number,
+                )
+                assigned_number = result.get("order_number", "")
+                success_msg = f"Orden {assigned_number} creada desde cotización"
             else:
+                # Creating new order without quote
+                on_value = self.order_number.get_value()
+                if on_value == "[ ASIGNACIÓN AUTOMÁTICA ]":
+                    on_value = "STRING"
+                    
+                data = {
+                    "order_number": on_value,
+                    "revision": self.revision.get_value(),
+                    "customer_po_number": self.customer_po_number.get_value(),
+                    "project_number": self.project_number.get_value(),
+                    "company_id": self.company_id,
+                    "quote_id": self.quote_id,
+                    "staff_id": 1,
+                    "currency_id": 1,
+                    "order_date": _time_provider.today().isoformat(),
+                    "status_id": 1,
+                    "payment_status_id": 1,
+                }
                 result = await order_api.create(data, user_id=user_id)
                 assigned_number = result.get("order_number", "")
                 success_msg = f"Orden {assigned_number} creada exitosamente"

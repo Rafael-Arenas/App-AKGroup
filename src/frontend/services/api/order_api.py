@@ -66,15 +66,12 @@ class OrderAPIService:
         order_number: Optional[str] = None
     ) -> Dict[str, Any]:
         """Create an order from a quote."""
-        params = {
-            "user_id": user_id,
-            "status_id": status_id,
-            "payment_status_id": payment_status_id
-        }
+        # Build URL with query parameters
+        url = f"/orders/from-quote/{quote_id}?user_id={user_id}&status_id={status_id}&payment_status_id={payment_status_id}"
         if order_number:
-            params["order_number"] = order_number
+            url += f"&order_number={order_number}"
             
-        return await self._client.post(f"/orders/from-quote/{quote_id}", params=params)
+        return await self._client.post(url)
 
     async def close(self):
         await self._client.close()
