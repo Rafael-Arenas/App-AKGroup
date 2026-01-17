@@ -121,3 +121,38 @@ DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 RUT_REGEX = r'^\d{1,8}-[\dkK]$'
 PHONE_REGEX = r'^\+?[1-9]\d{1,14}$'
 EMAIL_REGEX = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+
+# ============================================================================
+# TIEMPO Y ZONAS HORARIAS
+# ============================================================================
+
+# Zona horaria por defecto del negocio
+DEFAULT_TIMEZONE = "America/Santiago"
+UTC_TIMEZONE = "UTC"
+
+# Zonas horarias comunes para la app (timezone_id, display_name, country_code)
+COMMON_TIMEZONES: list[tuple[str, str, str]] = [
+    ("America/Santiago", "Chile (Santiago)", "CL"),
+    ("America/Argentina/Buenos_Aires", "Argentina (Buenos Aires)", "AR"),
+    ("America/Lima", "Perú (Lima)", "PE"),
+    ("America/Bogota", "Colombia (Bogotá)", "CO"),
+    ("America/Mexico_City", "México (CDMX)", "MX"),
+    ("America/New_York", "USA (Nueva York)", "US"),
+    ("America/Los_Angeles", "USA (Los Angeles)", "US"),
+    ("Europe/Madrid", "España (Madrid)", "ES"),
+    ("Europe/London", "Reino Unido (Londres)", "GB"),
+    ("Asia/Shanghai", "China (Shanghai)", "CN"),
+    ("Asia/Tokyo", "Japón (Tokio)", "JP"),
+]
+
+# Formatos de fecha (sintaxis Pendulum)
+PENDULUM_DATE_FORMAT = "DD/MM/YYYY"
+PENDULUM_DATETIME_FORMAT = "DD/MM/YYYY HH:mm"
+PENDULUM_DATETIME_SECONDS_FORMAT = "DD/MM/YYYY HH:mm:ss"
+PENDULUM_TIME_FORMAT = "HH:mm"
+PENDULUM_DATETIME_FULL_FORMAT = "dddd, D [de] MMMM [de] YYYY HH:mm"
+
+# Días de la semana laborales (0=lunes, 6=domingo)
+BUSINESS_DAYS = [0, 1, 2, 3, 4]  # Lunes a Viernes
+BUSINESS_HOUR_START = 9
+BUSINESS_HOUR_END = 18
