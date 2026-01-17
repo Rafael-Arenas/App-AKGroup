@@ -325,12 +325,20 @@ class QuoteProductsView(ft.Column):
         reference = product.get("reference", "")
         name = product.get("designation_es") or product.get("designation_en") or product.get("short_designation", "-")
         family = product.get("family_type", {}).get("name", "-") if isinstance(product.get("family_type"), dict) else "-"
-        price = product.get("sale_price", "0")
+        # Manejar None en sale_price
+        raw_price = product.get("sale_price")
+        price = float(raw_price) if raw_price is not None else 0.0
 
         # Verificar si ya está seleccionado (pendiente) o guardado (existente)
         is_pending = any(sp.get("product_id") == product.get("id") for sp in self._selected_products)
         is_saved = any(ep.get("product_id") == product.get("id") for ep in self._existing_products)
         is_added = is_pending or is_saved
+
+        # Handler para agregar el producto (definir antes de usar)
+        def handle_add_click(e, prod=product):
+            if not is_added:
+                logger.debug(f"Card clicked for product: {prod.get('reference')}")
+                self._on_add_product(prod)
 
         return ft.Container(
             content=ft.Row(
@@ -346,12 +354,12 @@ class QuoteProductsView(ft.Column):
                     ),
                     ft.Column(
                         controls=[
-                            ft.Text(f"${float(price):,.2f}", weight=ft.FontWeight.BOLD, color=ft.Colors.PRIMARY),
+                            ft.Text(f"${price:,.2f}", weight=ft.FontWeight.BOLD, color=ft.Colors.PRIMARY),
                             ft.IconButton(
                                 icon=ft.Icons.CHECK_CIRCLE if is_added else ft.Icons.ADD_CIRCLE_OUTLINE,
                                 icon_color=ft.Colors.GREEN if is_saved else (ft.Colors.ORANGE if is_pending else ft.Colors.PRIMARY),
                                 tooltip="Ya guardado" if is_saved else ("Pendiente" if is_pending else "Agregar"),
-                                on_click=lambda e, p=product: self._on_add_product(p),
+                                on_click=handle_add_click,
                                 disabled=is_added,
                             ),
                         ],
@@ -364,6 +372,9 @@ class QuoteProductsView(ft.Column):
             border=ft.border.all(1, ft.Colors.GREEN_400 if is_saved else (ft.Colors.ORANGE_400 if is_pending else ft.Colors.OUTLINE_VARIANT)),
             border_radius=LayoutConstants.RADIUS_SM,
             bgcolor=ft.Colors.GREY_800 if is_saved else (ft.Colors.GREY_700 if is_pending else ft.Colors.GREY_900),
+            # Hacer toda la card clickeable cuando no está agregado
+            on_click=handle_add_click if not is_added else None,
+            ink=not is_added,  # Efecto ripple solo si es clickeable
         )
 
     def _build_selected_panel(self) -> ft.Control:
@@ -592,8 +603,14 @@ class QuoteProductsView(ft.Column):
 
     def _on_add_product(self, product: dict) -> None:
         """Muestra diálogo para agregar un producto."""
+        logger.info(f"_on_add_product called for product: {product.get('reference', 'unknown')}")
+        
         product_name = product.get("designation_es") or product.get("designation_en") or product.get("reference", "")
-        sale_price = product.get("sale_price", "0")
+        # Manejar None en sale_price
+        raw_sale_price = product.get("sale_price")
+        sale_price = float(raw_sale_price) if raw_sale_price is not None else 0.0
+        
+        logger.debug(f"Product details: name={product_name}, price={sale_price}")
 
         # Campos del formulario
         quantity_field = ft.TextField(
