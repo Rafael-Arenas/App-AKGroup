@@ -362,6 +362,7 @@
     "search_placeholder": "Buscar nomenclaturas por código, nombre...",
     "bom": "Lista de Artículos",
     "add_component": "Agregar Componente",
+    "add_articles": "Agregar Artículos",
     "columns": {
       "id": "ID",
       "code": "Código",
