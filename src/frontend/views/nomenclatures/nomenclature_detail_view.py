@@ -365,21 +365,36 @@ class NomenclatureDetailView(ft.Container):
 
         # Crear tabla de componentes
         rows = []
-        for comp in self._bom_components:
+        logger.debug(f"Creating BOM tree for {len(self._bom_components)} components")
+        for i, comp in enumerate(self._bom_components):
+            # Los datos del componente vienen anidados en "component"
+            component_data = comp.get("component", {}) or {}
+            logger.debug(f"Component {i}: data={comp}, nested={component_data}")
+            reference = component_data.get("reference", "") or comp.get("component_code", "")
+            name = (
+                component_data.get("designation_es") 
+                or component_data.get("designation_en") 
+                or comp.get("component_name", "")
+                or "-"
+            )
+            quantity = float(comp.get("quantity", 0) or 0)
+            # Obtener precio del componente
+            unit_cost = float(
+                component_data.get("sale_price") 
+                or component_data.get("cost_price") 
+                or comp.get("unit_cost", 0) 
+                or 0
+            )
+            total_cost = quantity * unit_cost
+
             rows.append(
                 ft.DataRow(
                     cells=[
-                        ft.DataCell(ft.Text(comp.get("component_code", ""))),
-                        ft.DataCell(ft.Text(comp.get("component_name", ""))),
-                        ft.DataCell(ft.Text(str(comp.get("quantity", 0)))),
-                        ft.DataCell(
-                            ft.Text(f"${comp.get('unit_cost', 0):.2f}")
-                        ),
-                        ft.DataCell(
-                            ft.Text(
-                                f"${comp.get('quantity', 0) * comp.get('unit_cost', 0):.2f}"
-                            )
-                        ),
+                        ft.DataCell(ft.Text(reference)),
+                        ft.DataCell(ft.Text(name)),
+                        ft.DataCell(ft.Text(f"{quantity:.2f}")),
+                        ft.DataCell(ft.Text(f"${unit_cost:.2f}")),
+                        ft.DataCell(ft.Text(f"${total_cost:.2f}")),
                     ],
                 )
             )
@@ -405,7 +420,15 @@ class NomenclatureDetailView(ft.Container):
         """Calcula el costo total del BOM."""
         total = 0.0
         for comp in self._bom_components:
-            total += comp.get("quantity", 0) * comp.get("unit_cost", 0)
+            component_data = comp.get("component", {}) or {}
+            quantity = float(comp.get("quantity", 0) or 0)
+            unit_cost = float(
+                component_data.get("sale_price") 
+                or component_data.get("cost_price") 
+                or comp.get("unit_cost", 0) 
+                or 0
+            )
+            total += quantity * unit_cost
         return total
 
     def did_mount(self) -> None:
@@ -433,9 +456,8 @@ class NomenclatureDetailView(ft.Container):
             self.update()
 
         try:
-            from src.frontend.services.api import ProductAPI
+            from src.frontend.services.api import product_api
 
-            product_api = ProductAPI()
             self._nomenclature = await product_api.get_by_id(self.nomenclature_id)
 
             # Cargar componentes BOM
