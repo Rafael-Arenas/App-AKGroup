@@ -36,12 +36,14 @@ class NomenclatureFormView(ft.Column):
         nomenclature_id: int | None = None,
         on_save: Callable[[dict], None] | None = None,
         on_cancel: Callable[[], None] | None = None,
+        on_add_articles: Callable[[int], None] | None = None,
     ):
         """Inicializa el formulario de nomenclatura."""
         super().__init__()
         self.nomenclature_id = nomenclature_id
         self.on_save_callback = on_save
         self.on_cancel_callback = on_cancel
+        self.on_add_articles_callback = on_add_articles
 
         # Estado
         self._is_loading: bool = True
@@ -741,16 +743,31 @@ class NomenclatureFormView(ft.Column):
         """Callback para agregar componente a BOM."""
         logger.info("Add component clicked")
 
-        # TODO: Implementar ArticleSelectorDialog
-        if self.page:
-            snackbar = ft.SnackBar(
-                content=ft.Text("La funcionalidad de agregar componentes está en desarrollo"),
-                bgcolor=ft.Colors.ORANGE,
-                duration=3000,
-            )
-            self.page.overlay.append(snackbar)
-            snackbar.open = True
-            self.page.update()
+        # Si estamos en modo edición y tenemos el callback, navegar a la vista de artículos
+        if self.nomenclature_id and self.on_add_articles_callback:
+            self.on_add_articles_callback(self.nomenclature_id)
+        elif not self.nomenclature_id:
+            # En modo creación, mostrar mensaje de que debe guardar primero
+            if self.page:
+                snackbar = ft.SnackBar(
+                    content=ft.Text("Guarda la nomenclatura primero para agregar artículos"),
+                    bgcolor=ft.Colors.ORANGE,
+                    duration=3000,
+                )
+                self.page.overlay.append(snackbar)
+                snackbar.open = True
+                self.page.update()
+        else:
+            # Fallback: mostrar mensaje de que la funcionalidad no está disponible
+            if self.page:
+                snackbar = ft.SnackBar(
+                    content=ft.Text("La funcionalidad de agregar componentes no está disponible"),
+                    bgcolor=ft.Colors.ORANGE,
+                    duration=3000,
+                )
+                self.page.overlay.append(snackbar)
+                snackbar.open = True
+                self.page.update()
 
     def _on_article_selected(
         self,
@@ -780,8 +797,25 @@ class NomenclatureFormView(ft.Column):
 
     def _add_component_row(self, component_data: dict, index: int) -> None:
         """Agrega una fila de componente a la UI."""
+        # Normalizar los datos del componente
+        # La API devuelve: {component: {reference, designation_es, ...}, quantity, ...}
+        # BOMComponentRow espera: {code, name, quantity, id}
+        nested_component = component_data.get("component", {}) or {}
+        
+        normalized_data = {
+            "id": component_data.get("component_id") or nested_component.get("id") or component_data.get("id"),
+            "code": nested_component.get("reference") or component_data.get("code", ""),
+            "name": (
+                nested_component.get("designation_es") 
+                or nested_component.get("designation_en") 
+                or component_data.get("name", "")
+                or "-"
+            ),
+            "quantity": float(component_data.get("quantity", 1) or 1),
+        }
+        
         row = BOMComponentRow(
-            component_data=component_data,
+            component_data=normalized_data,
             on_quantity_change=self._on_component_quantity_change,
             on_remove=self._on_component_remove,
             index=index,
