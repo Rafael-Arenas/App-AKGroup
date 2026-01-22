@@ -470,7 +470,7 @@ class OrderService(BaseService[Order, OrderCreate, OrderUpdate, OrderResponse]):
                 entity_data["order_number"] = self.sequence_service.generate_document_number(
                     prefix="OC",
                     company_trigram=company_trigram,
-                    padding=2
+                    padding=3
                 )
 
             entity = self.model(**entity_data)
@@ -560,7 +560,7 @@ class OrderService(BaseService[Order, OrderCreate, OrderUpdate, OrderResponse]):
             order_number = self.sequence_service.generate_document_number(
                 prefix="OC",
                 company_trigram=company_trigram,
-                padding=2
+                padding=3
             )
 
         # Create order from quote data

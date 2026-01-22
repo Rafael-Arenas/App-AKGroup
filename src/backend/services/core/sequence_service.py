@@ -81,12 +81,12 @@ class SequenceService:
         year = _time_provider.today().year
         trigram = (company_trigram or settings.internal_company_trigram).upper()
         
-        # We use a shared sequence across all prefixes but per trigram+year
-        # If the user wants separate counters per prefix, we would pass prefix=prefix
+        # Separate sequence per prefix (C, OC, DOC, etc.) per trigram+year
+        # This ensures quotes, orders, and other documents have independent numbering
         next_val = self.get_next_number(
-            name="global_document_sequence", 
+            name="document_sequence", 
             year=year, 
-            prefix=None, # Global sequence across C, OC, DOC
+            prefix=prefix,  # Separate sequence per document type
             trigram=trigram
         )
 
