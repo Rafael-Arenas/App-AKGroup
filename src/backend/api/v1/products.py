@@ -358,6 +358,36 @@ def delete_product(
 # BOM (Bill of Materials) ENDPOINTS
 # ============================================================================
 
+@router.get("/{product_id}/components", response_model=list[ProductComponentResponse])
+def get_product_components(
+    product_id: int,
+    service: ProductService = Depends(get_product_service),
+):
+    """
+    Obtiene todos los componentes de un producto (BOM).
+
+    Args:
+        product_id: ID del producto padre
+        db: Sesión de base de datos
+
+    Returns:
+        Lista de componentes
+
+    Raises:
+        404: Si no se encuentra el producto
+
+    Example:
+        GET /api/v1/products/123/components
+    """
+    logger.info(f"GET /products/{product_id}/components")
+
+    # Obtener el producto con componentes
+    product = service.get_with_components(product_id)
+    
+    logger.info(f"Retornando {len(product.components)} componente(s) para el producto {product_id}")
+    return product.components
+
+
 @router.post("/{product_id}/components", response_model=ProductComponentResponse, status_code=status.HTTP_201_CREATED)
 def add_component(
     product_id: int,
