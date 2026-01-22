@@ -13,7 +13,6 @@ from src.frontend.layout_constants import LayoutConstants
 from src.frontend.components.common import BaseCard, LoadingSpinner, ErrorDisplay
 from src.frontend.components.forms import ValidatedTextField, DropdownField
 from src.frontend.i18n.translation_manager import t
-from src.frontend.views.products.components import BOMComponentRow
 from src.frontend.utils.fake_data_generator import FakeDataGenerator
 
 
@@ -59,7 +58,6 @@ class NomenclatureFormView(ft.Column):
 
         # BOM components state
         self._bom_components: list[dict] = []
-        self._bom_rows: list[BOMComponentRow] = []
 
         # Configuración del layout
         self.spacing = LayoutConstants.SPACING_MD
@@ -262,9 +260,9 @@ class NomenclatureFormView(ft.Column):
         )
 
         # Sección BOM
-        self._bom_components_container = ft.Column(
-            controls=[],
-            spacing=LayoutConstants.SPACING_SM,
+        self._bom_components_container = ft.Container(
+            content=ft.Column(scroll=ft.ScrollMode.ADAPTIVE),
+            padding=LayoutConstants.PADDING_NONE,
         )
 
         self._add_component_button = ft.Button(
@@ -795,37 +793,35 @@ class NomenclatureFormView(ft.Column):
 
         logger.success(f"Component added to BOM: {article_code}")
 
+    def _on_component_quantity_change_table(self, e: ft.ControlEvent) -> None:
+        """Manejador para cambio de cantidad en la tabla."""
+        index = e.control.data
+        try:
+            val = e.control.value.replace(",", ".")
+            quantity = float(val)
+            if 0 <= index < len(self._bom_components):
+                self._bom_components[index]["quantity"] = quantity
+                logger.debug(f"Component quantity updated from table: index={index}, quantity={quantity}")
+                # Reconstruir para actualizar el total_cost
+                self._rebuild_bom_components()
+        except ValueError:
+            pass
+
+    def _on_component_remove_click(self, e: ft.ControlEvent) -> None:
+        """Manejador para eliminar componente desde la tabla."""
+        index = e.control.data
+        self._on_component_remove(index)
+
     def _add_component_row(self, component_data: dict, index: int) -> None:
-        """Agrega una fila de componente a la UI."""
-        # Normalizar los datos del componente
-        # La API devuelve: {component: {reference, designation_es, ...}, quantity, ...}
-        # BOMComponentRow espera: {code, name, quantity, id}
-        nested_component = component_data.get("component", {}) or {}
-        
-        normalized_data = {
-            "id": component_data.get("component_id") or nested_component.get("id") or component_data.get("id"),
-            "code": nested_component.get("reference") or component_data.get("code", ""),
-            "name": (
-                nested_component.get("designation_es") 
-                or nested_component.get("designation_en") 
-                or component_data.get("name", "")
-                or "-"
-            ),
-            "quantity": float(component_data.get("quantity", 1) or 1),
-        }
-        
-        row = BOMComponentRow(
-            component_data=normalized_data,
-            on_quantity_change=self._on_component_quantity_change,
-            on_remove=self._on_component_remove,
-            index=index,
-        )
-
-        self._bom_rows.append(row)
-        self._bom_components_container.controls.append(row)
-
-        if self.page:
-            self._bom_components_container.update()
+        """
+        Mantenemos este método para compatibilidad con la carga inicial, 
+        pero ahora redirige a _rebuild_bom_components.
+        """
+        # En la nueva implementación, simplemente agregamos a la lista
+        # y reconstruimos todo el árbol para mantener la consistencia
+        # de la tabla (DataRows no se pueden agregar individualmente 
+        # a un contenedor de la misma forma que controles simples)
+        self._rebuild_bom_components()
 
     def _on_component_quantity_change(self, index: int, quantity: float) -> None:
         """Callback cuando cambia la cantidad de un componente."""
@@ -840,23 +836,109 @@ class NomenclatureFormView(ft.Column):
         if 0 <= index < len(self._bom_components):
             # Eliminar de la lista de datos
             removed = self._bom_components.pop(index)
-
-            # Eliminar de la lista de filas
-            if index < len(self._bom_rows):
-                self._bom_rows.pop(index)
-
             # Reconstruir la UI
             self._rebuild_bom_components()
-
             logger.success(f"Component removed: {removed.get('code')}")
 
     def _rebuild_bom_components(self) -> None:
-        """Reconstruye la lista de componentes en la UI."""
-        self._bom_components_container.controls.clear()
-        self._bom_rows.clear()
+        """Reconstruye la lista de componentes en la UI usando una DataTable."""
+        if not hasattr(self, "_bom_components_container"):
+            return
 
-        for index, component_data in enumerate(self._bom_components):
-            self._add_component_row(component_data, index)
+        if not self._bom_components:
+            self._bom_components_container.content = ft.Container(
+                content=ft.Text(
+                    t("nomenclatures.no_components"),
+                    size=LayoutConstants.FONT_SIZE_MD,
+                    italic=True,
+                ),
+                padding=LayoutConstants.PADDING_MD,
+            )
+            if self.page:
+                self._bom_components_container.update()
+            return
+
+        rows = []
+        for index, comp in enumerate(self._bom_components):
+            # Los datos pueden venir de la API (anidados en 'component') 
+            # o de una selección manual (planos)
+            nested_comp = comp.get("component") or {}
+            if not isinstance(nested_comp, dict):
+                nested_comp = {}
+            
+            # Datos básicos
+            reference = nested_comp.get("reference") or comp.get("code") or comp.get("component_code") or "-"
+            name = (
+                nested_comp.get("designation_es")
+                or nested_comp.get("designation_en")
+                or comp.get("name")
+                or comp.get("component_name")
+                or "-"
+            )
+            quantity = float(comp.get("quantity") or 1)
+            
+            # Costos (usando misma lógica que vista detalle)
+            unit_cost = float(
+                nested_comp.get("sale_price") 
+                or nested_comp.get("cost_price") 
+                or comp.get("unit_cost") 
+                or 0
+            )
+            total_cost = quantity * unit_cost
+
+            rows.append(
+                ft.DataRow(
+                    cells=[
+                        ft.DataCell(ft.Text(reference, size=LayoutConstants.FONT_SIZE_SM)),
+                        ft.DataCell(ft.Text(name, size=LayoutConstants.FONT_SIZE_SM)),
+                        ft.DataCell(
+                            ft.TextField(
+                                value=f"{quantity:.2f}",
+                                width=70,
+                                text_align=ft.TextAlign.RIGHT,
+                                dense=True,
+                                data=index,
+                                on_submit=self._on_component_quantity_change_table,
+                                # on_blur es mejor para formularios ya que on_change 
+                                # reconstruye la tabla en cada tecla
+                                on_blur=self._on_component_quantity_change_table,
+                            )
+                        ),
+                        ft.DataCell(ft.Text(f"${unit_cost:.2f}", size=LayoutConstants.FONT_SIZE_SM)),
+                        ft.DataCell(ft.Text(f"${total_cost:.2f}", size=LayoutConstants.FONT_SIZE_SM, weight=ft.FontWeight.W_600)),
+                        ft.DataCell(
+                            ft.IconButton(
+                                icon=ft.Icons.DELETE_OUTLINE,
+                                icon_color=ft.Colors.RED,
+                                tooltip=t("common.remove"),
+                                data=index,
+                                on_click=self._on_component_remove_click,
+                                icon_size=18,
+                            )
+                        ),
+                    ]
+                )
+            )
+
+        table = ft.DataTable(
+            columns=[
+                ft.DataColumn(ft.Text(t("nomenclatures.columns.code"))),
+                ft.DataColumn(ft.Text(t("nomenclatures.columns.name"))),
+                ft.DataColumn(ft.Text(t("nomenclatures.columns.quantity")), numeric=True),
+                ft.DataColumn(ft.Text(t("nomenclatures.columns.unit_cost")), numeric=True),
+                ft.DataColumn(ft.Text(t("nomenclatures.columns.total_cost")), numeric=True),
+                ft.DataColumn(ft.Text(t("common.actions"))),
+            ],
+            rows=rows,
+            column_spacing=LayoutConstants.SPACING_SM,
+            heading_row_height=40,
+            data_row_min_height=40,
+        )
+
+        self._bom_components_container.content = ft.Column(
+            controls=[table],
+            scroll=ft.ScrollMode.ADAPTIVE,
+        )
 
         if self.page:
             self._bom_components_container.update()
