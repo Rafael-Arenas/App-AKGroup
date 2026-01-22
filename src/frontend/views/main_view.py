@@ -400,6 +400,30 @@ class MainView(ft.Container):
                 logger.error(f"Error parsing dashboard route {route}: {e}")
             return
 
+        # Manejar rutas dinámicas de nomenclaturas
+        if route.startswith("/nomenclatures/"):
+            try:
+                # Formato esperado: /nomenclatures/{id}/edit o /nomenclatures/{id}/articles
+                parts = route.split("/")
+                if len(parts) >= 4:
+                    nomenclature_id = int(parts[2])
+                    action = parts[3]
+                    
+                    if action == "edit":
+                        self.navigate_to_nomenclature_form(nomenclature_id)
+                        return
+                    elif action == "articles":
+                        self.navigate_to_nomenclature_articles(nomenclature_id)
+                        return
+                elif len(parts) >= 3 and parts[2].isdigit():
+                    # /nomenclatures/{id} - ir al detalle
+                    nomenclature_id = int(parts[2])
+                    self.navigate_to_nomenclature_detail(nomenclature_id)
+                    return
+            except Exception as e:
+                logger.error(f"Error parsing nomenclature route {route}: {e}")
+            return
+
         # Mapear rutas a índices de navegación
         route_mapping = {
             "/": 0,  # Dashboard
@@ -1161,6 +1185,7 @@ class MainView(ft.Container):
             nomenclature_id=nomenclature_id,
             on_save=self._on_nomenclature_saved,
             on_cancel=self._on_back_to_nomenclature_list,
+            on_add_articles=self.navigate_to_nomenclature_articles,
         )
 
         # Actualizar contenido y breadcrumb
@@ -1201,3 +1226,35 @@ class MainView(ft.Container):
         """
         logger.info("Navigating back to nomenclature list")
         self.navigate_to(4)
+
+    def navigate_to_nomenclature_articles(self, nomenclature_id: int) -> None:
+        """
+        Navega a la vista de agregar artículos a una nomenclatura.
+
+        Args:
+            nomenclature_id: ID de la nomenclatura
+
+        Example:
+            >>> main_view.navigate_to_nomenclature_articles(123)
+        """
+        from src.frontend.views.nomenclatures.nomenclature_articles_view import NomenclatureArticlesView
+
+        logger.info(f"Navigating to nomenclature articles: nomenclature_id={nomenclature_id}")
+
+        articles_view = NomenclatureArticlesView(
+            nomenclature_id=nomenclature_id,
+            on_back=lambda: self.navigate_to_nomenclature_detail(nomenclature_id),
+            on_article_added=lambda: self.navigate_to_nomenclature_detail(nomenclature_id),
+        )
+
+        if self._content_area:
+            self._content_area.content = articles_view
+            if self.page:
+                self.update()
+
+        app_state.navigation.set_breadcrumb([
+            {"label": "nomenclatures.title", "route": "/nomenclatures"},
+            {"label": "nomenclatures.detail", "route": f"/nomenclatures/{nomenclature_id}"},
+            {"label": "nomenclatures.add_articles", "route": None},
+        ])
+
