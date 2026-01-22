@@ -309,16 +309,10 @@ class ProductUpdate(BaseSchema):
         return v
 
 
-class ProductResponse(BaseResponse):
+class ProductBaseResponse(BaseResponse):
     """
-    Schema para respuesta de producto.
-
-    Example:
-        product = ProductResponse.model_validate(product_orm)
-        print(product.reference)
-        print(product.designation_es)
+    Schema base para respuesta de producto (solo campos básicos).
     """
-
     reference: str
     designation_fr: str | None = None
     designation_es: str | None = None
@@ -358,6 +352,11 @@ class ProductResponse(BaseResponse):
     hs_code: str | None = None
     notes: str | None = None
 
+
+class ProductResponse(ProductBaseResponse):
+    """
+    Schema para respuesta de producto con relaciones.
+    """
     # Relaciones opcionales
     company: CompanyResponse | None = None
     sales_type: SalesTypeResponse | None = None
@@ -451,6 +450,10 @@ class ProductComponentResponse(BaseResponse):
     # Información del componente (eager loading opcional)
     component_name: str | None = None
     component_code: str | None = None
+    
+    # Objeto de producto completo (eager loading)
+    # Usamos ProductBaseResponse para evitar ciclos de recursión
+    component: ProductBaseResponse | None = None
 
 
 # ============================================================================
