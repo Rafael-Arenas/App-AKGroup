@@ -225,7 +225,7 @@ class QuoteProductsView(ft.Column):
                         spacing=8,
                     ),
                     padding=ft.padding.symmetric(horizontal=16, vertical=10),
-                    bgcolor=ft.Colors.PRIMARY if is_article else ft.Colors.SURFACE_CONTAINER,
+                    bgcolor=ft.Colors.BLUE if is_article else ft.Colors.GREY_50,
                     border_radius=8,
                     on_click=lambda e: self._switch_type("article"),
                     ink=True,
@@ -243,7 +243,7 @@ class QuoteProductsView(ft.Column):
                         spacing=8,
                     ),
                     padding=ft.padding.symmetric(horizontal=16, vertical=10),
-                    bgcolor=ft.Colors.PRIMARY if not is_article else ft.Colors.SURFACE_CONTAINER,
+                    bgcolor=ft.Colors.BLUE if not is_article else ft.Colors.GREY_50,
                     border_radius=8,
                     on_click=lambda e: self._switch_type("nomenclature"),
                     ink=True,
@@ -346,18 +346,18 @@ class QuoteProductsView(ft.Column):
                     ft.Column(
                         controls=[
                             ft.Text(reference, weight=ft.FontWeight.BOLD, size=LayoutConstants.FONT_SIZE_MD),
-                            ft.Text(name, size=LayoutConstants.FONT_SIZE_SM, color=ft.Colors.ON_SURFACE_VARIANT),
-                            ft.Text(f"Familia: {family}", size=LayoutConstants.FONT_SIZE_XS, color=ft.Colors.ON_SURFACE_VARIANT),
+                            ft.Text(name, size=LayoutConstants.FONT_SIZE_SM, color=ft.Colors.GREY_600),
+                            ft.Text(f"Familia: {family}", size=LayoutConstants.FONT_SIZE_XS, color=ft.Colors.GREY_600),
                         ],
                         spacing=2,
                         expand=True,
                     ),
                     ft.Column(
                         controls=[
-                            ft.Text(f"${price:,.2f}", weight=ft.FontWeight.BOLD, color=ft.Colors.PRIMARY),
+                            ft.Text(f"${price:,.2f}", weight=ft.FontWeight.BOLD, color=ft.Colors.BLUE),
                             ft.IconButton(
                                 icon=ft.Icons.CHECK_CIRCLE if is_added else ft.Icons.ADD_CIRCLE_OUTLINE,
-                                icon_color=ft.Colors.GREEN if is_saved else (ft.Colors.ORANGE if is_pending else ft.Colors.PRIMARY),
+                                icon_color=ft.Colors.GREEN if is_saved else (ft.Colors.ORANGE if is_pending else ft.Colors.BLUE),
                                 tooltip="Ya guardado" if is_saved else ("Pendiente" if is_pending else "Agregar"),
                                 on_click=handle_add_click,
                                 disabled=is_added,
@@ -369,7 +369,7 @@ class QuoteProductsView(ft.Column):
                 alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
             ),
             padding=LayoutConstants.PADDING_MD,
-            border=ft.border.all(1, ft.Colors.GREEN_400 if is_saved else (ft.Colors.ORANGE_400 if is_pending else ft.Colors.OUTLINE_VARIANT)),
+            border=ft.border.all(1, ft.Colors.GREEN if is_saved else (ft.Colors.ORANGE if is_pending else ft.Colors.GREY_300)),
             border_radius=LayoutConstants.RADIUS_SM,
             bgcolor=ft.Colors.GREY_800 if is_saved else (ft.Colors.GREY_700 if is_pending else ft.Colors.GREY_900),
             # Hacer toda la card clickeable cuando no está agregado
@@ -488,7 +488,7 @@ class QuoteProductsView(ft.Column):
                             content=ft.Text(t("common.save")),
                             icon=ft.Icons.SAVE,
                             on_click=self._on_save_click,
-                            bgcolor=ft.Colors.PRIMARY,
+                            bgcolor=ft.Colors.BLUE,
                             color=ft.Colors.ON_PRIMARY,
                         ),
                     ],
@@ -526,7 +526,7 @@ class QuoteProductsView(ft.Column):
                 expand=True,
             ),
             padding=LayoutConstants.PADDING_MD,
-            border=ft.border.all(1, ft.Colors.OUTLINE),
+            border=ft.border.all(1, ft.Colors.GREY_300),
             border_radius=LayoutConstants.RADIUS_MD,
             expand=True,
         )
@@ -558,7 +558,7 @@ class QuoteProductsView(ft.Column):
                 spacing=2,
             ),
             padding=LayoutConstants.PADDING_SM,
-            border=ft.border.all(1, ft.Colors.GREEN_400),
+            border=ft.border.all(1, ft.Colors.GREEN),
             border_radius=LayoutConstants.RADIUS_SM,
             bgcolor=ft.Colors.GREY_800,
         )
@@ -596,7 +596,7 @@ class QuoteProductsView(ft.Column):
                 spacing=2,
             ),
             padding=LayoutConstants.PADDING_SM,
-            border=ft.border.all(1, ft.Colors.ORANGE_400),
+            border=ft.border.all(1, ft.Colors.ORANGE),
             border_radius=LayoutConstants.RADIUS_SM,
             bgcolor=ft.Colors.GREY_700,
         )
