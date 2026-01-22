@@ -233,14 +233,9 @@ class LookupAPIService:
         """
         logger.info("Obteniendo tipos de venta")
         try:
-            response = await self._client.get(
-                f"{self.base_url}/lookups/sales-types",
-                headers=self.headers
-            )
-            response.raise_for_status()
-            data = response.json()
-            logger.info(f"Se encontraron {len(data)} tipos de venta")
-            return data
+            sales_types = await self._client.get("/lookups/sales-types/")
+            logger.success("Tipos de venta obtenidos | total={}", len(sales_types))
+            return sales_types
         except Exception as e:
             logger.error("Error al obtener tipos de venta | error={}", str(e))
             raise

@@ -521,6 +521,64 @@ class ProductAPIService:
             )
             raise
 
+    async def get_bom_components(
+        self,
+        product_id: int,
+    ) -> list[dict[str, Any]]:
+        """
+        Obtiene los componentes BOM de un producto (nomenclatura).
+
+        Args:
+            product_id: ID del producto padre
+
+        Returns:
+            Lista de componentes con sus datos
+
+        Raises:
+            NotFoundException: Si el producto no existe
+            NetworkException: Error de red/conexión
+            APIException: Error de API
+
+        Example:
+            >>> components = await service.get_bom_components(1)
+            >>> for comp in components:
+            ...     print(f"{comp['component']['reference']}: {comp['quantity']}")
+        """
+        logger.info(
+            "Obteniendo componentes BOM | product_id={}",
+            product_id,
+        )
+
+        try:
+            components = await self._client.get(
+                f"/products/{product_id}/components"
+            )
+
+            logger.debug(f"Raw components data from API for product {product_id}: {components}")
+
+            if components is None:
+                logger.warning(f"API returned None for components of product {product_id}")
+                return []
+                
+            if not isinstance(components, list):
+                logger.warning(f"API returned non-list for components of product {product_id}: {type(components)}")
+                return []
+
+            logger.success(
+                "Componentes BOM obtenidos exitosamente | product_id={} total={}",
+                product_id,
+                len(components),
+            )
+            return components
+
+        except Exception as e:
+            logger.error(
+                "Error al obtener componentes BOM | product_id={} error={}",
+                product_id,
+                str(e),
+            )
+            raise
+
     async def close(self) -> None:
         """
         Cierra el cliente HTTP y libera recursos.
