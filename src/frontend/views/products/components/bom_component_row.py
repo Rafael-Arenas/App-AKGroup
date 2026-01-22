@@ -44,9 +44,9 @@ class BOMComponentRow(ft.Container):
         
         # Configurar contenedor
         self.padding = LayoutConstants.PADDING_SM
-        self.border = ft.border.all(1, ft.Colors.OUTLINE)
-        self.border_radius = LayoutConstants.BORDER_RADIUS_SM
-        self.bgcolor = ft.Colors.SURFACE_VARIANT
+        self.border = ft.border.all(1, ft.Colors.GREY_400)
+        self.border_radius = LayoutConstants.RADIUS_SM
+        self.bgcolor = ft.Colors.GREY_200
         
         logger.debug(f"BOMComponentRow created: index={index}, component={component_data.get('name')}")
     
@@ -64,7 +64,7 @@ class BOMComponentRow(ft.Container):
         self._code_text = ft.Text(
             value=self.component_data.get("code", ""),
             size=LayoutConstants.FONT_SIZE_SM,
-            color=ft.Colors.ON_SURFACE_VARIANT,
+            color=ft.Colors.GREY_600,
         )
         
         # Campo de cantidad
