@@ -12,7 +12,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from src.backend.models.core.companies import Company, CompanyRut, Plant
 from src.backend.models.core.contacts import Contact, Service
-from src.backend.models.lookups.lookups import City
+from src.backend.models.lookups import City
 
 # Crear engine y sesión
 db_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'app_akgroup.db')

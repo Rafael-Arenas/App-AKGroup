@@ -6,7 +6,7 @@ from decimal import Decimal
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from src.backend.models.core.products import Product, ProductType
-from src.backend.models.lookups.lookups import FamilyType, Matter, SalesType
+from src.backend.models.lookups import FamilyType, Matter, SalesType
 
 # Crear engine y sesión
 engine = create_engine('sqlite:///app_akgroup.db', echo=False)
