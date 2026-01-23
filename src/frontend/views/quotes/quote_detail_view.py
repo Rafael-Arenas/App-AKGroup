@@ -608,7 +608,7 @@ class QuoteDetailView(ft.Container):
 
         except Exception as e:
             logger.exception(f"Error loading quote: {e}")
-            self._error_message = t("quotes.messages.error_loading", error=str(e))
+            self._error_message = t("quotes.messages.error_loading", {"error": str(e)})
             self._is_loading = False
 
         # Reconstruir contenido con los datos cargados
@@ -645,7 +645,7 @@ class QuoteDetailView(ft.Container):
         if self.page:
             confirm_dialog = ConfirmDialog(
                 title=t("common.confirm_delete"),
-                message=t("quotes.messages.delete_confirm", number=self._quote.get('quote_number')),
+                message=t("quotes.messages.delete_confirm", {"number": self._quote.get('quote_number')}),
                 confirm_text=t("common.delete"),
                 cancel_text=t("common.cancel"),
                 on_confirm=self._on_confirm_delete,
