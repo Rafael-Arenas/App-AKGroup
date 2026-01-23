@@ -268,6 +268,7 @@ class MainView(ft.Container):
         from src.frontend.views.articles.article_list_view import ArticleListView
         from src.frontend.views.nomenclatures.nomenclature_list_view import NomenclatureListView
         from src.frontend.views.quotes.quote_list_view import QuoteListView
+        from src.frontend.views.orders.order_list_view import OrderListView
 
         match index:
             case 0:
@@ -308,6 +309,12 @@ class MainView(ft.Container):
                 return QuoteListView(
                     on_view_detail=lambda qid, cid, ctype: self.navigate_to_quote_detail(cid, ctype, qid, from_quote_list=True),
                     on_edit=lambda qid, cid, ctype: self.navigate_to_quote_form(cid, ctype, qid, from_quote_list=True),
+                )
+            case 6:
+                logger.debug("Creating OrderListView")
+                return OrderListView(
+                    on_view_detail=lambda oid, cid, ctype: self.navigate_to_order_detail(cid, ctype, oid, from_order_list=True),
+                    on_edit=lambda oid, cid, ctype: self.navigate_to_order_form(cid, ctype, None, oid, from_order_list=True),
                 )
             case _:
                 logger.warning(f"No view implemented for index: {index}")
@@ -883,21 +890,39 @@ class MainView(ft.Container):
         else:
             self.navigate_to_company_quotes(company_id, company_type)
 
-    def navigate_to_order_detail(self, company_id: int, company_type: str, order_id: int) -> None:
+    def navigate_to_order_detail(
+        self,
+        company_id: int,
+        company_type: str,
+        order_id: int,
+        from_order_list: bool = False,
+    ) -> None:
         """
         Navega a la vista de detalle de orden.
+
+        Args:
+            company_id: ID de la empresa asociada
+            company_type: Tipo de empresa ("CLIENT" o "SUPPLIER")
+            order_id: ID de la orden
+            from_order_list: Si viene desde la lista de órdenes del menú principal
         """
         from src.frontend.views.orders.order_detail_view import OrderDetailView
 
-        logger.info(f"Navigating to order detail: company_id={company_id}, order_id={order_id}")
+        logger.info(f"Navigating to order detail: company_id={company_id}, order_id={order_id}, from_order_list={from_order_list}")
+
+        # Determinar la acción de "volver" según el contexto
+        if from_order_list:
+            on_back = lambda: self.navigate_to(6)  # Volver a la lista de órdenes
+        else:
+            on_back = lambda: self.navigate_to_company_orders(company_id, company_type)
 
         detail_view = OrderDetailView(
             order_id=order_id,
             company_id=company_id,
             company_type=company_type,
-            on_edit=lambda oid: self.navigate_to_order_form(company_id, company_type, order_id=oid),
-            on_delete=lambda oid: self._on_order_deleted(oid, company_id, company_type),
-            on_back=lambda: self.navigate_to_company_orders(company_id, company_type),
+            on_edit=lambda oid: self.navigate_to_order_form(company_id, company_type, order_id=oid, from_order_list=from_order_list),
+            on_delete=lambda oid: self._on_order_deleted(oid, company_id, company_type, from_order_list=from_order_list),
+            on_back=on_back,
         )
 
         if self._content_area:
@@ -905,21 +930,39 @@ class MainView(ft.Container):
             if self.page:
                 self.update()
 
-        section_key = "clients" if company_type == "CLIENT" else "suppliers"
-        dashboard_route = f"/companies/dashboard/{company_id}/{company_type}"
-        orders_route = f"{dashboard_route}/orders"
-        
-        app_state.navigation.set_breadcrumb([
-            {"label": f"{section_key}.title", "route": f"/companies/{company_type.lower()}s"},
-            {"label": "dashboard.title", "route": dashboard_route},
-            {"label": "orders.title", "route": orders_route},
-            {"label": "orders.detail", "route": None},
-        ])
+        # Configurar breadcrumb según el contexto
+        if from_order_list:
+            # Viene desde el menú de órdenes
+            app_state.navigation.set_breadcrumb([
+                {"label": "orders.title", "route": "/orders"},
+                {"label": "orders.detail", "route": None},
+            ])
+        else:
+            # Viene desde el dashboard/órdenes de un cliente
+            section_key = "clients" if company_type == "CLIENT" else "suppliers"
+            dashboard_route = f"/companies/dashboard/{company_id}/{company_type}"
+            orders_route = f"{dashboard_route}/orders"
+            
+            app_state.navigation.set_breadcrumb([
+                {"label": f"{section_key}.title", "route": f"/companies/{company_type.lower()}s"},
+                {"label": "dashboard.title", "route": dashboard_route},
+                {"label": "orders.title", "route": orders_route},
+                {"label": "orders.detail", "route": None},
+            ])
 
-    def _on_order_deleted(self, order_id: int, company_id: int, company_type: str) -> None:
+    def _on_order_deleted(
+        self,
+        order_id: int,
+        company_id: int,
+        company_type: str,
+        from_order_list: bool = False,
+    ) -> None:
         """Callback cuando se elimina una orden desde el detalle."""
         logger.success(f"Order deleted: {order_id}")
-        self.navigate_to_company_orders(company_id, company_type)
+        if from_order_list:
+            self.navigate_to(6)  # Volver a la lista de órdenes
+        else:
+            self.navigate_to_company_orders(company_id, company_type)
 
     def navigate_to_quote_form(
         self,
@@ -987,28 +1030,44 @@ class MainView(ft.Container):
             ])
 
     def navigate_to_order_form(
-        self, 
-        company_id: int, 
-        company_type: str, 
+        self,
+        company_id: int,
+        company_type: str,
         quote_id: int | None = None,
-        order_id: int | None = None
+        order_id: int | None = None,
+        from_order_list: bool = False,
     ) -> None:
         """
         Navega a la vista de formulario de orden.
+
+        Args:
+            company_id: ID de la empresa
+            company_type: Tipo de empresa
+            quote_id: ID de la cotización (si se crea desde cotización)
+            order_id: ID de la orden (None para crear nueva)
+            from_order_list: Si viene desde la lista de órdenes del menú principal
         """
         from src.frontend.views.orders.order_form_view import OrderFormView
 
         logger.info(
             f"Navigating to order form: company_id={company_id}, quote_id={quote_id}, "
-            f"order_id={order_id}, mode={'edit' if order_id else 'create'}"
+            f"order_id={order_id}, from_order_list={from_order_list}, mode={'edit' if order_id else 'create'}"
         )
+
+        # Determinar acciones de guardar/cancelar según el contexto
+        if from_order_list:
+            on_save = lambda: self.navigate_to(6)  # Volver a la lista de órdenes
+            on_cancel = lambda: self.navigate_to(6)  # Volver a la lista de órdenes
+        else:
+            on_save = lambda: self.navigate_to_company_orders(company_id, company_type)
+            on_cancel = lambda: self.navigate_to_company_orders(company_id, company_type)
 
         form_view = OrderFormView(
             company_id=company_id,
             quote_id=quote_id,
             order_id=order_id,
-            on_save=lambda: self.navigate_to_company_orders(company_id, company_type),
-            on_cancel=lambda: self.navigate_to_company_orders(company_id, company_type),
+            on_save=on_save,
+            on_cancel=on_cancel,
         )
 
         if self._content_area:
@@ -1016,16 +1075,26 @@ class MainView(ft.Container):
             if self.page:
                 self.update()
 
-        section_key = "clients" if company_type == "CLIENT" else "suppliers"
-        dashboard_route = f"/companies/dashboard/{company_id}/{company_type}"
+        # Configurar breadcrumb según el contexto
         action_key = "orders.edit" if order_id else "orders.create"
         
-        app_state.navigation.set_breadcrumb([
-            {"label": f"{section_key}.title", "route": f"/companies/{company_type.lower()}s"},
-            {"label": "dashboard.title", "route": dashboard_route},
-            {"label": "orders.title", "route": f"{dashboard_route}/orders"},
-            {"label": action_key, "route": None},
-        ])
+        if from_order_list:
+            # Viene desde el menú de órdenes
+            app_state.navigation.set_breadcrumb([
+                {"label": "orders.title", "route": "/orders"},
+                {"label": action_key, "route": None},
+            ])
+        else:
+            # Viene desde el dashboard/órdenes de un cliente
+            section_key = "clients" if company_type == "CLIENT" else "suppliers"
+            dashboard_route = f"/companies/dashboard/{company_id}/{company_type}"
+            
+            app_state.navigation.set_breadcrumb([
+                {"label": f"{section_key}.title", "route": f"/companies/{company_type.lower()}s"},
+                {"label": "dashboard.title", "route": dashboard_route},
+                {"label": "orders.title", "route": f"{dashboard_route}/orders"},
+                {"label": action_key, "route": None},
+            ])
 
     def navigate_to_company_orders(self, company_id: int, company_type: str) -> None:
         """Navega a la vista de órdenes de una empresa."""
