@@ -226,7 +226,7 @@ class FilterPanel(ft.Container):
         """
         if config.filter_type == "dropdown":
             options = [
-                ft.dropdown.Option(key=opt["value"], text=opt["text"])
+                ft.dropdown.Option(key=opt["value"], text=t(opt["text"]))
                 for opt in (config.options or [])
             ]
             return ft.Dropdown(
