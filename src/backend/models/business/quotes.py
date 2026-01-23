@@ -233,6 +233,11 @@ class Quote(Base, TimestampMixin, AuditMixin, ActiveMixin):
         delta = self.valid_until - _time_provider.today()
         return delta.days
 
+    @property
+    def company_name(self) -> str | None:
+        """Get company name for this quote."""
+        return self.company.name if self.company else None
+
     def __repr__(self) -> str:
         """String representation."""
         return f"<Quote(id={self.id}, number='{self.quote_number}', revision='{self.revision}', total={self.total})>"
