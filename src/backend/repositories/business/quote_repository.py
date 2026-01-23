@@ -42,6 +42,38 @@ class QuoteRepository(BaseRepository[Quote]):
         """
         super().__init__(session, Quote)
 
+    def get_all(
+        self,
+        skip: int = 0,
+        limit: int = 100,
+        order_by: str | None = None,
+        descending: bool = False,
+    ) -> Sequence[Quote]:
+        """
+        Get all quotes with company eagerly loaded.
+        """
+        logger.debug(f"Getting all quotes (skip={skip}, limit={limit})")
+        
+        # Default order by date if not specified
+        if not order_by:
+            order_by = "quote_date"
+            descending = True
+            
+        stmt = select(Quote).options(selectinload(Quote.company))
+        
+        # Apply ordering
+        if order_by:
+            column = getattr(Quote, order_by, None)
+            if column is not None:
+                order = column.desc() if descending else column.asc()
+                stmt = stmt.order_by(order)
+        
+        stmt = stmt.offset(skip).limit(limit)
+        
+        quotes = self.session.execute(stmt).scalars().all()
+        logger.debug(f"Found {len(quotes)} quote(s)")
+        return quotes
+
     def get_by_quote_number(self, quote_number: str) -> Quote | None:
         """
         Get quote by unique quote number.
@@ -130,6 +162,7 @@ class QuoteRepository(BaseRepository[Quote]):
         logger.debug(f"Getting quotes for company_id={company_id} (skip={skip}, limit={limit})")
         stmt = (
             select(Quote)
+            .options(selectinload(Quote.company))
             .filter(Quote.company_id == company_id)
             .order_by(Quote.quote_date.desc())
             .offset(skip)
