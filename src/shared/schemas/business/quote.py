@@ -401,6 +401,7 @@ class QuoteListResponse(BaseModel):
     subject: str
     revision: str
     company_id: int
+    company_name: str | None = None
     staff_id: int
     status_id: int
     quote_date: date
