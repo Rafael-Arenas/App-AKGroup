@@ -118,9 +118,9 @@ class ProductListView(ft.Container):
             search_placeholder = t("articles.search_placeholder")
 
         # Estados de carga/error/vacío
-        if self._is_loading:
+            loading_message = t("common.loading_items", {"items": t(title_key).lower()})
             return ft.Container(
-                content=LoadingSpinner(message=f"Cargando {t(title_key).lower()}..."),
+                content=LoadingSpinner(message=loading_message),
                 expand=True,
                 alignment=ft.Alignment(0, 0),  # center
             )
@@ -293,7 +293,7 @@ class ProductListView(ft.Container):
 
         except Exception as e:
             logger.exception(f"Error loading products: {e}")
-            self._error_message = f"Error al cargar productos: {str(e)}"
+            self._error_message = t("common.error_loading", {"error": str(e)})
             self._is_loading = False
 
         # Reconstruir contenido con los datos cargados o error
