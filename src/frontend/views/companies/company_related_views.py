@@ -71,7 +71,7 @@ class CompanyRelatedBaseView(ft.Container):
             controls=[
                 ft.IconButton(
                     icon=ft.Icons.ARROW_BACK,
-                    tooltip="Volver al Dashboard",
+                    tooltip=t("common.back"),
                     on_click=lambda e: self.on_back(),
                 ),
                 ft.Icon(self.icon, size=32, color=self.color),
@@ -105,8 +105,8 @@ class CompanyRelatedBaseView(ft.Container):
             content=ft.Column(
                 controls=[
                     ft.Icon(ft.Icons.CONSTRUCTION, size=64, color=ft.Colors.GREY_400),
-                    ft.Text("En Construcción", size=20, color=ft.Colors.GREY_600),
-                    ft.Text(f"Aquí se mostrarán las {t(self.title_key).lower()} de {self._company.get('name')}", color=ft.Colors.GREY_500),
+                    ft.Text(t("common.under_construction"), size=20, color=ft.Colors.GREY_600),
+                    ft.Text(t("common.under_construction_description", {"title": t(self.title_key).lower(), "company": self._company.get('name')}), color=ft.Colors.GREY_500),
                 ],
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                 alignment=ft.MainAxisAlignment.CENTER,
@@ -339,7 +339,7 @@ class CompanyQuotesView(CompanyRelatedBaseView):
 
         dialog = ConfirmDialog(
             title=t("common.confirm_delete"),
-            message=t("quotes.messages.delete_confirm", number=quote.get('quote_number')),
+            message=t("quotes.messages.delete_confirm", {"number": quote.get('quote_number')}),
             on_confirm=confirm_delete,
             variant="danger",
             confirm_text=t("common.delete")
@@ -355,7 +355,7 @@ class CompanyQuotesView(CompanyRelatedBaseView):
         except Exception as e:
             logger.error(f"Error deleting quote: {e}")
             if self.page:
-                self.page.show_snack_bar(ft.SnackBar(content=ft.Text(t("quotes.messages.error_deleting", error=str(e))), bgcolor="error"))
+                self.page.show_snack_bar(ft.SnackBar(content=ft.Text(t("quotes.messages.error_deleting", {"error": str(e)})), bgcolor="error"))
 
 
 class CompanyOrdersView(CompanyRelatedBaseView):
@@ -556,7 +556,7 @@ class CompanyOrdersView(CompanyRelatedBaseView):
 
         dialog = ConfirmDialog(
             title=t("common.confirm_delete"),
-            message=t("orders.messages.delete_confirm", number=order.get('order_number')),
+            message=t("orders.messages.delete_confirm", {"number": order.get('order_number')}),
             on_confirm=confirm_delete,
             variant="danger",
             confirm_text=t("common.delete")
@@ -572,7 +572,7 @@ class CompanyOrdersView(CompanyRelatedBaseView):
         except Exception as e:
             logger.error(f"Error deleting order: {e}")
             if self.page:
-                self.page.show_snack_bar(ft.SnackBar(content=ft.Text(t("orders.messages.error_deleting", error=str(e))), bgcolor="error"))
+                self.page.show_snack_bar(ft.SnackBar(content=ft.Text(t("orders.messages.error_deleting", {"error": str(e)})), bgcolor="error"))
 
 class CompanyDeliveriesView(CompanyRelatedBaseView):
     def __init__(self, company_id: int, company_type: str, on_back: Callable[[], None]):
