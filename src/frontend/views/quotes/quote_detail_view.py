@@ -58,6 +58,7 @@ class QuoteDetailView(ft.Container):
         self._is_loading: bool = True
         self._error_message: str = ""
         self._quote: dict | None = None
+        self._company_name: str | None = None
 
         # Configurar propiedades del contenedor
         self.expand = True
@@ -172,6 +173,23 @@ class QuoteDetailView(ft.Container):
                                     ],
                                     spacing=LayoutConstants.SPACING_SM,
                                 ),
+                                # Mostrar nombre de empresa si está disponible
+                                ft.Row(
+                                    controls=[
+                                        ft.Icon(
+                                            ft.Icons.BUSINESS,
+                                            size=16,
+                                            color=ft.Colors.BLUE_700,
+                                        ),
+                                        ft.Text(
+                                            self._company_name or self._quote.get("company_name", "Empresa no especificada"),
+                                            size=LayoutConstants.FONT_SIZE_MD,
+                                            color=ft.Colors.BLUE_700,
+                                            weight=LayoutConstants.FONT_WEIGHT_SEMIBOLD,
+                                        ),
+                                    ],
+                                    spacing=LayoutConstants.SPACING_XS,
+                                ) if (self._company_name or self._quote.get("company_name")) else ft.Container(),
                             ],
                             expand=True,
                             spacing=LayoutConstants.SPACING_XS,
@@ -588,21 +606,39 @@ class QuoteDetailView(ft.Container):
             
             logger.success(f"Quote loaded: {self._quote.get('quote_number')}")
 
+            # Cargar información de la empresa para mostrar en header y breadcrumb
             try:
                 company_api = CompanyAPI()
                 company = await company_api.get_by_id(self.company_id)
-                company_name = (company or {}).get("name")
-                if company_name:
+                self._company_name = (company or {}).get("name")
+                
+                # Si tenemos el nombre de la empresa, actualizar breadcrumb
+                if self._company_name:
+                    current_breadcrumb = app_state.navigation.breadcrumb_path
                     dashboard_route = f"/companies/dashboard/{self.company_id}/{self.company_type}"
-                    updated_path: list[dict[str, str | None]] = []
-                    for item in app_state.navigation.breadcrumb_path:
-                        if item.get("route") == dashboard_route:
-                            updated_path.append({"label": str(company_name), "route": dashboard_route})
-                        else:
-                            updated_path.append(item)
-                    app_state.navigation.set_breadcrumb(updated_path)
+                    
+                    # Verificar si viene desde la lista de cotizaciones (breadcrumb simple)
+                    if len(current_breadcrumb) == 2 and current_breadcrumb[0].get("route") == "/quotes":
+                        # Viene desde el menú de cotizaciones - insertar nombre de empresa
+                        updated_path: list[dict[str, str | None]] = [
+                            {"label": "quotes.title", "route": "/quotes"},
+                            {"label": str(self._company_name), "route": None},
+                            {"label": "quotes.detail", "route": None},
+                        ]
+                        app_state.navigation.set_breadcrumb(updated_path)
+                    else:
+                        # Viene desde el dashboard de un cliente - reemplazar "dashboard.title" con nombre
+                        updated_path: list[dict[str, str | None]] = []
+                        for item in current_breadcrumb:
+                            if item.get("route") == dashboard_route:
+                                updated_path.append({"label": str(self._company_name), "route": dashboard_route})
+                            else:
+                                updated_path.append(item)
+                        app_state.navigation.set_breadcrumb(updated_path)
             except Exception as e:
-                logger.warning(f"Could not update breadcrumb company name: {e}")
+                logger.warning(f"Could not load company info: {e}")
+                # Si falla, intentar usar el nombre que viene en la cotización
+                self._company_name = self._quote.get("company_name")
 
             self._is_loading = False
 
