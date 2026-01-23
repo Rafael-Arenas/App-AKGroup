@@ -698,7 +698,7 @@ class OrderDetailView(ft.Container):
 
         except Exception as e:
             logger.exception(f"Error loading order: {e}")
-            self._error_message = t("orders.messages.error_loading", error=str(e))
+            self._error_message = t("orders.messages.error_loading", {"error": str(e)})
             self._is_loading = False
 
         # Reconstruir contenido con los datos cargados
@@ -716,7 +716,7 @@ class OrderDetailView(ft.Container):
         if self.page:
             confirm_dialog = ConfirmDialog(
                 title=t("common.confirm_delete"),
-                message=t("orders.messages.delete_confirm", number=self._order.get('order_number')),
+                message=t("orders.messages.delete_confirm", {"number": self._order.get('order_number')}),
                 confirm_text=t("common.delete"),
                 cancel_text=t("common.cancel"),
                 on_confirm=self._on_confirm_delete,
