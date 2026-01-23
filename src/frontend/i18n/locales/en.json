@@ -497,7 +497,8 @@
       "notes": "Notes",
       "subtotal": "Subtotal",
       "taxes": "Taxes",
-      "total_amount": "Total Amount"
+      "total_amount": "Total Amount",
+      "status": "Status"
     },
     "columns": {
       "id": "ID",
@@ -538,7 +539,10 @@
     "messages": {
       "created": "Quote created successfully",
       "updated": "Quote updated successfully",
-      "error_saving": "Error saving: {error}"
+      "error_saving": "Error saving: {error}",
+      "error_loading": "Error loading quote: {error}",
+      "delete_confirm": "Are you sure you want to delete quote {number}?",
+      "error_deleting": "Error deleting quote: {error}"
     },
     "status": {
       "draft": "Draft",
@@ -553,6 +557,41 @@
       "unit_price": "Unit Price",
       "discount": "Discount",
       "total": "Total"
+    },
+    "add_products": {
+      "title": "Add Products",
+      "search_placeholder": "Search by code or name...",
+      "no_products": "No products",
+      "no_products_message": "No {type} available",
+      "family": "Family: {family}",
+      "already_saved": "Already saved",
+      "pending": "Pending",
+      "add": "Add",
+      "items_count": "Products ({count})",
+      "saved_count": "Saved ({count})",
+      "pending_count": "Pending ({count})",
+      "click_to_add": "Click + to add products",
+      "total_pending": "Total pending:",
+      "total_saved": "Total saved:",
+      "quantity": "Qty:",
+      "unit_price_short": "U.P:",
+      "form": {
+        "quantity": "Quantity",
+        "unit_price": "Unit Price",
+        "discount": "Discount (%)",
+        "notes": "Notes",
+        "invalid_quantity": "Must be greater than 0",
+        "invalid_price": "Must be greater than 0",
+        "invalid_value": "Invalid value",
+        "add_title": "Add: {name}"
+      },
+      "messages": {
+        "success_adding": "✓ {count} product(s) saved successfully",
+        "partial_success": "⚠ {success} saved, {error} with errors",
+        "error_saving": "Error saving products: {error}",
+        "error_loading": "Error loading products: {error}",
+        "loading": "Loading products..."
+      }
     }
   },
   "orders": {
@@ -623,6 +662,7 @@
   },
   "common": {
     "save": "Save",
+    "all": "All",
     "cancel": "Cancel",
     "delete": "Delete",
     "edit": "Edit",
@@ -656,6 +696,8 @@
     "saving": "Saving...",
     "deleting": "Deleting...",
     "error": "Error: {error}",
+    "error_loading": "Error loading: {error}",
+    "loading_items": "Loading {items}...",
     "success": "Success",
     "warning": "Warning",
     "info": "Information",
@@ -686,7 +728,9 @@
     "name": "Name",
     "category": "Category",
     "active_only": "Active only",
-    "date_range": "Date Range"
+    "date_range": "Date Range",
+    "under_construction": "Under Construction",
+    "under_construction_description": "The {title} for {company} will be displayed here"
   },
   "theme": {
     "light": "Light",

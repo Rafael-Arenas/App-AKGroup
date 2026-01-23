@@ -475,7 +475,6 @@
     "delete": "Eliminar Cotización",
     "view": "Ver Cotización",
     "detail": "Detalles de la Cotización",
-    "add_products": "Agregar Productos",
     "no_quotes": "No hay cotizaciones registradas",
     "no_quotes_message": "No hay cotizaciones registradas para {company_name}. Comienza creando la primera.",
     "create_first": "Crear Primera Cotización",
@@ -499,7 +498,8 @@
       "notes": "Notas",
       "subtotal": "Subtotal",
       "taxes": "Impuestos",
-      "total_amount": "Monto Total"
+      "total_amount": "Monto Total",
+      "status": "Estado"
     },
     "columns": {
       "id": "ID",
@@ -540,7 +540,10 @@
     "messages": {
       "created": "Cotización creada exitosamente",
       "updated": "Cotización actualizada exitosamente",
-      "error_saving": "Error al guardar: {error}"
+      "error_saving": "Error al guardar: {error}",
+      "error_loading": "Error al cargar la cotización: {error}",
+      "delete_confirm": "¿Está seguro que desea eliminar la cotización {number}?",
+      "error_deleting": "Error al eliminar la cotización: {error}"
     },
     "status": {
       "draft": "Borrador",
@@ -555,6 +558,41 @@
       "unit_price": "Precio Unitario",
       "discount": "Descuento",
       "total": "Total"
+    },
+    "add_products": {
+      "title": "Agregar Productos",
+      "search_placeholder": "Buscar por código o nombre...",
+      "no_products": "Sin productos",
+      "no_products_message": "No hay {type} disponibles",
+      "family": "Familia: {family}",
+      "already_saved": "Ya guardado",
+      "pending": "Pendiente",
+      "add": "Agregar",
+      "items_count": "Productos ({count})",
+      "saved_count": "Guardados ({count})",
+      "pending_count": "Pendientes ({count})",
+      "click_to_add": "Haz clic en + para agregar productos",
+      "total_pending": "Total pendiente:",
+      "total_saved": "Total guardado:",
+      "quantity": "Cant:",
+      "unit_price_short": "P.U:",
+      "form": {
+        "quantity": "Cantidad",
+        "unit_price": "Precio Unitario",
+        "discount": "Descuento (%)",
+        "notes": "Notas",
+        "invalid_quantity": "Debe ser mayor a 0",
+        "invalid_price": "Debe ser mayor a 0",
+        "invalid_value": "Valor inválido",
+        "add_title": "Agregar: {name}"
+      },
+      "messages": {
+        "success_adding": "✓ {count} producto(s) guardado(s) exitosamente",
+        "partial_success": "⚠ {success} guardados, {error} con errores",
+        "error_saving": "Error al guardar productos: {error}",
+        "error_loading": "Error al cargar productos: {error}",
+        "loading": "Cargando productos..."
+      }
     }
   },
   "orders": {
@@ -697,6 +735,7 @@
   },
   "common": {
     "save": "Guardar",
+    "all": "Todos",
     "cancel": "Cancelar",
     "delete": "Eliminar",
     "edit": "Editar",
@@ -729,6 +768,8 @@
     "saving": "Guardando...",
     "deleting": "Eliminando...",
     "error": "Error: {error}",
+    "error_loading": "Error al cargar: {error}",
+    "loading_items": "Cargando {items}...",
     "success": "Éxito",
     "warning": "Advertencia",
     "info": "Información",
@@ -760,7 +801,9 @@
     "name": "Nombre",
     "category": "Categoría",
     "active_only": "Solo Activos",
-    "date_range": "Rango de Fechas"
+    "date_range": "Rango de Fechas",
+    "under_construction": "En Construcción",
+    "under_construction_description": "Aquí se mostrarán las {title} de {company}"
   },
   "theme": {
     "light": "Claro",

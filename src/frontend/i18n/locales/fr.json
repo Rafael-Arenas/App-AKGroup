@@ -497,7 +497,8 @@
       "notes": "Notes",
       "subtotal": "Sous-total",
       "taxes": "Taxes",
-      "total_amount": "Montant Total"
+      "total_amount": "Montant Total",
+      "status": "Statut"
     },
     "columns": {
       "id": "ID",
@@ -537,7 +538,10 @@
     "messages": {
       "created": "Devis créé avec succès",
       "updated": "Devis mis à jour avec succès",
-      "error_saving": "Erreur lors de l'enregistrement: {error}"
+      "error_saving": "Erreur lors de l'enregistrement: {error}",
+      "error_loading": "Erreur lors du chargement du devis: {error}",
+      "delete_confirm": "Êtes-vous sûr de vouloir supprimer le devis {number}?",
+      "error_deleting": "Erreur lors de la suppression du devis: {error}"
     },
     "status": {
       "draft": "Brouillon",
@@ -552,6 +556,41 @@
       "unit_price": "Prix Unitaire",
       "discount": "Remise",
       "total": "Total"
+    },
+    "add_products": {
+      "title": "Ajouter des Produits",
+      "search_placeholder": "Rechercher par code ou nom...",
+      "no_products": "Aucun produit",
+      "no_products_message": "Aucun {type} disponible",
+      "family": "Famille: {family}",
+      "already_saved": "Déjà enregistré",
+      "pending": "En attente",
+      "add": "Ajouter",
+      "items_count": "Produits ({count})",
+      "saved_count": "Enregistrés ({count})",
+      "pending_count": "En attente ({count})",
+      "click_to_add": "Cliquez sur + pour ajouter des produits",
+      "total_pending": "Total en attente:",
+      "total_saved": "Total enregistré:",
+      "quantity": "Qté:",
+      "unit_price_short": "P.U:",
+      "form": {
+        "quantity": "Quantité",
+        "unit_price": "Prix Unitaire",
+        "discount": "Remise (%)",
+        "notes": "Notes",
+        "invalid_quantity": "Doit être supérieur à 0",
+        "invalid_price": "Doit être supérieur à 0",
+        "invalid_value": "Valeur invalide",
+        "add_title": "Ajouter: {name}"
+      },
+      "messages": {
+        "success_adding": "✓ {count} produit(s) enregistré(s) avec succès",
+        "partial_success": "⚠ {success} enregistrés, {error} avec erreurs",
+        "error_saving": "Erreur lors de l'enregistrement des produits: {error}",
+        "error_loading": "Erreur lors du chargement des produits: {error}",
+        "loading": "Chargement des produits..."
+      }
     }
   },
   "orders": {
@@ -593,6 +632,7 @@
   },
   "common": {
     "save": "Enregistrer",
+    "all": "Tous",
     "cancel": "Annuler",
     "delete": "Supprimer",
     "edit": "Modifier",
@@ -626,6 +666,8 @@
     "saving": "Enregistrement...",
     "deleting": "Suppression...",
     "error": "Erreur: {error}",
+    "error_loading": "Erreur lors du chargement: {error}",
+    "loading_items": "Chargement de {items}...",
     "success": "Succès",
     "warning": "Avertissement",
     "info": "Information",
@@ -656,7 +698,9 @@
     "name": "Nom",
     "category": "Catégorie",
     "active_only": "Actifs seulement",
-    "date_range": "Plage de dates"
+    "date_range": "Plage de dates",
+    "under_construction": "En Construction",
+    "under_construction_description": "Les {title} de {company} seront affichés ici"
   },
   "theme": {
     "light": "Clair",
