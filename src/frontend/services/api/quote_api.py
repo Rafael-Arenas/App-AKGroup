@@ -18,26 +18,122 @@ class QuoteAPIService:
         self._client = BaseAPIClient(base_url=base_url, timeout=timeout)
         logger.debug("QuoteAPIService initialized | base_url={}", base_url)
 
+    async def get_all(
+        self,
+        page: int = 1,
+        page_size: int = 20,
+        **filters
+    ) -> Dict[str, Any]:
+        """
+        Get all quotes with pagination and optional filters.
+
+        Args:
+            page: Page number (1-based)
+            page_size: Number of items per page
+            **filters: Optional filter parameters (is_active, status_id, staff_id, etc.)
+
+        Returns:
+            Dictionary with items and pagination info
+        """
+        logger.info(f"Getting all quotes | page={page} filters={filters}")
+        
+        # Calculate skip/limit
+        skip = (page - 1) * page_size
+        limit = page_size
+        
+        params = {
+            "skip": skip,
+            "limit": limit
+        }
+        params.update(filters)
+        
+        try:
+            quotes = await self._client.get("/quotes/", params=params)
+            
+            # Handle response format
+            items = quotes if isinstance(quotes, list) else quotes.get("items", [])
+            
+            # Backend returns just a list, so we estimate total
+            total = len(items)
+            if total == limit:
+                 total = (page * page_size) + 1
+            else:
+                 total = ((page - 1) * page_size) + total
+            
+            return {
+                "items": items,
+                "total": total
+            }
+            
+        except Exception as e:
+            logger.error(f"Error getting all quotes: {e}")
+            return {"items": [], "total": 0}
+
+    async def search(
+        self,
+        query: str,
+        page: int = 1,
+        page_size: int = 20
+    ) -> Dict[str, Any]:
+        """
+        Search quotes by subject.
+
+        Args:
+            query: Text to search in subject
+            page: Page number
+            page_size: Items per page
+
+        Returns:
+            Dictionary with matching items
+        """
+        logger.info(f"Searching quotes | query='{query}' page={page}")
+        
+        skip = (page - 1) * page_size
+        limit = page_size
+        
+        params = {
+            "subject": query,
+            "skip": skip,
+            "limit": limit
+        }
+        
+        try:
+            quotes = await self._client.get("/quotes/search", params=params)
+            
+            items = quotes if isinstance(quotes, list) else quotes.get("items", [])
+            
+            total = len(items)
+            if total == limit:
+                 total = (page * page_size) + 1
+            else:
+                 total = ((page - 1) * page_size) + total
+                 
+            return {
+                "items": items,
+                "total": total
+            }
+        except Exception as e:
+            logger.error(f"Error searching quotes: {e}")
+            return {"items": [], "total": 0}
+
     async def get_by_company(
         self, 
         company_id: int, 
         page: int = 1, 
         page_size: int = 20,
-        query: str = ""
     ) -> Dict[str, Any]:
         """
-        Get quotes for a specific company with pagination and optional search.
+        Get quotes for a specific company with pagination.
 
         Args:
             company_id: ID of the company
             page: Page number (1-based)
             page_size: Number of items per page
-            query: Optional search query
 
         Returns:
             Dictionary with items and pagination info
         """
-        logger.info(f"Getting quotes for company {company_id} | page={page} query={query}")
+        logger.info(f"Getting quotes for company {company_id} | page={page}")
         
         # Calculate skip/limit
         skip = (page - 1) * page_size
@@ -48,9 +144,6 @@ class QuoteAPIService:
             "limit": limit
         }
         
-        # Note: Backend does not support search query in get_by_company endpoint yet.
-        # We ignore 'query' param for now to avoid errors or incorrect filtering.
-        
         try:
             # Use specific endpoint for company quotes
             quotes = await self._client.get(f"/quotes/company/{company_id}", params=params)
@@ -58,14 +151,11 @@ class QuoteAPIService:
             # Handle response format
             items = quotes if isinstance(quotes, list) else quotes.get("items", [])
             
-            # Backend returns just a list, so we don't know true total count.
-            # We estimate total based on what we have.
+            # Backend returns just a list, so we estimate total
             total = len(items)
             if total == limit:
-                 # If we got a full page, assume there might be more
                  total = (page * page_size) + 1
             else:
-                 # If we got less than full page, we know the exact total (previous pages + this page)
                  total = ((page - 1) * page_size) + total
             
             return {
@@ -74,9 +164,8 @@ class QuoteAPIService:
             }
             
         except Exception as e:
-            logger.error(f"Error getting quotes: {e}")
+            logger.error(f"Error getting quotes for company {company_id}: {e}")
             return {"items": [], "total": 0}
-
     async def get_by_id(self, quote_id: int) -> Dict[str, Any]:
         """Get a quote by ID."""
         return await self._client.get(f"/quotes/{quote_id}")
