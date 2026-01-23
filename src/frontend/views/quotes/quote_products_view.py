@@ -84,7 +84,7 @@ class QuoteProductsView(ft.Column):
             {"label": "dashboard.title", "route": f"/companies/dashboard/{self.company_id}/{self.company_type}"},
             {"label": "quotes.title", "route": f"/companies/dashboard/{self.company_id}/{self.company_type}/quotes"},
             {"label": "quotes.detail", "route": f"/companies/dashboard/{self.company_id}/{self.company_type}/quotes/{self.quote_id}"},
-            {"label": "quotes.add_products", "route": None},
+            {"label": "quotes.add_products.title", "route": None},
         ])
 
         # Cargar productos
@@ -150,7 +150,7 @@ class QuoteProductsView(ft.Column):
 
         except Exception as e:
             logger.exception(f"Error loading products: {e}")
-            self._error_message = f"Error al cargar productos: {str(e)}"
+            self._error_message = t("quotes.add_products.messages.error_loading", {"error": str(e)})
 
         finally:
             self._is_loading = False
@@ -170,7 +170,7 @@ class QuoteProductsView(ft.Column):
                 ),
                 ft.Icon(ft.Icons.ADD_SHOPPING_CART, size=LayoutConstants.ICON_SIZE_XL),
                 ft.Text(
-                    t("quotes.add_products"),
+                    t("quotes.add_products.title"),
                     size=LayoutConstants.FONT_SIZE_DISPLAY_MD,
                     weight=LayoutConstants.FONT_WEIGHT_BOLD,
                 ),
@@ -296,8 +296,8 @@ class QuoteProductsView(ft.Column):
             return ft.Container(
                 content=EmptyState(
                     icon=ft.Icons.INVENTORY_2,
-                    title="Sin productos",
-                    message=f"No hay {product_type}s disponibles",
+                    title=t("quotes.add_products.no_products"),
+                    message=t("quotes.add_products.no_products_message", {"type": t(f"articles.types.{product_type}").lower()}),
                 ),
                 expand=True,
                 padding=LayoutConstants.PADDING_LG,
@@ -347,7 +347,7 @@ class QuoteProductsView(ft.Column):
                         controls=[
                             ft.Text(reference, weight=ft.FontWeight.BOLD, size=LayoutConstants.FONT_SIZE_MD),
                             ft.Text(name, size=LayoutConstants.FONT_SIZE_SM, color=ft.Colors.GREY_600),
-                            ft.Text(f"Familia: {family}", size=LayoutConstants.FONT_SIZE_XS, color=ft.Colors.GREY_600),
+                            ft.Text(t("quotes.add_products.family", {"family": family}), size=LayoutConstants.FONT_SIZE_XS, color=ft.Colors.GREY_600),
                         ],
                         spacing=2,
                         expand=True,
@@ -358,7 +358,7 @@ class QuoteProductsView(ft.Column):
                             ft.IconButton(
                                 icon=ft.Icons.CHECK_CIRCLE if is_added else ft.Icons.ADD_CIRCLE_OUTLINE,
                                 icon_color=ft.Colors.GREEN if is_saved else (ft.Colors.ORANGE if is_pending else ft.Colors.BLUE),
-                                tooltip="Ya guardado" if is_saved else ("Pendiente" if is_pending else "Agregar"),
+                                tooltip=t("quotes.add_products.already_saved") if is_saved else (t("quotes.add_products.pending") if is_pending else t("quotes.add_products.add")),
                                 on_click=handle_add_click,
                                 disabled=is_added,
                             ),
@@ -386,7 +386,7 @@ class QuoteProductsView(ft.Column):
             controls=[
                 ft.Icon(ft.Icons.SHOPPING_CART, size=LayoutConstants.ICON_SIZE_MD),
                 ft.Text(
-                    f"Productos ({total_products})",
+                    t("quotes.add_products.items_count", {"count": total_products}),
                     size=LayoutConstants.FONT_SIZE_LG,
                     weight=ft.FontWeight.BOLD,
                 ),
@@ -403,7 +403,7 @@ class QuoteProductsView(ft.Column):
                     controls=[
                         ft.Icon(ft.Icons.CHECK_CIRCLE, color=ft.Colors.GREEN, size=16),
                         ft.Text(
-                            f"Guardados ({len(self._existing_products)})",
+                            t("quotes.add_products.saved_count", {"count": len(self._existing_products)}),
                             size=LayoutConstants.FONT_SIZE_SM,
                             weight=ft.FontWeight.BOLD,
                             color=ft.Colors.GREEN,
@@ -426,7 +426,7 @@ class QuoteProductsView(ft.Column):
                     controls=[
                         ft.Icon(ft.Icons.PENDING, color=ft.Colors.ORANGE, size=16),
                         ft.Text(
-                            f"Pendientes ({len(self._selected_products)})",
+                            t("quotes.add_products.pending_count", {"count": len(self._selected_products)}),
                             size=LayoutConstants.FONT_SIZE_SM,
                             weight=ft.FontWeight.BOLD,
                             color=ft.Colors.ORANGE,
@@ -455,8 +455,8 @@ class QuoteProductsView(ft.Column):
         if not sections:
             content = EmptyState(
                 icon=ft.Icons.SHOPPING_CART_OUTLINED,
-                title="Sin productos",
-                message="Haz clic en + para agregar productos",
+                title=t("quotes.add_products.no_products"),
+                message=t("quotes.add_products.click_to_add"),
             )
             footer = ft.Container()
         else:
@@ -479,7 +479,7 @@ class QuoteProductsView(ft.Column):
                         ft.Divider(),
                         ft.Row(
                             controls=[
-                                ft.Text("Total pendiente:", weight=ft.FontWeight.BOLD),
+                                ft.Text(t("quotes.add_products.total_pending"), weight=ft.FontWeight.BOLD),
                                 ft.Text(f"${total_pending:,.2f}", weight=ft.FontWeight.BOLD, color=ft.Colors.ORANGE),
                             ],
                             alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
@@ -505,7 +505,7 @@ class QuoteProductsView(ft.Column):
                         ft.Divider(),
                         ft.Row(
                             controls=[
-                                ft.Text("Total guardado:", weight=ft.FontWeight.BOLD),
+                                ft.Text(t("quotes.add_products.total_saved"), weight=ft.FontWeight.BOLD),
                                 ft.Text(f"${total_existing:,.2f}", weight=ft.FontWeight.BOLD, color=ft.Colors.GREEN),
                             ],
                             alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
@@ -548,8 +548,8 @@ class QuoteProductsView(ft.Column):
                     ft.Text(item.get("designation", ""), size=LayoutConstants.FONT_SIZE_SM),
                     ft.Row(
                         controls=[
-                            ft.Text(f"Cant: {item.get('quantity', 0)}", size=LayoutConstants.FONT_SIZE_XS),
-                            ft.Text(f"P.U: ${float(item.get('unit_price', 0)):,.2f}", size=LayoutConstants.FONT_SIZE_XS),
+                            ft.Text(f"{t('quotes.add_products.quantity')} {item.get('quantity', 0)}", size=LayoutConstants.FONT_SIZE_XS),
+                            ft.Text(f"{t('quotes.add_products.unit_price_short')} ${float(item.get('unit_price', 0)):,.2f}", size=LayoutConstants.FONT_SIZE_XS),
                             ft.Text(f"= ${subtotal:,.2f}", size=LayoutConstants.FONT_SIZE_XS, weight=ft.FontWeight.BOLD),
                         ],
                         alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
@@ -576,7 +576,7 @@ class QuoteProductsView(ft.Column):
                             ft.IconButton(
                                 icon=ft.Icons.DELETE_OUTLINE,
                                 icon_color=ft.Colors.ERROR,
-                                tooltip="Eliminar",
+                                tooltip=t("common.delete"),
                                 on_click=lambda e, idx=index: self._on_remove_product(idx),
                                 icon_size=18,
                             ),
@@ -586,8 +586,8 @@ class QuoteProductsView(ft.Column):
                     ft.Text(item.get("designation", ""), size=LayoutConstants.FONT_SIZE_SM),
                     ft.Row(
                         controls=[
-                            ft.Text(f"Cant: {item.get('quantity', 0)}", size=LayoutConstants.FONT_SIZE_XS),
-                            ft.Text(f"P.U: ${float(item.get('unit_price', 0)):,.2f}", size=LayoutConstants.FONT_SIZE_XS),
+                            ft.Text(f"{t('quotes.add_products.quantity')} {item.get('quantity', 0)}", size=LayoutConstants.FONT_SIZE_XS),
+                            ft.Text(f"{t('quotes.add_products.unit_price_short')} ${float(item.get('unit_price', 0)):,.2f}", size=LayoutConstants.FONT_SIZE_XS),
                             ft.Text(f"= ${subtotal:,.2f}", size=LayoutConstants.FONT_SIZE_XS, weight=ft.FontWeight.BOLD),
                         ],
                         alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
@@ -646,12 +646,12 @@ class QuoteProductsView(ft.Column):
                 discount = Decimal(discount_field.value or "0")
 
                 if qty <= 0:
-                    quantity_field.error_text = "Debe ser mayor a 0"
+                    quantity_field.error_text = t("quotes.add_products.form.invalid_quantity")
                     quantity_field.update()
                     return
 
                 if price <= 0:
-                    price_field.error_text = "Debe ser mayor a 0"
+                    price_field.error_text = t("quotes.add_products.form.invalid_price")
                     price_field.update()
                     return
 
@@ -676,7 +676,7 @@ class QuoteProductsView(ft.Column):
 
             except Exception as ex:
                 logger.error(f"Error adding product: {ex}")
-                quantity_field.error_text = "Valor inválido"
+                quantity_field.error_text = t("quotes.add_products.form.invalid_value")
                 quantity_field.update()
 
         def handle_cancel(e):
@@ -685,7 +685,7 @@ class QuoteProductsView(ft.Column):
 
         dlg = ft.AlertDialog(
             modal=True,
-            title=ft.Text(f"Agregar: {product_name[:40]}..."),
+            title=ft.Text(t("quotes.add_products.form.add_title", {"name": f"{product_name[:30]}..."})),
             content=ft.Container(
                 content=ft.Column(
                     controls=[
@@ -700,8 +700,8 @@ class QuoteProductsView(ft.Column):
                 width=400,
             ),
             actions=[
-                ft.TextButton(content=ft.Text("Cancelar"), on_click=handle_cancel),
-                ft.ElevatedButton(content=ft.Text("Agregar"), on_click=handle_add),
+                ft.TextButton(content=ft.Text(t("common.cancel")), on_click=handle_cancel),
+                ft.ElevatedButton(content=ft.Text(t("quotes.add_products.add")), on_click=handle_add),
             ],
             actions_alignment=ft.MainAxisAlignment.END,
         )
@@ -757,12 +757,12 @@ class QuoteProductsView(ft.Column):
             if self.page:
                 if error_count == 0:
                     snackbar = ft.SnackBar(
-                        content=ft.Text(f"✓ {success_count} producto(s) guardado(s) exitosamente"),
+                        content=ft.Text(t("quotes.add_products.messages.success_adding", {"count": success_count})),
                         bgcolor=ft.Colors.GREEN,
                     )
                 else:
                     snackbar = ft.SnackBar(
-                        content=ft.Text(f"⚠ {success_count} guardados, {error_count} con errores"),
+                        content=ft.Text(t("quotes.add_products.messages.partial_success", {"success": success_count, "error": error_count})),
                         bgcolor=ft.Colors.ORANGE,
                     )
                 self.page.overlay.append(snackbar)
@@ -781,7 +781,7 @@ class QuoteProductsView(ft.Column):
             logger.exception(f"Error saving products: {e}")
             if self.page:
                 snackbar = ft.SnackBar(
-                    content=ft.Text(f"Error al guardar productos: {str(e)}"),
+                    content=ft.Text(t("quotes.add_products.messages.error_saving", {"error": str(e)})),
                     bgcolor=ft.Colors.RED,
                 )
                 self.page.overlay.append(snackbar)
