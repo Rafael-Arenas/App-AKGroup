@@ -263,11 +263,11 @@ class MainView(ft.Container):
             >>> view = self._get_view_for_section(1)  # Clientes
             >>> view = self._get_view_for_section(2)  # Proveedores
         """
-        # Lazy import para evitar imports circulares
         from src.frontend.views.dashboard.dashboard_view import DashboardView
         from src.frontend.views.companies.company_list_view import CompanyListView
         from src.frontend.views.articles.article_list_view import ArticleListView
         from src.frontend.views.nomenclatures.nomenclature_list_view import NomenclatureListView
+        from src.frontend.views.quotes.quote_list_view import QuoteListView
 
         match index:
             case 0:
@@ -302,6 +302,12 @@ class MainView(ft.Container):
                     on_view_detail=self.navigate_to_nomenclature_detail,
                     on_create=self.navigate_to_nomenclature_form,
                     on_edit=self.navigate_to_nomenclature_form,
+                )
+            case 5:
+                logger.debug("Creating QuoteListView")
+                return QuoteListView(
+                    on_view_detail=lambda qid, cid, ctype: self.navigate_to_quote_detail(cid, ctype, qid),
+                    on_edit=lambda qid, cid, ctype: self.navigate_to_quote_form(cid, ctype, qid),
                 )
             case _:
                 logger.warning(f"No view implemented for index: {index}")
