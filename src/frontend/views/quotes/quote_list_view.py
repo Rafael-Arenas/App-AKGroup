@@ -294,7 +294,7 @@ class QuoteListView(ft.Container):
                 "id": q.get("id"),
                 "quote_number": q.get("quote_number", "-"),
                 "subject": q.get("subject", "-"),
-                "company_name": q.get("company_name", "ID: " + str(q.get("company_id"))),
+                "company_name": q.get("company_name", "-"),
                 "quote_date": q.get("quote_date", "-"),
                 "total": f"${float(q.get('total', 0)):,.2f}",
                 "status": status_text,

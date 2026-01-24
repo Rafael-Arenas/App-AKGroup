@@ -195,6 +195,7 @@ class QuoteRepository(BaseRepository[Quote]):
         logger.debug(f"Getting quotes with status_id={status_id}")
         stmt = (
             select(Quote)
+            .options(selectinload(Quote.company))
             .filter(Quote.status_id == status_id)
             .order_by(Quote.quote_date.desc())
             .offset(skip)
@@ -224,6 +225,7 @@ class QuoteRepository(BaseRepository[Quote]):
         logger.debug(f"Getting quotes for staff_id={staff_id}")
         stmt = (
             select(Quote)
+            .options(selectinload(Quote.company))
             .filter(Quote.staff_id == staff_id)
             .order_by(Quote.quote_date.desc())
             .offset(skip)
@@ -247,6 +249,7 @@ class QuoteRepository(BaseRepository[Quote]):
         logger.debug("Getting expired quotes")
         stmt = (
             select(Quote)
+            .options(selectinload(Quote.company))
             .filter(
                 and_(
                     Quote.valid_until.isnot(None),
@@ -282,6 +285,7 @@ class QuoteRepository(BaseRepository[Quote]):
         search_pattern = f"%{subject}%"
         stmt = (
             select(Quote)
+            .options(selectinload(Quote.company))
             .filter(Quote.subject.ilike(search_pattern))
             .order_by(Quote.quote_date.desc())
             .offset(skip)

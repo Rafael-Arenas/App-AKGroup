@@ -309,6 +309,7 @@ class OrderListResponse(BaseModel):
     revision: str
     order_type: str
     company_id: int
+    company_name: str | None = None  # Nombre de la empresa
     staff_id: int
     status_id: int
     payment_status_id: int

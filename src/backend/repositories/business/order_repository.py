@@ -42,6 +42,29 @@ class OrderRepository(BaseRepository[Order]):
         """
         super().__init__(session, Order)
 
+    def get_all(self, skip: int = 0, limit: int = 100) -> Sequence[Order]:
+        """
+        Get all orders with company name loaded.
+
+        Args:
+            skip: Pagination offset
+            limit: Maximum records
+
+        Returns:
+            List of orders with company relationship loaded
+        """
+        logger.debug(f"Getting all orders with pagination: skip={skip}, limit={limit}")
+        stmt = (
+            select(Order)
+            .options(selectinload(Order.company))  # Eager load company for name access
+            .order_by(Order.order_date.desc())
+            .offset(skip)
+            .limit(limit)
+        )
+        orders = self.session.execute(stmt).scalars().all()
+        logger.debug(f"Found {len(orders)} order(s)")
+        return orders
+
     def get_by_order_number(self, order_number: str) -> Order | None:
         """
         Get order by unique order number.
@@ -115,6 +138,7 @@ class OrderRepository(BaseRepository[Order]):
         logger.debug(f"Getting orders for company_id={company_id}")
         stmt = (
             select(Order)
+            .options(selectinload(Order.company))
             .filter(Order.company_id == company_id)
             .order_by(Order.order_date.desc())
             .offset(skip)
@@ -134,6 +158,7 @@ class OrderRepository(BaseRepository[Order]):
         logger.debug(f"Getting orders with status_id={status_id}")
         stmt = (
             select(Order)
+            .options(selectinload(Order.company))
             .filter(Order.status_id == status_id)
             .order_by(Order.order_date.desc())
             .offset(skip)
@@ -172,6 +197,7 @@ class OrderRepository(BaseRepository[Order]):
         logger.debug(f"Getting orders for staff_id={staff_id}")
         stmt = (
             select(Order)
+            .options(selectinload(Order.company))
             .filter(Order.staff_id == staff_id)
             .order_by(Order.order_date.desc())
             .offset(skip)

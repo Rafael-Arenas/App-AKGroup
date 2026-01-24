@@ -74,6 +74,22 @@ class OrderService(BaseService[Order, OrderCreate, OrderUpdate, OrderResponse]):
         self.order_product_repo = OrderProductRepository(session)
         self.sequence_service = SequenceService(session)
 
+    def _convert_to_list_response(self, order: Order) -> OrderListResponse:
+        """
+        Convert Order entity to OrderListResponse including company name.
+
+        Args:
+            order: Order entity with company relationship loaded
+
+        Returns:
+            OrderListResponse with company_name populated
+        """
+        response = OrderListResponse.model_validate(order)
+        # Add company name if company relationship is loaded
+        if order.company:
+            response.company_name = order.company.name
+        return response
+
     def validate_create(self, entity: Order) -> None:
         """
         Validate order before creation.
@@ -214,6 +230,25 @@ class OrderService(BaseService[Order, OrderCreate, OrderUpdate, OrderResponse]):
             )
         return self.response_schema.model_validate(order)
 
+    def get_all(
+        self,
+        skip: int = 0,
+        limit: int = 100
+    ) -> list[OrderListResponse]:
+        """
+        Get all orders with company names.
+
+        Args:
+            skip: Pagination offset
+            limit: Maximum records
+
+        Returns:
+            List of orders with company names
+        """
+        logger.info(f"Getting all orders: skip={skip}, limit={limit}")
+        orders = self.order_repo.get_all(skip, limit)
+        return [self._convert_to_list_response(o) for o in orders]
+
     def get_by_company(
         self,
         company_id: int,
@@ -236,7 +271,7 @@ class OrderService(BaseService[Order, OrderCreate, OrderUpdate, OrderResponse]):
         """
         logger.info(f"Getting orders for company_id={company_id}")
         orders = self.order_repo.get_by_company(company_id, skip, limit)
-        return [OrderListResponse.model_validate(o) for o in orders]
+        return [self._convert_to_list_response(o) for o in orders]
 
     def get_by_status(
         self,
@@ -257,7 +292,7 @@ class OrderService(BaseService[Order, OrderCreate, OrderUpdate, OrderResponse]):
         """
         logger.info(f"Getting orders with status_id={status_id}")
         orders = self.order_repo.get_by_status(status_id, skip, limit)
-        return [OrderListResponse.model_validate(o) for o in orders]
+        return [self._convert_to_list_response(o) for o in orders]
 
     def get_by_staff(
         self,
@@ -278,7 +313,7 @@ class OrderService(BaseService[Order, OrderCreate, OrderUpdate, OrderResponse]):
         """
         logger.info(f"Getting orders for staff_id={staff_id}")
         orders = self.order_repo.get_by_staff(staff_id, skip, limit)
-        return [OrderListResponse.model_validate(o) for o in orders]
+        return [self._convert_to_list_response(o) for o in orders]
 
     def calculate_totals(self, order_id: int, user_id: int) -> OrderResponse:
         """

@@ -292,7 +292,7 @@ class OrderListView(ft.Container):
             formatted.append({
                 "id": o.get("id"),
                 "order_number": o.get("order_number", "-"),
-                "company_name": o.get("company_name", "ID: " + str(o.get("company_id"))),
+                "company_name": o.get("company_name", "-"),
                 "order_date": o.get("order_date", "-"),
                 "total": f"${float(o.get('total', 0)):,.2f}",
                 "status": status_text,

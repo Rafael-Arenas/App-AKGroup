@@ -64,6 +64,22 @@ class QuoteService(BaseService[Quote, QuoteCreate, QuoteUpdate, QuoteResponse]):
         self.product_repo = QuoteProductRepository(session)
         self.sequence_service = SequenceService(session)
 
+    def _convert_to_list_response(self, quote: Quote) -> QuoteListResponse:
+        """
+        Convert Quote entity to QuoteListResponse including company name.
+
+        Args:
+            quote: Quote entity with company relationship loaded
+
+        Returns:
+            QuoteListResponse with company_name populated
+        """
+        response = QuoteListResponse.model_validate(quote)
+        # Add company name if company relationship is loaded
+        if quote.company:
+            response.company_name = quote.company.name
+        return response
+
     def create(self, schema: QuoteCreate, user_id: int) -> QuoteResponse:
         """
         Create a new quote.
@@ -232,6 +248,25 @@ class QuoteService(BaseService[Quote, QuoteCreate, QuoteUpdate, QuoteResponse]):
             )
         return self.response_schema.model_validate(quote)
 
+    def get_all(
+        self,
+        skip: int = 0,
+        limit: int = 100
+    ) -> list[QuoteListResponse]:
+        """
+        Get all quotes with company names.
+
+        Args:
+            skip: Pagination offset
+            limit: Maximum records
+
+        Returns:
+            List of quotes with company names
+        """
+        logger.info(f"Getting all quotes: skip={skip}, limit={limit}")
+        quotes = self.quote_repo.get_all(skip, limit)
+        return [self._convert_to_list_response(q) for q in quotes]
+
     def get_by_company(
         self,
         company_id: int,
@@ -254,7 +289,7 @@ class QuoteService(BaseService[Quote, QuoteCreate, QuoteUpdate, QuoteResponse]):
         """
         logger.info(f"Getting quotes for company_id={company_id}")
         quotes = self.quote_repo.get_by_company(company_id, skip, limit)
-        return [QuoteListResponse.model_validate(q) for q in quotes]
+        return [self._convert_to_list_response(q) for q in quotes]
 
     def get_by_status(
         self,
@@ -275,7 +310,7 @@ class QuoteService(BaseService[Quote, QuoteCreate, QuoteUpdate, QuoteResponse]):
         """
         logger.info(f"Getting quotes with status_id={status_id}")
         quotes = self.quote_repo.get_by_status(status_id, skip, limit)
-        return [QuoteListResponse.model_validate(q) for q in quotes]
+        return [self._convert_to_list_response(q) for q in quotes]
 
     def get_by_staff(
         self,
@@ -296,7 +331,7 @@ class QuoteService(BaseService[Quote, QuoteCreate, QuoteUpdate, QuoteResponse]):
         """
         logger.info(f"Getting quotes for staff_id={staff_id}")
         quotes = self.quote_repo.get_by_staff(staff_id, skip, limit)
-        return [QuoteListResponse.model_validate(q) for q in quotes]
+        return [self._convert_to_list_response(q) for q in quotes]
 
     def search_by_subject(
         self,
@@ -317,7 +352,7 @@ class QuoteService(BaseService[Quote, QuoteCreate, QuoteUpdate, QuoteResponse]):
         """
         logger.info(f"Searching quotes by subject: '{subject}'")
         quotes = self.quote_repo.search_by_subject(subject, skip, limit)
-        return [QuoteListResponse.model_validate(q) for q in quotes]
+        return [self._convert_to_list_response(q) for q in quotes]
 
     def calculate_totals(self, quote_id: int, user_id: int) -> QuoteResponse:
         """
