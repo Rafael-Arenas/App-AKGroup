@@ -41,9 +41,7 @@ class InvoiceAPIService:
         skip = (page - 1) * page_size
         params = {"skip": skip, "limit": page_size}
         try:
-            # We'll filter client-side since there's no order endpoint
-            all_items = await self._client.get("/invoices/invoices-sii/", params=params)
-            items = [inv for inv in all_items if inv.get("order_id") == order_id]
+            items = await self._client.get(f"/invoices/invoices-sii/order/{order_id}", params=params)
             return {"items": items, "total": len(items)}
         except Exception as e:
             logger.error(f"Error getting SII invoices for order {order_id}: {e}")
@@ -106,9 +104,7 @@ class InvoiceAPIService:
         skip = (page - 1) * page_size
         params = {"skip": skip, "limit": page_size}
         try:
-            # We'll filter client-side since there's no order endpoint
-            all_items = await self._client.get("/invoices/invoices-export/", params=params)
-            items = [inv for inv in all_items if inv.get("order_id") == order_id]
+            items = await self._client.get(f"/invoices/invoices-export/order/{order_id}", params=params)
             return {"items": items, "total": len(items)}
         except Exception as e:
             logger.error(f"Error getting export invoices for order {order_id}: {e}")
