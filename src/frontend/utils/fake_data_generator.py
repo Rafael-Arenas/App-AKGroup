@@ -546,3 +546,58 @@ class FakeDataGenerator:
             
         except Exception as e:
             logger.exception(f"Error populating nomenclature form: {e}")
+
+    @classmethod
+    def generate_invoice_data(cls) -> Dict[str, Any]:
+        """
+        Genera datos ficticios para una factura.
+
+        Returns:
+            Diccionario con los datos generados.
+        """
+        logger.debug("Generating fake invoice data")
+
+        invoice_number = f"FAC-{random.randint(2026, 2030)}-{random.randint(100, 999)}"
+        revision = random.choice(["A", "B", "C"])
+        today = _time_provider.today()
+        due_date = today + timedelta(days=30)
+        
+        return {
+            "invoice_number": invoice_number,
+            "revision": revision,
+            "invoice_date": today,
+            "due_date": due_date,
+            "payment_terms": "30 días neto",
+            "notes": "Factura generada automáticamente para pruebas.",
+            "shipping_date": today + timedelta(days=5),
+            "port_of_loading": random.choice(["San Antonio", "Valparaíso", "Talca"]),
+            "port_of_discharge": random.choice(["Miami", "Houston", "Rotterdam"]),
+        }
+
+    @classmethod
+    def populate_invoice_form(cls, form_view) -> None:
+        """
+        Pobla un formulario de factura con datos ficticios.
+
+        Args:
+            form_view: Instancia de InvoiceFormView.
+        """
+        try:
+            data = cls.generate_invoice_data()
+
+            form_view.invoice_number.set_value(data["invoice_number"])
+            form_view.revision.set_value(data["revision"])
+            form_view.invoice_date.value = str(data["invoice_date"])
+            form_view.due_date.value = str(data["due_date"])
+            form_view.payment_terms.value = data["payment_terms"]
+            form_view.notes.value = data["notes"]
+            
+            if hasattr(form_view, "invoice_type_class") and form_view.invoice_type_class.value == "EXPORT":
+                form_view.shipping_date.value = str(data["shipping_date"])
+                form_view.port_of_loading.value = data["port_of_loading"]
+                form_view.port_of_discharge.value = data["port_of_discharge"]
+
+            logger.success(f"Invoice form populated with fake data: {data['invoice_number']}")
+
+        except Exception as e:
+            logger.exception(f"Error populating invoice form: {e}")
