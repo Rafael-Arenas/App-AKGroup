@@ -601,21 +601,92 @@
     "create": "Create Order",
     "edit": "Edit Order",
     "view": "View Order",
+    "detail": "Order Details",
     "no_orders": "No orders",
     "no_orders_message": "No orders found for {company_name}",
     "search_placeholder": "Search orders...",
     "fields": {
       "revision": "Revision",
       "order_number": "Order Number",
+      "order_date": "Order Date",
+      "promised_date": "Promised Date",
+      "completed_date": "Completed Date",
+      "order_type": "Order Type",
+      "staff": "Sales Staff",
+      "project_number": "Project Number",
       "customer_po": "Customer PO (OC)",
-      "project_number": "Project Number"
+      "customer_po_number": "Customer PO",
+      "currency": "Currency",
+      "exchange_rate": "Exchange Rate",
+      "incoterm": "Incoterm",
+      "payment_terms": "Payment Terms",
+      "is_export": "Is Export",
+      "subtotal": "Subtotal",
+      "taxes": "Taxes ({percent}%)",
+      "total_amount": "Total",
+      "source_quote": "Source Quote",
+      "status": "Status"
     },
     "columns": {
       "order_number": "Order #",
       "revision": "Revision",
+      "company": "Company",
       "order_date": "Date",
       "total_amount": "Total",
       "status": "Status"
+    },
+    "status": {
+      "draft": "Draft",
+      "pending": "Pending",
+      "confirmed": "Confirmed",
+      "in_progress": "In Progress",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
+    },
+    "payment_status": {
+      "pending": "Pending",
+      "partial": "Partial",
+      "paid": "Paid"
+    },
+    "sections": {
+      "general_info": "General Information",
+      "financial_details": "Financial Details",
+      "products": "Products",
+      "deliveries": "Deliveries",
+      "addresses": "Addresses",
+      "transport": "Transport",
+      "payment_condition": "Payment Condition",
+      "customer_notes": "Customer Notes",
+      "internal_notes": "Internal Notes",
+      "notes": "Notes",
+      "no_notes": "No notes"
+    },
+    "products_table": {
+      "product": "Product",
+      "quantity": "Quantity",
+      "unit_price": "Unit Price",
+      "discount": "Discount",
+      "total": "Total"
+    },
+    "delivery": {
+      "number": "Delivery Number",
+      "no_deliveries": "No deliveries registered"
+    },
+    "address": {
+      "shipping": "Shipping Address",
+      "billing": "Billing Address",
+      "no_addresses": "No addresses associated"
+    },
+    "transport": {
+      "name": "Transport Name",
+      "delivery_number": "Delivery Number",
+      "no_transport": "No transport assigned"
+    },
+    "payment": {
+      "condition_number": "Condition Number",
+      "name": "Name",
+      "type": "Payment Type",
+      "no_payment_condition": "No payment condition defined"
     },
     "form": {
       "edit_title": "Edit Order",
@@ -625,9 +696,13 @@
       "fake_data_error": "Failed to generate fake data: {error}"
     },
     "messages": {
+      "not_found": "Order not found",
+      "error_loading": "Error loading order: {error}",
       "deleted": "Order deleted successfully",
       "error_deleting": "Error deleting order: {error}",
-      "delete_confirm": "Are you sure you want to delete order {number}?"
+      "delete_confirm": "Are you sure you want to delete order {number}?",
+      "quote_already_has_order": "This quote already has an associated order. Cannot create another order from the same quote.",
+      "duplicate_order": "An order with this number already exists. Please use a different number."
     }
   },
   "deliveries": {

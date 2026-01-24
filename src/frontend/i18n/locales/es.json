@@ -625,16 +625,19 @@
       "subtotal": "Subtotal",
       "taxes": "Impuestos ({percent}%)",
       "total_amount": "Total",
-      "source_quote": "Cotización Origen"
+      "source_quote": "Cotización Origen",
+      "status": "Estado"
     },
     "columns": {
       "order_number": "Nº Orden",
       "revision": "Revisión",
+      "company": "Empresa",
       "order_date": "Fecha",
       "total_amount": "Total",
       "status": "Estado"
     },
     "status": {
+      "draft": "Borrador",
       "pending": "Pendiente",
       "confirmed": "Confirmada",
       "in_progress": "En Progreso",

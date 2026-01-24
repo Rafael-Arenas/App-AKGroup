@@ -598,7 +598,111 @@
     "description": "Gestion des commandes",
     "list_title": "Liste des Commandes",
     "create": "Créer Commande",
-    "view": "Voir Commande"
+    "edit": "Modifier Commande",
+    "view": "Voir Commande",
+    "detail": "Détails de la Commande",
+    "no_orders": "Aucune commande",
+    "no_orders_message": "Aucune commande trouvée pour {company_name}",
+    "search_placeholder": "Rechercher commandes...",
+    "fields": {
+      "revision": "Révision",
+      "order_number": "Numéro de Commande",
+      "order_date": "Date de Commande",
+      "promised_date": "Date Promise",
+      "completed_date": "Date de Complétion",
+      "order_type": "Type de Commande",
+      "staff": "Vendeur",
+      "project_number": "Numéro de Projet",
+      "customer_po": "OC Client (OC)",
+      "customer_po_number": "OC du Client",
+      "currency": "Devise",
+      "exchange_rate": "Taux de Change",
+      "incoterm": "Incoterm",
+      "payment_terms": "Conditions de Paiement",
+      "is_export": "Est Export",
+      "subtotal": "Sous-total",
+      "taxes": "Taxes ({percent}%)",
+      "total_amount": "Total",
+      "source_quote": "Devis Source",
+      "status": "Statut"
+    },
+    "columns": {
+      "order_number": "Nº Commande",
+      "revision": "Révision",
+      "company": "Entreprise",
+      "order_date": "Date",
+      "total_amount": "Total",
+      "status": "Statut"
+    },
+    "status": {
+      "draft": "Brouillon",
+      "pending": "En attente",
+      "confirmed": "Confirmée",
+      "in_progress": "En cours",
+      "completed": "Complétée",
+      "cancelled": "Annulée"
+    },
+    "payment_status": {
+      "pending": "En attente",
+      "partial": "Partiel",
+      "paid": "Payée"
+    },
+    "sections": {
+      "general_info": "Informations Générales",
+      "financial_details": "Détails Financiers",
+      "products": "Produits",
+      "deliveries": "Livraisons",
+      "addresses": "Adresses",
+      "transport": "Transport",
+      "payment_condition": "Condition de Paiement",
+      "customer_notes": "Notes du Client",
+      "internal_notes": "Notes Internes",
+      "notes": "Notes",
+      "no_notes": "Aucune note"
+    },
+    "products_table": {
+      "product": "Produit",
+      "quantity": "Quantité",
+      "unit_price": "Prix Unitaire",
+      "discount": "Remise",
+      "total": "Total"
+    },
+    "delivery": {
+      "number": "Numéro de Livraison",
+      "no_deliveries": "Aucune livraison enregistrée"
+    },
+    "address": {
+      "shipping": "Adresse de Livraison",
+      "billing": "Adresse de Facturation",
+      "no_addresses": "Aucune adresse associée"
+    },
+    "transport": {
+      "name": "Nom du Transport",
+      "delivery_number": "Numéro de Livraison",
+      "no_transport": "Aucun transport assigné"
+    },
+    "payment": {
+      "condition_number": "Numéro de Condition",
+      "name": "Nom",
+      "type": "Type de Paiement",
+      "no_payment_condition": "Aucune condition de paiement définie"
+    },
+    "form": {
+      "edit_title": "Modifier Commande",
+      "create_title": "Créer Commande",
+      "generate_fake_data": "Générer des données fictives",
+      "fake_data_success": "Données fictives générées avec succès",
+      "fake_data_error": "Impossible de générer les données fictives: {error}"
+    },
+    "messages": {
+      "not_found": "Commande non trouvée",
+      "error_loading": "Erreur lors du chargement de la commande: {error}",
+      "deleted": "Commande supprimée avec succès",
+      "error_deleting": "Erreur lors de la suppression de la commande: {error}",
+      "delete_confirm": "Êtes-vous sûr de vouloir supprimer la commande {number}?",
+      "quote_already_has_order": "Ce devis a déjà une commande associée. Impossible de créer une autre commande à partir du même devis.",
+      "duplicate_order": "Une commande avec ce numéro existe déjà. Veuillez utiliser un numéro différent."
+    }
   },
   "deliveries": {
     "title": "Livraisons",
