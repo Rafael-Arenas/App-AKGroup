@@ -2,6 +2,7 @@
 Vista principal de la aplicación.
 
 Contenedor principal que integra AppBar, NavigationRail, Breadcrumb y área de contenido.
+Usa navegadores especializados para delegar la lógica de navegación específica de cada módulo.
 """
 from typing import Callable
 import flet as ft
@@ -17,6 +18,15 @@ from src.frontend.components.navigation import (
     Breadcrumb,
 )
 
+# Navegadores especializados
+from src.frontend.navigation import (
+    CompanyNavigator,
+    ArticleNavigator,
+    NomenclatureNavigator,
+    QuoteNavigator,
+    OrderNavigator,
+)
+
 
 class MainView(ft.Container):
     """
@@ -24,6 +34,7 @@ class MainView(ft.Container):
 
     Proporciona la estructura base con navegación, breadcrumb y área de contenido.
     Implementa observers para actualizaciones automáticas de navegación, idioma y tema.
+    Delega la navegación específica de cada módulo a navegadores especializados.
 
     Args:
         on_logout: Callback cuando el usuario hace logout
@@ -65,10 +76,17 @@ class MainView(ft.Container):
         self._content_area: ft.Container | None = None
         self._current_view: ft.Control | None = None
 
+        # Inicializar navegadores especializados
+        self.company_navigator = CompanyNavigator(self)
+        self.article_navigator = ArticleNavigator(self)
+        self.nomenclature_navigator = NomenclatureNavigator(self)
+        self.quote_navigator = QuoteNavigator(self)
+        self.order_navigator = OrderNavigator(self)
+
         # Construir el contenido
         self.content = self._build()
 
-        logger.info("MainView initialized")
+        logger.info("MainView initialized with specialized navigators")
 
     def _build(self) -> ft.Control:
         """
@@ -394,20 +412,20 @@ class MainView(ft.Container):
                     if len(parts) >= 6:
                         action = parts[5]
                         if action == "quotes":
-                            self.navigate_to_company_quotes(company_id, company_type)
+                            self.company_navigator.navigate_to_quotes(company_id, company_type)
                             return
                         elif action == "orders":
-                            self.navigate_to_company_orders(company_id, company_type)
+                            self.company_navigator.navigate_to_orders(company_id, company_type)
                             return
                         elif action == "deliveries":
-                            self.navigate_to_company_deliveries(company_id, company_type)
+                            self.company_navigator.navigate_to_deliveries(company_id, company_type)
                             return
                         elif action == "invoices":
-                            self.navigate_to_company_invoices(company_id, company_type)
+                            self.company_navigator.navigate_to_invoices(company_id, company_type)
                             return
 
                     # Default to dashboard
-                    self.navigate_to_company_dashboard(company_id, company_type)
+                    self.company_navigator.navigate_to_dashboard(company_id, company_type)
                     return
             except Exception as e:
                 logger.error(f"Error parsing dashboard route {route}: {e}")
@@ -423,15 +441,15 @@ class MainView(ft.Container):
                     action = parts[3]
                     
                     if action == "edit":
-                        self.navigate_to_nomenclature_form(nomenclature_id)
+                        self.nomenclature_navigator.navigate_to_form(nomenclature_id)
                         return
                     elif action == "articles":
-                        self.navigate_to_nomenclature_articles(nomenclature_id)
+                        self.nomenclature_navigator.navigate_to_articles(nomenclature_id)
                         return
                 elif len(parts) >= 3 and parts[2].isdigit():
                     # /nomenclatures/{id} - ir al detalle
                     nomenclature_id = int(parts[2])
-                    self.navigate_to_nomenclature_detail(nomenclature_id)
+                    self.nomenclature_navigator.navigate_to_detail(nomenclature_id)
                     return
             except Exception as e:
                 logger.error(f"Error parsing nomenclature route {route}: {e}")
@@ -558,856 +576,79 @@ class MainView(ft.Container):
         else:
             logger.warning(f"Route not found: {route}")
 
-    def navigate_to_company_detail(
-        self,
-        company_id: int,
-        company_type: str = "CLIENT",
-        from_dashboard: bool = False,
-    ) -> None:
-        """
-        Navega a la vista de detalle de una empresa.
+    # =========================================================================
+    # MÉTODOS PÚBLICOS DE NAVEGACIÓN - Delegados a navegadores especializados
+    # =========================================================================
+    
+    # COMPANIES
+    def navigate_to_company_detail(self, company_id: int, company_type: str = "CLIENT", from_dashboard: bool = False) -> None:
+        """Delega a company_navigator."""
+        self.company_navigator.navigate_to_detail(company_id, company_type, from_dashboard)
 
-        Args:
-            company_id: ID de la empresa
-            company_type: Tipo de empresa ("CLIENT" o "SUPPLIER")
-            from_dashboard: Si viene del dashboard
+    def navigate_to_company_form(self, company_id: int | None = None, company_type: str = "CLIENT") -> None:
+        """Delega a company_navigator."""
+        self.company_navigator.navigate_to_form(company_id, company_type)
 
-        Example:
-            >>> main_view.navigate_to_company_detail(123, "CLIENT")
-        """
-        from src.frontend.views.companies.company_detail_view import CompanyDetailView
-
-        logger.info(f"Navigating to company detail: ID={company_id}, type={company_type}")
-
-        # Determine back action
-        if from_dashboard:
-            on_back = lambda: self.navigate_to_company_dashboard(company_id, company_type)
-        else:
-            on_back = lambda: self._on_back_to_company_list(company_type)
-
-        # Crear vista de detalle
-        detail_view = CompanyDetailView(
-            company_id=company_id,
-            on_edit=lambda cid: self.navigate_to_company_form(cid, company_type),
-            on_delete=lambda cid: self._on_company_deleted(cid, company_type),
-            on_back=on_back,
-        )
-
-        # Actualizar contenido y breadcrumb
-        if self._content_area:
-            self._content_area.content = detail_view
-            if self.page:
-                self.update()
-
-        # Actualizar breadcrumb
-        section_key = "clients" if company_type == "CLIENT" else "suppliers"
-        breadcrumb = [
-            {"label": f"{section_key}.title", "route": f"/companies/{company_type.lower()}s"},
-        ]
-        
-        if from_dashboard:
-             dashboard_route = f"/companies/dashboard/{company_id}/{company_type}"
-             breadcrumb.append({"label": "dashboard.title", "route": dashboard_route})
-             
-        breadcrumb.append({"label": f"{section_key}.detail", "route": None})
-        
-        app_state.navigation.set_breadcrumb(breadcrumb)
-
-    def navigate_to_company_form(
-        self,
-        company_id: int | None = None,
-        company_type: str = "CLIENT",
-    ) -> None:
-        """
-        Navega a la vista de formulario de empresa (crear/editar).
-
-        Args:
-            company_id: ID de la empresa a editar (None para crear)
-            company_type: Tipo de empresa ("CLIENT" o "SUPPLIER")
-
-        Example:
-            >>> main_view.navigate_to_company_form(None, "CLIENT")  # Crear cliente
-            >>> main_view.navigate_to_company_form(123, "SUPPLIER")  # Editar proveedor
-        """
-        from src.frontend.views.companies.company_form_view import CompanyFormView
-
-        logger.info(
-            f"Navigating to company form: ID={company_id}, type={company_type}, "
-            f"mode={'edit' if company_id else 'create'}"
-        )
-
-        # Crear vista de formulario
-        form_view = CompanyFormView(
-            company_id=company_id,
-            default_type=company_type,
-            on_save=lambda company: self._on_company_saved(company, company_type),
-            on_cancel=lambda: self._on_back_to_company_list(company_type),
-        )
-
-        # Actualizar contenido y breadcrumb
-        if self._content_area:
-            self._content_area.content = form_view
-            if self.page:
-                self.update()
-
-        # Actualizar breadcrumb
-        section_key = "clients" if company_type == "CLIENT" else "suppliers"
-        action_key = f"{section_key}.edit" if company_id else f"{section_key}.create"
-        app_state.navigation.set_breadcrumb([
-            {"label": f"{section_key}.title", "route": f"/companies/{company_type.lower()}s"},
-            {"label": action_key, "route": None},
-        ])
-
-    def _on_company_saved(self, company: dict, company_type: str) -> None:
-        """
-        Callback cuando se guarda una empresa exitosamente.
-
-        Args:
-            company: Datos de la empresa guardada
-            company_type: Tipo de empresa
-        """
-        logger.success(f"Company saved: {company.get('name')}")
-        # Volver a la lista
-        self._on_back_to_company_list(company_type)
-
-    def _on_company_deleted(self, company_id: int, company_type: str) -> None:
-        """
-        Callback cuando se elimina una empresa.
-
-        Args:
-            company_id: ID de la empresa eliminada
-            company_type: Tipo de empresa
-        """
-        logger.success(f"Company deleted: ID={company_id}")
-        # Volver a la lista
-        self._on_back_to_company_list(company_type)
-
-    def _on_back_to_company_list(self, company_type: str) -> None:
-        """
-        Navega de vuelta a la lista de empresas.
-
-        Args:
-            company_type: Tipo de empresa ("CLIENT" o "SUPPLIER")
-        """
-        logger.info(f"Navigating back to company list: type={company_type}")
-        # Navegar al índice correspondiente
-        index = 1 if company_type == "CLIENT" else 2
-        self.navigate_to(index)
-
-    def navigate_to_company_dashboard(
-        self,
-        company_id: int,
-        company_type: str = "CLIENT",
-    ) -> None:
-        """
-        Navega al dashboard de una empresa.
-        """
-        from src.frontend.views.companies.company_dashboard_view import CompanyDashboardView
-
-        logger.info(f"Navigating to company dashboard: ID={company_id}")
-
-        dashboard_view = CompanyDashboardView(
-            company_id=company_id,
-            company_type=company_type,
-            on_view_details=lambda cid, ctype: self.navigate_to_company_detail(cid, ctype, from_dashboard=True),
-            on_back=lambda: self._on_back_to_company_list(company_type),
-            on_view_quotes=self.navigate_to_company_quotes,
-            on_view_orders=self.navigate_to_company_orders,
-            on_view_deliveries=self.navigate_to_company_deliveries,
-            on_view_invoices=self.navigate_to_company_invoices,
-        )
-
-        if self._content_area:
-            self._content_area.content = dashboard_view
-            if self.page:
-                self.update()
-
-        section_key = "clients" if company_type == "CLIENT" else "suppliers"
-        dashboard_route = f"/companies/dashboard/{company_id}/{company_type}"
-        app_state.navigation.set_breadcrumb([
-            {"label": f"{section_key}.title", "route": f"/companies/{company_type.lower()}s"},
-            {"label": "dashboard.title", "route": dashboard_route},
-        ])
+    def navigate_to_company_dashboard(self, company_id: int, company_type: str = "CLIENT") -> None:
+        """Delega a company_navigator."""
+        self.company_navigator.navigate_to_dashboard(company_id, company_type)
 
     def navigate_to_company_quotes(self, company_id: int, company_type: str) -> None:
-        """Navega a la vista de cotizaciones de una empresa."""
-        from src.frontend.views.companies.company_related_views import CompanyQuotesView
-        
-        logger.info(f"Navigating to quotes for company {company_id}")
-        
-        view = CompanyQuotesView(
-            company_id=company_id,
-            company_type=company_type,
-            on_back=lambda: self.navigate_to_company_dashboard(company_id, company_type),
-            on_create_quote=lambda: self.navigate_to_quote_form(company_id, company_type),
-            on_edit_quote=lambda quote_id: self.navigate_to_quote_form(company_id, company_type, quote_id),
-            on_view_quote=lambda quote_id: self.navigate_to_quote_detail(company_id, company_type, quote_id),
-        )
-        
-        if self._content_area:
-            self._content_area.content = view
-            if self.page:
-                self.update()
-
-        section_key = "clients" if company_type == "CLIENT" else "suppliers"
-        dashboard_route = f"/companies/dashboard/{company_id}/{company_type}"
-        quotes_route = f"{dashboard_route}/quotes"
-        
-        app_state.navigation.set_breadcrumb([
-            {"label": f"{section_key}.title", "route": f"/companies/{company_type.lower()}s"},
-            {"label": "dashboard.title", "route": dashboard_route},
-            {"label": "quotes.title", "route": quotes_route},
-        ])
-
-    def navigate_to_quote_detail(
-        self,
-        company_id: int,
-        company_type: str,
-        quote_id: int,
-        from_quote_list: bool = False,
-    ) -> None:
-        """
-        Navega a la vista de detalle de cotización.
-
-        Args:
-            company_id: ID de la empresa asociada
-            company_type: Tipo de empresa ("CLIENT" o "SUPPLIER")
-            quote_id: ID de la cotización
-            from_quote_list: Si viene desde la lista de cotizaciones del menú principal
-        """
-        from src.frontend.views.quotes.quote_detail_view import QuoteDetailView
-
-        logger.info(f"Navigating to quote detail: company_id={company_id}, quote_id={quote_id}, from_quote_list={from_quote_list}")
-
-        # Determinar la acción de "volver" según el contexto
-        if from_quote_list:
-            on_back = lambda: self.navigate_to(5)  # Volver a la lista de cotizaciones
-        else:
-            on_back = lambda: self.navigate_to_company_quotes(company_id, company_type)
-
-        detail_view = QuoteDetailView(
-            quote_id=quote_id,
-            company_id=company_id,
-            company_type=company_type,
-            on_edit=lambda qid: self.navigate_to_quote_form(company_id, company_type, qid, from_quote_list=from_quote_list),
-            on_delete=lambda qid: self._on_quote_deleted(qid, company_id, company_type, from_quote_list=from_quote_list),
-            on_create_order=lambda qid: self.navigate_to_order_form(company_id, company_type, qid),
-            on_add_products=lambda qid: self.navigate_to_quote_products(company_id, company_type, qid, from_quote_list=from_quote_list),
-            on_back=on_back,
-        )
-
-        if self._content_area:
-            self._content_area.content = detail_view
-            if self.page:
-                self.update()
-
-        # Configurar breadcrumb según el contexto
-        if from_quote_list:
-            # Viene desde el menú de cotizaciones
-            app_state.navigation.set_breadcrumb([
-                {"label": "quotes.title", "route": "/quotes"},
-                {"label": "quotes.detail", "route": None},
-            ])
-        else:
-            # Viene desde el dashboard/cotizaciones de un cliente
-            section_key = "clients" if company_type == "CLIENT" else "suppliers"
-            dashboard_route = f"/companies/dashboard/{company_id}/{company_type}"
-            quotes_route = f"{dashboard_route}/quotes"
-            
-            app_state.navigation.set_breadcrumb([
-                {"label": f"{section_key}.title", "route": f"/companies/{company_type.lower()}s"},
-                {"label": "dashboard.title", "route": dashboard_route},
-                {"label": "quotes.title", "route": quotes_route},
-                {"label": "quotes.detail", "route": None},
-            ])
-
-    def navigate_to_quote_products(
-        self,
-        company_id: int,
-        company_type: str,
-        quote_id: int,
-        from_quote_list: bool = False,
-    ) -> None:
-        """
-        Navega a la vista de agregar productos a una cotización.
-        
-        Args:
-            company_id: ID de la empresa
-            company_type: Tipo de empresa
-            quote_id: ID de la cotización
-            from_quote_list: Si viene desde la lista de cotizaciones del menú principal
-        """
-        from src.frontend.views.quotes.quote_products_view import QuoteProductsView
-
-        logger.info(f"Navigating to quote products: company_id={company_id}, quote_id={quote_id}")
-
-        products_view = QuoteProductsView(
-            quote_id=quote_id,
-            company_id=company_id,
-            company_type=company_type,
-            on_back=lambda: self.navigate_to_quote_detail(company_id, company_type, quote_id, from_quote_list=from_quote_list),
-            on_product_added=lambda: self.navigate_to_quote_detail(company_id, company_type, quote_id, from_quote_list=from_quote_list),
-        )
-
-        if self._content_area:
-            self._content_area.content = products_view
-            if self.page:
-                self.update()
-
-        # Configurar breadcrumb según el contexto
-        if from_quote_list:
-            # Viene desde el menú de cotizaciones
-            app_state.navigation.set_breadcrumb([
-                {"label": "quotes.title", "route": "/quotes"},
-                {"label": "quotes.detail", "route": None},
-                {"label": "quotes.add_products", "route": None},
-            ])
-        else:
-            # Viene desde el dashboard/cotizaciones de un cliente
-            section_key = "clients" if company_type == "CLIENT" else "suppliers"
-            dashboard_route = f"/companies/dashboard/{company_id}/{company_type}"
-            quotes_route = f"{dashboard_route}/quotes"
-            
-            app_state.navigation.set_breadcrumb([
-                {"label": f"{section_key}.title", "route": f"/companies/{company_type.lower()}s"},
-                {"label": "dashboard.title", "route": dashboard_route},
-                {"label": "quotes.title", "route": quotes_route},
-                {"label": "quotes.detail", "route": f"{quotes_route}/{quote_id}"},
-                {"label": "quotes.add_products", "route": None},
-            ])
-
-    def _on_quote_deleted(
-        self,
-        quote_id: int,
-        company_id: int,
-        company_type: str,
-        from_quote_list: bool = False,
-    ) -> None:
-        """Callback cuando se elimina una cotización desde el detalle."""
-        logger.success(f"Quote deleted: {quote_id}")
-        if from_quote_list:
-            self.navigate_to(5)  # Volver a la lista de cotizaciones
-        else:
-            self.navigate_to_company_quotes(company_id, company_type)
-
-    def navigate_to_order_detail(
-        self,
-        company_id: int,
-        company_type: str,
-        order_id: int,
-        from_order_list: bool = False,
-    ) -> None:
-        """
-        Navega a la vista de detalle de orden.
-
-        Args:
-            company_id: ID de la empresa asociada
-            company_type: Tipo de empresa ("CLIENT" o "SUPPLIER")
-            order_id: ID de la orden
-            from_order_list: Si viene desde la lista de órdenes del menú principal
-        """
-        from src.frontend.views.orders.order_detail_view import OrderDetailView
-
-        logger.info(f"Navigating to order detail: company_id={company_id}, order_id={order_id}, from_order_list={from_order_list}")
-
-        # Determinar la acción de "volver" según el contexto
-        if from_order_list:
-            on_back = lambda: self.navigate_to(6)  # Volver a la lista de órdenes
-        else:
-            on_back = lambda: self.navigate_to_company_orders(company_id, company_type)
-
-        detail_view = OrderDetailView(
-            order_id=order_id,
-            company_id=company_id,
-            company_type=company_type,
-            on_edit=lambda oid: self.navigate_to_order_form(company_id, company_type, order_id=oid, from_order_list=from_order_list),
-            on_delete=lambda oid: self._on_order_deleted(oid, company_id, company_type, from_order_list=from_order_list),
-            on_back=on_back,
-        )
-
-        if self._content_area:
-            self._content_area.content = detail_view
-            if self.page:
-                self.update()
-
-        # Configurar breadcrumb según el contexto
-        if from_order_list:
-            # Viene desde el menú de órdenes
-            app_state.navigation.set_breadcrumb([
-                {"label": "orders.title", "route": "/orders"},
-                {"label": "orders.detail", "route": None},
-            ])
-        else:
-            # Viene desde el dashboard/órdenes de un cliente
-            section_key = "clients" if company_type == "CLIENT" else "suppliers"
-            dashboard_route = f"/companies/dashboard/{company_id}/{company_type}"
-            orders_route = f"{dashboard_route}/orders"
-            
-            app_state.navigation.set_breadcrumb([
-                {"label": f"{section_key}.title", "route": f"/companies/{company_type.lower()}s"},
-                {"label": "dashboard.title", "route": dashboard_route},
-                {"label": "orders.title", "route": orders_route},
-                {"label": "orders.detail", "route": None},
-            ])
-
-    def _on_order_deleted(
-        self,
-        order_id: int,
-        company_id: int,
-        company_type: str,
-        from_order_list: bool = False,
-    ) -> None:
-        """Callback cuando se elimina una orden desde el detalle."""
-        logger.success(f"Order deleted: {order_id}")
-        if from_order_list:
-            self.navigate_to(6)  # Volver a la lista de órdenes
-        else:
-            self.navigate_to_company_orders(company_id, company_type)
-
-    def navigate_to_quote_form(
-        self,
-        company_id: int,
-        company_type: str,
-        quote_id: int | None = None,
-        from_quote_list: bool = False,
-    ) -> None:
-        """
-        Navega a la vista de formulario de cotización.
-
-        Args:
-            company_id: ID de la empresa
-            company_type: Tipo de empresa
-            quote_id: ID de la cotización (None para crear nueva)
-            from_quote_list: Si viene desde la lista de cotizaciones del menú principal
-        """
-        from src.frontend.views.quotes.quote_form_view import QuoteFormView
-
-        logger.info(
-            f"Navigating to quote form: company_id={company_id}, quote_id={quote_id}, "
-            f"mode={'edit' if quote_id else 'create'}"
-        )
-
-        # Determinar acciones según el contexto
-        if from_quote_list:
-            on_save = lambda: self.navigate_to(5)  # Volver a la lista de cotizaciones
-            on_cancel = lambda: self.navigate_to(5)
-        else:
-            on_save = lambda: self.navigate_to_company_quotes(company_id, company_type)
-            on_cancel = lambda: self.navigate_to_company_quotes(company_id, company_type)
-
-        form_view = QuoteFormView(
-            company_id=company_id,
-            quote_id=quote_id,
-            on_save=on_save,
-            on_cancel=on_cancel,
-        )
-
-        if self._content_area:
-            self._content_area.content = form_view
-            if self.page:
-                self.update()
-
-        action_key = "quotes.edit" if quote_id else "quotes.create"
-        
-        # Configurar breadcrumb según el contexto
-        if from_quote_list:
-            # Viene desde el menú de cotizaciones
-            app_state.navigation.set_breadcrumb([
-                {"label": "quotes.title", "route": "/quotes"},
-                {"label": action_key, "route": None},
-            ])
-        else:
-            # Viene desde el dashboard/cotizaciones de un cliente
-            section_key = "clients" if company_type == "CLIENT" else "suppliers"
-            dashboard_route = f"/companies/dashboard/{company_id}/{company_type}"
-            quotes_route = f"{dashboard_route}/quotes"
-            
-            app_state.navigation.set_breadcrumb([
-                {"label": f"{section_key}.title", "route": f"/companies/{company_type.lower()}s"},
-                {"label": "dashboard.title", "route": dashboard_route},
-                {"label": "quotes.title", "route": quotes_route},
-                {"label": action_key, "route": None},
-            ])
-
-    def navigate_to_order_form(
-        self,
-        company_id: int,
-        company_type: str,
-        quote_id: int | None = None,
-        order_id: int | None = None,
-        from_order_list: bool = False,
-    ) -> None:
-        """
-        Navega a la vista de formulario de orden.
-
-        Args:
-            company_id: ID de la empresa
-            company_type: Tipo de empresa
-            quote_id: ID de la cotización (si se crea desde cotización)
-            order_id: ID de la orden (None para crear nueva)
-            from_order_list: Si viene desde la lista de órdenes del menú principal
-        """
-        from src.frontend.views.orders.order_form_view import OrderFormView
-
-        logger.info(
-            f"Navigating to order form: company_id={company_id}, quote_id={quote_id}, "
-            f"order_id={order_id}, from_order_list={from_order_list}, mode={'edit' if order_id else 'create'}"
-        )
-
-        # Determinar acciones de guardar/cancelar según el contexto
-        if from_order_list:
-            on_save = lambda: self.navigate_to(6)  # Volver a la lista de órdenes
-            on_cancel = lambda: self.navigate_to(6)  # Volver a la lista de órdenes
-        else:
-            on_save = lambda: self.navigate_to_company_orders(company_id, company_type)
-            on_cancel = lambda: self.navigate_to_company_orders(company_id, company_type)
-
-        form_view = OrderFormView(
-            company_id=company_id,
-            quote_id=quote_id,
-            order_id=order_id,
-            on_save=on_save,
-            on_cancel=on_cancel,
-        )
-
-        if self._content_area:
-            self._content_area.content = form_view
-            if self.page:
-                self.update()
-
-        # Configurar breadcrumb según el contexto
-        action_key = "orders.edit" if order_id else "orders.create"
-        
-        if from_order_list:
-            # Viene desde el menú de órdenes
-            app_state.navigation.set_breadcrumb([
-                {"label": "orders.title", "route": "/orders"},
-                {"label": action_key, "route": None},
-            ])
-        else:
-            # Viene desde el dashboard/órdenes de un cliente
-            section_key = "clients" if company_type == "CLIENT" else "suppliers"
-            dashboard_route = f"/companies/dashboard/{company_id}/{company_type}"
-            
-            app_state.navigation.set_breadcrumb([
-                {"label": f"{section_key}.title", "route": f"/companies/{company_type.lower()}s"},
-                {"label": "dashboard.title", "route": dashboard_route},
-                {"label": "orders.title", "route": f"{dashboard_route}/orders"},
-                {"label": action_key, "route": None},
-            ])
+        """Delega a company_navigator."""
+        self.company_navigator.navigate_to_quotes(company_id, company_type)
 
     def navigate_to_company_orders(self, company_id: int, company_type: str) -> None:
-        """Navega a la vista de órdenes de una empresa."""
-        from src.frontend.views.companies.company_related_views import CompanyOrdersView
-        
-        logger.info(f"Navigating to orders for company {company_id}")
-        
-        view = CompanyOrdersView(
-            company_id=company_id,
-            company_type=company_type,
-            on_back=lambda: self.navigate_to_company_dashboard(company_id, company_type),
-            on_view_order=lambda order_id: self.navigate_to_order_detail(company_id, company_type, order_id),
-            on_create_order=lambda: self.navigate_to_order_form(company_id=company_id, company_type=company_type),
-            on_edit_order=lambda order_id: self.navigate_to_order_form(company_id=company_id, company_type=company_type, order_id=order_id),
-        )
-        
-        if self._content_area:
-            self._content_area.content = view
-            if self.page:
-                self.update()
-
-        section_key = "clients" if company_type == "CLIENT" else "suppliers"
-        dashboard_route = f"/companies/dashboard/{company_id}/{company_type}"
-        
-        app_state.navigation.set_breadcrumb([
-            {"label": f"{section_key}.title", "route": f"/companies/{company_type.lower()}s"},
-            {"label": "dashboard.title", "route": dashboard_route},
-            {"label": "orders.title", "route": None},
-        ])
+        """Delega a company_navigator."""
+        self.company_navigator.navigate_to_orders(company_id, company_type)
 
     def navigate_to_company_deliveries(self, company_id: int, company_type: str) -> None:
-        """Navega a la vista de entregas de una empresa."""
-        from src.frontend.views.companies.company_related_views import CompanyDeliveriesView
-        
-        logger.info(f"Navigating to deliveries for company {company_id}")
-        
-        view = CompanyDeliveriesView(
-            company_id=company_id,
-            company_type=company_type,
-            on_back=lambda: self.navigate_to_company_dashboard(company_id, company_type)
-        )
-        
-        if self._content_area:
-            self._content_area.content = view
-            if self.page:
-                self.update()
-
-        section_key = "clients" if company_type == "CLIENT" else "suppliers"
-        dashboard_route = f"/companies/dashboard/{company_id}/{company_type}"
-        
-        app_state.navigation.set_breadcrumb([
-            {"label": f"{section_key}.title", "route": f"/companies/{company_type.lower()}s"},
-            {"label": "dashboard.title", "route": dashboard_route},
-            {"label": "deliveries.title", "route": None},
-        ])
+        """Delega a company_navigator."""
+        self.company_navigator.navigate_to_deliveries(company_id, company_type)
 
     def navigate_to_company_invoices(self, company_id: int, company_type: str) -> None:
-        """Navega a la vista de facturas de una empresa."""
-        from src.frontend.views.companies.company_related_views import CompanyInvoicesView
-        
-        logger.info(f"Navigating to invoices for company {company_id}")
-        
-        view = CompanyInvoicesView(
-            company_id=company_id,
-            company_type=company_type,
-            on_back=lambda: self.navigate_to_company_dashboard(company_id, company_type)
-        )
-        
-        if self._content_area:
-            self._content_area.content = view
-            if self.page:
-                self.update()
+        """Delega a company_navigator."""
+        self.company_navigator.navigate_to_invoices(company_id, company_type)
 
-        section_key = "clients" if company_type == "CLIENT" else "suppliers"
-        dashboard_route = f"/companies/dashboard/{company_id}/{company_type}"
-        
-        app_state.navigation.set_breadcrumb([
-            {"label": f"{section_key}.title", "route": f"/companies/{company_type.lower()}s"},
-            {"label": "dashboard.title", "route": dashboard_route},
-            {"label": "invoices.title", "route": None},
-        ])
-
-    # =========================================================================
-    # NAVEGACIÓN DE ARTÍCULOS
-    # =========================================================================
-
+    # ARTICLES
     def navigate_to_article_detail(self, article_id: int) -> None:
-        """
-        Navega a la vista de detalle de un artículo.
-
-        Args:
-            article_id: ID del artículo a mostrar
-
-        Example:
-            >>> main_view.navigate_to_article_detail(123)
-        """
-        from src.frontend.views.articles.article_detail_view import ArticleDetailView
-
-        logger.info(f"Navigating to article detail: ID={article_id}")
-
-        # Crear vista de detalle
-        detail_view = ArticleDetailView(
-            article_id=article_id,
-            on_edit=self.navigate_to_article_form,
-            on_delete=self._on_article_deleted,
-            on_back=self._on_back_to_article_list,
-        )
-
-        # Actualizar contenido y breadcrumb
-        if self._content_area:
-            self._content_area.content = detail_view
-            if self.page:
-                self.update()
-
-        app_state.navigation.set_breadcrumb([
-            {"label": "articles.title", "route": "/articles"},
-            {"label": "articles.detail", "route": None},
-        ])
+        """Delega a article_navigator."""
+        self.article_navigator.navigate_to_detail(article_id)
 
     def navigate_to_article_form(self, article_id: int | None = None) -> None:
-        """
-        Navega a la vista de formulario de artículo.
+        """Delega a article_navigator."""
+        self.article_navigator.navigate_to_form(article_id)
 
-        Args:
-            article_id: ID del artículo a editar (None para crear nuevo)
-
-        Example:
-            >>> main_view.navigate_to_article_form(None)  # Crear nuevo
-            >>> main_view.navigate_to_article_form(123)   # Editar existente
-        """
-        from src.frontend.views.articles.article_form_view import ArticleFormView
-
-        logger.info(
-            f"Navigating to article form: ID={article_id}, "
-            f"mode={'edit' if article_id else 'create'}"
-        )
-
-        # Crear vista de formulario
-        form_view = ArticleFormView(
-            article_id=article_id,
-            on_save=self._on_article_saved,
-            on_cancel=self._on_back_to_article_list,
-        )
-
-        # Actualizar contenido y breadcrumb
-        if self._content_area:
-            self._content_area.content = form_view
-            if self.page:
-                self.update()
-
-        action_key = "articles.edit" if article_id else "articles.create"
-        app_state.navigation.set_breadcrumb([
-            {"label": "articles.title", "route": "/articles"},
-            {"label": action_key, "route": None},
-        ])
-
-    def _on_article_saved(self, article: dict) -> None:
-        """
-        Callback cuando se guarda un artículo exitosamente.
-
-        Args:
-            article: Datos del artículo guardado
-        """
-        logger.success(f"Article saved: {article.get('reference', article.get('code'))}")
-        self._on_back_to_article_list()
-
-    def _on_article_deleted(self, article_id: int) -> None:
-        """
-        Callback cuando se elimina un artículo.
-
-        Args:
-            article_id: ID del artículo eliminado
-        """
-        logger.success(f"Article deleted: ID={article_id}")
-        self._on_back_to_article_list()
-
-    def _on_back_to_article_list(self) -> None:
-        """
-        Navega de vuelta a la lista de artículos.
-        """
-        logger.info("Navigating back to article list")
-        self.navigate_to(3)
-
-    # =========================================================================
-    # NAVEGACIÓN DE NOMENCLATURAS
-    # =========================================================================
-
+    # NOMENCLATURES
     def navigate_to_nomenclature_detail(self, nomenclature_id: int) -> None:
-        """
-        Navega a la vista de detalle de una nomenclatura.
-
-        Args:
-            nomenclature_id: ID de la nomenclatura a mostrar
-
-        Example:
-            >>> main_view.navigate_to_nomenclature_detail(123)
-        """
-        from src.frontend.views.nomenclatures.nomenclature_detail_view import NomenclatureDetailView
-
-        logger.info(f"Navigating to nomenclature detail: ID={nomenclature_id}")
-
-        # Crear vista de detalle
-        detail_view = NomenclatureDetailView(
-            nomenclature_id=nomenclature_id,
-            on_edit=self.navigate_to_nomenclature_form,
-            on_delete=self._on_nomenclature_deleted,
-            on_back=self._on_back_to_nomenclature_list,
-        )
-
-        # Actualizar contenido y breadcrumb
-        if self._content_area:
-            self._content_area.content = detail_view
-            if self.page:
-                self.update()
-
-        app_state.navigation.set_breadcrumb([
-            {"label": "nomenclatures.title", "route": "/nomenclatures"},
-            {"label": "nomenclatures.detail", "route": None},
-        ])
+        """Delega a nomenclature_navigator."""
+        self.nomenclature_navigator.navigate_to_detail(nomenclature_id)
 
     def navigate_to_nomenclature_form(self, nomenclature_id: int | None = None) -> None:
-        """
-        Navega a la vista de formulario de nomenclatura.
-
-        Args:
-            nomenclature_id: ID de la nomenclatura a editar (None para crear nueva)
-
-        Example:
-            >>> main_view.navigate_to_nomenclature_form(None)  # Crear nueva
-            >>> main_view.navigate_to_nomenclature_form(123)   # Editar existente
-        """
-        from src.frontend.views.nomenclatures.nomenclature_form_view import NomenclatureFormView
-
-        logger.info(
-            f"Navigating to nomenclature form: ID={nomenclature_id}, "
-            f"mode={'edit' if nomenclature_id else 'create'}"
-        )
-
-        # Crear vista de formulario
-        form_view = NomenclatureFormView(
-            nomenclature_id=nomenclature_id,
-            on_save=self._on_nomenclature_saved,
-            on_cancel=self._on_back_to_nomenclature_list,
-            on_add_articles=self.navigate_to_nomenclature_articles,
-        )
-
-        # Actualizar contenido y breadcrumb
-        if self._content_area:
-            self._content_area.content = form_view
-            if self.page:
-                self.update()
-
-        action_key = "nomenclatures.edit" if nomenclature_id else "nomenclatures.create"
-        app_state.navigation.set_breadcrumb([
-            {"label": "nomenclatures.title", "route": "/nomenclatures"},
-            {"label": action_key, "route": None},
-        ])
-
-    def _on_nomenclature_saved(self, nomenclature: dict) -> None:
-        """
-        Callback cuando se guarda una nomenclatura exitosamente.
-
-        Args:
-            nomenclature: Datos de la nomenclatura guardada
-        """
-        logger.success(f"Nomenclature saved: {nomenclature.get('reference', nomenclature.get('code'))}")
-        self._on_back_to_nomenclature_list()
-
-    def _on_nomenclature_deleted(self, nomenclature_id: int) -> None:
-        """
-        Callback cuando se elimina una nomenclatura.
-
-        Args:
-            nomenclature_id: ID de la nomenclatura eliminada
-        """
-        logger.success(f"Nomenclature deleted: ID={nomenclature_id}")
-        self._on_back_to_nomenclature_list()
-
-    def _on_back_to_nomenclature_list(self) -> None:
-        """
-        Navega de vuelta a la lista de nomenclaturas.
-        """
-        logger.info("Navigating back to nomenclature list")
-        self.navigate_to(4)
+        """Delega a nomenclature_navigator."""
+        self.nomenclature_navigator.navigate_to_form(nomenclature_id)
 
     def navigate_to_nomenclature_articles(self, nomenclature_id: int) -> None:
-        """
-        Navega a la vista de agregar artículos a una nomenclatura.
+        """Delega a nomenclature_navigator."""
+        self.nomenclature_navigator.navigate_to_articles(nomenclature_id)
 
-        Args:
-            nomenclature_id: ID de la nomenclatura
+    # QUOTES
+    def navigate_to_quote_detail(self, company_id: int, company_type: str, quote_id: int, from_quote_list: bool = False) -> None:
+        """Delega a quote_navigator."""
+        self.quote_navigator.navigate_to_detail(company_id, company_type, quote_id, from_quote_list)
 
-        Example:
-            >>> main_view.navigate_to_nomenclature_articles(123)
-        """
-        from src.frontend.views.nomenclatures.nomenclature_articles_view import NomenclatureArticlesView
+    def navigate_to_quote_form(self, company_id: int, company_type: str, quote_id: int | None = None, from_quote_list: bool = False) -> None:
+        """Delega a quote_navigator."""
+        self.quote_navigator.navigate_to_form(company_id, company_type, quote_id, from_quote_list)
 
-        logger.info(f"Navigating to nomenclature articles: nomenclature_id={nomenclature_id}")
+    def navigate_to_quote_products(self, company_id: int, company_type: str, quote_id: int, from_quote_list: bool = False) -> None:
+        """Delega a quote_navigator."""
+        self.quote_navigator.navigate_to_products(company_id, company_type, quote_id, from_quote_list)
 
-        articles_view = NomenclatureArticlesView(
-            nomenclature_id=nomenclature_id,
-            on_back=lambda: self.navigate_to_nomenclature_detail(nomenclature_id),
-            on_article_added=lambda: self.navigate_to_nomenclature_detail(nomenclature_id),
-        )
+    # ORDERS
+    def navigate_to_order_detail(self, company_id: int, company_type: str, order_id: int, from_order_list: bool = False) -> None:
+        """Delega a order_navigator."""
+        self.order_navigator.navigate_to_detail(company_id, company_type, order_id, from_order_list)
 
-        if self._content_area:
-            self._content_area.content = articles_view
-            if self.page:
-                self.update()
-
-        app_state.navigation.set_breadcrumb([
-            {"label": "nomenclatures.title", "route": "/nomenclatures"},
-            {"label": "nomenclatures.detail", "route": f"/nomenclatures/{nomenclature_id}"},
-            {"label": "nomenclatures.add_articles", "route": None},
-        ])
-
+    def navigate_to_order_form(self, company_id: int, company_type: str, quote_id: int | None = None, order_id: int | None = None, from_order_list: bool = False) -> None:
+        """Delega a order_navigator."""
+        self.order_navigator.navigate_to_form(company_id, company_type, quote_id, order_id, from_order_list)
