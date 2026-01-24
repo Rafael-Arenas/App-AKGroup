@@ -77,7 +77,7 @@ class InvoiceNavigator(BaseNavigator):
             on_view_detail=lambda inv_id, inv_type_class: self.navigate_to_invoice_detail(
                 inv_id, inv_type_class, order_id, company_id, company_type
             ),
-            on_create=None,  # TODO: Implement when needed
+            on_create=lambda oid: self.navigate_to_form(oid, order_number, company_id, company_type),
             on_back=lambda: self.navigate_to_orders(),
         )
         
@@ -129,6 +129,46 @@ class InvoiceNavigator(BaseNavigator):
             {"label": "invoices.title", "route": "/invoices"},
             {"label": "invoices.for_order", "route": None},  # TODO: Add route if needed
             {"label": "invoices.detail", "route": None},
+        ])
+    
+    def navigate_to_form(
+        self,
+        order_id: int,
+        order_number: str,
+        company_id: int,
+        company_type: str,
+        invoice_id: int | None = None,
+    ) -> None:
+        """
+        Navega a la vista de formulario de factura.
+        
+        Args:
+            order_id: ID de la orden
+            order_number: Número de la orden
+            company_id: ID de la empresa
+            company_type: Tipo de empresa
+            invoice_id: ID de la factura (None para crear nueva)
+        """
+        from src.frontend.views.invoices.invoice_form_view import InvoiceFormView
+        
+        action = "edit" if invoice_id else "create"
+        logger.info(f"Navigating to invoice form: order_id={order_id}, action={action}")
+        
+        form_view = InvoiceFormView(
+            order_id=order_id,
+            order_number=order_number,
+            invoice_id=invoice_id,
+            on_save=lambda: self.navigate_to_invoice_list_for_order(order_id, company_id, company_type),
+            on_cancel=lambda: self.navigate_to_invoice_list_for_order(order_id, company_id, company_type),
+        )
+        
+        self._update_content(form_view)
+        
+        action_key = "invoices.edit" if invoice_id else "invoices.create"
+        self._set_breadcrumb([
+            {"label": "invoices.title", "route": "/invoices"},
+            {"label": "invoices.for_order", "route": None},
+            {"label": action_key, "route": None},
         ])
     
     def _on_deleted(
