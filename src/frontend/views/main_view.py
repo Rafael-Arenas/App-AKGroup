@@ -344,6 +344,10 @@ class MainView(ft.Container):
                     on_create=None,  # No crear desde aquí
                     on_edit=None,  # No editar desde aquí
                 )
+            case 8 | 9:
+                # Personal (8) y Configuración (9)
+                logger.debug(f"Creating placeholder view for index: {index}")
+                return self._create_placeholder_view(index)
             case _:
                 logger.warning(f"No view implemented for index: {index}")
                 return self._create_placeholder_view(index)
@@ -465,28 +469,15 @@ class MainView(ft.Container):
                 logger.error(f"Error parsing nomenclature route {route}: {e}")
             return
 
-        # Mapear rutas a índices de navegación
-        route_mapping = {
-            "/": 0,  # Dashboard
-            "/companies/clients": 1,  # Clientes
-            "/companies/suppliers": 2,  # Proveedores
-            "/articles": 3,  # Artículos
-            "/nomenclatures": 4,  # Nomenclaturas
-            "/quotes": 5,  # Cotizaciones
-            "/orders": 6,  # Órdenes
-            "/deliveries": 7,  # Entregas
-            "/invoices": 8,  # Facturas
-            "/staff": 9,  # Personal
-            "/settings": 10,  # Configuración
-        }
+        # Intentar obtener el ítem de navegación directamente por la ruta usando la configuración centralizada
+        from src.frontend.navigation_config import get_navigation_item_by_route
+        nav_item = get_navigation_item_by_route(route)
+        if nav_item:
+            # Usar el método existente de navegación con el índice correcto
+            self.navigate_to(nav_item["index"])
+            return
 
-        # Obtener el índice correspondiente a la ruta
-        index = route_mapping.get(route)
-        if index is not None:
-            # Usar el método existente de navegación
-            self._on_destination_change(index)
-        else:
-            logger.warning(f"Unknown route in breadcrumb: {route}")
+        logger.warning(f"Unknown route in breadcrumb: {route}")
 
     def _on_navigation_changed(self) -> None:
         """
