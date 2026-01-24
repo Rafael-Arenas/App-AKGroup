@@ -26,6 +26,13 @@ def main(page: ft.Page) -> None:
     page.title = "AK Group - Sistema de Gestión"
     page.padding = 0
     page.spacing = 0
+    
+    # Configuración del tamaño de ventana inicial (debe hacerse ANTES de configurar el tema y contenido)
+    page.window.width = 1400
+    page.window.height = 1000  # Ajustado a un valor razonable pero alto
+    page.window.min_width = 1000  # Tamaño mínimo para evitar problemas de UI
+    page.window.min_height = 700
+    
     page.theme_mode = app_state.theme.get_flet_theme_mode()
 
     # Configurar tema con Material 3 (colores por defecto)
@@ -62,4 +69,4 @@ def main(page: ft.Page) -> None:
 
 if __name__ == "__main__":
     logger.info("Ejecutando aplicación Flet en modo desktop")
-    ft.app(target=main)
+    ft.run(main)
