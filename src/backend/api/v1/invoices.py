@@ -7,7 +7,7 @@ Provides REST API for managing InvoiceSII and InvoiceExport.
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 
-from src.backend.database import get_db
+from src.backend.api.dependencies import get_database as get_db
 from src.backend.repositories.business.invoice_repository import InvoiceSIIRepository, InvoiceExportRepository
 from src.backend.services.business.invoice_service import InvoiceSIIService, InvoiceExportService
 from src.shared.schemas.business.invoice import (
@@ -58,6 +58,22 @@ def get_invoices_sii(
         return invoices
     except Exception as e:
         logger.error(f"Error retrieving SII invoices: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+
+@invoices_sii_router.get("/order/{order_id}", response_model=list[InvoiceSIIListResponse])
+def get_invoices_sii_by_order(
+    order_id: int,
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=1000),
+    service: InvoiceSIIService = Depends(get_invoice_sii_service),
+) -> list[InvoiceSIIListResponse]:
+    """Get SII invoices by order."""
+    logger.info(f"GET /invoices-sii/order/{order_id}")
+    try:
+        invoices = service.get_by_order(order_id, skip, limit)
+        return invoices
+    except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
@@ -178,6 +194,22 @@ def get_invoices_export(
     try:
         invoices = service.get_all(skip=skip, limit=limit)
         logger.success(f"Retrieved {len(invoices)} export invoice(s)")
+        return invoices
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+
+@invoices_export_router.get("/order/{order_id}", response_model=list[InvoiceExportListResponse])
+def get_invoices_export_by_order(
+    order_id: int,
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=1000),
+    service: InvoiceExportService = Depends(get_invoice_export_service),
+) -> list[InvoiceExportListResponse]:
+    """Get export invoices by order."""
+    logger.info(f"GET /invoices-export/order/{order_id}")
+    try:
+        invoices = service.get_by_order(order_id, skip, limit)
         return invoices
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))

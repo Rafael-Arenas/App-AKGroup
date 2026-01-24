@@ -7,7 +7,7 @@ Provides REST API for managing delivery orders, transports, and payment conditio
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 
-from src.backend.database import get_db
+from src.backend.api.dependencies import get_database as get_db
 from src.backend.repositories.business.delivery_repository import (
     DeliveryOrderRepository,
     TransportRepository,
