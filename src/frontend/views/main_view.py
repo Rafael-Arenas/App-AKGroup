@@ -25,6 +25,7 @@ from src.frontend.navigation import (
     NomenclatureNavigator,
     QuoteNavigator,
     OrderNavigator,
+    InvoiceNavigator,
 )
 
 
@@ -82,6 +83,7 @@ class MainView(ft.Container):
         self.nomenclature_navigator = NomenclatureNavigator(self)
         self.quote_navigator = QuoteNavigator(self)
         self.order_navigator = OrderNavigator(self)
+        self.invoice_navigator = InvoiceNavigator(self)
 
         # Construir el contenido
         self.content = self._build()
@@ -333,6 +335,14 @@ class MainView(ft.Container):
                 return OrderListView(
                     on_view_detail=lambda oid, cid, ctype: self.navigate_to_order_detail(cid, ctype, oid, from_order_list=True),
                     on_edit=lambda oid, cid, ctype: self.navigate_to_order_form(cid, ctype, None, oid, from_order_list=True),
+                )
+            case 7:
+                logger.debug("Creating OrderListView for Invoices entry point")
+                # La vista de facturas muestra primero órdenes
+                return OrderListView(
+                    on_view_detail=lambda oid, cid, ctype: self.navigate_to_invoice_list_for_order(oid, cid, ctype),
+                    on_create=None,  # No crear desde aquí
+                    on_edit=None,  # No editar desde aquí
                 )
             case _:
                 logger.warning(f"No view implemented for index: {index}")
@@ -652,3 +662,12 @@ class MainView(ft.Container):
     def navigate_to_order_form(self, company_id: int, company_type: str, quote_id: int | None = None, order_id: int | None = None, from_order_list: bool = False) -> None:
         """Delega a order_navigator."""
         self.order_navigator.navigate_to_form(company_id, company_type, quote_id, order_id, from_order_list)
+
+    # INVOICES
+    def navigate_to_invoice_list_for_order(self, order_id: int, company_id: int, company_type: str) -> None:
+        """Delega a invoice_navigator."""
+        self.invoice_navigator.navigate_to_invoice_list_for_order(order_id, company_id, company_type)
+
+    def navigate_to_invoice_detail(self, invoice_id: int, invoice_type_class: str, order_id: int, company_id: int, company_type: str) -> None:
+        """Delega a invoice_navigator."""
+        self.invoice_navigator.navigate_to_invoice_detail(invoice_id, invoice_type_class, order_id, company_id, company_type)

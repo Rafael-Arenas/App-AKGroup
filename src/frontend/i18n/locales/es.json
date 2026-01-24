@@ -718,7 +718,67 @@
     "description": "Gestión de facturas",
     "list_title": "Lista de Facturas",
     "create": "Crear Factura",
-    "view": "Ver Factura"
+    "create_first": "Crear Primera Factura",
+    "edit": "Editar Factura",
+    "view": "Ver Factura",
+    "detail": "Detalle de Factura",
+    "order": "Orden",
+    "for_order": "Facturas de la Orden",
+    "no_invoices": "No hay facturas registradas",
+    "no_invoices_message": "No se encontraron facturas para esta orden",
+    "search_placeholder": "Buscar facturas por número...",
+    "fields": {
+      "revision": "Revisión",
+      "invoice_number": "Número de Factura",
+      "invoice_type": "Tipo de Documento",
+      "invoice_type_class": "Clase",
+      "invoice_date": "Fecha de Emisión",
+      "due_date": "Fecha de Vencimiento",
+      "paid_date": "Fecha de Pago",
+      "order_id": "Orden",
+      "company_id": "Empresa",
+      "plant_id": "Planta",
+      "staff_id": "Vendedor",
+      "payment_status_id": "Estado de Pago",
+      "currency_id": "Moneda",
+      "exchange_rate": "Tipo de Cambio",
+      "subtotal": "Subtotal",
+      "tax_amount": "Impuestos",
+      "total": "Total",
+      "net_amount": "Monto Neto",
+      "exempt_amount": "Monto Exento",
+      "payment_terms": "Términos de Pago",
+      "sii_status": "Estado SII",
+      "sii_track_id": "ID de Seguimiento SII",
+      "shipping_date": "Fecha de Envío",
+      "incoterm_id": "Incoterm",
+      "country_id": "País",
+      "freight_cost": "Costo de Flete",
+      "insurance_cost": "Costo de Seguro"
+    },
+    "columns": {
+      "revision": "Rev.",
+      "invoice_number": "Nº Factura",
+      "invoice_type": "Tipo Documento",
+      "class": "Clase",
+      "order": "Orden",
+      "total": "Total",
+      "status": "Estado"
+    },
+    "sections": {
+      "general_info": "Información General",
+      "notes": "Notas",
+      "no_notes": "Sin notas"
+    },
+    "type": {
+      "sii": "SII (Nacional)",
+      "export": "Exportación"
+    },
+    "messages": {
+      "not_found": "Factura no encontrada",
+      "error_loading": "Error al cargar la factura: {error}",
+      "delete_confirm": "¿Está seguro que desea eliminar la factura {number}?"
+    }
   },
   "staff": {
     "title": "Personal",

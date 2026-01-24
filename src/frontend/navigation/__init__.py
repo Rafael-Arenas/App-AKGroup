@@ -9,6 +9,7 @@ from src.frontend.navigation.article_navigator import ArticleNavigator
 from src.frontend.navigation.nomenclature_navigator import NomenclatureNavigator
 from src.frontend.navigation.quote_navigator import QuoteNavigator
 from src.frontend.navigation.order_navigator import OrderNavigator
+from src.frontend.navigation.invoice_navigator import InvoiceNavigator
 
 __all__ = [
     "BaseNavigator",
@@ -17,4 +18,5 @@ __all__ = [
     "NomenclatureNavigator",
     "QuoteNavigator",
     "OrderNavigator",
+    "InvoiceNavigator",
 ]

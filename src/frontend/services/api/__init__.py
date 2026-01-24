@@ -22,6 +22,7 @@ from .order_api import OrderAPIService
 from .contact_api import ContactAPIService
 from .company_rut_api import CompanyRutAPIService
 from .staff_api import StaffAPIService
+from .invoice_api import InvoiceAPIService
 from .config import APISettings, api_settings
 
 
@@ -35,6 +36,7 @@ OrderAPI = OrderAPIService
 ContactAPI = ContactAPIService
 CompanyRutAPI = CompanyRutAPIService
 StaffAPI = StaffAPIService
+InvoiceAPI = InvoiceAPIService
 
 # Instancias singleton de servicios
 # Estas instancias pueden ser importadas y reutilizadas en toda la aplicación
@@ -47,6 +49,7 @@ order_api = OrderAPIService()
 contact_api = ContactAPIService()
 company_rut_api = CompanyRutAPIService()
 staff_api = StaffAPIService()
+invoice_api = InvoiceAPIService()
 
 
 __all__ = [
@@ -68,6 +71,7 @@ __all__ = [
     "ContactAPIService",
     "CompanyRutAPIService",
     "StaffAPIService",
+    "InvoiceAPIService",
     # Aliases
     "CompanyAPI",
     "ProductAPI",
@@ -78,6 +82,7 @@ __all__ = [
     "ContactAPI",
     "CompanyRutAPI",
     "StaffAPI",
+    "InvoiceAPI",
     # Instancias singleton
     "company_api",
     "product_api",
@@ -88,6 +93,7 @@ __all__ = [
     "contact_api",
     "company_rut_api",
     "staff_api",
+    "invoice_api",
     # Configuración
     "APISettings",
     "api_settings",
