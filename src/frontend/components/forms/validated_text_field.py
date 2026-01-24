@@ -193,6 +193,16 @@ class ValidatedTextField(ft.Container):
 
         return None
 
+    @property
+    def value(self) -> str:
+        """Getter para el valor del campo (compatibilidad con Flet)."""
+        return self.get_value()
+
+    @value.setter
+    def value(self, val: str):
+        """Setter para el valor del campo (compatibilidad con Flet)."""
+        self.set_value(val)
+
     def get_value(self) -> str:
         """
         Obtiene el valor actual del campo.
