@@ -26,6 +26,17 @@ class InvoiceSIIRepository(BaseRepository[InvoiceSII]):
         invoice = self.session.execute(stmt).scalar_one_or_none()
         return invoice
 
+    def get_by_order(self, order_id: int, skip: int = 0, limit: int = 100) -> Sequence[InvoiceSII]:
+        """Get invoices by order ID."""
+        stmt = (
+            select(InvoiceSII)
+            .filter(InvoiceSII.order_id == order_id)
+            .order_by(InvoiceSII.invoice_date.desc())
+            .offset(skip)
+            .limit(limit)
+        )
+        return self.session.execute(stmt).scalars().all()
+
     def get_by_company(self, company_id: int, skip: int = 0, limit: int = 100) -> Sequence[InvoiceSII]:
         """Get invoices by company."""
         stmt = (
@@ -61,6 +72,17 @@ class InvoiceExportRepository(BaseRepository[InvoiceExport]):
         stmt = select(InvoiceExport).filter(InvoiceExport.invoice_number == invoice_number)
         invoice = self.session.execute(stmt).scalar_one_or_none()
         return invoice
+
+    def get_by_order(self, order_id: int, skip: int = 0, limit: int = 100) -> Sequence[InvoiceExport]:
+        """Get invoices by order ID."""
+        stmt = (
+            select(InvoiceExport)
+            .filter(InvoiceExport.order_id == order_id)
+            .order_by(InvoiceExport.invoice_date.desc())
+            .offset(skip)
+            .limit(limit)
+        )
+        return self.session.execute(stmt).scalars().all()
 
     def get_by_company(self, company_id: int, skip: int = 0, limit: int = 100) -> Sequence[InvoiceExport]:
         """Get invoices by company."""

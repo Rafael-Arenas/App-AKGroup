@@ -56,6 +56,12 @@ class InvoiceSIIService(BaseService[InvoiceSII, InvoiceSIICreate, InvoiceSIIUpda
         invoices = self.invoice_repo.get_by_company(company_id, skip, limit)
         return [InvoiceSIIListResponse.model_validate(i) for i in invoices]
 
+    def get_by_order(self, order_id: int, skip: int = 0, limit: int = 100) -> list[InvoiceSIIListResponse]:
+        """Get invoices by order."""
+        logger.info(f"Getting SII invoices for order_id={order_id}")
+        invoices = self.invoice_repo.get_by_order(order_id, skip, limit)
+        return [InvoiceSIIListResponse.model_validate(i) for i in invoices]
+
 
 class InvoiceExportService(BaseService[InvoiceExport, InvoiceExportCreate, InvoiceExportUpdate, InvoiceExportResponse]):
     """Service for export invoices."""
@@ -94,4 +100,10 @@ class InvoiceExportService(BaseService[InvoiceExport, InvoiceExportCreate, Invoi
         """Get invoices by company."""
         logger.info(f"Getting export invoices for company_id={company_id}")
         invoices = self.invoice_repo.get_by_company(company_id, skip, limit)
+        return [InvoiceExportListResponse.model_validate(i) for i in invoices]
+
+    def get_by_order(self, order_id: int, skip: int = 0, limit: int = 100) -> list[InvoiceExportListResponse]:
+        """Get invoices by order."""
+        logger.info(f"Getting export invoices for order_id={order_id}")
+        invoices = self.invoice_repo.get_by_order(order_id, skip, limit)
         return [InvoiceExportListResponse.model_validate(i) for i in invoices]
