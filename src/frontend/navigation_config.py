@@ -92,15 +92,6 @@ NAVIGATION_STRUCTURE = [
             },
             {
                 "index": 7,
-                "icon": ft.Icons.LOCAL_SHIPPING_OUTLINED,
-                "icon_selected": ft.Icons.LOCAL_SHIPPING,
-                "label": "deliveries.title",
-                "route": "/deliveries",
-                "description": "deliveries.description",
-                "badge": None,
-            },
-            {
-                "index": 8,
                 "icon": ft.Icons.RECEIPT_LONG_OUTLINED,
                 "icon_selected": ft.Icons.RECEIPT_LONG,
                 "label": "invoices.title",
@@ -115,7 +106,7 @@ NAVIGATION_STRUCTURE = [
         "group_label": "navigation.settings",  # i18n key
         "items": [
             {
-                "index": 9,
+                "index": 8,
                 "icon": ft.Icons.BADGE_OUTLINED,
                 "icon_selected": ft.Icons.BADGE,
                 "label": "staff.title",
@@ -124,7 +115,7 @@ NAVIGATION_STRUCTURE = [
                 "badge": None,
             },
             {
-                "index": 10,
+                "index": 9,
                 "icon": ft.Icons.SETTINGS_OUTLINED,
                 "icon_selected": ft.Icons.SETTINGS,
                 "label": "settings.title",
