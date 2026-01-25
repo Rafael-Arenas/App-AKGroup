@@ -602,6 +602,7 @@
     "edit": "Edit Order",
     "view": "View Order",
     "detail": "Order Details",
+    "order": "Order",
     "no_orders": "No orders",
     "no_orders_message": "No orders found for {company_name}",
     "search_placeholder": "Search orders...",
@@ -717,7 +718,68 @@
     "description": "Invoice management",
     "list_title": "Invoice List",
     "create": "Create Invoice",
-    "view": "View Invoice"
+    "create_first": "Create First Invoice",
+    "edit": "Edit Invoice",
+    "view": "View Invoice",
+    "detail": "Invoice Details",
+    "order": "Order",
+    "for_order": "Invoices for Order",
+    "no_invoices": "No invoices registered",
+    "no_invoices_message": "No invoices found for this order",
+    "search_placeholder": "Search invoices by number...",
+    "fields": {
+      "revision": "Revision",
+      "invoice_number": "Invoice Number",
+      "invoice_type": "Document Type",
+      "invoice_type_class": "Class",
+      "invoice_date": "Issue Date",
+      "due_date": "Due Date",
+      "paid_date": "Paid Date",
+      "order_id": "Order",
+      "company_id": "Company",
+      "plant_id": "Plant",
+      "staff_id": "Sales Staff",
+      "payment_status_id": "Payment Status",
+      "currency_id": "Currency",
+      "exchange_rate": "Exchange Rate",
+      "subtotal": "Subtotal",
+      "tax_amount": "Taxes",
+      "total": "Total",
+      "net_amount": "Net Amount",
+      "exempt_amount": "Exempt Amount",
+      "payment_terms": "Payment Terms",
+      "sii_status": "SII Status",
+      "sii_track_id": "SII Track ID",
+      "shipping_date": "Shipping Date",
+      "incoterm_id": "Incoterm",
+      "country_id": "Country",
+      "freight_cost": "Freight Cost",
+      "insurance_cost": "Insurance Cost",
+      "type": "Type"
+    },
+    "columns": {
+      "revision": "Rev.",
+      "invoice_number": "Invoice No.",
+      "invoice_type": "Document Type",
+      "class": "Class",
+      "order": "Order",
+      "total": "Total",
+      "status": "Status"
+    },
+    "sections": {
+      "general_info": "General Information",
+      "notes": "Notes",
+      "no_notes": "No notes"
+    },
+    "type": {
+      "sii": "SII (Domestic)",
+      "export": "Export"
+    },
+    "messages": {
+      "not_found": "Invoice not found",
+      "error_loading": "Error loading invoice: {error}",
+      "delete_confirm": "Are you sure you want to delete invoice {number}?"
+    }
   },
   "staff": {
     "title": "Staff",

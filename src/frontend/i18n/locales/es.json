@@ -603,6 +603,7 @@
     "edit": "Editar Orden",
     "view": "Ver Orden",
     "detail": "Detalle de Orden",
+    "order": "Orden",
     "no_orders": "No hay órdenes",
     "no_orders_message": "No se encontraron órdenes para {company_name}",
     "search_placeholder": "Buscar órdenes...",

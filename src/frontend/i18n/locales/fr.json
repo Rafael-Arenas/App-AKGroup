@@ -601,6 +601,7 @@
     "edit": "Modifier Commande",
     "view": "Voir Commande",
     "detail": "Détails de la Commande",
+    "order": "Commande",
     "no_orders": "Aucune commande",
     "no_orders_message": "Aucune commande trouvée pour {company_name}",
     "search_placeholder": "Rechercher commandes...",
@@ -716,7 +717,68 @@
     "description": "Gestion des factures",
     "list_title": "Liste des Factures",
     "create": "Créer Facture",
-    "view": "Voir Facture"
+    "create_first": "Créer Première Facture",
+    "edit": "Modifier Facture",
+    "view": "Voir Facture",
+    "detail": "Détails de la Facture",
+    "order": "Commande",
+    "for_order": "Factures de la Commande",
+    "no_invoices": "Aucune facture enregistrée",
+    "no_invoices_message": "Aucune facture trouvée pour cette commande",
+    "search_placeholder": "Rechercher des factures par numéro...",
+    "fields": {
+      "revision": "Révision",
+      "invoice_number": "Numéro de Facture",
+      "invoice_type": "Type de Document",
+      "invoice_type_class": "Classe",
+      "invoice_date": "Date d'Émission",
+      "due_date": "Date d'Échéance",
+      "paid_date": "Date de Paiement",
+      "order_id": "Commande",
+      "company_id": "Entreprise",
+      "plant_id": "Usine",
+      "staff_id": "Vendeur",
+      "payment_status_id": "Statut de Paiement",
+      "currency_id": "Devise",
+      "exchange_rate": "Taux de Change",
+      "subtotal": "Sous-total",
+      "tax_amount": "Taxes",
+      "total": "Total",
+      "net_amount": "Montant Net",
+      "exempt_amount": "Montant Exonéré",
+      "payment_terms": "Conditions de Paiement",
+      "sii_status": "Statut SII",
+      "sii_track_id": "ID Suivi SII",
+      "shipping_date": "Date d'Expédition",
+      "incoterm_id": "Incoterm",
+      "country_id": "Pays",
+      "freight_cost": "Coût de Fret",
+      "insurance_cost": "Coût d'Assurance",
+      "type": "Type"
+    },
+    "columns": {
+      "revision": "Rév.",
+      "invoice_number": "Nº Facture",
+      "invoice_type": "Type Document",
+      "class": "Classe",
+      "order": "Commande",
+      "total": "Total",
+      "status": "Statut"
+    },
+    "sections": {
+      "general_info": "Informations Générales",
+      "notes": "Notes",
+      "no_notes": "Aucune note"
+    },
+    "type": {
+      "sii": "SII (National)",
+      "export": "Exportation"
+    },
+    "messages": {
+      "not_found": "Facture non trouvée",
+      "error_loading": "Erreur lors du chargement de la facture: {error}",
+      "delete_confirm": "Êtes-vous sûr de vouloir supprimer la facture {number}?"
+    }
   },
   "staff": {
     "title": "Personnel",
