@@ -783,10 +783,89 @@
   },
   "staff": {
     "title": "Personal",
-    "description": "Gestión de personal",
+    "description": "Gestión de personal del sistema",
     "list_title": "Lista de Personal",
     "create": "Agregar Personal",
-    "view": "Ver Personal"
+    "create_title": "Nuevo Personal",
+    "edit": "Editar Personal",
+    "edit_title": "Editar Personal",
+    "delete": "Eliminar Personal",
+    "view": "Ver Personal",
+    "detail": "Detalles del Personal",
+    "no_staff": "No hay personal registrado",
+    "no_staff_message": "Comienza agregando tu primer miembro del equipo",
+    "create_first": "Agregar Primer Personal",
+    "search_placeholder": "Buscar por nombre, usuario, email...",
+    "columns": {
+      "id": "ID",
+      "full_name": "Nombre Completo",
+      "username": "Usuario",
+      "email": "Email",
+      "trigram": "Trigrama",
+      "position": "Cargo",
+      "role": "Rol",
+      "status": "Estado",
+      "created_at": "Fecha Creación",
+      "actions": "Acciones"
+    },
+    "fields": {
+      "username": "Nombre de usuario",
+      "email": "Correo electrónico",
+      "first_name": "Nombre",
+      "last_name": "Apellido",
+      "trigram": "Trigrama",
+      "phone": "Teléfono",
+      "position": "Cargo",
+      "role": "Rol",
+      "status": "Estado",
+      "is_active": "Usuario activo",
+      "is_admin": "Administrador",
+      "created_at": "Fecha de creación",
+      "updated_at": "Última actualización"
+    },
+    "filters": {
+      "all": "Todos",
+      "active": "Activos",
+      "inactive": "Inactivos",
+      "status": "Estado",
+      "role": "Rol",
+      "admin": "Administradores",
+      "user": "Usuarios"
+    },
+    "role": {
+      "admin": "Administrador",
+      "user": "Usuario"
+    },
+    "sections": {
+      "personal_info": "Información Personal",
+      "contact_info": "Información de Contacto",
+      "work_info": "Información Laboral",
+      "permissions": "Permisos",
+      "credentials": "Credenciales",
+      "audit_info": "Auditoría"
+    },
+    "actions": {
+      "edit": "Editar",
+      "delete": "Eliminar",
+      "activate": "Activar",
+      "deactivate": "Desactivar"
+    },
+    "messages": {
+      "loading": "Cargando personal...",
+      "error_loading": "Error al cargar personal: {error}",
+      "error_saving": "Error al guardar: {error}",
+      "created": "Personal creado exitosamente",
+      "updated": "Personal actualizado exitosamente",
+      "deleted": "Personal eliminado exitosamente",
+      "delete_confirm": "¿Está seguro que desea eliminar a '{name}'?",
+      "activated": "Personal activado exitosamente",
+      "deactivated": "Personal desactivado exitosamente",
+      "fake_data_success": "Datos ficticios generados exitosamente",
+      "fake_data_error": "No se pudieron generar los datos ficticios: {error}"
+    },
+    "validation": {
+      "trigram_length": "El trigrama debe tener exactamente 3 caracteres"
+    }
   },
   "settings": {
     "title": "Configuración",

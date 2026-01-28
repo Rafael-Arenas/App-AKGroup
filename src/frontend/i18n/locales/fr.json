@@ -782,10 +782,89 @@
   },
   "staff": {
     "title": "Personnel",
-    "description": "Gestion du personnel",
+    "description": "Gestion du personnel système",
     "list_title": "Liste du Personnel",
     "create": "Ajouter Personnel",
-    "view": "Voir Personnel"
+    "create_title": "Nouveau Personnel",
+    "edit": "Modifier Personnel",
+    "edit_title": "Modifier Personnel",
+    "delete": "Supprimer Personnel",
+    "view": "Voir Personnel",
+    "detail": "Détails du Personnel",
+    "no_staff": "Aucun personnel enregistré",
+    "no_staff_message": "Commencez par ajouter votre premier membre de l'équipe",
+    "create_first": "Ajouter Premier Personnel",
+    "search_placeholder": "Rechercher par nom, utilisateur, email...",
+    "columns": {
+      "id": "ID",
+      "full_name": "Nom Complet",
+      "username": "Utilisateur",
+      "email": "Email",
+      "trigram": "Trigramme",
+      "position": "Poste",
+      "role": "Rôle",
+      "status": "Statut",
+      "created_at": "Date de Création",
+      "actions": "Actions"
+    },
+    "fields": {
+      "username": "Nom d'utilisateur",
+      "email": "Email",
+      "first_name": "Prénom",
+      "last_name": "Nom",
+      "trigram": "Trigramme",
+      "phone": "Téléphone",
+      "position": "Poste",
+      "role": "Rôle",
+      "status": "Statut",
+      "is_active": "Utilisateur actif",
+      "is_admin": "Administrateur",
+      "created_at": "Date de création",
+      "updated_at": "Dernière mise à jour"
+    },
+    "filters": {
+      "all": "Tous",
+      "active": "Actifs",
+      "inactive": "Inactifs",
+      "status": "Statut",
+      "role": "Rôle",
+      "admin": "Administrateurs",
+      "user": "Utilisateurs"
+    },
+    "role": {
+      "admin": "Administrateur",
+      "user": "Utilisateur"
+    },
+    "sections": {
+      "personal_info": "Informations Personnelles",
+      "contact_info": "Informations de Contact",
+      "work_info": "Informations Professionnelles",
+      "permissions": "Permissions",
+      "credentials": "Identifiants",
+      "audit_info": "Audit"
+    },
+    "actions": {
+      "edit": "Modifier",
+      "delete": "Supprimer",
+      "activate": "Activer",
+      "deactivate": "Désactiver"
+    },
+    "messages": {
+      "loading": "Chargement du personnel...",
+      "error_loading": "Erreur lors du chargement du personnel: {error}",
+      "error_saving": "Erreur lors de l'enregistrement: {error}",
+      "created": "Personnel créé avec succès",
+      "updated": "Personnel mis à jour avec succès",
+      "deleted": "Personnel supprimé avec succès",
+      "delete_confirm": "Êtes-vous sûr de vouloir supprimer '{name}'?",
+      "activated": "Personnel activé avec succès",
+      "deactivated": "Personnel désactivé avec succès",
+      "fake_data_success": "Données fictives générées avec succès",
+      "fake_data_error": "Impossible de générer des données fictives: {error}"
+    },
+    "validation": {
+      "trigram_length": "Le trigramme doit avoir exactement 3 caractères"
+    }
   },
   "settings": {
     "title": "Paramètres",

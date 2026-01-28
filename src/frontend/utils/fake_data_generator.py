@@ -70,6 +70,18 @@ class FakeDataGenerator:
         "Equipamiento para nueva planta",
     ]
 
+    FIRST_NAMES = [
+        "Juan", "Carlos", "Pedro", "Miguel", "José", "Luis", "Francisco", "Antonio",
+        "María", "Ana", "Carmen", "Laura", "Isabel", "Patricia", "Rosa", "Elena"
+    ]
+    
+    STAFF_POSITIONS = [
+        "Gerente de Ventas", "Ejecutivo Comercial", "Ingeniero de Proyectos",
+        "Analista de Operaciones", "Coordinador de Logística", "Jefe de Bodega",
+        "Asistente Administrativo", "Director Técnico", "Contador General",
+        "Especialista en Compras", "Supervisor de Producción", "Asesor Técnico"
+    ]
+
     @classmethod
     def generate_company_data(cls, company_type: str = "CLIENT") -> Dict[str, Any]:
         """
@@ -601,3 +613,101 @@ class FakeDataGenerator:
 
         except Exception as e:
             logger.exception(f"Error populating invoice form: {e}")
+
+    @classmethod
+    def generate_staff_data(cls) -> Dict[str, Any]:
+        """
+        Genera datos ficticios para un miembro del personal.
+
+        Returns:
+            Diccionario con los datos generados.
+        """
+        logger.debug("Generating fake staff data")
+
+        first_name = random.choice(cls.FIRST_NAMES)
+        last_name = random.choice(cls.SPANISH_NAMES)
+        
+        # Generar username basado en nombre
+        username = f"{first_name.lower()}{last_name.lower()}{random.randint(1, 99)}"
+        username = username.replace("á", "a").replace("é", "e").replace("í", "i").replace("ó", "o").replace("ú", "u")
+        
+        # Generar trigram (3 letras del nombre y apellido)
+        trigram = (first_name[0] + last_name[:2]).upper()
+        
+        # Generar email
+        email = f"{username}@akgroup.cl"
+        
+        # Generar teléfono (formato chileno)
+        phone = f"+56 9 {random.randint(10000000, 99999999)}"
+        
+        # Generar cargo
+        position = random.choice(cls.STAFF_POSITIONS)
+        
+        return {
+            "username": username,
+            "email": email,
+            "first_name": first_name,
+            "last_name": last_name,
+            "trigram": trigram,
+            "phone": phone,
+            "position": position,
+            "is_active": True,
+            "is_admin": random.choice([True, False]),
+        }
+
+    @classmethod
+    def populate_staff_form(cls, form_view) -> None:
+        """
+        Pobla un formulario de personal con datos ficticios.
+
+        Args:
+            form_view: Instancia de StaffFormView.
+        """
+        try:
+            data = cls.generate_staff_data()
+
+            # Poblar campos usando set_value (ValidatedTextField)
+            if hasattr(form_view, '_username_field'):
+                form_view._username_field.set_value(data["username"])
+            
+            if hasattr(form_view, '_email_field'):
+                form_view._email_field.set_value(data["email"])
+            
+            if hasattr(form_view, '_first_name_field'):
+                form_view._first_name_field.set_value(data["first_name"])
+            
+            if hasattr(form_view, '_last_name_field'):
+                form_view._last_name_field.set_value(data["last_name"])
+            
+            if hasattr(form_view, '_trigram_field'):
+                form_view._trigram_field.set_value(data["trigram"])
+            
+            if hasattr(form_view, '_phone_field'):
+                form_view._phone_field.set_value(data["phone"])
+            
+            if hasattr(form_view, '_position_field'):
+                form_view._position_field.set_value(data["position"])
+            
+            # Checkbox fields are standard controls
+            if hasattr(form_view, '_is_active_checkbox') and form_view._is_active_checkbox:
+                form_view._is_active_checkbox.value = data["is_active"]
+                try:
+                    form_view._is_active_checkbox.update()
+                except:
+                    pass
+            
+            if hasattr(form_view, '_is_admin_checkbox') and form_view._is_admin_checkbox:
+                form_view._is_admin_checkbox.value = data["is_admin"]
+                try:
+                    form_view._is_admin_checkbox.update()
+                except:
+                    pass
+
+            logger.success(f"Staff form populated with fake data: {data['username']}")
+
+        except Exception as e:
+            logger.exception(f"Error populating staff form: {e}")
+
+
+
+

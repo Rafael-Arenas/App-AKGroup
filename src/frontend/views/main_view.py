@@ -26,6 +26,7 @@ from src.frontend.navigation import (
     QuoteNavigator,
     OrderNavigator,
     InvoiceNavigator,
+    StaffNavigator,
 )
 
 
@@ -84,6 +85,7 @@ class MainView(ft.Container):
         self.quote_navigator = QuoteNavigator(self)
         self.order_navigator = OrderNavigator(self)
         self.invoice_navigator = InvoiceNavigator(self)
+        self.staff_navigator = StaffNavigator(self)
 
         # Construir el contenido
         self.content = self._build()
@@ -289,6 +291,7 @@ class MainView(ft.Container):
         from src.frontend.views.nomenclatures.nomenclature_list_view import NomenclatureListView
         from src.frontend.views.quotes.quote_list_view import QuoteListView
         from src.frontend.views.orders.order_list_view import OrderListView
+        from src.frontend.views.staff.staff_list_view import StaffListView
 
         match index:
             case 0:
@@ -344,9 +347,17 @@ class MainView(ft.Container):
                     on_create=None,  # No crear desde aquí
                     on_edit=None,  # No editar desde aquí
                 )
-            case 8 | 9:
-                # Personal (8) y Configuración (9)
-                logger.debug(f"Creating placeholder view for index: {index}")
+            case 8:
+                # Personal
+                logger.debug("Creating StaffListView")
+                return StaffListView(
+                    on_view_detail=lambda sid: self.staff_navigator.navigate_to_detail(sid),
+                    on_create=lambda: self.staff_navigator.navigate_to_form(),
+                    on_edit=lambda sid: self.staff_navigator.navigate_to_form(sid),
+                )
+            case 9:
+                # Configuración
+                logger.debug("Creating placeholder view for settings")
                 return self._create_placeholder_view(index)
             case _:
                 logger.warning(f"No view implemented for index: {index}")
@@ -467,6 +478,26 @@ class MainView(ft.Container):
                     return
             except Exception as e:
                 logger.error(f"Error parsing nomenclature route {route}: {e}")
+            return
+
+        # Manejar rutas dinámicas de staff
+        if route.startswith("/staff/"):
+            try:
+                parts = route.split("/")
+                if len(parts) >= 3:
+                    if parts[2] == "create":
+                        self.staff_navigator.navigate_to_form()
+                        return
+                    elif parts[2].isdigit():
+                        staff_id = int(parts[2])
+                        if len(parts) >= 4 and parts[3] == "edit":
+                            self.staff_navigator.navigate_to_form(staff_id)
+                            return
+                        else:
+                            self.staff_navigator.navigate_to_detail(staff_id)
+                            return
+            except Exception as e:
+                logger.error(f"Error parsing staff route {route}: {e}")
             return
 
         # Intentar obtener el ítem de navegación directamente por la ruta usando la configuración centralizada
