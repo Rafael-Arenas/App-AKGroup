@@ -10,6 +10,7 @@ from loguru import logger
 from src.frontend.app_state import app_state
 from src.frontend.layout_constants import LayoutConstants
 from src.frontend.components.common import (
+    BaseCard,
     LoadingSpinner,
     ErrorDisplay,
 )
@@ -200,124 +201,114 @@ class StaffFormView(ft.Column):
                     ],
                     spacing=LayoutConstants.SPACING_SM,
                 ),
+                padding=ft.padding.only(left=LayoutConstants.PADDING_MD, right=LayoutConstants.PADDING_MD, top=LayoutConstants.PADDING_MD),
             ),
             ft.Divider(),
             ft.Container(
                 content=ft.Column(
                     controls=[
                         error_container,
-                        # Sección de credenciales
+                        # Contenido centrado con ancho máximo
                         ft.Container(
                             content=ft.Column(
                                 controls=[
-                                    ft.Text(
-                                        t("staff.sections.credentials"),
-                                        size=LayoutConstants.FONT_SIZE_LG,
-                                        weight=LayoutConstants.FONT_WEIGHT_SEMIBOLD,
+                                    # Sección de credenciales
+                                    BaseCard(
+                                        title=t("staff.sections.credentials"),
+                                        icon=ft.Icons.LOCK,
+                                        content=ft.ResponsiveRow(
+                                            controls=[
+                                                ft.Container(content=self._username_field, col={"sm": 12, "md": 6}, expand=True),
+                                                ft.Container(content=self._email_field, col={"sm": 12, "md": 6}, expand=True),
+                                            ],
+                                            spacing=LayoutConstants.SPACING_MD,
+                                            run_spacing=LayoutConstants.SPACING_MD,
+                                        ),
                                     ),
-                                    ft.Row(
-                                        controls=[
-                                            ft.Container(content=self._username_field, expand=True),
-                                            ft.Container(content=self._email_field, expand=True),
-                                        ],
-                                        spacing=LayoutConstants.SPACING_MD,
+                                    # Sección de información personal
+                                    BaseCard(
+                                        title=t("staff.sections.personal_info"),
+                                        icon=ft.Icons.PERSON,
+                                        content=ft.ResponsiveRow(
+                                            controls=[
+                                                ft.Container(content=self._first_name_field, col={"sm": 12, "md": 5}, expand=True),
+                                                ft.Container(content=self._last_name_field, col={"sm": 12, "md": 5}, expand=True),
+                                                ft.Container(content=self._trigram_field, col={"sm": 12, "md": 2}, expand=True),
+                                            ],
+                                            spacing=LayoutConstants.SPACING_MD,
+                                            run_spacing=LayoutConstants.SPACING_MD,
+                                        ),
+                                    ),
+                                    # Sección de contacto
+                                    BaseCard(
+                                        title=t("staff.sections.contact_info"),
+                                        icon=ft.Icons.CONTACT_PHONE,
+                                        content=ft.ResponsiveRow(
+                                            controls=[
+                                                ft.Container(content=self._phone_field, col={"sm": 12, "md": 6}, expand=True),
+                                                ft.Container(content=self._position_field, col={"sm": 12, "md": 6}, expand=True),
+                                            ],
+                                            spacing=LayoutConstants.SPACING_MD,
+                                            run_spacing=LayoutConstants.SPACING_MD,
+                                        ),
+                                    ),
+                                    # Sección de permisos
+                                    BaseCard(
+                                        title=t("staff.sections.permissions"),
+                                        icon=ft.Icons.ADMIN_PANEL_SETTINGS,
+                                        content=ft.Row(
+                                            controls=[
+                                                self._is_active_checkbox,
+                                                self._is_admin_checkbox,
+                                            ],
+                                            spacing=LayoutConstants.SPACING_LG,
+                                        ),
+                                    ),
+                                    # Botones de acción
+                                    ft.Container(
+                                        content=ft.Row(
+                                            controls=[
+                                                ft.ElevatedButton(
+                                                    content=ft.Text(t("common.save")),
+                                                    icon=ft.Icons.SAVE,
+                                                    on_click=self._on_save_click,
+                                                    disabled=self._is_saving,
+                                                    style=ft.ButtonStyle(
+                                                        padding=LayoutConstants.PADDING_MD,
+                                                        shape=ft.RoundedRectangleBorder(radius=LayoutConstants.RADIUS_SM),
+                                                    ),
+                                                ),
+                                                ft.OutlinedButton(
+                                                    content=ft.Text(t("common.cancel")),
+                                                    icon=ft.Icons.CANCEL,
+                                                    on_click=self._on_cancel_click,
+                                                    disabled=self._is_saving,
+                                                    style=ft.ButtonStyle(
+                                                        padding=LayoutConstants.PADDING_MD,
+                                                        shape=ft.RoundedRectangleBorder(radius=LayoutConstants.RADIUS_SM),
+                                                    ),
+                                                ),
+                                                ft.ProgressRing(
+                                                    visible=self._is_saving,
+                                                    width=20,
+                                                    height=20,
+                                                    stroke_width=2,
+                                                ),
+                                            ],
+                                            spacing=LayoutConstants.SPACING_MD,
+                                            alignment=ft.MainAxisAlignment.END,
+                                        ),
+                                        padding=ft.padding.only(top=LayoutConstants.PADDING_MD),
                                     ),
                                 ],
-                                spacing=LayoutConstants.SPACING_SM,
+                                spacing=LayoutConstants.SPACING_LG,
                             ),
-                            padding=ft.padding.only(bottom=LayoutConstants.PADDING_MD),
-                        ),
-                        # Sección de información personal
-                        ft.Container(
-                            content=ft.Column(
-                                controls=[
-                                    ft.Text(
-                                        t("staff.sections.personal_info"),
-                                        size=LayoutConstants.FONT_SIZE_LG,
-                                        weight=LayoutConstants.FONT_WEIGHT_SEMIBOLD,
-                                    ),
-                                    ft.Row(
-                                        controls=[
-                                            ft.Container(content=self._first_name_field, expand=True),
-                                            ft.Container(content=self._last_name_field, expand=True),
-                                            ft.Container(content=self._trigram_field, width=120),
-                                        ],
-                                        spacing=LayoutConstants.SPACING_MD,
-                                    ),
-                                ],
-                                spacing=LayoutConstants.SPACING_SM,
-                            ),
-                            padding=ft.padding.only(bottom=LayoutConstants.PADDING_MD),
-                        ),
-                        # Sección de contacto
-                        ft.Container(
-                            content=ft.Column(
-                                controls=[
-                                    ft.Text(
-                                        t("staff.sections.contact_info"),
-                                        size=LayoutConstants.FONT_SIZE_LG,
-                                        weight=LayoutConstants.FONT_WEIGHT_SEMIBOLD,
-                                    ),
-                                    ft.Row(
-                                        controls=[
-                                            ft.Container(content=self._phone_field, expand=True),
-                                            ft.Container(content=self._position_field, expand=True),
-                                        ],
-                                        spacing=LayoutConstants.SPACING_MD,
-                                    ),
-                                ],
-                                spacing=LayoutConstants.SPACING_SM,
-                            ),
-                            padding=ft.padding.only(bottom=LayoutConstants.PADDING_MD),
-                        ),
-                        # Sección de permisos
-                        ft.Container(
-                            content=ft.Column(
-                                controls=[
-                                    ft.Text(
-                                        t("staff.sections.permissions"),
-                                        size=LayoutConstants.FONT_SIZE_LG,
-                                        weight=LayoutConstants.FONT_WEIGHT_SEMIBOLD,
-                                    ),
-                                    ft.Row(
-                                        controls=[
-                                            self._is_active_checkbox,
-                                            self._is_admin_checkbox,
-                                        ],
-                                        spacing=LayoutConstants.SPACING_LG,
-                                    ),
-                                ],
-                                spacing=LayoutConstants.SPACING_SM,
-                            ),
-                            padding=ft.padding.only(bottom=LayoutConstants.PADDING_LG),
-                        ),
-                        # Botones de acción
-                        ft.Row(
-                            controls=[
-                                ft.ElevatedButton(
-                                    content=ft.Text(t("common.save")),
-                                    icon=ft.Icons.SAVE,
-                                    on_click=self._on_save_click,
-                                    disabled=self._is_saving,
-                                ),
-                                ft.ElevatedButton(
-                                    content=ft.Text(t("common.cancel")),
-                                    icon=ft.Icons.CANCEL,
-                                    on_click=self._on_cancel_click,
-                                    disabled=self._is_saving,
-                                ),
-                                ft.ProgressRing(
-                                    visible=self._is_saving,
-                                    width=20,
-                                    height=20,
-                                    stroke_width=2,
-                                ),
-                            ],
-                            spacing=LayoutConstants.SPACING_MD,
+                            alignment=ft.Alignment(0, -1),
                         ),
                     ],
-                    expand=True,
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                     scroll=ft.ScrollMode.AUTO,
+                    expand=True,
                 ),
                 padding=LayoutConstants.PADDING_LG,
                 expand=True,
