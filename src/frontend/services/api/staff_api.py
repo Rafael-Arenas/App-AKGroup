@@ -156,7 +156,7 @@ class StaffAPIService:
             Created staff dictionary
         """
         logger.info(f"Creating staff | username={data.get('username')}")
-        return await self._client.post("/staff/", data=data)
+        return await self._client.post("/staff/", json=data)
 
     async def update(self, staff_id: int, data: dict[str, Any]) -> dict[str, Any]:
         """
@@ -179,7 +179,7 @@ class StaffAPIService:
             Updated staff dictionary
         """
         logger.info(f"Updating staff | staff_id={staff_id}")
-        return await self._client.put(f"/staff/{staff_id}", data=data)
+        return await self._client.put(f"/staff/{staff_id}", json=data)
 
     async def delete(self, staff_id: int, soft: bool = True) -> dict[str, Any]:
         """
