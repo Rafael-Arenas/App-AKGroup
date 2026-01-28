@@ -454,12 +454,14 @@ class BaseAPIClient:
     async def delete(
         self,
         endpoint: str,
+        params: Optional[dict[str, Any]] = None,
     ) -> bool:
         """
         Realiza una petición DELETE.
 
         Args:
             endpoint: Endpoint de la API
+            params: Parámetros de query string (opcional)
 
         Returns:
             True si la eliminación fue exitosa
@@ -472,8 +474,8 @@ class BaseAPIClient:
         Example:
             >>> success = await client.delete("/companies/1")
         """
-        logger.info("DELETE request | endpoint={}", endpoint)
-        await self._request_with_retry("DELETE", endpoint)
+        logger.info("DELETE request | endpoint={} params={}", endpoint, params)
+        await self._request_with_retry("DELETE", endpoint, params=params)
         return True
 
     async def __aenter__(self) -> "BaseAPIClient":
