@@ -631,14 +631,15 @@ class FakeDataGenerator:
         username = f"{first_name.lower()}{last_name.lower()}{random.randint(1, 99)}"
         username = username.replace("á", "a").replace("é", "e").replace("í", "i").replace("ó", "o").replace("ú", "u")
         
-        # Generar trigram (3 letras del nombre y apellido)
-        trigram = (first_name[0] + last_name[:2]).upper()
+        # Generar trigram (3 letras del nombre y apellido, sin acentos)
+        trigram_raw = (first_name[0] + last_name[:2]).upper()
+        trigram = trigram_raw.replace("Á", "A").replace("É", "E").replace("Í", "I").replace("Ó", "O").replace("Ú", "U").replace("Ñ", "N")
         
         # Generar email
         email = f"{username}@akgroup.cl"
         
-        # Generar teléfono (formato chileno)
-        phone = f"+56 9 {random.randint(10000000, 99999999)}"
+        # Generar teléfono (formato chileno sin espacios para validación)
+        phone = f"+569{random.randint(10000000, 99999999)}"
         
         # Generar cargo
         position = random.choice(cls.STAFF_POSITIONS)
