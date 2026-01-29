@@ -869,11 +869,14 @@
   },
   "settings": {
     "title": "Configuración",
-    "description": "Configuración de la aplicación",
+    "description": "Personaliza tu experiencia en la aplicación",
     "general": "General",
     "appearance": "Apariencia",
     "language": "Idioma",
     "theme": "Tema",
+    "theme_light": "Claro",
+    "theme_dark": "Oscuro",
+    "theme_system": "Sistema",
     "notifications": "Notificaciones"
   },
   "common": {

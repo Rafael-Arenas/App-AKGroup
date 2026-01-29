@@ -868,11 +868,14 @@
   },
   "settings": {
     "title": "Paramètres",
-    "description": "Paramètres de l'application",
+    "description": "Personnalisez votre expérience dans l'application",
     "general": "Général",
     "appearance": "Apparence",
     "language": "Langue",
     "theme": "Thème",
+    "theme_light": "Clair",
+    "theme_dark": "Sombre",
+    "theme_system": "Système",
     "notifications": "Notifications"
   },
   "common": {

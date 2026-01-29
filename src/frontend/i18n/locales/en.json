@@ -869,11 +869,14 @@
   },
   "settings": {
     "title": "Settings",
-    "description": "Application settings",
+    "description": "Customize your app experience",
     "general": "General",
     "appearance": "Appearance",
     "language": "Language",
     "theme": "Theme",
+    "theme_light": "Light",
+    "theme_dark": "Dark",
+    "theme_system": "System",
     "notifications": "Notifications"
   },
   "common": {
