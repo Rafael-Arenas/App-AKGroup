@@ -105,7 +105,7 @@ class MainView(ft.Container):
         self._app_bar = CustomAppBar(
             on_logout=self.on_logout,
             on_profile_click=self.on_profile,
-            on_settings_click=None,  # TODO: Implementar settings
+            on_settings_click=lambda _: self.navigate_to(9),
         )
 
         # Crear NavigationRail
@@ -292,6 +292,7 @@ class MainView(ft.Container):
         from src.frontend.views.quotes.quote_list_view import QuoteListView
         from src.frontend.views.orders.order_list_view import OrderListView
         from src.frontend.views.staff.staff_list_view import StaffListView
+        from src.frontend.views.settings.settings_view import SettingsView
 
         match index:
             case 0:
@@ -357,8 +358,8 @@ class MainView(ft.Container):
                 )
             case 9:
                 # Configuración
-                logger.debug("Creating placeholder view for settings")
-                return self._create_placeholder_view(index)
+                logger.debug("Creating SettingsView")
+                return SettingsView()
             case _:
                 logger.warning(f"No view implemented for index: {index}")
                 return self._create_placeholder_view(index)

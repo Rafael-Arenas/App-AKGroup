@@ -21,6 +21,9 @@ def main(page: ft.Page) -> None:
         >>> ft.app(target=main)
     """
     logger.info("Iniciando aplicación AK Group Frontend")
+    
+    # Inicializar persistencia de estado
+    app_state.initialize_persistence(page)
 
     # Configuración de la página
     page.title = "AK Group - Sistema de Gestión"
