@@ -12,13 +12,40 @@ from src.frontend.components.common import BaseCard
 from src.frontend.i18n.translation_manager import t
 
 
-def SettingsView():
+class SettingsView(ft.Container):
     """
-    Crea y retorna la vista de configuración para preferencias de usuario.
+    Vista de configuración para preferencias de usuario.
     """
     
-    # Manejadores de eventos persistentes durante la vida de la vista
-    def _on_theme_change(e: ft.ControlEvent) -> None:
+    def __init__(self):
+        super().__init__()
+        self.expand = True
+        self.padding = LayoutConstants.PADDING_LG
+        
+        # El contenido se building en build() o similar, 
+        # pero en Flet Containers usamos self.content
+        self.column = ft.Column(
+            spacing=LayoutConstants.SPACING_LG,
+            scroll=ft.ScrollMode.AUTO,
+        )
+        self.content = self.column
+        self._update_content()
+        
+        logger.info("SettingsView initialized")
+
+    def did_mount(self):
+        """Lifecycle: Se ejecuta cuando el componente se monta."""
+        logger.debug("SettingsView mounted, adding observers")
+        app_state.i18n.add_observer(self._update_ui)
+        app_state.theme.add_observer(self._update_ui)
+
+    def will_unmount(self):
+        """Lifecycle: Se ejecuta cuando el componente se desmonta."""
+        logger.debug("SettingsView unmounting, removing observers")
+        app_state.i18n.remove_observer(self._update_ui)
+        app_state.theme.remove_observer(self._update_ui)
+
+    async def _on_theme_change(self, e: ft.ControlEvent) -> None:
         """Maneja el cambio de tema."""
         # Manejar diferentes versiones de Flet para SegmentedButton.on_change
         selection = e.data if isinstance(e.data, (list, set)) else getattr(e, "selection", [])
@@ -28,9 +55,9 @@ def SettingsView():
         if selection:
             theme_mode = list(selection)[0]
             logger.info(f"Changing theme to: {theme_mode}")
-            app_state.theme.set_theme_mode(theme_mode)
+            await app_state.theme.set_theme_mode(theme_mode)
 
-    def _on_language_change(e: ft.ControlEvent) -> None:
+    async def _on_language_change(self, e: ft.ControlEvent) -> None:
         """Maneja el cambio de idioma."""
         logger.info(f"Language change event triggered. Control value: {e.control.value}, Data: {e.data}")
         lang = e.control.value
@@ -40,17 +67,24 @@ def SettingsView():
             
         logger.info(f"Changing language to: {lang}")
         try:
-            app_state.i18n.set_language(lang)
+            await app_state.i18n.set_language(lang)
             logger.info("Language set in app_state")
         except Exception as ex:
             logger.error(f"Error setting language: {ex}")
 
-    def _build_content() -> list[ft.Control]:
-        """Construye los controles de la vista."""
+    def _update_ui(self):
+        """Callback de los observers para actualizar la UI."""
+        logger.info("Updating Settings UI")
+        self._update_content()
+        if self.page:
+            self.update()
+
+    def _update_content(self):
+        """Construye/actualiza los controles de la vista."""
         current_lang = app_state.i18n.current_language
         logger.debug(f"Building content with language: {current_lang}")
         
-        return [
+        self.column.controls = [
             # Título de la vista
             ft.Row(
                 controls=[
@@ -80,7 +114,7 @@ def SettingsView():
                         ft.SegmentedButton(
                             selected=[app_state.theme.theme_mode],
                             allow_multiple_selection=False,
-                            on_change=_on_theme_change,
+                            on_change=self._on_theme_change,
                             segments=[
                                 ft.Segment(
                                     value="light",
@@ -121,41 +155,10 @@ def SettingsView():
                                 spacing=LayoutConstants.SPACING_LG,
                             ),
                             value=current_lang,
-                            on_change=_on_language_change,
+                            on_change=self._on_language_change,
                         ),
                     ],
                     spacing=LayoutConstants.SPACING_MD,
                 ),
             ),
         ]
-
-    # Crear el contenedor principal
-    container = ft.Container(
-        expand=True,
-        padding=LayoutConstants.PADDING_LG,
-    )
-    
-    column = ft.Column(
-        controls=_build_content(),
-        spacing=LayoutConstants.SPACING_LG,
-        scroll=ft.ScrollMode.AUTO,
-    )
-    
-    container.content = column
-
-    # Manejar actualizaciones
-    def _update_ui():
-        logger.info("Updating Settings UI")
-        column.controls = _build_content()
-        column.update()
-
-    # Suscribirse a cambios (Nota: en una función factory, 
-    # necesitamos una forma de limpiar esto, pero para esta vista 
-    # singleton-like suele estar bien. Sin embargo, did_mount/will_unmount 
-    # en la clase original era mejor. Si la factory causa problemas, 
-    # volveremos a la clase con correcciones.)
-    app_state.i18n.add_observer(_update_ui)
-    app_state.theme.add_observer(_update_ui)
-
-    logger.info("SettingsView components created")
-    return container

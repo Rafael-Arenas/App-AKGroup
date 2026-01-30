@@ -229,7 +229,7 @@ class CustomAppBar(ft.Container):
             items=items,
         )
 
-    def _on_theme_select(self, theme_mode: str):
+    async def _on_theme_select(self, theme_mode: str):
         """
         Maneja la selección de tema.
 
@@ -237,7 +237,7 @@ class CustomAppBar(ft.Container):
             theme_mode: Modo de tema seleccionado
         """
         logger.info(f"Cambiando tema a: {theme_mode}")
-        app_state.theme.set_theme_mode(theme_mode)
+        await app_state.theme.set_theme_mode(theme_mode)
 
     def _on_notifications_click(self, e):
         """

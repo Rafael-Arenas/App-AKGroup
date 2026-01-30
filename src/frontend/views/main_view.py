@@ -550,7 +550,7 @@ class MainView(ft.Container):
         if self.page:
             self.update()
 
-    def _handle_theme_change(self, theme_mode: str) -> None:
+    async def _handle_theme_change(self, theme_mode: str) -> None:
         """
         Maneja el cambio de tema desde el AppBar.
 
@@ -558,12 +558,12 @@ class MainView(ft.Container):
             theme_mode: Modo de tema ("light", "dark", "system")
         """
         logger.info(f"Theme change requested: {theme_mode}")
-        app_state.theme.set_theme_mode(theme_mode)
+        await app_state.theme.set_theme_mode(theme_mode)
 
         if self.on_theme_change:
             self.on_theme_change(theme_mode)
 
-    def _handle_language_change(self, language: str) -> None:
+    async def _handle_language_change(self, language: str) -> None:
         """
         Maneja el cambio de idioma desde el AppBar.
 
@@ -571,7 +571,7 @@ class MainView(ft.Container):
             language: Código de idioma ("es", "en", "fr")
         """
         logger.info(f"Language change requested: {language}")
-        app_state.i18n.set_language(language)
+        await app_state.i18n.set_language(language)
 
         if self.on_language_change:
             self.on_language_change(language)

@@ -110,7 +110,7 @@ class LanguageSelector(ft.PopupMenuButton):
 
         return items
 
-    def _on_language_select(self, lang_code: str):
+    async def _on_language_select(self, lang_code: str):
         """
         Maneja la selección de un idioma.
 
@@ -125,7 +125,7 @@ class LanguageSelector(ft.PopupMenuButton):
 
         # Actualizar idioma en translation_manager y app_state
         translation_manager.set_language(lang_code)
-        app_state.i18n.set_language(lang_code)
+        await app_state.i18n.set_language(lang_code)
 
     def _on_language_change(self):
         """Callback cuando cambia el idioma."""

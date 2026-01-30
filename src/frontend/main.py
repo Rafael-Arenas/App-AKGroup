@@ -10,43 +10,34 @@ from src.frontend.views import MainView
 from src.frontend.app_state import app_state
 
 
-def main(page: ft.Page) -> None:
+async def main(page: ft.Page) -> None:
     """
-    Función principal que inicializa la aplicación Flet.
+    Función principal que inicializa la aplicación Flet (asíncrona).
 
     Args:
         page: Instancia de la página Flet
-
-    Example:
-        >>> ft.app(target=main)
     """
-    logger.info("Iniciando aplicación AK Group Frontend")
+    logger.info("Iniciando aplicación AK Group Frontend (Async Mode)")
     
-    # Inicializar persistencia de estado
-    app_state.initialize_persistence(page)
+    # Inicializar persistencia de estado (AHORA ESPERANDO)
+    await app_state.initialize_persistence(page)
 
     # Configuración de la página
     page.title = "AK Group - Sistema de Gestión"
     page.padding = 0
     page.spacing = 0
     
-    # Configuración del tamaño de ventana inicial (debe hacerse ANTES de configurar el tema y contenido)
+    # Configuración del tamaño de ventana inicial
     page.window.width = 1400
-    page.window.height = 1000  # Ajustado a un valor razonable pero alto
-    page.window.min_width = 1000  # Tamaño mínimo para evitar problemas de UI
+    page.window.height = 1000
+    page.window.min_width = 1000
     page.window.min_height = 700
     
     page.theme_mode = app_state.theme.get_flet_theme_mode()
 
-    # Configurar tema con Material 3 (colores por defecto)
-    page.theme = ft.Theme(
-        use_material3=True,
-    )
-
-    # Configurar tema oscuro con Material 3 (colores por defecto)
-    page.dark_theme = ft.Theme(
-        use_material3=True,
-    )
+    # Configurar tema con Material 3
+    page.theme = ft.Theme(use_material3=True)
+    page.dark_theme = ft.Theme(use_material3=True)
 
     # Suscribirse a cambios de tema
     def on_theme_change():

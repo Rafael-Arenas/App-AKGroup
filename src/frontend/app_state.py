@@ -27,11 +27,12 @@ class NavigationState:
         self.navigation_rail_expanded: bool = True
         self._storage = None
 
-    def set_storage(self, storage) -> None:
+    async def set_storage(self, storage) -> None:
         """Establece el almacenamiento persistente."""
         self._storage = storage
         # Cargar estado persistente si existe
-        expanded = self._storage.get("nav.rail_expanded")
+        expanded = await self._storage.get("nav.rail_expanded")
+        logger.debug(f"Retrieved nav.rail_expanded from storage: {expanded}")
         if expanded is not None:
             self.navigation_rail_expanded = bool(expanded)
 
@@ -105,15 +106,15 @@ class NavigationState:
         logger.debug(f"Breadcrumb updated: {path}")
         self.notify_observers()
 
-    def toggle_rail_expanded(self) -> None:
+    async def toggle_rail_expanded(self) -> None:
         """Alterna el estado expandido/colapsado del navigation rail."""
         self.navigation_rail_expanded = not self.navigation_rail_expanded
         logger.debug(f"Navigation rail expanded: {self.navigation_rail_expanded}")
         if self._storage:
-            self._storage.set("nav.rail_expanded", self.navigation_rail_expanded)
+            await self._storage.set("nav.rail_expanded", self.navigation_rail_expanded)
         self.notify_observers()
 
-    def set_rail_expanded(self, expanded: bool) -> None:
+    async def set_rail_expanded(self, expanded: bool) -> None:
         """
         Establece el estado expandido/colapsado del navigation rail.
 
@@ -124,7 +125,7 @@ class NavigationState:
             self.navigation_rail_expanded = expanded
             logger.debug(f"Navigation rail expanded set to: {expanded}")
             if self._storage:
-                self._storage.set("nav.rail_expanded", self.navigation_rail_expanded)
+                await self._storage.set("nav.rail_expanded", self.navigation_rail_expanded)
             self.notify_observers()
 
 
@@ -142,11 +143,12 @@ class I18nState:
         self.available_languages: list[str] = ["es", "en", "fr"]
         self._storage = None
 
-    def set_storage(self, storage) -> None:
+    async def set_storage(self, storage) -> None:
         """Establece el almacenamiento persistente."""
         self._storage = storage
         # Cargar idioma persistente
-        lang = self._storage.get("i18n.language")
+        lang = await self._storage.get("i18n.language")
+        logger.debug(f"Retrieved i18n.language from storage: {lang}")
         if lang in self.available_languages:
             # Aseguramos que es string
             lang = str(lang)
@@ -158,6 +160,8 @@ class I18nState:
             except ImportError:
                 logger.error("Could not import translation_manager to sync initial state")
             logger.info(f"Loaded persisted language: {self.current_language}")
+        else:
+            logger.warning(f"!!! [PERSISTENCE] Language '{lang}' not valid or not found. Defaulting to: {self.current_language}")
 
     def add_observer(self, callback: Callable[[], None]) -> None:
         """
@@ -190,7 +194,7 @@ class I18nState:
             except Exception as e:
                 logger.error(f"Error notifying observer: {e}")
 
-    def set_language(self, lang: str) -> None:
+    async def set_language(self, lang: str) -> None:
         """
         Cambia el idioma actual.
 
@@ -218,13 +222,10 @@ class I18nState:
                 logger.error("Could not import translation_manager to sync language change")
 
             if self._storage:
-                # TODO: Manejar la asincronía de shared_preferences correctamente
-                # Por ahora, se llama sin await sabiendo que genera un RuntimeWarning
-                # pero queremos priorizar la funcionalidad de traducción
                 try:
-                    self._storage.set("i18n.language", lang)
+                    await self._storage.set("i18n.language", lang)
                 except Exception as e:
-                    logger.warning(f"Error persisting language (might be async issue): {e}")
+                    logger.warning(f"Error persisting language: {e}")
                     
             self.notify_observers()
 
@@ -243,15 +244,18 @@ class ThemeState:
         self.is_dark_mode: bool = False  # Se actualiza basado en theme_mode y sistema
         self._storage = None
 
-    def set_storage(self, storage) -> None:
+    async def set_storage(self, storage) -> None:
         """Establece el almacenamiento persistente."""
         self._storage = storage
         # Cargar tema persistente
-        mode = self._storage.get("theme.mode")
+        mode = await self._storage.get("theme.mode")
+        logger.debug(f"Retrieved theme.mode from storage: {mode}")
         if mode in ["light", "dark", "system"]:
             self.theme_mode = str(mode)
             self._update_is_dark_mode()
             logger.info(f"Loaded persisted theme mode: {self.theme_mode}")
+        else:
+            logger.warning(f"!!! [PERSISTENCE] Theme mode '{mode}' not valid or not found. Defaulting to: {self.theme_mode}")
 
     def add_observer(self, callback: Callable[[], None]) -> None:
         """
@@ -284,7 +288,7 @@ class ThemeState:
             except Exception as e:
                 logger.error(f"Error notifying observer: {e}")
 
-    def set_theme_mode(self, mode: str) -> None:
+    async def set_theme_mode(self, mode: str) -> None:
         """
         Establece el modo de tema.
 
@@ -305,7 +309,7 @@ class ThemeState:
             logger.info(f"Changing theme mode from {self.theme_mode} to {mode}")
             self.theme_mode = mode
             if self._storage:
-                self._storage.set("theme.mode", mode)
+                await self._storage.set("theme.mode", mode)
             self._update_is_dark_mode()
             self.notify_observers()
 
@@ -370,7 +374,7 @@ class AppState:
         self.theme = ThemeState()
         logger.success("AppState initialized successfully")
 
-    def initialize_persistence(self, page: ft.Page) -> None:
+    async def initialize_persistence(self, page: ft.Page) -> None:
         """
         Inicializa la persistencia de los estados usando el storage de la página.
 
@@ -379,10 +383,14 @@ class AppState:
         """
         logger.info("Initializing AppState persistence")
         storage = page.shared_preferences
-        self.navigation.set_storage(storage)
-        self.i18n.set_storage(storage)
-        self.theme.set_storage(storage)
-        logger.success("AppState persistence initialized")
+        if storage is None:
+            logger.error("page.shared_preferences is None, persistence will not work")
+            return
+
+        await self.navigation.set_storage(storage)
+        await self.i18n.set_storage(storage)
+        await self.theme.set_storage(storage)
+        logger.success("AppState persistence initialized successfully")
 
     def reset(self) -> None:
         """Resetea el estado de la aplicación (útil para testing)."""
