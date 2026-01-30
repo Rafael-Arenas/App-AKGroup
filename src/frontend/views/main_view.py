@@ -108,9 +108,11 @@ class MainView(ft.Container):
             on_settings_click=lambda _: self.navigate_to(9),
         )
 
-        # Crear NavigationRail
+        # Crear NavigationRail con estado persistente
         self._navigation_rail = CustomNavigationRail(
             on_destination_change=self._on_destination_change,
+            expanded=app_state.navigation.navigation_rail_expanded,
+            on_expand_toggle=self._handle_rail_expand_toggle,
         )
 
         # Crear Breadcrumb con contenedor
@@ -519,6 +521,10 @@ class MainView(ft.Container):
         """
         logger.debug("Navigation state changed, updating UI")
 
+        # Mantener el rail sincronizado con el estado global
+        if self._navigation_rail:
+            self._navigation_rail.set_expanded(app_state.navigation.navigation_rail_expanded)
+
         # Actualizar breadcrumb
         self._update_breadcrumb()
 
@@ -575,6 +581,16 @@ class MainView(ft.Container):
 
         if self.on_language_change:
             self.on_language_change(language)
+
+    async def _handle_rail_expand_toggle(self, expanded: bool) -> None:
+        """
+        Maneja el cambio de expansión del rail y lo persiste.
+
+        Args:
+            expanded: True si está expandido
+        """
+        logger.debug(f"Persistence: Saving rail expanded state: {expanded}")
+        await app_state.navigation.set_rail_expanded(expanded)
 
     def navigate_to(self, index: int) -> None:
         """
