@@ -77,8 +77,6 @@ class CustomAppBar(ft.Container):
         # Crear componentes
         self.logo = self._build_logo()
         self.title = self._build_title()
-        self.language_selector = LanguageSelector()
-        self.theme_selector = self._build_theme_selector()
         self.notification_badge = NotificationBadge(
             count=notification_count,
             has_urgent=has_urgent_notifications,
@@ -100,10 +98,6 @@ class CustomAppBar(ft.Container):
                 ft.Container(width=LayoutConstants.SPACING_LG),
                 self.title,
                 ft.Container(expand=True),  # Spacer
-                self.language_selector,
-                ft.Container(width=LayoutConstants.SPACING_SM),
-                self.theme_selector,
-                ft.Container(width=LayoutConstants.SPACING_SM),
                 self.notification_badge,
                 ft.Container(width=LayoutConstants.SPACING_SM),
                 self.user_menu,
@@ -314,8 +308,7 @@ class CustomAppBar(ft.Container):
         El título será actualizado por el MainView a través de update_title(),
         que se llama desde el observer de navegación.
         """
-        # Reconstruir selector de tema con nuevas traducciones
-        self.theme_selector = self._build_theme_selector()
+        # Reconstruir contenido con nuevas traducciones
         self._rebuild_content()
 
         if self.page:
@@ -327,7 +320,6 @@ class CustomAppBar(ft.Container):
         # Reconstruir logo y título
         self.logo = self._build_logo()
         self.title = self._build_title()
-        self.theme_selector = self._build_theme_selector()
         self._rebuild_content()
 
         if self.page:
@@ -342,10 +334,6 @@ class CustomAppBar(ft.Container):
                 ft.Container(width=LayoutConstants.SPACING_LG),
                 self.title,
                 ft.Container(expand=True),  # Spacer
-                self.language_selector,
-                ft.Container(width=LayoutConstants.SPACING_SM),
-                self.theme_selector,
-                ft.Container(width=LayoutConstants.SPACING_SM),
                 self.notification_badge,
                 ft.Container(width=LayoutConstants.SPACING_SM),
                 self.user_menu,
