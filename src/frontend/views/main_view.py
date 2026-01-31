@@ -3,6 +3,7 @@ Vista principal de la aplicación.
 
 Contenedor principal que integra AppBar, NavigationRail, Breadcrumb y área de contenido.
 Usa navegadores especializados para delegar la lógica de navegación específica de cada módulo.
+Extiende ObservableComponent para manejo automático de observers.
 """
 from typing import Callable
 import flet as ft
@@ -12,6 +13,7 @@ from src.frontend.app_state import app_state
 from src.frontend.layout_constants import LayoutConstants
 from src.frontend.navigation_config import get_navigation_item_by_index
 from src.frontend.i18n.translation_manager import t
+from src.frontend.components.base_component import ObservableComponent
 from src.frontend.components.navigation import (
     CustomAppBar,
     CustomNavigationRail,
@@ -30,7 +32,7 @@ from src.frontend.navigation import (
 )
 
 
-class MainView(ft.Container):
+class MainView(ObservableComponent):
     """
     Vista principal contenedora de la aplicación.
 
@@ -173,23 +175,21 @@ class MainView(ft.Container):
         Lifecycle: Se ejecuta cuando el componente se monta en la página.
 
         Suscribe observers a los estados de navegación, idioma y tema.
+        Las suscripciones se limpian automáticamente en will_unmount (via ObservableComponent).
         """
+        super().did_mount()
         logger.info("MainView mounted, subscribing to state observers")
 
         # Cargar vista inicial (Dashboard)
         self._load_initial_view()
 
-        # Suscribirse a cambios de navegación
-        app_state.navigation.add_observer(self._on_navigation_changed)
+        # Suscribirse a cambios (limpieza automática via ObservableComponent)
+        self.subscribe(app_state.navigation, self._on_navigation_changed)
+        self.subscribe(app_state.i18n, self._on_i18n_changed)
+        self.subscribe(app_state.theme, self._on_theme_changed)
 
         # Actualizar breadcrumb inicial
         self._update_breadcrumb()
-
-        # Suscribirse a cambios de idioma
-        app_state.i18n.add_observer(self._on_i18n_changed)
-
-        # Suscribirse a cambios de tema
-        app_state.theme.add_observer(self._on_theme_changed)
 
         logger.success("MainView observers subscribed successfully")
 
@@ -197,16 +197,11 @@ class MainView(ft.Container):
         """
         Lifecycle: Se ejecuta cuando el componente se desmonta.
 
-        Limpia los observers para evitar memory leaks.
+        La limpieza de observers es automática via ObservableComponent.super().
         """
-        logger.info("MainView unmounting, removing observers")
-
-        # Remover observers
-        app_state.navigation.remove_observer(self._on_navigation_changed)
-        app_state.i18n.remove_observer(self._on_i18n_changed)
-        app_state.theme.remove_observer(self._on_theme_changed)
-
-        logger.success("MainView observers removed")
+        logger.info("MainView unmounting")
+        super().will_unmount()  # Limpia automáticamente todos los observers
+        logger.success("MainView unmounted and observers cleaned up")
 
     def _load_initial_view(self) -> None:
         """Carga la vista inicial (Dashboard)."""
@@ -267,8 +262,7 @@ class MainView(ft.Container):
             self._current_view = view
             if self._content_area:
                 self._content_area.content = view
-                if self.page:
-                    self.update()
+                self.safe_update()
             logger.success(f"View content set for index: {index}")
         else:
             logger.error(f"No view found for index: {index}")
@@ -528,8 +522,7 @@ class MainView(ft.Container):
         # Actualizar breadcrumb
         self._update_breadcrumb()
 
-        if self.page:
-            self.update()
+        self.safe_update()
 
     def _on_i18n_changed(self) -> None:
         """
@@ -542,8 +535,7 @@ class MainView(ft.Container):
         # Actualizar breadcrumb con nuevas traducciones
         self._update_breadcrumb()
 
-        if self.page:
-            self.update()
+        self.safe_update()
 
     def _on_theme_changed(self) -> None:
         """
@@ -553,8 +545,7 @@ class MainView(ft.Container):
         """
         logger.debug("Theme changed, updating UI")
 
-        if self.page:
-            self.update()
+        self.safe_update()
 
     async def _handle_theme_change(self, theme_mode: str) -> None:
         """

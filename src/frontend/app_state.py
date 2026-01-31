@@ -31,10 +31,11 @@ class NavigationState:
         """Establece el almacenamiento persistente."""
         self._storage = storage
         # Cargar estado persistente si existe
-        expanded = await self._storage.get("nav.rail_expanded")
-        logger.debug(f"Retrieved nav.rail_expanded from storage: {expanded}")
-        if expanded is not None:
-            self.navigation_rail_expanded = bool(expanded)
+        expanded_str = await self._storage.get("nav.rail_expanded")
+        logger.debug(f"Retrieved nav.rail_expanded from storage: {expanded_str}")
+        if expanded_str is not None:
+            # shared_preferences guarda como string, convertir a bool
+            self.navigation_rail_expanded = expanded_str == "true"
 
     def add_observer(self, callback: Callable[[], None]) -> None:
         """
@@ -111,7 +112,8 @@ class NavigationState:
         self.navigation_rail_expanded = not self.navigation_rail_expanded
         logger.debug(f"Navigation rail expanded: {self.navigation_rail_expanded}")
         if self._storage:
-            await self._storage.set("nav.rail_expanded", self.navigation_rail_expanded)
+            # shared_preferences solo acepta strings
+            await self._storage.set("nav.rail_expanded", "true" if self.navigation_rail_expanded else "false")
         self.notify_observers()
 
     async def set_rail_expanded(self, expanded: bool) -> None:
@@ -125,7 +127,8 @@ class NavigationState:
             self.navigation_rail_expanded = expanded
             logger.debug(f"Navigation rail expanded set to: {expanded}")
             if self._storage:
-                await self._storage.set("nav.rail_expanded", self.navigation_rail_expanded)
+                # shared_preferences solo acepta strings
+                await self._storage.set("nav.rail_expanded", "true" if expanded else "false")
             self.notify_observers()
 
 

@@ -243,8 +243,12 @@ units = await lookup_api.get_units()
 
 ## Ciclo de Vida de Componentes
 
+### Usando ObservableComponent (Recomendado)
+
 ```python
-class MyView(ft.Container):
+from src.frontend.components.base_component import ObservableComponent
+
+class MyView(ObservableComponent):
     def __init__(self):
         super().__init__()
         # 1. Configurar propiedades
@@ -256,20 +260,24 @@ class MyView(ft.Container):
         # 3. Crear componentes
         self._build_components()
 
-        # 4. Suscribirse a observers
-        app_state.i18n.add_observer(self._on_language_change)
-
-        # 5. Construir layout
+        # 4. Construir layout
         self.content = self._build_layout()
 
     def did_mount(self):
         """Llamado después de agregar a page"""
-        self.page.run_task(self.load_data)
+        super().did_mount()  # Importante: llamar primero
+        
+        # Suscribirse a observers (limpieza automática en will_unmount)
+        self.subscribe(app_state.i18n, self._on_language_change)
+        self.subscribe(app_state.theme, self._on_theme_change)
+        
+        # Ejecutar tarea async de forma segura
+        self.run_async(self.load_data())
 
     async def load_data(self):
         """Carga asíncrona de datos"""
         self.loading = True
-        self._update_content()
+        self.safe_update()  # Usa safe_update() en lugar de if self.page: self.update()
 
         try:
             self.data = await api.get_all()
@@ -277,12 +285,21 @@ class MyView(ft.Container):
             self.error = str(e)
         finally:
             self.loading = False
-            self._update_content()
+            self.safe_update()
 
     def will_unmount(self):
         """Limpieza antes de desmontar"""
-        app_state.i18n.remove_observer(self._on_language_change)
+        super().will_unmount()  # Limpia automáticamente todos los observers
 ```
+
+### Métodos de ObservableComponent
+
+| Método | Descripción |
+|--------|-------------|
+| `subscribe(state, callback)` | Suscribe y limpia automáticamente |
+| `safe_update()` | Actualiza solo si está montado |
+| `run_async(coro)` | Ejecuta corutina via `page.run_task()` |
+| `is_mounted` | Property: True si está montado |
 
 ## Mejores Prácticas
 
@@ -291,10 +308,11 @@ class MyView(ft.Container):
 3. **Logging**: Usar loguru para logging estructurado
 4. **Async/Await**: Todas las llamadas a API deben ser async
 5. **Estados**: Manejar loading, error y empty states
-6. **Observers**: Limpiar observers en `will_unmount()`
-7. **Constantes**: Usar LayoutConstants para dimensiones y espaciado
-8. **Theming**: Dejar que Flet maneje los colores con Material 3
-9. **i18n**: Todos los textos deben ser traducibles con `t()`
+6. **ObservableComponent**: Usar como base para todos los componentes nuevos
+7. **safe_update()**: Usar en lugar de `if self.page: self.update()`
+8. **Constantes**: Usar LayoutConstants para dimensiones y espaciado
+9. **Theming**: Dejar que Flet maneje los colores con Material 3
+10. **i18n**: Todos los textos deben ser traducibles con `t()`
 
 ## Contribuir
 

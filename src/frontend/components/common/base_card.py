@@ -2,18 +2,21 @@
 Componente de tarjeta base colapsable.
 
 Proporciona una tarjeta reutilizable con header, contenido y acciones.
+Usa ObservableComponent para manejo automático de observers.
 """
-from typing import Callable
 import flet as ft
 from loguru import logger
 
 from src.frontend.layout_constants import LayoutConstants
 from src.frontend.app_state import app_state
+from src.frontend.components.base_component import ObservableComponent
 
 
-class BaseCard(ft.Container):
+class BaseCard(ObservableComponent):
     """
     Tarjeta base colapsable con header, contenido y acciones.
+
+    Extiende ObservableComponent para manejo automático de observers.
 
     Args:
         title: Título de la tarjeta
@@ -56,16 +59,15 @@ class BaseCard(ft.Container):
         self.elevation = elevation
         logger.debug(f"BaseCard initialized: title={title}, collapsible={collapsible}")
 
-        # Suscribirse a cambios de tema
-        app_state.theme.add_observer(self._on_theme_changed)
+        # Suscribirse a cambios de tema (se limpia automáticamente en will_unmount)
+        self.subscribe(app_state.theme, self._on_theme_changed)
 
         # Construir contenido inicial
         self.content = self.build()
 
     def _on_theme_changed(self) -> None:
         """Callback cuando cambia el tema."""
-        if self.page:
-            self.update()
+        self.safe_update()
 
     def build(self) -> ft.Control:
         """
@@ -160,8 +162,7 @@ class BaseCard(ft.Container):
         """
         self.is_collapsed = not self.is_collapsed
         logger.debug(f"Card collapsed state: {self.is_collapsed}")
-        if self.page:
-            self.update()
+        self.safe_update()
 
     def set_content(self, content: ft.Control) -> None:
         """
@@ -172,11 +173,9 @@ class BaseCard(ft.Container):
 
         Example:
             >>> card.set_content(ft.Text("Nuevo contenido"))
-            >>> card.update()
         """
         self.content_control = content
-        if self.page:
-            self.update()
+        self.safe_update()
 
     def set_actions(self, actions: list[ft.Control]) -> None:
         """
@@ -187,11 +186,9 @@ class BaseCard(ft.Container):
 
         Example:
             >>> card.set_actions([ft.Button("Guardar")])
-            >>> card.update()
         """
         self.actions = actions
-        if self.page:
-            self.update()
+        self.safe_update()
 
     def expand(self) -> None:
         """
@@ -202,8 +199,7 @@ class BaseCard(ft.Container):
         """
         if self.is_collapsed:
             self.is_collapsed = False
-            if self.page:
-                self.update()
+            self.safe_update()
 
     def collapse(self) -> None:
         """
@@ -214,9 +210,5 @@ class BaseCard(ft.Container):
         """
         if not self.is_collapsed:
             self.is_collapsed = True
-            if self.page:
-                self.update()
+            self.safe_update()
 
-    def will_unmount(self) -> None:
-        """Limpieza cuando el componente se desmonta."""
-        app_state.theme.remove_observer(self._on_theme_changed)

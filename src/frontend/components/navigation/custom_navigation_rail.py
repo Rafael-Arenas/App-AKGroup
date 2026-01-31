@@ -179,9 +179,16 @@ class CustomNavigationRail(ft.Container):
         if self.page:
             self.update()
 
-        # Notificar callback
+        # Notificar callback (puede ser async)
         if self.on_expand_toggle_callback:
-            self.on_expand_toggle_callback(self.expanded)
+            import asyncio
+            if asyncio.iscoroutinefunction(self.on_expand_toggle_callback):
+                # Es async, usar page.run_task
+                if self.page:
+                    self.page.run_task(self.on_expand_toggle_callback, self.expanded)
+            else:
+                # Es sync, llamar directamente
+                self.on_expand_toggle_callback(self.expanded)
 
     def _handle_destination_change(self, index: int):
         """
